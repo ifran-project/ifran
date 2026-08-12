@@ -1,0 +1,56 @@
+params:
+  k8s:
+    master_node: node1
+    join_command: 'kubeadm join 10.123.101.170:6443 --token awfba8.zj5z2is3kxlc3pp8
+      --discovery-token-ca-cert-hash sha256:73b0f364c35295844b945a26ac0cd0480874ce32d38aae810ab903bee76cc25c '
+  provisioning:
+    experiment: tst
+nodes:
+  node1:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.101.170
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node2:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.122.250
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node3:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.178.220
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+core_deployment:
+  components:
+    smf: {}
+    amf: {}
+    upf: {}
+    nrf: {}
+ran_deployment:
+  components:
+    gnb: {}

@@ -1,0 +1,127 @@
+# plain text config overwrites everything
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{% else %}
+# SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
+# OAI CN Configuration File
+### This file can be used by all OAI NFs
+### Some fields are specific to an NF and will be ignored by other NFs
+
+## NOTE ON YAML ANCHORS ##
+# We use YAML anchors to ease the configuration and to avoid duplicating parts of the configuration.
+# This is especially true for the SNSSAIs, as we have to define them for multiple NFs.
+# Please note that the use of anchors is not mandatory, and you can define the SNSSAI in each NF yourself.
+# You can read more about anchors here: https://yaml.org/spec/1.2.2/#anchors-and-aliases
+############# Common configuration
+
+# Log level
+log_level:
+{% if component.advanced_config and component.advanced_config.log_level %}
+{{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  general: debug
+{% endif %}
+
+# If you enable registration, the NF will use the NRF discovery mechanism
+register_nf:
+{% if component.advanced_config and component.advanced_config.register_nf %}
+{{ component.advanced_config.register_nf | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  general: yes
+{% endif %}
+
+http_version: {{ component.advanced_config.http_version | default(2) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+
+## general single_nssai configuration
+## Defines YAML anchors, which are reused in the config file
+#snssais:
+snssais:
+{% for plmn in component.config.plmnList %}
+{% for slice in plmn.snssaiList %}
+  - &{{ slice.name }}
+    sst: {{ slice.sst }}
+{% if slice.sd %}
+    sd: {{ slice.sd }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+############## SBI Interfaces
+### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
+nfs:
+  amf:
+    host: {{ component_name | default("oai-amf") }}
+    sbi:
+      port: {{ component.config.sbi.port }}
+      api_version: {{ component.config.sbi.apiVersion }}
+      interface_name: {{ component.config.sbi.interfaceName }}
+    n2:
+      interface_name: {{ component.config.n2.interfaceName }}
+      port: {{ component.config.n2.port }}
+{% if component.advanced_config %}{% if component.advanced_config.nfs %}
+{{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
+{%- endif %}{% endif %}
+
+#### Only if using mini deployment of core network
+database:
+{% if component.advanced_config and component.advanced_config.database %}
+{{ component.advanced_config.database | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  host: oai-database
+  user: test
+  type: mysql
+  password: test
+  database_name: oai_db
+  generate_random: true
+  connection_timeout: 300 # seconds
+{% endif %}
+
+############## NF-specific configuration
+amf:
+  amf_name: oai-{{ component_name }}
+  # This really depends on if we want to keep the "mini" version or not
+  support_features_options:
+{% if component.advanced_config and component.advanced_config.support_features_options %}
+{{ component.advanced_config.support_features_options | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable_simple_scenario: no # "no" by default with the normal deployment scenarios with AMF/SMF/UPF/AUSF/UDM/UDR/NRF.
+                               # set it to "yes" to use with the minimalist deployment scenario (including only AMF/SMF/UPF) by using the internal AUSF/UDM implemented inside AMF.
+                               # There's no NRF in this scenario, SMF info is taken from "nfs" section.
+    enable_nssf: no
+    enable_smf_selection: yes
+{% endif %}
+  relative_capacity: {{ component.advanced_config.relative_capacity | default(30) }}
+  statistics_timer_interval: {{ component.advanced_config.statistics_timer_interval | default(20) }}  # in seconds
+  emergency_support: {{ component.advanced_config.emergency_support | default(false) | lower }}
+  served_guami_list:
+{% for guami in component.config.guamiList %}
+    - mcc: {{ guami.plmnId.mcc }}
+      mnc: {{ guami.plmnId.mnc }}
+      amf_region_id: {{ guami.amfRegionId }}
+      amf_set_id: {{ guami.amfSetId }}
+      amf_pointer: {{ guami.amfPointer }}
+{% endfor %}
+  plmn_support_list:
+{% for tai in component.config.taiList %}
+    - mcc: {{ tai.plmnId.mcc }}
+      mnc: {{ tai.plmnId.mnc }}
+      tac: {{ "0x%04x" | format(tai.tac) }}
+
+      nssai:
+{% for plmn in component.config.plmnList %}
+{% for slice in plmn.snssaiList %}
+        - *{{ slice.name }}
+{% endfor %}
+{% endfor %}
+{% endfor %}
+  supported_integrity_algorithms:
+{% for algorithm in component.config.securityAlgorithmConfiguration.integrityOrder %}
+    - "{{ algorithm | upper }}"
+{% endfor %}
+  supported_encryption_algorithms:
+{% for algorithm in component.config.securityAlgorithmConfiguration.cipheringOrder %}
+    - "{{ algorithm | upper }}"
+{% endfor %}
+
+{% endif %}

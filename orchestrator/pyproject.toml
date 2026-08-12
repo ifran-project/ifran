@@ -1,0 +1,26 @@
+[project]
+name = "orchestrator"
+version = "0.0.1"
+description = "Post-5G Blueprint orchestrator"
+authors = [
+    {name = "Ziyad Mabrouk",email = "ziyad.mabrouk@inria.fr"},
+    {name = "Damien Saucez",email = "damien.saucez@inria.fr"},
+    {name = "Mohammadbagher Tavassoli",email = "mohammadbagher.tavassoli-kejani@inria.fr"},
+]
+license = {text = "BSD-Clear"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.12.0",
+    "pydantic_core>=2.41.5",
+    "ansible-runner>=2.4.3",
+]
+
+[tool.poetry]
+packages = [{include = "orchestrator", from = "src"}]
+include = [{path = "ansible", format = ["sdist", "wheel"]}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,45 @@
+# Role to prepare/render Helm chart on Kubernetes cluster
+
+# Input:
+# - component_name: str
+# - component: K8S5GComponent
+# - chart_name: str
+# - helm_build_dir: str
+# - helm_wait: bool
+# - helm_wait_timeout: bool
+# - render: bool
+
+# Output: None
+---
+- name: Create Helm build directory for '{{ chart_name }}' chart
+  ansible.builtin.file:
+    path: "{{ helm_build_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Copy local '{{ component.implementation }}-{{ component.type }}' Helm chart directory for '{{ chart_name }}'
+  ansible.builtin.copy:
+    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/"
+    dest: "{{ helm_build_dir }}"
+    mode: "0755"
+
+- name: Render '{{ chart_name }}' Helm Chart.yaml file from Jinja template
+  ansible.builtin.template:
+    src: "Chart.yaml.j2"
+    dest: "{{ helm_build_dir }}/Chart.yaml"
+    mode: "0600"
+  when: render
+
+- name: Render '{{ chart_name }}' Helm values file from Jinja template
+  ansible.builtin.template:
+    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/values.yaml.j2"
+    dest: "{{ helm_build_dir }}/values.yaml"
+    mode: "0600"
+  when: render
+
+- name: Render '{{ chart_name }}' configuration file from Jinja template
+  ansible.builtin.template:
+    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/config.yaml.j2"
+    dest: "{{ helm_build_dir }}/config.yaml"
+    mode: "0600"
+  when: render

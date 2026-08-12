@@ -1,0 +1,14 @@
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  cni:
+    type: Calico
+  calicoNetwork:
+    bgp: Disabled
+    ipPools:
+      - cidr: {{ pod_network_cidr }}
+        encapsulation: VXLAN
+        natOutgoing: Enabled
+        nodeSelector: all()

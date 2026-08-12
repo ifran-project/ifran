@@ -1,0 +1,46 @@
+# Role to install Helm chart on Kubernetes cluster
+
+# Input:
+# - component: K8S5GComponent
+# - chart_name: str
+# - helm_build_dir: str
+# - output_with_multus: bool
+
+# Output:
+# - network_info: str if output_with_multus is False, else list[MultusNetworkStatus]
+---
+- name: Deploy rendered '{{ chart_name }}' Helm chart in namespace '{{ component.namespace }}'
+  kubernetes.core.helm:
+    name: "{{ chart_name }}"
+    chart_ref: "{{ helm_build_dir }}"
+    release_namespace: "{{ component.namespace }}"
+    create_namespace: true
+    state: present
+    values_files:
+      - "{{ helm_build_dir }}/values.yaml"
+
+- name: Wait for '{{ chart_name }}' pod to be ready
+  ansible.builtin.command: kubectl wait --namespace {{ component.namespace }} --for=condition=Ready pod -l app.kubernetes.io/name={{ chart_name }} --timeout=200s
+
+- name: Get '{{ chart_name }}' pod information
+  ansible.builtin.command: kubectl get pod -n {{ component.namespace }} -l app.kubernetes.io/name={{ chart_name }} -o json
+  register: pod_json
+
+- name: Parse '{{ chart_name }}' pod information
+  ansible.builtin.set_fact:
+    pod_info: "{{ pod_json.stdout | from_json }}"
+
+- name: Set '{{ chart_name }}' pod IP as component network information
+  ansible.builtin.set_fact:
+    network_info: "{{ pod_info['items'][0]['status']['podIP'] }}"
+  when: not output_with_multus
+
+- name: Set '{{ chart_name }}' Multus network information
+  ansible.builtin.set_fact:
+    network_info: "{{ pod_info['items'][0]['metadata']['annotations']['k8s.v1.cni.cncf.io/network-status'] | default('[]') | from_json }}"
+  when: output_with_multus
+
+- name: Return '{{ chart_name }}' network information
+  ansible.builtin.set_stats:
+    data:
+      network_info: "{{ network_info }}"

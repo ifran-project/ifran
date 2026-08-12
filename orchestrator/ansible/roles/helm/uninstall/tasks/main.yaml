@@ -1,0 +1,30 @@
+# Role to install Helm chart on Kubernetes cluster
+
+# Input:
+# - component: K8S5GComponent
+# - chart_name: str
+# - helm_build_dir: str
+# - clean_helm_build_dir: bool
+
+# Output: None
+---
+- name: Uninstall '{{ chart_name }}' Helm chart
+  kubernetes.core.helm:
+    name: "{{ chart_name }}"
+    release_namespace: "{{ component.namespace }}"
+    state: absent
+    timeout: "5m0s"
+
+- name: Wait for '{{ chart_name }}' pod to be deleted
+  ansible.builtin.command: kubectl get pods --namespace "{{ component.namespace }}" -l app.kubernetes.io/instance="{{ chart_name }}" --no-headers
+  register: chart_pods
+  retries: 60
+  delay: 2
+  until: chart_pods.stdout == ""
+  changed_when: false
+
+- name: Clean up Helm build directory for '{{ chart_name }}' chart if desired
+  ansible.builtin.file:
+    path: "{{ helm_build_dir }}"
+    state: absent
+  when: clean_helm_build_dir

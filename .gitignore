@@ -1,0 +1,11 @@
+venv
+.venv
+__pycache__
+
+.vscode
+
+# macos
+.DS_Store
+.AppleDouble
+.LSOverride
+._*

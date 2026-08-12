@@ -1,0 +1,22 @@
+# Legacy POS provisioner unprovision role.
+
+# Input:
+# - resource_name: str
+# - central_pos_ssh_info: SSHInfo
+
+# Output: None
+---
+- name: Register central POS host for '{{ resource_name }}'
+  ansible.builtin.add_host:
+    name: central_pos
+    ansible_connection: ssh
+    ansible_host: "{{ central_pos_ssh_info.hostname }}"
+    ansible_user: "{{ central_pos_ssh_info.user }}"
+    ansible_port: "{{ central_pos_ssh_info.port }}"
+    ansible_ssh_common_args: "{{ central_pos_ssh_info.common_args | default(omit) }}"
+
+- block:
+  - name: Free '{{ resource_name }}'
+    ansible.builtin.shell: pos allocations free {{ resource_name }} --keep-calendar-event
+
+  delegate_to: central_pos

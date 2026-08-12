@@ -1,0 +1,106 @@
+# Kubernetes remove role
+
+# Undoes Kubernetes prepare, create and join roles.
+
+# Input: None
+
+# Output: None
+---
+- name: Check if kubeadm exists  on '{{ node.name }}'
+  ansible.builtin.command: which kubeadm
+  register: kubeadm_binary
+  changed_when: false
+  failed_when: false
+
+- name: Reset Kubernetes node state  on '{{ node.name }}'
+  ansible.builtin.command: kubeadm reset --force
+  changed_when: false
+  ignore_errors: true
+  when: kubeadm_binary.rc == 0
+
+- name: Remove Kubernetes manifests  on '{{ node.name }}'
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/kubernetes/manifests
+
+- name: Stop kubelet, containerd systemd services  on '{{ node.name }}'
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - kubelet
+    - containerd
+  failed_when: false
+
+- name: Stop cni-dhcp service  on '{{ node.name }}'
+  ansible.builtin.service:
+    name: cni-dhcp
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: Remove k9s package on '{{ node.name }}'
+  ansible.builtin.apt:
+    name:
+      - k9s
+    state: absent
+    autoremove: true
+
+- name: Remove Kubernetes packages on '{{ node.name }}'
+  ansible.builtin.apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+      - containerd
+    state: absent
+    autoremove: true
+    allow_change_held_packages: true
+
+- name: Remove Kubernetes repositories and keyring others on '{{ node.name }}'
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/kubernetes.sources
+    - /etc/apt/sources.list.d/kubernetes.list
+    - /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    - /etc/apt/keyrings/Release.key
+    - /etc/modules-load.d/k8s.conf
+    - /etc/sysctl.d/99-kubernetes-cri.conf
+    - /etc/containerd
+    - /etc/kubernetes
+    - /var/lib/kubelet
+    - /var/lib/etcd
+    - /var/lib/containerd
+    - /root/.kube
+    - /etc/cni
+    - /opt/cni
+    - /tmp/helm.tar.gz
+    - /tmp/linux-amd64
+    - /usr/local/bin/helm
+    - /etc/systemd/system/cni-dhcp.service
+    - /tmp/k9s_linux_amd64.deb
+
+# mainly for unfinished preapre roles executions
+- name: Repair dpkg state on '{{ node.name }}'
+  ansible.builtin.command: dpkg --configure -a
+  changed_when: false
+
+- name: Remove cached apt lists on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /var/lib/apt/lists
+    state: absent
+
+- name: Recreate apt lists directory on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /var/lib/apt/lists/partial
+    state: directory
+    mode: "0755"
+
+- name: Clean apt cache on '{{ node.name }}'
+  ansible.builtin.apt:
+    autoclean: true

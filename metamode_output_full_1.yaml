@@ -1,0 +1,271 @@
+core:
+  type: oai
+  components:
+    amf:
+      category: core
+      type: amf
+      implementation: oai
+      config:
+        sbi:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          apiVersion: v1
+          tls:
+            enabled: false
+            certificate: null
+            privateKey: null
+        n2:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38412
+          protocol: SCTP
+        guamiList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          amfRegionId: '02'
+          amfSetId: '001'
+          amfPointer: '00'
+        taiList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        securityAlgorithmConfiguration:
+          integrityOrder:
+          - nia2
+          - nia1
+          - nia0
+          cipheringOrder:
+          - nea0
+          - nea1
+          - nea2
+        networkName:
+          fullNetworkName: 5G_network
+          shortNetworkName: null
+      advanced_config: null
+      plain_text_config: null
+    smf:
+      category: core
+      type: smf
+      implementation: oai
+      config:
+        sbi:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          apiVersion: v1
+          tls:
+            enabled: false
+            certificate: null
+            privateKey: null
+        n4:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 8805
+          protocol: UDP
+        snssaiList:
+        - internet
+      advanced_config: null
+      plain_text_config: null
+    upf:
+      category: core
+      type: upf
+      implementation: oai
+      config:
+        sbi:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          apiVersion: v1
+          tls:
+            enabled: false
+            certificate: null
+            privateKey: null
+        snssaiList:
+        - internet
+        n3:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2152
+          protocol: UDP
+        n4:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 8805
+          protocol: UDP
+        n6:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: null
+          protocol: null
+        n9:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2153
+          protocol: UDP
+      advanced_config: null
+      plain_text_config: null
+    nrf:
+      category: core
+      type: nrf
+      implementation: oai
+      config:
+        sbi:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          apiVersion: v1
+          tls:
+            enabled: false
+            certificate: null
+            privateKey: null
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+      advanced_config: null
+      plain_text_config: null
+ran:
+  type: oai
+  components:
+    gnb:
+      category: ran
+      type: gnb
+      implementation: oai
+      config:
+        timeZone: Europe/Paris
+        gnbId: 0
+        tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sctpConfiguration:
+          inStreams: 2
+          outStreams: 2
+        e2: null
+        ric: null
+        nrCellId: 1
+        physicalCellId: 0
+        radioConfiguration:
+          frType: fr1
+          nrBand: 78
+          duplexMode: tdd
+          downlinkArfcn: 640000
+          ssbArfcn: 621312
+          pointAFrequencyArfcn: 620040
+          channelBandwidthMhz: 40
+          subcarrierSpacingKhz: 30
+          tddConfiguration:
+            periodicityMilliseconds: 5.0
+            nrofDownlinkSlots: 7
+            nrofDownlinkSymbols: 6
+            nrofUplinkSlots: 2
+            nrofUplinkSymbols: 4
+          numerology: 1
+        ru: sim_ru
+        securityAlgorithmConfiguration:
+          integrityOrder:
+          - nia2
+          - nia1
+          - nia0
+          cipheringOrder:
+          - nea0
+          - nea1
+          - nea2
+        n2:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38412
+          protocol: SCTP
+        n3:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2152
+          protocol: UDP
+        amf: amf
+      advanced_config: null
+      plain_text_config: null
+      derived_radio_config: null
+rus:
+  sim_ru:
+    type: simulated
+    model: null
+    capabilities: null
+    ip: null
+    id: null
+    clockSource: internal
+    timeSource: internal
+    numberOfTxPorts: 1
+    numberOfRxPorts: 1
+    txAttenuationDB: 0
+    rxAttenuationDB: 0
+    txGainDB: 35
+    rxGainDB: 75
+ues: {}
+slices:
+  internet:
+    sst: 1
+    sd: null
+    name: internet
+    dnns:
+      internet:
+        name: internet
+        pduSessionType: ipv4
+        ipv4Network: 11.1.1.0/24
+        ipv6Network: null
+        aggregateMaximumBitRate:
+          uplink: 200Mbps
+          downlink: 200Mbps
+        qosFlows:
+        - qfi: 1
+          fiveQI: 9
+          arp:
+            priorityLevel: 1
+            preemptionCapability: NOT_PREEMPT
+            preemptionVulnerability: PREEMPTABLE
+          guaranteedBitRate: null
+          maximumBitRate: null
+rics: {}

@@ -1,0 +1,34 @@
+# Kubernetes join role
+
+# Joins existing Kubernetes cluster using provided kubeadm join command.
+
+# Input:
+# - node: Node (node.name and node.roles)
+# - join_command: str
+# - copy_kubeconfig_to_workers: bool
+# - local_kubeconfig_path: str
+
+# Output: None
+---
+- name: Join '{{ node.name }}' to the Kubernetes cluster
+  ansible.builtin.command: "{{ join_command }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf
+
+- name: Create .kube directory in '{{ node.name }}' root if desired
+  ansible.builtin.file:
+    path: "/root/.kube"
+    state: directory
+    mode: "0700"
+  when: copy_kubeconfig_to_workers
+
+- name: Copy admin.conf to kube config for '{{ node.name }}'
+  ansible.builtin.copy:
+    src: "{{ local_kubeconfig_path }}"
+    dest: "/root/.kube/config"
+    mode: "0600"
+  when: copy_kubeconfig_to_workers
+
+- name: Add '{{ node.name }}' roles as Kubernetes label for later selective scheduling
+  ansible.builtin.command: kubectl label nodes {{ node.name }} node-type.5g.blueprint/{{ item }}=true --overwrite
+  loop: "{{ node.roles }}"

@@ -1,0 +1,49 @@
+params:
+  provisioning:
+    experiment: tst
+nodes:
+  node1:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.101.170
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+  node2:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.122.250
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+  node3:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.178.220
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+core_deployment:
+  components:
+    smf: {}
+    amf: {}
+    upf: {}
+    nrf: {}
+ran_deployment:
+  components:
+    gnb: {}

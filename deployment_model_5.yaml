@@ -1,0 +1,149 @@
+params:
+  k8s:
+    master_node: node1
+    join_command: 'kubeadm join 10.123.101.170:6443 --token awfba8.zj5z2is3kxlc3pp8
+      --discovery-token-ca-cert-hash sha256:73b0f364c35295844b945a26ac0cd0480874ce32d38aae810ab903bee76cc25c '
+  provisioning:
+    experiment: tst
+nodes:
+  node1:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.101.170
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node2:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.122.250
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node3:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.178.220
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+core_deployment:
+  components:
+    smf:
+      is_installed: true
+      network_info: 10.244.135.4
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-smf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n4:
+          port: 8805
+          protocol: UDP
+      namespace: oai-core
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    amf:
+      is_installed: true
+      network_info: 10.244.104.3
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-amf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n2:
+          port: 38412
+          protocol: SCTP
+      namespace: oai-core
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    upf:
+      is_installed: true
+      network_info: 10.244.104.2
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-upf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n3:
+          port: 2152
+          protocol: UDP
+        n4:
+          port: 8805
+          protocol: UDP
+        n9:
+          port: 2153
+          protocol: UDP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          - SYS_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    nrf:
+      is_installed: true
+      network_info: 10.244.135.3
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-nrf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+  is_database_present: true
+ran_deployment:
+  components:
+    gnb:
+      is_installed: true
+      network_info: 10.244.135.5
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-gnb
+        image_tag: 2026.w31
+      exposed_ports:
+        n2:
+          port: 38412
+          protocol: SCTP
+        n3:
+          port: 2152
+          protocol: UDP
+      namespace: oai-ran
+      security_context:
+        capabilities:
+          add:
+          - SYS_NICE
+          - IPC_LOCK
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/ran: 'true'

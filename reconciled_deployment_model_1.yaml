@@ -1,0 +1,12 @@
+params:
+  provisioning:
+    experiment: tst
+core_deployment:
+  components:
+    smf: {}
+    amf: {}
+    upf: {}
+    nrf: {}
+ran_deployment:
+  components:
+    gnb: {}

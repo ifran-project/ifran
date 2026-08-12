@@ -1,0 +1,12 @@
+[plugins.'io.containerd.cri.v1.images']
+  snapshotter = "{{ selected_containerd_snapshotter }}"
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options]
+  SystemdCgroup = true
+
+{% if selected_containerd_snapshotter == "native" %}
+[plugins."io.containerd.transfer.v1.local"]
+  unpack_config = [
+    { platform = "linux/amd64", snapshotter = "native" }
+  ]
+{% endif %}

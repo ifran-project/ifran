@@ -1,0 +1,66 @@
+# R2Lab provisioner common provision role.
+
+# Input:
+# - resource_name: str
+# - r2lab_gateway: str
+# - r2lab_slice: str
+# - attempt_reservation: bool
+# - reservation_period: int (if attempt_reservation is True)
+# - email: str (if attempt_reservation is True)
+# - password: str (if attempt_reservation is True)
+
+# Output:
+# - ssh_info: SSHInfo
+---
+- name: Register R2Lab gateway host for '{{ resource_name }}'
+  ansible.builtin.add_host:
+    name: gateway
+    ansible_connection: ssh
+    ansible_host: "{{ r2lab_gateway }}"
+    ansible_user: "{{ r2lab_slice }}"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+- block:
+  - name: Attempt reserving R2Lab for '{{ resource_name }}'
+    ansible.builtin.command: rhubarbe book --slice {{ r2lab_slice }} --email {{ email }} --password {{ passowrd }} {{ start }} {{ end }}
+    vars:
+      # get current time
+      start: "{{ now(fmt='%Y-%m-%dT%H:%M', tz='Europe/Paris') }}"
+      # add reservation_period (in minutes)
+      end: "{{ (now(tz='Europe/Paris') + timedelta(minutes=reservation_period | int)).strftime('%Y-%m-%dT%H:%M') }}"
+    when:
+      - attempt_reservation
+    failed_when: false
+
+  - name: Check current R2Lab lease for '{{ resource_name }}'
+    ansible.builtin.command: rhubarbe leases --check
+    register: r2lab_lease_check
+    failed_when: false
+    changed_when: false
+
+  - name: Set fact indicating if access is granted or denied for '{{ resource_name }}'
+    ansible.builtin.set_fact:
+      r2lab_access_denied: "{{ 'Access currently denied' in r2lab_lease_check.stdout or 'Access currently denied' in r2lab_lease_check.stderr }}"
+
+  # prevent turning on device when not reserved
+  - name: Fail if R2Lab access is denied for slice '{{ r2lab_slice }}' for '{{ resource_name }}'
+    ansible.builtin.fail:
+      msg: "Access is currently denied for slice '{{ r2lab_slice }}'. Make sure a valid reservation exists on R2Lab."
+    when: r2lab_access_denied
+
+  - name: Turn on '{{ resource_name }}'
+    ansible.builtin.command: rhubarbe pdu on {{ resource_name }}
+
+  - name: Return updated SSH info object for '{{ resource_name }}'
+    ansible.builtin.set_stats:
+      data:
+        ssh_info:
+          hostaname: "{{ resource_name }}"
+          port: 22
+          user: "root"
+          jumphost:
+            hostname: "{{ gateway }}"
+            port: 22
+            user: "{{ r2lab_slice }}"
+
+  delegate_to: gateway

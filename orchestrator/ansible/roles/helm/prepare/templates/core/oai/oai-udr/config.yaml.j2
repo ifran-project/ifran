@@ -1,0 +1,57 @@
+{% if component.plain_text_config -%}
+{{ component.plain_text_config }}
+{%- else %}
+# SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
+############# Common configuration
+
+# Log level
+log_level:
+{% if component.advanced_config and component.advanced_config.log_level %}
+{{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  general: debug
+{% endif %}
+
+# If you enable registration, the NF will use the NRF discovery mechanism
+register_nf:
+{% if component.advanced_config and component.advanced_config.register_nf %}
+{{ component.advanced_config.register_nf | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  general: yes
+{% endif %}
+
+http_version: {{ component.advanced_config.http_version | default(2) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+
+############## SBI Interfaces
+### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
+nfs:
+  udr:
+    host: {{ component_name | default("oai-udr") }}
+    sbi:
+      port: {{ component.config.sbi.port }}
+      api_version: {{ component.config.sbi.apiVersion }}
+      interface_name: {{ component.config.sbi.interfaceName }}
+{% if component.advanced_config and component.advanced_config.nfs %}
+{{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
+
+############## NF-specific configuration
+udr:
+  udr_name: oai-{{ component_name }}
+
+#### Common for UDR and AMF
+database:
+{% if component.advanced_config and component.advanced_config.database %}
+{{ component.advanced_config.database | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  host: oai-database
+  user: test
+  type: mysql
+  password: test
+  database_name: oai_db
+  generate_random: true
+  connection_timeout: 300 # seconds
+{% endif %}
+
+{% endif %}

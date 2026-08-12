@@ -1,0 +1,77 @@
+# POS provisioner provision role.
+
+# Assumes the deployment machine (host on which this Ansible code will run) has
+# the 'slices' and 'slices-pos' CLIs installed and authenticated with the user's SLICES account.
+
+# Input:
+# - resource_name: str
+# - testbed: str
+# - attempt_reservation: bool
+# - reservation_period: int (if attempt_reservation is True)
+# - image: str (if only_bootstrap is False)
+# - is_staged_image: bool
+# - only_bootstrap: bool
+# - boot_params: str | None
+
+# Output:
+# - ssh_info: SSHInfo
+---
+- name: Select testbed '{{ testbed }}' for '{{ resource_name }}'
+  ansible.builtin.command: slices pos testbed use {{ testbed }}
+
+- name: Free any existing allocation for '{{ resource_name }}'
+  ansible.builtin.command: slices pos allocations free {{ resource_name }} --keep-calendar-event
+
+- name: Allocate' {{ resource_name }}'
+  ansible.builtin.command: slices pos allocations allocate {{ resource_name }} {{ "--duration " ~ reservation_period if attempt_reservation else ""}}
+
+- name: Set image for '{{ resource_name }}'
+  ansible.builtin.command: slices pos nodes image {{ resource_name }} {{ image }} {{ "--staging" if is_staged_image else "" }}
+  when: not only_bootstrap
+
+- name: Set boot parameters for '{{ resource_name }}'
+  ansible.builtin.command: slices pos nodes bootparameter {{ resource_name }} --raw {{ boot_params }}
+  when:
+    - not only_bootstrap
+    - boot_params is not none
+
+- name: Reset '{{ resource_name }}'
+  ansible.builtin.command: slices pos nodes reset {{ resource_name }}
+  when: not only_bootstrap
+
+- name: Bootstrap '{{ resource_name }}'
+  ansible.builtin.command: slices pos nodes bootstrap {{ resource_name }}
+  when: only_bootstrap
+
+- name: Get '{{ resource_name }} 'information
+  ansible.builtin.command: slices pos nodes show {{ resource_name }} --all --json
+  register: node_info
+  changed_when: false
+
+- name: Get testbed '{{ testbed }}' information for '{{ resource_name }}'
+  ansible.builtin.command: slices pos testbed show --json
+  register: test_info
+  changed_when: false
+
+- name: Parse JSON outputs for '{{ resource_name }}'
+  ansible.builtin.set_fact:
+    pos_node: "{{ (node_info.stdout | from_json)[resource_name] }}"
+    pos_testbed: "{{ test_info.stdout | from_json }}"
+
+- name: Return updated SSH info object for '{{ resource_name }}'
+  ansible.builtin.set_stats:
+    data:
+      ssh_info:
+        hostname: "{{ pos_node.hardware.fqdn }}"
+        port: 22
+        user: "root"
+        jumphost: >-
+          {{
+            {
+              "hostname": pos_testbed.bastion.host,
+              "port": pos_testbed.bastion.port | default(22),
+              "user": pos_testbed.bastion.user
+            }
+            if (pos_testbed.bastion | default(none)) is not none
+            else none
+          }}

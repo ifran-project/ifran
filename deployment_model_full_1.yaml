@@ -1,0 +1,134 @@
+params:
+  ansible:
+    runner_path: /Users/zimabrou/.ansible-runner
+    roles_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/ansible/roles
+  k8s:
+    timezone: Europe/Paris
+    k8s_version:
+      major: 1
+      minor: 36
+      patch: 2
+      extension: '2.1'
+    cluster_name: 5gbp
+    master_node: null
+    join_command: null
+    pod_network_cidr: 10.244.0.0/16
+    service_cidr: 10.96.0.0/12
+    calico_version: 3.32.1
+    install_multus: true
+    multus_version: 4.3.0
+    helm_version: 4.2.3
+    k9s_install: true
+    k9s_version: 0.51.0
+    containerd_snapshotter: null
+    enable_cni_dhcp: true
+    copy_kubeconfig_to_workers: true
+    local_kubeconfig_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/.k8s-admin.conf
+  provisioning:
+    experiment: tst
+provisioners:
+  bi:
+    category: node
+    type: bi
+    params:
+      extra_path: null
+      infra: fr-sophia2-bi-vm1
+      image: Ubuntu 24.04.3
+      flavor: medium
+      project: post5g-beta
+      experiment: 5gbp_exp
+      create_experiment: false
+      experiment_duration: 24h
+      node_duration: 3h
+  pos:
+    category: node
+    type: pos
+    params:
+      extra_path: null
+      image: ubuntu-noble
+      is_staged_image: false
+      boot_params: null
+      attempt_reservation: false
+      reservation_period: 120
+      only_bootstrap: false
+      testbed: sophia
+nodes:
+  node1:
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
+  node2:
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
+  node3:
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
+core_deployment:
+  components: {}
+  is_database_present: false
+ran_deployment:
+  components: {}
+rus: {}
+ues: {}
+simulated_ues: {}
+rics: {}
+miscellaneous: null

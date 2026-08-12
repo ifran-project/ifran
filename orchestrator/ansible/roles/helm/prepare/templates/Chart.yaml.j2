@@ -1,0 +1,14 @@
+apiVersion: v2
+name: {{ component.implementation }}-{{ component_name }}
+description: Helm chart for {{ component.implementation | upper }} {{ component.category }}  {{ component.type | upper }}
+
+type: application
+
+version: 0.1.0
+
+appVersion: {{ component.image.image_tag }}
+
+keywords:
+  - {{ component.category | upper }}
+  - {{ component.implementation | upper }}
+  - {{ component.type | upper }}

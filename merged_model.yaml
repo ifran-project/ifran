@@ -1,0 +1,564 @@
+core:
+  components:
+    amf:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: core
+      config:
+        guamiList:
+        - amfPointer: '00'
+          amfRegionId: '02'
+          amfSetId: '001'
+          plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+        n2:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38412
+          protocol: SCTP
+        networkName:
+          fullNetworkName: 5G_network
+          shortNetworkName: null
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sbi:
+          apiVersion: v1
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          tls:
+            certificate: null
+            enabled: false
+            privateKey: null
+        securityAlgorithmConfiguration:
+          cipheringOrder:
+          - nea0
+          - nea1
+          - nea2
+          integrityOrder:
+          - nia2
+          - nia1
+          - nia0
+        taiList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          tac: 1
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oai
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: amf
+    nrf:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: core
+      config:
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sbi:
+          apiVersion: v1
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          tls:
+            certificate: null
+            enabled: false
+            privateKey: null
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oai
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: nrf
+    smf:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: core
+      config:
+        n4:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 8805
+          protocol: UDP
+        sbi:
+          apiVersion: v1
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          tls:
+            certificate: null
+            enabled: false
+            privateKey: null
+        snssaiList:
+        - internet
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oai
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: smf
+    upf:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: core
+      config:
+        n3:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2152
+          protocol: UDP
+        n4:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 8805
+          protocol: UDP
+        n6:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: null
+          protocol: null
+        n9:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2153
+          protocol: UDP
+        sbi:
+          apiVersion: v1
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          tls:
+            certificate: null
+            enabled: false
+            privateKey: null
+        snssaiList:
+        - internet
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oai
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: upf
+  is_database_present: false
+  type: oai
+miscellaneous: null
+nodes:
+  node1:
+    category: node
+    is_provisioned: true
+    k8s_params: {}
+    k8s_status: not_configured
+    provisioner: bi
+    provisioning_params: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    ssh_info:
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+      extra_args: null
+      hostname: 10.123.101.170
+      jumphost:
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        extra_args: null
+        hostname: bastion1.theblueprintfactory.org
+        jumphost: null
+        no_host_key_checking: true
+        password: null
+        port: 22
+        private_key_file: null
+        sudo_password: null
+        user: proxy
+      no_host_key_checking: true
+      password: null
+      port: 22
+      private_key_file: null
+      sudo_password: null
+      user: ziyad
+  node2:
+    category: node
+    is_provisioned: true
+    k8s_params: {}
+    k8s_status: not_configured
+    provisioner: bi
+    provisioning_params: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    ssh_info:
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+      extra_args: null
+      hostname: 10.123.122.250
+      jumphost:
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        extra_args: null
+        hostname: bastion1.theblueprintfactory.org
+        jumphost: null
+        no_host_key_checking: true
+        password: null
+        port: 22
+        private_key_file: null
+        sudo_password: null
+        user: proxy
+      no_host_key_checking: true
+      password: null
+      port: 22
+      private_key_file: null
+      sudo_password: null
+      user: ziyad
+  node3:
+    category: node
+    is_provisioned: true
+    k8s_params: {}
+    k8s_status: not_configured
+    provisioner: bi
+    provisioning_params: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    ssh_info:
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+      extra_args: null
+      hostname: 10.123.178.220
+      jumphost:
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        extra_args: null
+        hostname: bastion1.theblueprintfactory.org
+        jumphost: null
+        no_host_key_checking: true
+        password: null
+        port: 22
+        private_key_file: null
+        sudo_password: null
+        user: proxy
+      no_host_key_checking: true
+      password: null
+      port: 22
+      private_key_file: null
+      sudo_password: null
+      user: ziyad
+params:
+  ansible:
+    roles_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/ansible/roles
+    runner_path: /Users/zimabrou/.ansible-runner
+  k8s:
+    calico_version: 3.32.1
+    cluster_name: 5gbp
+    containerd_snapshotter: null
+    copy_kubeconfig_to_workers: true
+    enable_cni_dhcp: true
+    helm_version: 4.2.3
+    install_multus: true
+    join_command: null
+    k8s_version:
+      extension: '2.1'
+      major: 1
+      minor: 36
+      patch: 2
+    k9s_install: true
+    k9s_version: 0.51.0
+    local_kubeconfig_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/.k8s-admin.conf
+    master_node: null
+    multus_version: 4.3.0
+    pod_network_cidr: 10.244.0.0/16
+    service_cidr: 10.96.0.0/12
+    timezone: Europe/Paris
+  provisioning:
+    experiment: tst
+ran:
+  components:
+    gnb:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ran
+      config:
+        amf: amf
+        e2: null
+        gnbId: 0
+        n2:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38412
+          protocol: SCTP
+        n3:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2152
+          protocol: UDP
+        nrCellId: 1
+        physicalCellId: 0
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        radioConfiguration:
+          channelBandwidthMhz: 40
+          downlinkArfcn: 640000
+          duplexMode: tdd
+          frType: fr1
+          nrBand: 78
+          numerology: 1
+          pointAFrequencyArfcn: 620040
+          ssbArfcn: 621312
+          subcarrierSpacingKhz: 30
+          tddConfiguration:
+            nrofDownlinkSlots: 7
+            nrofDownlinkSymbols: 6
+            nrofUplinkSlots: 2
+            nrofUplinkSymbols: 4
+            periodicityMilliseconds: 5.0
+        ric: null
+        ru: sim_ru
+        sctpConfiguration:
+          inStreams: 2
+          outStreams: 2
+        securityAlgorithmConfiguration:
+          cipheringOrder:
+          - nea0
+          - nea1
+          - nea2
+          integrityOrder:
+          - nia2
+          - nia1
+          - nia0
+        tac: 1
+        timeZone: Europe/Paris
+      derived_radio_config: null
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oai
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: gnb
+  type: oai
+rics: {}
+rus:
+  sim_ru:
+    capabilities: null
+    clockSource: internal
+    id: null
+    ip: null
+    model: null
+    numberOfRxPorts: 1
+    numberOfTxPorts: 1
+    rxAttenuationDB: 0
+    rxGainDB: 75
+    timeSource: internal
+    txAttenuationDB: 0
+    txGainDB: 35
+    type: simulated
+ues: {}

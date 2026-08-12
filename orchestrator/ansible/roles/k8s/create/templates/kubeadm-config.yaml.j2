@@ -1,0 +1,17 @@
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: unix:///run/containerd/containerd.sock
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: v{{ k8s_version.major }}.{{ k8s_version.minor }}.{{ k8s_version.patch }}
+clusterName: {{ cluster_name }}
+networking:
+  serviceSubnet: {{ service_cidr }}
+  podSubnet: {{ pod_network_cidr }}
+  dnsDomain: cluster.local
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd

@@ -1,0 +1,13 @@
+# R2Lab RU provisioner unprovision role.
+
+# Input:
+# - resource_name: str
+# - r2lab_gateway: str
+# - r2lab_slice: str
+
+# Output: None
+---
+- name: Include common R2Lab role for '{{ resource.name }}'
+  ansible.builtin.include_role:
+    name: ../../../common/r2lab/unprovision
+    public: true

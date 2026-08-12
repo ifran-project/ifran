@@ -1,0 +1,249 @@
+# Kubernetes prepare role
+
+# Prepares a Debian-based node as a Kubernetes host with:
+# containerd, systemd cgroups, kubelet, kubeadm, kubectl, kernel networking parameters, Helm, k9s
+
+# Input:
+# - node: Node (node.name and node.roles)
+# - timezone: str
+# - k8s_version: Version
+# - cluster_name: str
+# - helm_version: str
+# - k9s_install: bool
+# - k9s_version: str
+# - containerd_snapshotter: str
+
+# Output: None
+---
+# - name: Wait for Ansible connection
+#   ansible.builtin.wait_for_connection:
+#     timeout: 300
+
+- name: Set time zone to '{{ timezone }}' on '{{ node.name }}'
+  ansible.builtin.command: timedatectl set-timezone {{ timezone }}
+
+- name: Install base packages required for Kubernetes on '{{ node.name }}'
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - conntrack
+      - ipset
+      - iptables
+      - socat
+      - ethtool
+    state: present
+    update_cache: true
+
+- name: Ensure apt keyring directory exists on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add Kubernetes apt signing key on '{{ node.name }}'
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version.major }}.{{ k8s_version.minor }}/deb/Release.key"
+    dest: /etc/apt/keyrings/Release.key
+    mode: "0644"
+
+- name: Convert Kubernetes apt key to keyring format on '{{ node.name }}'
+  ansible.builtin.shell: gpg --dearmor --yes --output /etc/apt/keyrings/kubernetes-apt-keyring.gpg /etc/apt/keyrings/Release.key
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Install python3-debian dependency for deb822_repository on '{{ node.name }}'
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    update_cache: true
+
+- name: Add Kubernetes apt repository on '{{ node.name }}'
+  ansible.builtin.deb822_repository:
+    name: kubernetes
+    types: deb
+    uris: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version.major }}.{{ k8s_version.minor }}/deb/"
+    suites: "/"
+    components: []
+    signed_by: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    state: present
+
+- name: Update apt cache after adding Kubernetes repository on '{{ node.name }}'
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Define k8s_full_version variable on '{{ node.name }}'
+  ansible.builtin.set_fact:
+    k8s_full_version: "{{ k8s_version.major }}.{{ k8s_version.minor }}.{{ k8s_version.patch }}-{{ k8s_version.extension }}"
+
+- name: Install Kubernetes packages kubelet, kubeadm and kubectl on '{{ node.name }}'
+  ansible.builtin.apt:
+    name:
+      - "kubelet={{ k8s_full_version }}"
+      - "kubeadm={{ k8s_full_version }}"
+      - "kubectl={{ k8s_full_version }}"
+    state: present
+    allow_change_held_packages: true
+
+- name: Prevent Kubernetes packages from being upgraded on '{{ node.name }}'
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Install containerd on '{{ node.name }}'
+  ansible.builtin.apt:
+    name: containerd
+    state: present
+
+- name: Disable swap for kubelet on '{{ node.name }}'
+  ansible.builtin.command: swapoff --all
+
+- name: Disable swap in fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^(.*\sswap\s+.*)$'
+    replace: '# \1'
+
+- name: Load overlay and br_netfilter kernel modules for Kubernetes networking on '{{ node.name }}'
+  ansible.builtin.command:
+    cmd: "modprobe {{ item }}"
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Persist loaded modules across reboots on '{{ node.name }}'
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    mode: "0644"
+    content: |
+      overlay
+      br_netfilter
+
+- name: Configure sysctl values for Kubernetes networking on '{{ node.name }}'
+  ansible.builtin.copy:
+    dest: "/etc/sysctl.d/99-kubernetes-cri.conf"
+    mode: "0644"
+    content: |
+      net.bridge.bridge-nf-call-iptables = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward = 1
+
+- name: Reload sysctl settings on '{{ node.name }}'
+  ansible.builtin.command: sysctl --system
+
+# pick snapshotter
+- name: Detect root filesystem information on '{{ node.name }}'
+  ansible.builtin.command: findmnt --noheadings --output FSTYPE,SOURCE,OPTIONS /
+  register: root_filesystem
+  changed_when: false
+  when: containerd_snapshotter == None
+
+- name: Select containerd snapshotter automatically on '{{ node.name }}'
+  ansible.builtin.set_fact:
+    selected_containerd_snapshotter: "{{ 'native' if (root_filesystem.stdout is search('overlay') or root_filesystem.stdout is search('squashfs')) else 'overlayfs' }}"
+  when: containerd_snapshotter == None
+
+- name: Use explicitly configured containerd snapshotter on '{{ node.name }}'
+  ansible.builtin.set_fact:
+    selected_containerd_snapshotter: "{{ containerd_snapshotter }}"
+  when: containerd_snapshotter != None
+
+- name: Ensure containerd configuration directory exists on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    mode: "0755"
+
+- name: Copy containerd base configuration on '{{ node.name }}'
+  ansible.builtin.copy:
+    src: containerd-config.toml
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart containerd
+
+- name: Ensure containerd configuration directory exists on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /etc/containerd/conf.d
+    state: directory
+    mode: "0755"
+
+- name: Configure Kubernetes containerd settings with snapshotter '{{ selected_containerd_snapshotter }}' on '{{ node.name }}'
+  ansible.builtin.template:
+    src: containerd-k8s.toml.j2
+    dest: /etc/containerd/conf.d/10-kubernetes.toml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart containerd
+
+- name: Flush handlers on '{{ node.name }}'
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable containerd on '{{ node.name }}'
+  ansible.builtin.service:
+    name: containerd
+    enabled: true
+
+- name: Enable kubelet on '{{ node.name }}'
+  ansible.builtin.service:
+    name: kubelet
+    enabled: true
+
+- name: Copy CNI DHCP systemd service on '{{ node.name }}'
+  ansible.builtin.copy:
+    src: cni-dhcp.service
+    dest: "/etc/systemd/system/cni-dhcp.service"
+    owner: root
+    group: root
+    mode: "0644"
+  when: enable_cni_dhcp
+
+- name: Enable and start CNI DHCP service on '{{ node.name }}'
+  ansible.builtin.systemd:
+    name: "cni-dhcp.service"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: enable_cni_dhcp
+
+- name: Download Helm archive on '{{ node.name }}'
+  ansible.builtin.get_url:
+    url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
+    dest: /tmp/helm.tar.gz
+
+- name: Extract Helm on '{{ node.name }}'
+  ansible.builtin.unarchive:
+    src: /tmp/helm.tar.gz
+    dest: /tmp
+    remote_src: true
+
+- name: Install Helm binary on '{{ node.name }}'
+  ansible.builtin.copy:
+    src: /tmp/linux-amd64/helm
+    dest: /usr/local/bin/helm
+    mode: "0755"
+    remote_src: true
+
+# use curl isntead of get_url to avoid "Connection failure: Remote end closed connection without response" error with thsi url
+- name: Download k9s deb package on '{{ node.name }}'
+  ansible.builtin.command:
+    cmd: >
+      curl --fail --silent --show-error --location --http2
+      https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_linux_amd64.deb
+      --output /tmp/k9s_linux_amd64.deb
+    creates: "/tmp/k9s_linux_amd64.deb"
+  when: k9s_install
+
+- name: Install k9s deb package on '{{ node.name }}'
+  ansible.builtin.apt:
+    deb: "/tmp/k9s_linux_amd64.deb"
+    state: present
+  when: k9s_install
