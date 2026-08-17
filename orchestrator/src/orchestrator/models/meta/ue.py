@@ -104,7 +104,7 @@ class UEAuthenticationData(BlueprintBaseModel):
     op: bytes | None = Field(default=None, min_length=16, max_length=16)
     """Operator Code (OP). 128-bit value."""
 
-    amf: int | None = Field(efault=None, ge=0, le=0xFFFF)
+    amf: int = Field(default=0x8000, ge=0, le=0xFFFF)
     """Authentication Management Field (AMF). 16-bit value."""
 
     sqn: int = Field(default=0, ge=0, le=0xFFFFFFFFFFFF)
@@ -197,7 +197,7 @@ class UEConfiguration(BlueprintBaseModel):
         - 3GPP TS 24.501
     """
 
-    supi: str = Field(pattern=r"^[0-9]{15}$")
+    supi: str = Field(default="001010000000100", pattern=r"^[0-9]{15}$")
     """UE Subscription Permanent Identifier (SUPI). For IMSI-based SUPI, this contains the IMSI digits."""
 
     pei: str | None = Field(default=None, pattern=r"^[0-9]{14,16}$")
@@ -216,7 +216,7 @@ class UEConfiguration(BlueprintBaseModel):
 class GenericUE(Component5G):
     """Base class for real and simulated UEs."""
 
-    category: Literal[Category5G.UE] = Field(frozen=True)
+    category: Literal[Category5G.UE] = Field(default=Category5G.UE, frozen=True)
 
     config: UEConfiguration = Field(default_factory=UEConfiguration)
     """UE configuration."""

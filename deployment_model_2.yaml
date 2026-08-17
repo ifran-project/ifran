@@ -6,7 +6,7 @@ nodes:
     category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.2.44
+      hostname: 10.123.46.143
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -19,7 +19,7 @@ nodes:
     category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.5.31
+      hostname: 10.123.93.30
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -32,7 +32,7 @@ nodes:
     category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.136.170
+      hostname: 10.123.2.153
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -49,9 +49,11 @@ core_deployment:
     upf: {}
 ran_deployment:
   components:
-    cu1: {}
-    cuup: {}
     du1: {}
-    gnb: {}
-    du2: {}
     cucp: {}
+    gnb: {}
+    cuup: {}
+    cu1: {}
+    du2: {}
+simulated_ues:
+  sim_ue: {}

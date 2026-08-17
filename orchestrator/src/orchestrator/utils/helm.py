@@ -69,6 +69,7 @@ async def run_single_helm_action(
     # expect network info output after installation
     if action == "install":
         args["output_keys"] = ["network_info"]
+
     try:
         result = await run_ansible_role(**args)
     except Exception as e:

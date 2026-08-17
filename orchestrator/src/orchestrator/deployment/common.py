@@ -9,6 +9,7 @@ import yaml
 from orchestrator.models.deployment.core import K8SCoreComponent
 from orchestrator.models.deployment.deployment import DeploymentModel
 from orchestrator.models.deployment.provisioning import (
+    ProvisionableNode,
     ProvisionableResource,
     ProvisionableRU,
     ProvisionableUE,
@@ -18,8 +19,8 @@ from orchestrator.models.deployment.ran import K8SRANComponent
 from orchestrator.models.deployment.ric import RICDeployment
 from orchestrator.models.deployment.ue import UEDeployment
 from orchestrator.models.meta.metamodel import MetaModel
-from orchestrator.models.meta.ru import RUType
-from orchestrator.models.meta.ue import UEType
+from orchestrator.models.meta.ru import RU, RUType
+from orchestrator.models.meta.ue import Category5G, Component5G, UEType
 from orchestrator.utils.ansible import get_ansible_inventory_line
 from orchestrator.utils.common import deep_merge, sync_dict_keys
 
@@ -82,6 +83,12 @@ class BaseBlueprintManagement:
             source_dict=self.metamodel.rics,
             default_factory=RICDeployment,
         )
+
+
+    def output(self) -> tuple[MetaModel, DeploymentModel]:
+        """Output potentially modified input models."""
+
+        return self.metamodel, self.deployment_model
 
 
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
@@ -164,8 +171,62 @@ class BaseBlueprintManagement:
         else:
             return merged
 
+    def add_component(self, name: str, component: Component5G) -> None:
+        """Add a 5G component."""
 
-    def output(self) -> tuple[MetaModel, DeploymentModel]:
-        """Output potentially modified input models."""
+        category = component.category
+        match category:
+            case Category5G.CORE:
+                self.metamodel.core.components[name] = component.model_copy(deep=True)
+            case Category5G.RAN:
+                self.metamodel.ran.components[name] = component.model_copy(deep=True)
+            case Category5G.UE:
+                self.metamodel.ues[name] = component.model_copy(deep=True)
+            case Category5G.RIC:
+                self.metamodel.rics[name] = component.model_copy(deep=True)
 
-        return self.metamodel, self.deployment_model
+        self.reconcile()
+
+
+    def remove_component(self, name: str, category: Category5G) -> None:
+        """Remove a 5G component."""
+
+        match category:
+            case Category5G.CORE:
+                self.metamodel.core.components.pop(name, None)
+            case Category5G.RAN:
+                self.metamodel.ran.components.pop(name, None)
+            case Category5G.UE:
+                self.metamodel.ues.pop(name, None)
+            case Category5G.RIC:
+                self.metamodel.rics.pop(name, None)
+
+        self.reconcile()
+
+
+    def add_ru(self, name: str, ru: RU) -> None:
+        """Add RU."""
+
+        self.metamodel.rus[name] = ru.model_copy(deep=True)
+        if ru.type is not RUType.SIMULATED:
+            self.reconcile()
+
+
+    def remove_ru(self, name: str) -> None:
+        """Remove RU."""
+
+        ru = self.metamodel.rus.pop(name, None)
+        if ru and ru.type is not RUType.SIMULATED:
+            self.reconcile()
+
+
+    def add_node(self, name: str, node: ProvisionableNode) -> None:
+        """Add deployment node."""
+
+        self.deployment_model.nodes[name] = node.model_copy(deep=True)
+
+
+    def remove_node(self, name: str) -> None:
+        """Remove deployment node."""
+
+        self.deployment_model.nodes.pop(name, None)

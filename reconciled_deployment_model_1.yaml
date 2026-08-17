@@ -9,9 +9,11 @@ core_deployment:
     upf: {}
 ran_deployment:
   components:
-    cu1: {}
-    cuup: {}
     du1: {}
-    gnb: {}
-    du2: {}
     cucp: {}
+    gnb: {}
+    cuup: {}
+    cu1: {}
+    du2: {}
+simulated_ues:
+  sim_ue: {}

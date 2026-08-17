@@ -8,7 +8,7 @@ from orchestrator.models.meta.ran import RAN
 from orchestrator.models.meta.ric import RIC
 from orchestrator.models.meta.ru import RU
 from orchestrator.models.meta.slice import Slice
-from orchestrator.models.meta.ue import UE, UEType
+from orchestrator.models.meta.ue import UE, SimulatedUE, UEType
 
 
 class MetaModel(BlueprintBaseModel):
@@ -23,7 +23,7 @@ class MetaModel(BlueprintBaseModel):
     rus: dict[str, RU] = Field(default_factory=lambda: {"sim_ru": RU()})
     """Radio Units."""
 
-    ues: dict[str, UE] = Field(default_factory=dict)
+    ues: dict[str, UE] = Field(default_factory=lambda: {"sim_ue": SimulatedUE(type=UEType.SIMULATED)})
     """User Equipements."""
 
     slices: dict[str, Slice] = Field(default_factory=lambda: {"internet": Slice()})

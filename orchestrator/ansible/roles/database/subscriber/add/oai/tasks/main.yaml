@@ -1,0 +1,56 @@
+# Role to add a subscriber to OAI dataabse (mysql)
+
+# Input:
+# - ue_name: str
+# - ue_config: UEConfiguration
+# - database_ip: IPvAnyAddress
+
+# Output: None
+---
+- name: Ensure necessary dependency 'python3-pymysql' is installed
+  ansible.builtin.apt:
+    name:
+    - python3-pymysql
+    state: present
+    update_cache: true
+
+- name: Add authentication subscription for UE '{{ ue_name }}' on OAI database
+  community.mysql.mysql_query:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_db: oai_db
+    query: |
+      INSERT IGNORE INTO AuthenticationSubscription (
+        ueid,
+        authenticationMethod,
+        encPermanentKey,
+        protectionParameterId,
+        sequenceNumber,
+        authenticationManagementField,
+        algorithmId,
+        encOpcKey,
+        encTopcKey,
+        vectorGenerationInHss,
+        n5gcAuthMethod,
+        rgAuthenticationInd,
+        supi
+      )
+      VALUES (
+        '{{ ue_config.supi }}',
+        '{{ ue_config.authenticationData.authenticationMethod | upper }}',
+        '{{ ue_config.authenticationData.k }}',
+        '{{ ue_config.authenticationData.k }}',
+        '{{ {"sqn": ue_config.authenticationData.sqn, "sqnScheme": "NON_TIME_BASED", "lastIndexes": {"ausf": 0}} | to_json }}',
+        '{{ ue_config.authenticationData.amf }}',
+        'milenage',
+        '{{ ue_config.authenticationData.opc }}',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        '{{ ue_config.supi }}'
+      );
+
+# subscriber is not added in the 'SessionManagementSubscriptionData' table because a ue has no info about its serving plmn id
+# the subscription should work just fine as long as 'use_local_subscription_info' is set to 'yes' on the smf config

@@ -44,6 +44,7 @@ mysqlDatabase: oai_db
 #### added to handle two setting for oai database for mini and basic
 
 oai5gdatabase: basic #only two values mini or basic nothing else default is basic
+## always kept as basic for add/remove subscriber role
 
 
 ## Specify an imagePullPolicy (Required)

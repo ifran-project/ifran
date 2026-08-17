@@ -605,7 +605,7 @@ type ValidatedCoreComponent = Annotated[AMFComponent | SMFComponent | UPFCompone
 class Core(Network5G):
     """5G core."""
 
-    type: CoreType | None = Field(default=CoreType.OAI)
+    type: CoreType = Field(default=CoreType.OAI)
     """Core type."""
 
     components: dict[str, ValidatedCoreComponent | CoreComponent] = Field(default_factory=lambda: {

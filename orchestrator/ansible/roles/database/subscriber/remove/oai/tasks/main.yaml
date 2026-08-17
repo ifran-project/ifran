@@ -1,0 +1,32 @@
+# Role to add a subscriber to OAI dataabse (mysql)
+
+# Input:
+# - ue_name: str
+# - ue_config: UEConfiguration
+# - database_ip: IPvAnyAddress
+
+# Output: None
+---
+- name: Remove all mentions of UE '{{ ue_name }}' from OAI database
+  community.mysql.mysql_query:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_db: oai_db
+    query:
+      - DELETE FROM AccessAndMobilitySubscriptionData WHERE ueid = '{{ ue_config.supi }}';
+
+      - DELETE FROM Amf3GppAccessRegistration WHERE ueid = '{{ ue_config.supi }}';
+
+      - DELETE FROM AuthenticationStatus WHERE ueid = '{{ ue_config.supi }}';
+
+      # explicitly added
+      - DELETE FROM AuthenticationSubscription WHERE ueid = '{{ ue_config.supi }}';
+
+      - DELETE FROM SdmSubscriptions WHERE ueid = '{{ ue_config.supi }}';
+
+      - DELETE FROM SessionManagementSubscriptionData WHERE ueid = '{{ ue_config.supi }}';
+
+      - DELETE FROM SmfRegistrations WHERE ueid = '{{ ue_config.supi }}';
+
+      - DELETE FROM SmfSelectionSubscriptionData WHERE ueid = '{{ ue_config.supi }}';

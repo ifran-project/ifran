@@ -597,7 +597,25 @@ rus:
     rxAttenuationDB: 0
     txGainDB: 35
     rxGainDB: 75
-ues: {}
+ues:
+  sim_ue:
+    category: ue
+    type: simulated
+    implementation: oai
+    config:
+      supi: '001010000000100'
+      pei: null
+      authenticationData:
+        k: FEC86BA6EB707ED08905757B1BB44B8F
+        opc: C42449363BBAD02B66D16BC975D77CC1
+        op: null
+        amf: '8000'
+        sqn: '000000000000'
+        authenticationMethod: 5G_AKA
+      subscriptions: []
+      pduSessions: []
+    advanced_config: null
+    plain_text_config: null
 slices:
   internet:
     sst: 1

@@ -34,12 +34,18 @@ def generate_random_ip(network: IPvAnyNetwork, used: set[IPvAnyAddress] | None =
 
 
 def sync_dict_keys(target_dict: dict, source_dict: dict, default_factory):
-    """Ensures target_dict has all keys present in source_dict."""
+    """Synchronize target_dict keys with source_dict keys."""
 
     missing_keys = source_dict.keys() - target_dict.keys()
+    extra_keys = target_dict.keys() - source_dict.keys()
 
+    # add missing keys
     for key in missing_keys:
         target_dict[key] = default_factory()
+
+    # remove exra keys
+    for key in extra_keys:
+        del target_dict[key]
 
 
 def _to_jsonable(value: Any) -> Any:

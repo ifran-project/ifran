@@ -1,6 +1,6 @@
 """Core deployment models."""
 
-from pydantic import Field
+from pydantic import Field, IPvAnyAddress
 
 from orchestrator.models.common import BlueprintBaseModel
 from orchestrator.models.deployment.k8s import K8SComponent
@@ -18,3 +18,6 @@ class CoreDeployment(BlueprintBaseModel):
 
     is_database_present: bool = Field(default=False)
     """If 5G core databse is deployed or not."""
+
+    database_ip: IPvAnyAddress | None = Field(default=None)
+    """5G core databse IP address."""
