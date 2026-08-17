@@ -1,6 +1,7 @@
 """Ansible utilities and helpers."""
 
 import asyncio
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -53,9 +54,9 @@ def get_ansible_output(runner: ansible_runner.runner.Runner, output_keys: list[s
 
 async def run_ansible_playbook(
         playbook: list | dict[str, Any] | str,
+        runner_path: str,
         inputs: dict[str, Any] | None = None,
         output_keys: list[str] | None = None,
-        runner_path: str | None = None,
         roles_path: str | None = None,
         inventory: str | dict[str, Any] | list | None = None,
         ) -> dict[str, Any] | None:
@@ -63,11 +64,12 @@ async def run_ansible_playbook(
 
         # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overriden by other ansible runs if using the same private_data_dir
         # ensure runner path exists
-        if runner_path:
-            Path(runner_path).mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S.%fZ") # add timestamp for more meaningful log collection
+        run_path = Path(runner_path) / timestamp
+        run_path.mkdir(parents=True, exist_ok=True)
 
         run_args = {
-            "private_data_dir": runner_path,
+            "private_data_dir": run_path,
             "roles_path": roles_path,
             "inventory": inventory,
             "playbook": playbook,
@@ -95,10 +97,10 @@ async def run_ansible_playbook(
 
 async def run_ansible_role(
         role: str,
+        runner_path: str,
         inputs: dict[str, Any] | None = None,
         extra_params: dict[str, Any] | None = None,
         output_keys: list[str] | None = None,
-        runner_path: str | None = None,
         roles_path: str | None = None,
         hosts: str = "localhost",
         inventory: str | dict[str, Any] | list | None = None,
@@ -117,7 +119,14 @@ async def run_ansible_role(
     if extra_params:
         playbook[0] |= extra_params
 
-    return await run_ansible_playbook(playbook, inputs, output_keys, runner_path, roles_path, inventory)
+    return await run_ansible_playbook(
+        playbook=playbook,
+        runner_path=runner_path,
+        inputs=inputs,
+        output_keys=output_keys,
+        roles_path=roles_path,
+        inventory=inventory,
+        )
 
 
 def handle_ansible_result_exception(
