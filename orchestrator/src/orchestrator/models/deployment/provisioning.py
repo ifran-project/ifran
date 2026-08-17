@@ -254,10 +254,10 @@ class GenericProvisioner(BlueprintBaseModel):
 class POSProvisioner(GenericProvisioner):
     """POS provisioner."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(default=ProvisioningCategory.NODE, frozen=True)
+    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
     """Provisioning category for POS provisioner."""
 
-    type: Literal[NodeProvisioningType.POS] = Field(default=NodeProvisioningType.POS, frozen=True)
+    type: Literal[NodeProvisioningType.POS] = Field(frozen=True)
     """Provisioning type for POS provisioner."""
 
     params: POSParams = Field(default_factory=POSParams)
@@ -267,10 +267,10 @@ class POSProvisioner(GenericProvisioner):
 class LegacyPOSProvisioner(GenericProvisioner):
     """Legacy POS provisioner."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(default=ProvisioningCategory.NODE, frozen=True)
+    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
     """Provisioning category for Legacy POS provisioner."""
 
-    type: Literal[NodeProvisioningType.LEGACY_POS] = Field(default=NodeProvisioningType.LEGACY_POS, frozen=True)
+    type: Literal[NodeProvisioningType.LEGACY_POS] = Field(frozen=True)
     """Provisioning type for Legacy POS provisioner."""
 
     params: LegacyPOSParams = Field(default_factory=LegacyPOSParams)
@@ -280,10 +280,10 @@ class LegacyPOSProvisioner(GenericProvisioner):
 class BIProvisioner(GenericProvisioner):
     """BI provisioner."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(default=ProvisioningCategory.NODE, frozen=True)
+    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
     """Provisioning category for BI provisioner."""
 
-    type: Literal[NodeProvisioningType.BI] = Field(default=NodeProvisioningType.BI, frozen=True)
+    type: Literal[NodeProvisioningType.BI] = Field(frozen=True)
     """Provisioning type for BI provisioner."""
 
     params: BIParams = Field(default_factory=BIParams)
@@ -293,10 +293,10 @@ class BIProvisioner(GenericProvisioner):
 class R2LabRUProvisioner(GenericProvisioner):
     """R2lab RU provisioner."""
 
-    category: Literal[ProvisioningCategory.RU] = Field(default=ProvisioningCategory.RU, frozen=True)
+    category: Literal[ProvisioningCategory.RU] = Field(frozen=True)
     """Provisioning category for R2lab RU provisioner."""
 
-    type: Literal[RUProvisioningType.R2LAB] = Field(default=RUProvisioningType.R2LAB, frozen=True)
+    type: Literal[RUProvisioningType.R2LAB] = Field(frozen=True)
     """Provisioning type for R2lab RU provisioner."""
 
     params: R2LabParams = Field(default_factory=R2LabParams)
@@ -306,10 +306,10 @@ class R2LabRUProvisioner(GenericProvisioner):
 class R2LabUEProvisioner(GenericProvisioner):
     """R2lab UE provisioner."""
 
-    category: Literal[ProvisioningCategory.UE] = Field(default=ProvisioningCategory.UE, frozen=True)
+    category: Literal[ProvisioningCategory.UE] = Field(frozen=True)
     """Provisioning category for R2lab UE provisioner."""
 
-    type: Literal[UEProvisioningType.R2LAB] = Field(default=UEProvisioningType.R2LAB, frozen=True)
+    type: Literal[UEProvisioningType.R2LAB] = Field(frozen=True)
     """Provisioning type for R2lab UE provisioner."""
 
     params: R2LabParams = Field(default_factory=R2LabParams)
@@ -357,7 +357,7 @@ class ProvisionableResource(BlueprintBaseModel):
 class ProvisionableNode(ProvisionableResource):
     """Node provisioning."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(default=ProvisioningCategory.NODE, frozen=True)
+    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
 
     provisioner: str = Field(default="bi")
     """Node provisioner's name."""
@@ -375,7 +375,7 @@ class ProvisionableNode(ProvisionableResource):
 class ProvisionableRU(ProvisionableResource):
     """Radio Unit (RU) provisionig."""
 
-    category: Literal[ProvisioningCategory.RU] = Field(default=ProvisioningCategory.RU, frozen=True)
+    category: Literal[ProvisioningCategory.RU] = Field(frozen=True)
 
     provisioner: str = Field(default="r2lab")
     """RU provisioner's name."""
@@ -384,7 +384,7 @@ class ProvisionableRU(ProvisionableResource):
 class ProvisionableUE(ProvisionableResource):
     """User Equipment (UE) provisionig."""
 
-    category: Literal[ProvisioningCategory.UE] = Field(default=ProvisioningCategory.UE, frozen=True)
+    category: Literal[ProvisioningCategory.UE] = Field(frozen=True)
 
     provisioner: str = Field(default="r2lab")
     """UE provisioner's name."""

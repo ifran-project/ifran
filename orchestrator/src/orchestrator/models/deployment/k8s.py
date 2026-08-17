@@ -1,6 +1,7 @@
 """Kubernetes models."""
 
 from enum import StrEnum, auto
+from ipaddress import IPv4Network
 from pathlib import Path
 from typing import Any, Literal
 
@@ -49,10 +50,10 @@ class K8SParams(BlueprintBaseModel):
     join_command: str | None = Field(default=None)
     """Kubernetes command to join workers to cluster."""
 
-    pod_network_cidr: IPvAnyNetwork = Field(default="10.244.0.0/16")
+    pod_network_cidr: IPvAnyNetwork = Field(default=IPv4Network("10.244.0.0/16"))
     """Kubernetes pod network CIDR."""
 
-    service_cidr: IPvAnyNetwork = Field(default="10.96.0.0/12")
+    service_cidr: IPvAnyNetwork = Field(default=IPv4Network("10.96.0.0/12"))
     """Kubernetes service CIDR."""
 
     calico_version: str = Field(default="3.32.1", pattern=SEM_VER_PATTERN)

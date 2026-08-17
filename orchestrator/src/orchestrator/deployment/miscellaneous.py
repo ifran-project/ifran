@@ -13,12 +13,12 @@ class Miscellaneous(BaseBlueprintManagement):
 
     async def run_playbook(
             self,
-            playbook: list | dict | str,
-            inputs: dict | None = None,
+            playbook: list | dict[str, Any] | str,
+            inputs: dict[str, Any] | None = None,
             output_keys: list[str] | None = None,
             runner_path: str | None = None,
             roles_path: str | None = None,
-            inventory: str | dict | list | None = None,
+            inventory: str | dict[str, Any] | list | None = None,
             store: bool = True,
             ) -> dict[str, Any] | None:
         """

@@ -4,7 +4,10 @@
 from pydantic import IPvAnyAddress, IPvAnyNetwork
 
 from orchestrator.models.deployment.k8s import K8SComponent
-from orchestrator.models.deployment.provisioning import ProvisionableRU
+from orchestrator.models.deployment.provisioning import (
+    ProvisionableRU,
+    ProvisioningCategory,
+)
 from orchestrator.models.deployment.ran import RANDeployment
 from orchestrator.models.meta.ran import (
     RAN,
@@ -37,7 +40,7 @@ def resolve_ran_component_references(
         rics: dict[str, K8SComponent],
     ):
 
-    # merge rus (we need the meta for ran parameters and provisioning for readiness state)
+    # merge rus (we need the meta for ran config parameters and provisioning for readiness state)
     rus: dict[str, TempMergedRU] = {}
     for ru_name, (ru_meta, ru_prov) in {
         k: (rus_meta[k], rus_provisioning[k])
@@ -71,14 +74,14 @@ def resolve_ran_component_references(
         resolve_component_reference(
             component_name=component_name,
             component_meta=component_meta,
-            **reference
+            **reference,
         )
 
 
 def resolve_split_ran_references(
         ran_meta: RAN,
         ran_deployment: RANDeployment,
-        pod_network_cidr: IPvAnyNetwork
+        pod_network_cidr: IPvAnyNetwork,
     ):
     """Resolve the cyclic dependencies between split RAN components by assigning them static IPs."""
 
@@ -151,9 +154,9 @@ def reconcile_ran(
 
     # add simulated rus as provisioned to be considered as ready
     merged_rus = rus_provisioning | {
-        name: ProvisionableRU(is_provisioned=True)
+        name: ProvisionableRU(category=ProvisioningCategory.RU, is_provisioned=True)
         for name, ru in rus_meta.items()
-        if ru.type == RUType.SIMULATED
+        if ru.type is RUType.SIMULATED
         }
 
     for component_name, (component_meta, component_k8s) in {

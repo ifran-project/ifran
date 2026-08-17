@@ -6,18 +6,18 @@ metadata:
   name: {{ .Chart.Name }}
   labels:
     app: {{ .Release.Name }}
-    {{- include "oai-cu-cp.labels" . | nindent 4 }}
+    {{- include "oai-cu_cp.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "oai-cu-cp.selectorLabels" . | nindent 6 }}
+      {{- include "oai-cu_cp.selectorLabels" . | nindent 6 }}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        {{- include "oai-cu-cp.selectorLabels" . | nindent 8 }}
+        {{- include "oai-cu_cp.selectorLabels" . | nindent 8 }}
         app: {{ .Release.Name }}
     {{- if or .Values.staticPodIp (and .Values.multus.enabled .Values.multus.interfaces) }}
       annotations:
@@ -72,7 +72,7 @@ spec:
       nodeName: {{ .Values.nodeName }}
       {{- end }}
       containers:
-      - name: oaicucp
+      - name: cucp
         image: "{{ .Values.nfimage.repository }}:{{ .Values.nfimage.version }}"
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
@@ -98,7 +98,7 @@ spec:
           protocol: {{ $port.protocol }}
           {{- end }}
         {{- end }}
-        {{- if not .Values.start.oaicucp }}
+        {{- if not .Values.start.cu_cp }}
         command: [ "/bin/sleep", "infinity" ]
         {{- end }}
         env:

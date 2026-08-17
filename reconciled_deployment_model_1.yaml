@@ -3,10 +3,15 @@ params:
     experiment: tst
 core_deployment:
   components:
-    smf: {}
     amf: {}
-    upf: {}
+    smf: {}
     nrf: {}
+    upf: {}
 ran_deployment:
   components:
+    cu1: {}
+    cuup: {}
+    du1: {}
     gnb: {}
+    du2: {}
+    cucp: {}

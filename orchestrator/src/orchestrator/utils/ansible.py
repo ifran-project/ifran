@@ -52,12 +52,12 @@ def get_ansible_output(runner: ansible_runner.runner.Runner, output_keys: list[s
 
 
 async def run_ansible_playbook(
-        playbook: list | dict | str,
-        inputs: dict | None = None,
+        playbook: list | dict[str, Any] | str,
+        inputs: dict[str, Any] | None = None,
         output_keys: list[str] | None = None,
         runner_path: str | None = None,
         roles_path: str | None = None,
-        inventory: str | dict | list | None = None,
+        inventory: str | dict[str, Any] | list | None = None,
         ) -> dict[str, Any] | None:
         """Run an Ansible playbook."""
 
@@ -95,13 +95,13 @@ async def run_ansible_playbook(
 
 async def run_ansible_role(
         role: str,
-        inputs: dict | None = None,
+        inputs: dict[str, Any] | None = None,
         extra_params: dict[str, Any] | None = None,
         output_keys: list[str] | None = None,
         runner_path: str | None = None,
         roles_path: str | None = None,
         hosts: str = "localhost",
-        inventory: str | dict | list | None = None,
+        inventory: str | dict[str, Any] | list | None = None,
         become: bool = False,
         ) -> dict[str, Any] | None:
     """Run an Ansible role."""

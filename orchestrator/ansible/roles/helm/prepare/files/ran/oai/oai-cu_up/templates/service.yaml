@@ -6,7 +6,7 @@ metadata:
   name: {{ .Chart.Name }}
   labels:
     app: {{ .Release.Name }}
-    {{- include "oai-cu-cp.labels" . | nindent 4 }}
+    {{- include "oai-cu_up.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   clusterIP: None
@@ -20,4 +20,4 @@ spec:
       {{- end }}
     {{- end }}
   selector:
-    {{- include "oai-cu-cp.selectorLabels" . | nindent 4 }}
+    {{- include "oai-cu_up.selectorLabels" . | nindent 4 }}

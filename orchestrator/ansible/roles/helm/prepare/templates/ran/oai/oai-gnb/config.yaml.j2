@@ -1,3 +1,7 @@
+# plain text config overwrites everything
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
 # SPDX-License-Identifier: LicenseRef-CSSL-1.0
 
 Active_gNBs:
@@ -224,4 +228,16 @@ log_config:
   rrc_log_level: info
   ngap_log_level: debug
   f1ap_log_level: debug
+{% endif %}
+
+
+{% if component.advanced_config and component.advanced_config.fhi_72 %}
+fhi_72:
+{{ component.advanced_config.fhi_72 | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.thread_pool %}
+thread-pool: {{ component.advanced_config.thread_pool }}
+{% endif %}
+
 {% endif %}

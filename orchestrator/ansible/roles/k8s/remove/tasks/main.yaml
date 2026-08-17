@@ -56,6 +56,8 @@
       - kubeadm
       - kubectl
       - containerd
+      - python3-debian
+      - python3-kubernetes
     state: absent
     autoremove: true
     allow_change_held_packages: true
@@ -84,6 +86,7 @@
     - /usr/local/bin/helm
     - /etc/systemd/system/cni-dhcp.service
     - /tmp/k9s_linux_amd64.deb
+    - /etc/kubernetes/calico-installation.yaml
 
 # mainly for unfinished preapre roles executions
 - name: Repair dpkg state on '{{ node.name }}'

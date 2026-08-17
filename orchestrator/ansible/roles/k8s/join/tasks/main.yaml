@@ -15,7 +15,7 @@
   args:
     creates: /etc/kubernetes/kubelet.conf
 
-- name: Create .kube directory in '{{ node.name }}' root if desired
+- name: Create .kube directory on '{{ node.name }}' root if desired
   ansible.builtin.file:
     path: "/root/.kube"
     state: directory
@@ -30,5 +30,11 @@
   when: copy_kubeconfig_to_workers
 
 - name: Add '{{ node.name }}' roles as Kubernetes label for later selective scheduling
-  ansible.builtin.command: kubectl label nodes {{ node.name }} node-type.5g.blueprint/{{ item }}=true --overwrite
+  kubernetes.core.k8s:
+    state: patched
+    kind: Node
+    name: "{{ node.name }}"
+    definition:
+      metadata:
+        labels: "{{ {'node-type.5g.blueprint/' ~ item: 'true'} }}"
   loop: "{{ node.roles }}"

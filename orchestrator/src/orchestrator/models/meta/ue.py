@@ -4,9 +4,13 @@ from enum import StrEnum, auto
 from ipaddress import IPv6Network
 from typing import Annotated, Literal
 
-from pydantic import Field, IPvAnyAddress, field_validator
+from pydantic import Field, IPvAnyAddress
 
-from orchestrator.models.common import BlueprintBaseModel
+from orchestrator.models.common import (
+    BlueprintBaseModel,
+    parse_hex_int,
+    serialize_hex_int,
+)
 from orchestrator.models.meta.common import Category5G, Component5G
 from orchestrator.models.meta.slice import DNN, BitRate, Slice
 
@@ -74,6 +78,9 @@ class UESubscriptionData(BlueprintBaseModel):
     """DNN associated with this PDU Session (can be a reference to a defined DNN)."""
 
 
+from pydantic import Field, field_serializer, field_validator
+
+
 class UEAuthenticationData(BlueprintBaseModel):
     """
     UE authentication subscription data.
@@ -88,23 +95,61 @@ class UEAuthenticationData(BlueprintBaseModel):
         - 3GPP TS 29.503
     """
 
-    k: str = Field(default="fec86ba6eb707ed08905757b1bb44b8f", pattern=r"^[A-Fa-f0-9]{32}$")
-    """Subscriber permanent key (K). 128-bit hexadecimal value."""
+    k: bytes = Field(default=bytes.fromhex("fec86ba6eb707ed08905757b1bb44b8f"), min_length=16, max_length=16)
+    """Subscriber permanent key (K). 128-bit value."""
 
-    opc: str = Field(default="C42449363BBAD02B66D16BC975D77CC1", pattern=r"^[A-Fa-f0-9]{32}$")
-    """Operator Variant Algorithm Configuration Field (OPc)."""
+    opc: bytes = Field(default=bytes.fromhex("C42449363BBAD02B66D16BC975D77CC1"), min_length=16, max_length=16)
+    """Operator Variant Algorithm Configuration Field (OPc). 128-bit value."""
 
-    op: str | None = Field(default=None, pattern=r"^[A-Fa-f0-9]{32}$")
-    """Operator Code (OP). 128-bit hexadecimal value."""
+    op: bytes | None = Field(default=None, min_length=16, max_length=16)
+    """Operator Code (OP). 128-bit value."""
 
-    amf: str | None = Field(default=None, pattern=r"^[A-Fa-f0-9]{4}$")
-    """Authentication Management Field (AMF). 16-bit hexadecimal value."""
+    amf: int | None = Field(efault=None, ge=0, le=0xFFFF)
+    """Authentication Management Field (AMF). 16-bit value."""
 
-    sqn: str = Field(default="000000000000", pattern=r"^[A-Fa-f0-9]{12}$")
-    """Sequence Number (SQN). 48-bit hexadecimal value."""
+    sqn: int = Field(default=0, ge=0, le=0xFFFFFFFFFFFF)
+    """Sequence Number (SQN). 48-bit value."""
 
     authenticationMethod: AuthenticationMethod = Field(default=AuthenticationMethod.FIVE_G_AKA)
     """Authentication method used for 5GS access."""
+
+    @field_validator("amf", "sqn", mode="before")
+    @classmethod
+    def normalize_hex_int(cls, value):
+        """Convert hexadecimal strings to integers."""
+
+        return parse_hex_int(value)
+
+    @field_serializer("amf")
+    def serialize_amf(self, value: int | None) -> str | None:
+        """Serialize AMF as a four-digit hexadecimal string."""
+
+        return serialize_hex_int(value, 4)
+
+    @field_serializer("sqn")
+    def serialize_sqn(self, value: int) -> str:
+        """Serialize SQN as a twelve-digit hexadecimal string."""
+
+        return serialize_hex_int(value, 12)
+
+    @field_validator("k", "opc", "op", mode="before")
+    @classmethod
+    def normalize_hex_bytes(cls, value):
+        """Convert hexadecimal strings to bytes."""
+
+        if isinstance(value, str):
+            return bytes.fromhex(value)
+
+        return value
+
+    @field_serializer("k", "opc", "op")
+    def serialize_hex_bytes(self, value: bytes | None) -> str | None:
+        """Serialize bytes as an uppercase hexadecimal string."""
+
+        if value is None:
+            return None
+
+        return value.hex().upper()
 
 
 class UEPDUSession(BlueprintBaseModel):
@@ -121,7 +166,6 @@ class UEPDUSession(BlueprintBaseModel):
     subscriptionIndex: int | UESubscriptionData = Field(ge=0)
     """
     Index of the UE subscription data used by this PDU Session.
-
     The referenced subscription provides the S-NSSAI and DNN.
     """
 
@@ -168,20 +212,11 @@ class UEConfiguration(BlueprintBaseModel):
     pduSessions: list[UEPDUSession] = Field(default_factory=list)
     """List of UE PDU Sessions."""
 
-    @field_validator("supi", mode="before")
-    @classmethod
-    def normalize_supi(cls, value):
-        """Convert SUPI/IMSI values of type int to string before validation."""
-
-        if isinstance(value, int):
-            return str(value)
-        return value
-
 
 class GenericUE(Component5G):
     """Base class for real and simulated UEs."""
 
-    category: Literal[Category5G.UE] = Field(default=Category5G.UE, frozen=True)
+    category: Literal[Category5G.UE] = Field(frozen=True)
 
     config: UEConfiguration = Field(default_factory=UEConfiguration)
     """UE configuration."""
@@ -190,7 +225,7 @@ class GenericUE(Component5G):
 class RealUE(GenericUE):
     """Real UE."""
 
-    type: Literal[UEType.REAL] = Field(default=UEType.REAL, frozen=True)
+    type: Literal[UEType.REAL] = Field(frozen=True)
 
     implementation: None = Field(default=None, frozen=True)
     """Real UE doesn't have an implementation."""
@@ -199,7 +234,7 @@ class RealUE(GenericUE):
 class SimulatedUE(GenericUE):
     """Simulated UE."""
 
-    type: Literal[UEType.SIMULATED] = Field(default=UEType.SIMULATED, frozen=True)
+    type: Literal[UEType.SIMULATED] = Field(frozen=True)
 
     implementation: UEImplementation = Field(default=UEImplementation.OAI)
     """Simulated UE implementation."""

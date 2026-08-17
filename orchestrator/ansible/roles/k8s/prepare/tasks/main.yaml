@@ -15,12 +15,9 @@
 
 # Output: None
 ---
-# - name: Wait for Ansible connection
-#   ansible.builtin.wait_for_connection:
-#     timeout: 300
-
 - name: Set time zone to '{{ timezone }}' on '{{ node.name }}'
-  ansible.builtin.command: timedatectl set-timezone {{ timezone }}
+  community.general.timezone:
+    name: "{{ timezone }}"
 
 - name: Install base packages required for Kubernetes on '{{ node.name }}'
   ansible.builtin.apt:
@@ -34,6 +31,8 @@
       - iptables
       - socat
       - ethtool
+      - python3-debian # required by deb822_repository Ansible module
+      - python3-kubernetes # required by kubernetes Ansible module
     state: present
     update_cache: true
 
@@ -54,12 +53,6 @@
   args:
     creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-- name: Install python3-debian dependency for deb822_repository on '{{ node.name }}'
-  ansible.builtin.apt:
-    name: python3-debian
-    state: present
-    update_cache: true
-
 - name: Add Kubernetes apt repository on '{{ node.name }}'
   ansible.builtin.deb822_repository:
     name: kubernetes
@@ -74,7 +67,7 @@
   ansible.builtin.apt:
     update_cache: true
 
-- name: Define k8s_full_version variable on '{{ node.name }}'
+- name: Define k8s_full_version variable for '{{ node.name }}'
   ansible.builtin.set_fact:
     k8s_full_version: "{{ k8s_version.major }}.{{ k8s_version.minor }}.{{ k8s_version.patch }}-{{ k8s_version.extension }}"
 
@@ -101,41 +94,39 @@
     name: containerd
     state: present
 
+# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#swap-configuration
 - name: Disable swap for kubelet on '{{ node.name }}'
   ansible.builtin.command: swapoff --all
 
-- name: Disable swap in fstab
+- name: Disable swap in fstab on '{{ node.name }}'
   ansible.builtin.replace:
     path: /etc/fstab
-    regexp: '^(.*\sswap\s+.*)$'
+    regexp: '^([^#].*\sswap\s+.*)$'
     replace: '# \1'
 
-- name: Load overlay and br_netfilter kernel modules for Kubernetes networking on '{{ node.name }}'
-  ansible.builtin.command:
-    cmd: "modprobe {{ item }}"
+- name: Load and persist overlay and br_netfilter kernel modules for Kubernetes networking on '{{ node.name }}'
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+    persistent: present
   loop:
     - overlay
     - br_netfilter
 
-- name: Persist loaded modules across reboots on '{{ node.name }}'
-  ansible.builtin.copy:
-    dest: /etc/modules-load.d/k8s.conf
-    mode: "0644"
-    content: |
-      overlay
-      br_netfilter
-
 - name: Configure sysctl values for Kubernetes networking on '{{ node.name }}'
-  ansible.builtin.copy:
-    dest: "/etc/sysctl.d/99-kubernetes-cri.conf"
-    mode: "0644"
-    content: |
-      net.bridge.bridge-nf-call-iptables = 1
-      net.bridge.bridge-nf-call-ip6tables = 1
-      net.ipv4.ip_forward = 1
-
-- name: Reload sysctl settings on '{{ node.name }}'
-  ansible.builtin.command: sysctl --system
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-kubernetes-cri.conf
+    reload: true
+  loop:
+    - name: net.bridge.bridge-nf-call-iptables
+      value: "1"
+    - name: net.bridge.bridge-nf-call-ip6tables
+      value: "1"
+    - name: net.ipv4.ip_forward
+      value: "1"
 
 # pick snapshotter
 - name: Detect root filesystem information on '{{ node.name }}'
@@ -237,7 +228,7 @@
   ansible.builtin.command:
     cmd: >
       curl --fail --silent --show-error --location --http2
-      https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_linux_amd64.deb
+      https://github.com/derailed/k9s/releases/download/v{{ k9s_version }}/k9s_linux_amd64.deb
       --output /tmp/k9s_linux_amd64.deb
     creates: "/tmp/k9s_linux_amd64.deb"
   when: k9s_install

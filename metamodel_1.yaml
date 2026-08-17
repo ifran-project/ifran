@@ -1,1 +1,34 @@
-{}
+ran:
+  components:
+    gnb:
+      type: gnb
+      implementation: oai
+    cucp:
+      type: cu_cp
+      implementation: oai
+      config:
+        du: du2
+        cu_up: cuup
+    cuup:
+      type: cu_up
+      implementation: oai
+      config:
+        du: du2
+        cu_cp: cucp
+    cu1:
+      type: cu
+      implementation: oai
+      config:
+        du: du1
+    du1:
+      type: du
+      implementation: oai
+      config:
+        cu_cp: cu1
+        cu_up: cu1
+    du2:
+      type: du
+      implementation: oai
+      config:
+        cu_cp: cucp
+        cu_up: cuup

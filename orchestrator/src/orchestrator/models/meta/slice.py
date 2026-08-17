@@ -1,11 +1,16 @@
 """Slice meta models."""
 
+import re
 from enum import StrEnum, auto
-from typing import Annotated
+from ipaddress import IPv4Network
 
-from pydantic import Field, IPvAnyNetwork, field_validator
+from pydantic import Field, IPvAnyNetwork, field_serializer, field_validator
 
-from orchestrator.models.common import BlueprintBaseModel
+from orchestrator.models.common import (
+    BlueprintBaseModel,
+    parse_hex_int,
+    serialize_hex_int,
+)
 
 
 class PreemptionCapability(StrEnum):
@@ -74,8 +79,6 @@ class PDUSessionType(StrEnum):
     """Unstructured PDU Session Type."""
 
 
-BitrateValue = Annotated[str, Field(pattern=r"^\d+(?:\.\d+)?\s*(?:bps|Kbps|Mbps|Gbps)$", examples=["20Mbps", "100Mbps", "1Gbps"])]
-
 class BitRate(BlueprintBaseModel):
     """
     Bit Rate values.
@@ -87,11 +90,58 @@ class BitRate(BlueprintBaseModel):
         - 3GPP TS 23.503
     """
 
-    uplink: BitrateValue = Field(default="200Mbps")
-    """Maximum uplink bitrate in bps."""
+    uplink: int = Field(ge=0, default=200_000_000)
+    """Uplink bitrate in bits per second."""
 
-    downlink: BitrateValue = Field(default="200Mbps")
-    """Maximum downlink bitrate in bps."""
+    downlink: int = Field(ge=0, default=200_000_000)
+    """Downlink bitrate in bits per second."""
+
+
+    @field_validator("uplink", "downlink", mode="before")
+    @classmethod
+    def parse_bitrate(cls, value: int | str) -> int:
+        """Convert a bitrate string to integer bits per second."""
+
+        if isinstance(value, int):
+            return value
+
+        if not isinstance(value, str):
+            raise TypeError("Bitrate must be an integer or a string with a unit.")
+
+        value = value.strip()
+
+        match = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(bps|Kbps|Mbps|Gbps)", value)
+
+        if not match:
+            raise ValueError("Invalid bitrate. Expected a value like: '500Kbps', '100Mbps', or '1Gbps'.")
+
+        number = float(match.group(1))
+        unit = match.group(2)
+
+        multiplier = {
+            "bps": 1,
+            "Kbps": 1_000,
+            "Mbps": 1_000_000,
+            "Gbps": 1_000_000_000,
+        }[unit]
+
+        return int(number * multiplier)
+
+
+    @field_serializer("uplink", "downlink")
+    def serialize_bitrate(self, value: int) -> str:
+        """Serialize integer bits per second to a human-readable bitrate."""
+
+        if value % 1_000_000_000 == 0:
+            return f"{value // 1_000_000_000}Gbps"
+
+        if value % 1_000_000 == 0:
+            return f"{value // 1_000_000}Mbps"
+
+        if value % 1_000 == 0:
+            return f"{value // 1_000}Kbps"
+
+        return f"{value}bps"
 
 
 class ARP(BlueprintBaseModel):
@@ -160,7 +210,7 @@ class DNN(BlueprintBaseModel):
     pduSessionType: PDUSessionType = Field(default=PDUSessionType.IPV4)
     """PDU Session Type."""
 
-    ipv4Network: IPvAnyNetwork = Field(default="11.1.1.0/24")
+    ipv4Network: IPvAnyNetwork = Field(default=IPv4Network("11.1.1.0/24"))
     """IPv4 address pool associated with the DNN."""
 
     ipv6Network: IPvAnyNetwork | None = Field(default=None)
@@ -187,21 +237,22 @@ class SNSSAI(BlueprintBaseModel):
     sst: int = Field(default=1, ge=0, le=255)
     """Slice/Service Type (SST) (0 to 255)."""
 
-    sd: str | None = Field(default=None, pattern=r"^[A-F0-9]{6}$")
+    sd: int | None = Field(default=None, ge=0, le=0xFFFFFF)
     """Slice Differentiator (SD) in hex format (000001 to FFFFFF)."""
 
 
     @field_validator("sd", mode="before")
     @classmethod
     def normalize_sd(cls, value):
-        """Force SD value to uppercase before validation."""
+        """Convert SD hexadecimal strings to integers."""
 
-        if isinstance(value, str):
-            return value.upper()
-        elif isinstance(value, int):
-            return str(value)
+        return parse_hex_int(value)
 
-        return value
+    @field_serializer("sd")
+    def serialize_sd(self, value: int | None) -> str | None:
+        """Serialize SD as a six-digit hexadecimal string."""
+
+        return serialize_hex_int(value, 6)
 
 
 class Slice(SNSSAI):
@@ -212,6 +263,7 @@ class Slice(SNSSAI):
     configuration.
     """
 
+    # populated by parent model (metamodel)
     name: str | None = Field(default="internet")
     """Slice name."""
 

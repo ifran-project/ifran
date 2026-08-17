@@ -7,7 +7,7 @@ metadata:
   name: {{ .Chart.Name }}-configmap
   labels:
     app: {{ .Release.Name }}
-    {{- include "oai-cu-cp.labels" . | nindent 4 }}
+    {{- include "oai-cu_cp.labels" . | nindent 4 }}
 data:
   gnb.yaml: |-
 {{ .Files.Get "config.yaml" | nindent 4 }}

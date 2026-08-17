@@ -143,7 +143,7 @@ def populate_default_images(
         )
 
     if (
-        component_meta.category == Category5G.CORE and
+        component_meta.category is Category5G.CORE and
         component_k8s.image is None and
         DEFAULT_CORE_IMAGES.get(component_meta.implementation)
         ):
@@ -151,7 +151,7 @@ def populate_default_images(
                                                           ).get(component_meta.type)
 
 
-    if component_meta.category == Category5G.RAN:
+    if component_meta.category is Category5G.RAN:
         # for RAN components, RU is supposed to be resolved before this
         # NOTE CUs, CU-CPs and CU-UPs dont have and ru field, so give them simulated one instead
         config = component_meta.config

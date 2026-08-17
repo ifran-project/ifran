@@ -44,8 +44,8 @@ class HelmManagement(BaseBlueprintManagement):
                 all_k8s = self.deployment_model.ran_deployment.components
 
             case Category5G.UE:
-                all_meta = {ue for ue in self.mutatable_metamodel.ues if ue.type == UEType.SIMULATED}
-                all_k8s = self.deployment_model.deployed_ues
+                all_meta = {ue for ue in self.mutatable_metamodel.ues if ue.type is UEType.SIMULATED}
+                all_k8s = self.deployment_model.simulated_ues
 
             case Category5G.RIC:
                 all_meta = self.mutatable_metamodel.rics

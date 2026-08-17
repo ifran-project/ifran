@@ -1,7 +1,7 @@
 """Common utilities and helpers."""
 
 import ipaddress
-import secrets
+import random
 from typing import Any
 
 from pydantic import BaseModel, IPvAnyAddress, IPvAnyNetwork
@@ -28,7 +28,7 @@ def generate_random_ip(network: IPvAnyNetwork, used: set[IPvAnyAddress] | None =
 
     retries = 100
     for i in range(retries):
-        address = ipaddress.ip_address(secrets.randbelow(last - first + 1) + first)
+        address = ipaddress.ip_address(random.randint(first, last))
         if address not in used:
             return address
 
@@ -60,7 +60,7 @@ def _to_jsonable(value: Any) -> Any:
     return value
 
 
-def deep_merge(left: dict | BaseModel, right: dict | BaseModel) -> dict:
+def deep_merge(left: dict[str, Any] | BaseModel, right: dict[str, Any] | BaseModel) -> dict:
     """
     Recursively merge two dictionaries or pydantic models (converted to dictionaries).
     Values from 'right' dict take precedence when the same leaf field exists in both dicts.

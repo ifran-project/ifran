@@ -1,12 +1,13 @@
 """5G RAN meta models."""
 
-from enum import IntEnum, StrEnum, auto
+from enum import Enum, IntEnum, StrEnum, auto
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, IPvAnyAddress, model_validator
+from pydantic import Field, IPvAnyAddress, computed_field, model_validator
 
 from orchestrator.models.common import (
     BlueprintBaseModel,
+    BlueprintTolerantBaseModel,
 )
 from orchestrator.models.deployment.k8s import MultusNetworkStatus
 from orchestrator.models.meta.common import (
@@ -51,10 +52,10 @@ class RANComponentType(StrEnum):
     DU = auto()
     """Distributed Unit (F1 split)."""
 
-    CU_CP = "cu-cp"
+    CU_CP = auto()
     """CU Control Plane (E1 split)."""
 
-    CU_UP = "cu-up"
+    CU_UP = auto()
     """CU User Plane (E1 split)."""
 
 
@@ -81,6 +82,49 @@ class FrequencyRange(StrEnum):
     """mmWave (24250 MHz - 71000 MHz)"""
 
 
+class TDDPeriodicity(float, Enum):
+    """
+    NR TDD UL/DL configuration periodicity.
+
+    3GPP References:
+        - 3GPP TS 38.331, IE TDD-UL-DL-ConfigCommon / TDD-UL-DL-ConfigDedicated
+        - 3GPP TS 38.213, TDD UL/DL timing and slot configuration
+
+    The periodicity values correspond to the standardized values of the
+    `dl-UL-TransmissionPeriodicity` field in TS 38.331, expressed in milliseconds.
+    """
+
+    MS_0_5 = 0.5
+    """0.5 ms TDD periodicity."""
+
+    MS_0_625 = 0.625
+    """0.625 ms TDD periodicity."""
+
+    MS_1 = 1.0
+    """1 ms TDD periodicity."""
+
+    MS_1_25 = 1.25
+    """1.25 ms TDD periodicity."""
+
+    MS_2 = 2.0
+    """2 ms TDD periodicity."""
+
+    MS_2_5 = 2.5
+    """2.5 ms TDD periodicity."""
+
+    MS_3 = 3.0
+    """3 ms TDD periodicity."""
+
+    MS_4 = 4.0
+    """4 ms TDD periodicity."""
+
+    MS_5 = 5.0
+    """5 ms TDD periodicity."""
+
+    MS_10 = 10.0
+    """10 ms TDD periodicity."""
+
+
 class SubcarrierSpacing(IntEnum):
     """3GPP TS 38.211 Table 4.2-1: Subcarrier Spacing (SCS) Numerologies."""
 
@@ -100,6 +144,18 @@ class SubcarrierSpacing(IntEnum):
     """mu = 4 (FR2 only)"""
 
 
+FR1_SCS = {
+    SubcarrierSpacing.SCS_15KHZ,
+    SubcarrierSpacing.SCS_30KHZ,
+    SubcarrierSpacing.SCS_60KHZ,
+}
+
+FR2_SCS = {
+    SubcarrierSpacing.SCS_60KHZ,
+    SubcarrierSpacing.SCS_120KHZ,
+    SubcarrierSpacing.SCS_240KHZ,
+}
+
 NUMEROLOGY: dict[SubcarrierSpacing, int] = {
     SubcarrierSpacing.SCS_15KHZ: 0,
     SubcarrierSpacing.SCS_30KHZ: 1,
@@ -110,8 +166,8 @@ NUMEROLOGY: dict[SubcarrierSpacing, int] = {
 
 # Common FR1 operating bands. An explicit radio.duplex_mode remains available
 # for bands not yet included in this prototype catalogue.
-TDD_BANDS: set[int] = {38, 40, 41, 46, 47, 48, 50, 51, 53, 77, 78, 79, 90, 96, 101, 102, 104}
-FDD_BANDS: set[int] = {1, 2, 3, 5, 7, 8, 12, 13, 14, 18, 20, 24, 25, 26, 28, 30, 31, 65, 66, 70, 71, 74, 85, 91, 92, 93, 94, 95, 97, 98, 99, 100}
+TDD_BANDS: frozenset[int] = frozenset({38, 40, 41, 46, 47, 48, 50, 51, 53, 77, 78, 79, 90, 96, 101, 102, 104})
+FDD_BANDS: frozenset[int] = frozenset({1, 2, 3, 5, 7, 8, 12, 13, 14, 18, 20, 24, 25, 26, 28, 30, 31, 65, 66, 70, 71, 74, 85, 91, 92, 93, 94, 95, 97, 98, 99, 100})
 
 
 class SCTPConfiguration(BlueprintBaseModel):
@@ -135,10 +191,15 @@ class TDDConfiguration(BlueprintBaseModel):
     NR TDD UL/DL slot pattern configuration.
     
     Maps directly to 3GPP TS 38.331 'TDD-UL-DL-ConfigCommon' / 'Pattern'.
+
+    The default configuration corresponds to the commonly used
+    FR1 / 30 kHz / 5 ms TDD pattern:
+        7 full DL slots + 6 DL symbols
+        2 full UL slots + 4 UL symbols.
     """
 
-    periodicityMilliseconds: float = Field(default=5.0, gt=0)
-    """TDD periodicity."""
+    periodicityMilliseconds: TDDPeriodicity = Field(default=TDDPeriodicity.MS_5)
+    """TDD periodicity in milliseconds."""
 
     nrofDownlinkSlots: int = Field(default=7,ge=0,le=320)
     """Number of complete downlink slots."""
@@ -153,7 +214,8 @@ class TDDConfiguration(BlueprintBaseModel):
     """Number of additional uplink symbols."""
 
 
-class RadioConfiguration(BlueprintBaseModel):
+# NOTE numerology is a computed field that might be provided by used -> needs to be tolerated
+class RadioConfiguration(BlueprintTolerantBaseModel):
     """
     NR Radio Configuration.
 
@@ -170,7 +232,7 @@ class RadioConfiguration(BlueprintBaseModel):
     """NR Operating Band (e.g. 78 for n78). Covers FR1 and FR2 boundaries."""
 
     duplexMode: DuplexMode | None = Field(default=None)
-    """NR Duplex Mode. None means derive the duplex mode from the NR band."""
+    """NR Duplex Mode. None means derive the duplex mode from the NR band (TDD takes precedence)."""
 
     downlinkArfcn: int = Field(default=640000, ge=0, le=3279165)
     """NR Downlink Absolute Radio Frequency Channel Number (NR-ARFCN). Max bound per TS 38.104."""
@@ -190,45 +252,52 @@ class RadioConfiguration(BlueprintBaseModel):
     tddConfiguration: TDDConfiguration | None = Field(default_factory=TDDConfiguration)
     """TDD configuration if duplex mode is TDD."""
 
-    # NOTE don't use @property to avoid having to tolerate extra input fields for serialized output
-    numerology: int | None = Field(default=None)
-    """NR numerology corresponding to the configured SCS."""
-
-    @model_validator(mode="after")
-    def populate_numerlogy(self):
-        """Populate the NR numerology corresponding to the configured SCS."""
-
-        if self.numerology is None:
-            self.numerology = NUMEROLOGY[self.subcarrierSpacingKhz]
-        return self
+    @computed_field
+    @property
+    def numerology(self) -> int:
+        """NR numerology corresponding to the configured SCS."""
+        return NUMEROLOGY[self.subcarrierSpacingKhz]
 
 
     def _derive_duplex_mode(self) -> None:
         """Derive duplex mode if not defined from the configured NR band."""
 
         if self.duplexMode is None:
-            # band can be support both -> tdd takes precedednce
-            if self.nrBand in FDD_BANDS:
-                self.duplexMode = DuplexMode.FDD
-            elif self.nrBand in TDD_BANDS:
+            # band can support both -> tdd takes precedednce
+            if self.nrBand in TDD_BANDS:
                 self.duplexMode = DuplexMode.TDD
+            elif self.nrBand in FDD_BANDS:
+                self.duplexMode = DuplexMode.FDD
             else:
                 raise ValueError(f"Cannot derive duplex mode for given NR band 'n{self.nrBand}'.")
 
 
     def _validate_tdd(self) -> None:
-        """Ensure 'tddConfiguration' is set when duplex mode is TDD."""
+        """Ensure 'tddConfiguration' is set when duplex mode is TDD and is None for FDD."""
 
-        if self.duplexMode == DuplexMode.TDD and self.tddConfiguration is None:
-            raise ValueError("'tddConfiguration' is required when duplex mode is TDD.")
+        if self.duplexMode is DuplexMode.TDD:
+            if self.tddConfiguration is None:
+                raise ValueError("'tddConfiguration' is required when duplex mode is TDD.")
+        elif self.duplexMode is DuplexMode.FDD and self.tddConfiguration:
+            raise ValueError("'tddConfiguration' must not be 'None' when duplex mode is FDD.")
+
+
+    def _validate_scs_for_frequency_range(self) -> None:
+        """Validate if SCS is valid for the selected FR."""
+
+        valid_scs = FR1_SCS if self.frType is FrequencyRange.FR1 else FR2_SCS
+
+        if self.subcarrierSpacingKhz not in valid_scs:
+            raise ValueError(f"{self.subcarrierSpacingKhz.value}kHz SCS is not valid for {self.frType.value.upper()!r}.")
 
 
     @model_validator(mode="after")
     def validate_configuration(self):
-        """Validate provided radion configuration."""
+        """Validate provided radio configuration."""
 
         self._derive_duplex_mode()
         self._validate_tdd()
+        self._validate_scs_for_frequency_range()
         return self
 
 
@@ -260,7 +329,7 @@ class RANComponentConfig(BlueprintBaseModel):
 class CommonCUConfig(RANComponentConfig):
     """Common configuration between CU, CU-UP and CU-CP."""
 
-    du: IPvAnyAddress | str | list[MultusNetworkStatus] = Field()
+    du: IPvAnyAddress | str | list[MultusNetworkStatus] = Field(default="du")
     """DU component to connect to (can be a reference to a defined DU)."""
 
 
@@ -282,7 +351,7 @@ class CUCPConfig(CommonCUConfig):
     n2: NGAP = Field(default_factory=NGAP)
     """N2 reference point endpoint. Used for NGAP signalling between AMF and NG-RAN."""
 
-    cu_up: IPvAnyAddress | str | list[MultusNetworkStatus] = Field()
+    cu_up: IPvAnyAddress | str | list[MultusNetworkStatus] = Field(default="cu_up")
     """CU-UP component to connect to (can be a reference to a defined CU-UP or CU)."""
 
     amf: IPvAnyAddress | str = Field(default="amf")
@@ -304,7 +373,7 @@ class CUUPConfig(CommonCUConfig):
     n3: GTPUEndpoint = Field(default_factory=GTPUEndpoint)
     """N3 reference point endpoint. GTP-U user-plane tunnel endpoint towards NG-RAN."""
 
-    cu_cp: IPvAnyAddress | str | list[MultusNetworkStatus] = Field()
+    cu_cp: IPvAnyAddress | str | list[MultusNetworkStatus] = Field(default="cu_cp")
     """CU-CP component to connect to (can be a reference to a defined CU-CP or CU)."""
 
 
@@ -339,7 +408,7 @@ class CommonGNBConfig(RANComponentConfig):
     nrCellId: int = Field(default=1, ge=0)
     """NR Cell Identity."""
 
-    physicalCellId: int = Field(default=0, ge=0, le=4294967295)
+    physicalCellId: int = Field(default=0, ge=0, le=1007)
     """Physical cell identity."""
 
     radioConfiguration: RadioConfiguration = Field(default_factory=RadioConfiguration)
@@ -361,10 +430,10 @@ class DUConfig(CommonGNBConfig):
     f1c: F1C = Field(default_factory=F1C)
     """F1-C endpoint."""
 
-    cu_cp: IPvAnyAddress | str | list[MultusNetworkStatus] = Field()
+    cu_cp: IPvAnyAddress | str | list[MultusNetworkStatus] = Field(default="cu_cp")
     """CU-CP component to connect to (can be a reference to a defined CU or CU-CP)."""
 
-    cu_up: IPvAnyAddress | str | list[MultusNetworkStatus] = Field()
+    cu_up: IPvAnyAddress | str | list[MultusNetworkStatus] = Field(default="cu_up")
     """CU-UP component to connect to (can be a reference to a defined CU or CU-CUP)."""
 
 
@@ -387,17 +456,10 @@ class GNBConfig(CommonGNBConfig):
 class GenericAdvancedRANConfig(BlueprintBaseModel):
     """Generic 5G RAN advanced configuration (implementation-specific)."""
 
-    implementation: RANType | None = Field(default=None)
-    """5G RAN implementation."""
-
-    type: RANComponentType | None = Field(default=None)
-    """5G RAN component type."""
-
 
 class GenericOAIAdvancedRANConfig(GenericAdvancedRANConfig):
    """Generic advanced configuration for OAI RAN."""
 
-   implementation: Literal[RANType.OAI] = Field(default=RANType.OAI, frozen=True)
    useAdditionalOptions: str | None = Field(default=None)
    gdbstack: int | None = Field(default=None)
    Asn1_verbosity: Literal["none", "info", "annoying"] | None = Field(default=None)
@@ -407,16 +469,13 @@ class GenericOAIAdvancedRANConfig(GenericAdvancedRANConfig):
 class GenericSRSRANAdvancedRANConfig(GenericAdvancedRANConfig):
    """Generic advanced configuration for SRSRAN RAN."""
 
-   implementation: Literal[RANType.SRSRAN] = Field(default=RANType.SRSRAN, frozen=True)
+    # TODO
 
 
 class GenericUERANSIMAdvancedRANConfig(GenericAdvancedRANConfig):
    """Generic advanced configuration for UERANSIM RAN."""
 
-   implementation: Literal[RANType.UERANSIM] = Field(default=RANType.UERANSIM, frozen=True)
-
-
-type AdvancedRANConfig = Annotated[GenericOAIAdvancedRANConfig | GenericSRSRANAdvancedRANConfig | GenericUERANSIMAdvancedRANConfig, Field(discriminator="implementation")]
+    # TODO
 
 
 class OAIAdvancedCUCPConfig(GenericOAIAdvancedRANConfig):
@@ -482,7 +541,9 @@ class OAIAdvancedCommonGNBConfig(GenericOAIAdvancedRANConfig):
    max_pdschReferenceSignalPower: int | None = Field(default=None)
    eNB_instances: list[int] | None = Field(default=None)
    sf_extension: int | None = Field(default=None)
-   rfsimulator: dict | None = Field(default=None)
+   rfsimulator: dict[str, Any] | None = Field(default=None)
+   fhi_72: dict[str, Any] | None = Field(default=None)
+   thread_pool: str | None = Field(default=None)
 
 
 class OAIAdvancedDUConfig(OAIAdvancedCommonGNBConfig):
@@ -497,10 +558,11 @@ class OAIAdvancedGNBConfig(OAIAdvancedCommonGNBConfig):
     sm_dir: str | None = Field(default=None)
 
 
-ADVANCED_RAN_CONFIG_MAPPING: dict[RANType, dict[RANComponentType, AdvancedRANConfig]] = {
+ADVANCED_RAN_CONFIG_MAPPING: dict[RANType, dict[RANComponentType, type[GenericAdvancedRANConfig]]] = {
     RANType.OAI: {
         RANComponentType.CU_CP: OAIAdvancedCUCPConfig,
         RANComponentType.CU_UP: OAIAdvancedCUUPConfig,
+        RANComponentType.CU: OAIAdvancedCUConfig,
         RANComponentType.DU: OAIAdvancedDUConfig,
         RANComponentType.GNB: OAIAdvancedGNBConfig,
     }
@@ -521,7 +583,7 @@ class GenericRANComponent(Component5G):
     config: RANComponentConfig = Field(default_factory=RANComponentConfig)
     """Core component configuration."""
 
-    advanced_config: AdvancedRANConfig | dict | None = Field(default=None)
+    advanced_config: dict[str, Any] | None = Field(default=None)
     """RAN component configuration specific to the implementation."""
 
 
@@ -534,22 +596,22 @@ class GenericRANComponent(Component5G):
 
         model = ADVANCED_RAN_CONFIG_MAPPING.get(self.implementation, {}).get(self.type)
         if model:
-            self.advanced_config = model(**self.advanced_config)
+            self.advanced_config = model.model_validate(self.advanced_config)
         return self
 
 
 class CUCPComponent(GenericRANComponent):
     """Generic CU-CP component config."""
 
-    type: Literal[RANComponentType.CU_CP] = Field(default=RANComponentType.CU_CP, frozen=True)
+    type: Literal[RANComponentType.CU_CP] = Field(frozen=True)
     config: CUCPConfig = Field(default_factory=CUCPConfig)
     """CU-CP component configuration."""
 
 
 class CUUPComponent(GenericRANComponent):
-    """Generic CU=UP component config."""
+    """Generic CU-UP component config."""
 
-    type: Literal[RANComponentType.CU_UP] = Field(default=RANComponentType.CU_UP, frozen=True)
+    type: Literal[RANComponentType.CU_UP] = Field(frozen=True)
     config: CUUPConfig = Field(default_factory=CUUPConfig)
     """CU-UP component configuration."""
 
@@ -557,7 +619,7 @@ class CUUPComponent(GenericRANComponent):
 class CUComponent(GenericRANComponent):
     """Generic CU component config."""
 
-    type: Literal[RANComponentType.CU] = Field(default=RANComponentType.CU, frozen=True)
+    type: Literal[RANComponentType.CU] = Field(frozen=True)
     config: CUConfig = Field(default_factory=CUConfig)
     """CU component configuration."""
 
@@ -577,7 +639,7 @@ class CommonGNBComponent(GenericRANComponent):
 class DUComponent(CommonGNBComponent):
     """Generic DU component config."""
 
-    type: Literal[RANComponentType.DU] = Field(default=RANComponentType.DU, frozen=True)
+    type: Literal[RANComponentType.DU] = Field(frozen=True)
     config: DUConfig = Field(default_factory=DUConfig)
     """DU component configuration."""
 
@@ -585,7 +647,7 @@ class DUComponent(CommonGNBComponent):
 class GNBComponent(CommonGNBComponent):
     """Generic gNB component config."""
 
-    type: Literal[RANComponentType.GNB] = Field(default=RANComponentType.GNB, frozen=True)
+    type: Literal[RANComponentType.GNB] = Field(frozen=True)
     config: GNBConfig = Field(default_factory=GNBConfig)
     """gNB component configuration."""
 
@@ -600,7 +662,7 @@ class RAN(Network5G):
     type: RANType | None = Field(default=RANType.OAI)
     """RAN type."""
 
-    components: dict[str, RANComponent] = Field(default_factory=lambda: {"gnb": GNBComponent()})
+    components: dict[str, RANComponent] = Field(default_factory=lambda: {"gnb": GNBComponent(type=RANComponentType.GNB)})
     """RAN components."""
 
 

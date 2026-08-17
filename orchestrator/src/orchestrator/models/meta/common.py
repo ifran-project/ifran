@@ -1,6 +1,7 @@
 """Common 5G meta models."""
 
 from enum import StrEnum, auto
+from ipaddress import IPv4Address
 from typing import Any, Literal
 
 from pydantic import (
@@ -42,18 +43,32 @@ class CipheringAlgorithm(StrEnum):
     """Supported New Radio Encryption Algorithms (NEA). TS 33.501."""
 
     NEA0 = auto()
+    """Null ciphering."""
+
     NEA1 = auto()
+    """128-bit SNOW 3G ciphering."""
+
     NEA2 = auto()
+    """128-bit AES ciphering."""
+
     NEA3 = auto()
+    """128-bit ZUC ciphering."""
 
 
 class IntegrityAlgorithm(StrEnum):
-    """"Supported New Radio Integrity Algorithms (NIA). TS 33.501."""
+    """Supported New Radio Integrity Algorithms (NIA). TS 33.501."""
 
     NIA0 = auto()
+    """Null integrity protection."""
+
     NIA1 = auto()
+    """128-bit SNOW 3G integrity."""
+
     NIA2 = auto()
+    """128-bit AES integrity."""
+
     NIA3 = auto()
+    """128-bit ZUC integrity."""
 
 
 class SecurityAlgorithmConfiguration(BlueprintBaseModel):
@@ -99,7 +114,7 @@ class TransportEndpoint(BlueprintBaseModel):
     interfaceName: str = Field(default="eth0")
     """Network interface used to bind the transport endpoint."""
 
-    ipv4EndPointAddress: IPvAnyAddress = Field(default="0.0.0.0")
+    ipv4EndPointAddress: IPvAnyAddress = Field(default=IPv4Address("0.0.0.0"))
     """IPv4 endpoint address."""
 
     ipv6EndPointAddress: IPvAnyAddress | None = Field(default=None)

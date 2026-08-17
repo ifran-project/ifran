@@ -86,7 +86,7 @@ class K8SSetupManagement(BaseBlueprintManagement):
         )
 
         # get successfully prepared nodes
-        prepared_nodes = {k: v for k, v in target_nodes.items() if v.k8s_status == K8SStatus.CONFIGURED}
+        prepared_nodes = {k: v for k, v in target_nodes.items() if v.k8s_status is K8SStatus.CONFIGURED}
 
         if not prepared_nodes:
             raise RuntimeError("No nodes were successfully prepared for Kubernetes setup.")

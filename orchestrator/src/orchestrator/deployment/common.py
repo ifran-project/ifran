@@ -12,6 +12,7 @@ from orchestrator.models.deployment.provisioning import (
     ProvisionableResource,
     ProvisionableRU,
     ProvisionableUE,
+    ProvisioningCategory,
 )
 from orchestrator.models.deployment.ran import K8SRANComponent
 from orchestrator.models.deployment.ric import RICDeployment
@@ -61,18 +62,18 @@ class BaseBlueprintManagement:
         # rus
         sync_dict_keys(
             target_dict=self.deployment_model.rus,
-            source_dict={k: ru for k, ru in self.metamodel.rus.items() if ru.type != RUType.SIMULATED}, # only real rus are provisionable
-            default_factory=ProvisionableRU,
+            source_dict={k: ru for k, ru in self.metamodel.rus.items() if ru.type is not RUType.SIMULATED}, # only real rus are provisionable
+            default_factory=lambda: ProvisionableRU(category=ProvisioningCategory.RU),
         )
         # ues
         sync_dict_keys(
             target_dict=self.deployment_model.ues,
-            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type == UEType.REAL}, # only real ues are provisionable
-            default_factory=ProvisionableUE,
+            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.REAL}, # only real ues are provisionable
+            default_factory=lambda: ProvisionableUE(category=ProvisioningCategory.UE),
         )
         sync_dict_keys(
             target_dict=self.deployment_model.simulated_ues,
-            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type == UEType.SIMULATED},
+            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.SIMULATED},
             default_factory=UEDeployment,
         )
         # rics

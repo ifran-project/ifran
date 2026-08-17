@@ -1,6 +1,6 @@
 # Kubernetes create role
 
-# Creates a primary Kubernetes control plane with kubeadm, deploys Flannel and optional Multus CNI,
+# Creates a primary Kubernetes control plane with kubeadm, deploys Calico and optional Multus CNI,
 # untaints the control plane node to allow workload scheduling, and exports the cluster join command for worker nodes.
 
 # Input:
@@ -35,7 +35,7 @@
   args:
     creates: /etc/kubernetes/admin.conf
 
-- name: Ensure kube config directory exists for '{{ node.name }}' root
+- name: Ensure kube config directory exists on '{{ node.name }}' root
   ansible.builtin.file:
     path: /root/.kube
     state: directory
@@ -49,16 +49,14 @@
     mode: "0600"
 
 - name: Install Calico operator CRDs on '{{ node.name }}'
-  ansible.builtin.command:
-    cmd: >-
-      kubectl apply --server-side --force-conflicts
-      -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/v1_crd_projectcalico_org.yaml
+  kubernetes.core.k8s:
+    state: present
+    src: https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/v1_crd_projectcalico_org.yaml
 
 - name: Install Calico operator on '{{ node.name }}'
-  ansible.builtin.command:
-    cmd: >-
-      kubectl apply --server-side --force-conflicts
-      -f https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
+  kubernetes.core.k8s:
+    state: present
+    src: https://raw.githubusercontent.com/projectcalico/calico/v{{ calico_version }}/manifests/tigera-operator.yaml
 
 - name: Write Calico installation resource on '{{ node.name }}'
   ansible.builtin.template:
@@ -67,26 +65,40 @@
     mode: "0644"
 
 - name: Install Calico networking on '{{ node.name }}'
-  ansible.builtin.command:
-    cmd: kubectl apply -f /etc/kubernetes/calico-installation.yaml
+  kubernetes.core.k8s:
+    state: present
+    src: /etc/kubernetes/calico-installation.yaml
 
 - name: Install Multus CNI on '{{ node.name }}'
-  ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/v{{ multus_version }}/deployments/multus-daemonset-thick.yml
+  kubernetes.core.k8s:
+    state: present
+    src: https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/v{{ multus_version }}/deployments/multus-daemonset-thick.yml
   when: install_multus
 
 - name: Remove default NoSchedule taint from master node '{{ node.name }}'
-  ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
-  failed_when: false
+  kubernetes.core.k8s:
+    state: patched
+    kind: Node
+    name: "{{ node.name }}"
+    definition:
+      spec:
+        taints: []
 
 - name: Add '{{ node.name }}' roles as Kubernetes label for later selective scheduling
-  ansible.builtin.command: kubectl label nodes {{ node.name }} node-type.5g.blueprint/{{ item }}=true --overwrite
+  kubernetes.core.k8s:
+    state: patched
+    kind: Node
+    name: "{{ node.name }}"
+    definition:
+      metadata:
+        labels: "{{ {'node-type.5g.blueprint/' ~ item: 'true'} }}"
   loop: "{{ node.roles }}"
 
-- name: Fetch admin.conf to Ansible orchestrator to be distributed to workers on '{{ node.name }}'
+- name: Fetch admin.conf from '{{ node.name }}' to Ansible orchestrator at {{ local_kubeconfig_path }} to be distributed to workers later
   ansible.builtin.fetch:
     src: /etc/kubernetes/admin.conf
     dest: "{{ local_kubeconfig_path }}"
-    flat: true
+    flat: true # put the fetched file directly at the destination specified (local_kubeconfig_path)
 
 - name: Generate the Kubernetes join command from master node '{{ node.name }}' (valid for 24h)
   ansible.builtin.command: kubeadm token create --print-join-command --ttl 24h

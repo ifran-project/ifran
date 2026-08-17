@@ -229,6 +229,279 @@ ran:
       advanced_config: null
       plain_text_config: null
       derived_radio_config: null
+    cucp:
+      category: ran
+      type: cu_cp
+      implementation: oai
+      config:
+        timeZone: Europe/Paris
+        gnbId: 0
+        tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sctpConfiguration:
+          inStreams: 2
+          outStreams: 2
+        e2: null
+        ric: null
+        du: du2
+        nrCellId: 0
+        securityAlgorithmConfiguration:
+          integrityOrder:
+          - nia2
+          - nia1
+          - nia0
+          cipheringOrder:
+          - nea0
+          - nea1
+          - nea2
+        e1:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38462
+          protocol: SCTP
+        f1c:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38472
+          protocol: SCTP
+        n2:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38412
+          protocol: SCTP
+        cu_up: cuup
+        amf: amf
+      advanced_config: null
+      plain_text_config: null
+    cuup:
+      category: ran
+      type: cu_up
+      implementation: oai
+      config:
+        timeZone: Europe/Paris
+        gnbId: 0
+        tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sctpConfiguration:
+          inStreams: 2
+          outStreams: 2
+        e2: null
+        ric: null
+        du: du2
+        gnbCuUpId: 0
+        e1:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38462
+          protocol: SCTP
+        f1u:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2153
+          protocol: UDP
+        n3:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2152
+          protocol: UDP
+        cu_cp: cucp
+      advanced_config: null
+      plain_text_config: null
+    cu1:
+      category: ran
+      type: cu
+      implementation: oai
+      config:
+        timeZone: Europe/Paris
+        gnbId: 0
+        tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sctpConfiguration:
+          inStreams: 2
+          outStreams: 2
+        e2: null
+        ric: null
+        du: du1
+        nrCellId: 0
+        f1c:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38472
+          protocol: SCTP
+        f1u:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2153
+          protocol: UDP
+        n2:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38412
+          protocol: SCTP
+        n3:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2152
+          protocol: UDP
+        securityAlgorithmConfiguration:
+          integrityOrder:
+          - nia2
+          - nia1
+          - nia0
+          cipheringOrder:
+          - nea0
+          - nea1
+          - nea2
+        amf: amf
+      advanced_config: null
+      plain_text_config: null
+    du1:
+      category: ran
+      type: du
+      implementation: oai
+      config:
+        timeZone: Europe/Paris
+        gnbId: 0
+        tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sctpConfiguration:
+          inStreams: 2
+          outStreams: 2
+        e2: null
+        ric: null
+        nrCellId: 1
+        physicalCellId: 0
+        radioConfiguration:
+          frType: fr1
+          nrBand: 78
+          duplexMode: tdd
+          downlinkArfcn: 640000
+          ssbArfcn: 621312
+          pointAFrequencyArfcn: 620040
+          channelBandwidthMhz: 40
+          subcarrierSpacingKhz: 30
+          tddConfiguration:
+            periodicityMilliseconds: 5.0
+            nrofDownlinkSlots: 7
+            nrofDownlinkSymbols: 6
+            nrofUplinkSlots: 2
+            nrofUplinkSymbols: 4
+          numerology: 1
+        ru: sim_ru
+        gnbDuId: 0
+        f1u:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2153
+          protocol: UDP
+        f1c:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38472
+          protocol: SCTP
+        cu_cp: cu1
+        cu_up: cu1
+      advanced_config: null
+      plain_text_config: null
+      derived_radio_config: null
+    du2:
+      category: ran
+      type: du
+      implementation: oai
+      config:
+        timeZone: Europe/Paris
+        gnbId: 0
+        tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+            mncLength: 2
+            plmnId: '00101'
+          snssaiList:
+          - internet
+        sctpConfiguration:
+          inStreams: 2
+          outStreams: 2
+        e2: null
+        ric: null
+        nrCellId: 1
+        physicalCellId: 0
+        radioConfiguration:
+          frType: fr1
+          nrBand: 78
+          duplexMode: tdd
+          downlinkArfcn: 640000
+          ssbArfcn: 621312
+          pointAFrequencyArfcn: 620040
+          channelBandwidthMhz: 40
+          subcarrierSpacingKhz: 30
+          tddConfiguration:
+            periodicityMilliseconds: 5.0
+            nrofDownlinkSlots: 7
+            nrofDownlinkSymbols: 6
+            nrofUplinkSlots: 2
+            nrofUplinkSymbols: 4
+          numerology: 1
+        ru: sim_ru
+        gnbDuId: 0
+        f1u:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 2153
+          protocol: UDP
+        f1c:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 38472
+          protocol: SCTP
+        cu_cp: cucp
+        cu_up: cuup
+      advanced_config: null
+      plain_text_config: null
+      derived_radio_config: null
 rus:
   sim_ru:
     type: simulated

@@ -91,7 +91,7 @@ async def run_single_provisioning_action(
     # lvl 1 : merge provisioner params with global provisioning_params with priority to non-default provisioner's params
     # lvl 2: merge provisioner params with resource provisioning params with priority to resource's provisioning params
     # NOTE provisioner params model needs to tolerate extra fields and ignore them for this to work with no problems
-    merged_prov_params = type(provisioner.params).model_validate(provisioning_params | provisioner.params.model_dump(mode="json", exclude_unset=True) | resource_data.provisioning_params)
+    merged_prov_params = type(provisioner.params).model_validate(provisioning_params | provisioner.params.model_dump(mode="json", exclude_defaults=True) | resource_data.provisioning_params)
 
     args = {
         "role": f"provisioning/{provisioner.category.value}/{provisioner.type.value}/{action}",

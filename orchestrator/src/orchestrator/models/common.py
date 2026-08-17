@@ -52,3 +52,20 @@ class BlueprintTolerantBaseModel(BlueprintBaseModel):
     """5G blueprint basemodel with extra fields tolerance."""
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+# utils
+def parse_hex_int(value: int | str) -> int:
+    """Convert an integer or hexadecimal string to an integer."""
+
+    if isinstance(value, str):
+        return int(value, 16)
+    return value
+
+
+def serialize_hex_int(value: int | None, width: int) -> str | None:
+    """Serialize an integer to a zero-padded uppercase hexadecimal string."""
+
+    if value is None:
+        return None
+    return f"{value:0{width}X}"

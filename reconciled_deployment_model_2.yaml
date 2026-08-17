@@ -1,15 +1,16 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.101.170:6443 --token awfba8.zj5z2is3kxlc3pp8
-      --discovery-token-ca-cert-hash sha256:73b0f364c35295844b945a26ac0cd0480874ce32d38aae810ab903bee76cc25c '
+    join_command: 'kubeadm join 10.123.2.44:6443 --token qw0ke2.hxp104lsbolvf5ke --discovery-token-ca-cert-hash
+      sha256:c457ff48357454b0bd6d7b6bd557965e960cbeca9c5004f226fd8c1bde62e3e2 '
   provisioning:
     experiment: tst
 nodes:
   node1:
+    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.101.170
+      hostname: 10.123.2.44
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -20,9 +21,10 @@ nodes:
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
   node2:
+    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.122.250
+      hostname: 10.123.5.31
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -33,9 +35,10 @@ nodes:
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
   node3:
+    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.178.220
+      hostname: 10.123.136.170
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -47,6 +50,20 @@ nodes:
     k8s_status: in_cluster
 core_deployment:
   components:
+    amf:
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-amf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n2:
+          port: 38412
+          protocol: SCTP
+      namespace: oai-core
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
     smf:
       image:
         repository: docker.io/oaisoftwarealliance/oai-smf
@@ -61,17 +78,14 @@ core_deployment:
       namespace: oai-core
       node_selector:
         node-type.5g.blueprint/core: 'true'
-    amf:
+    nrf:
       image:
-        repository: docker.io/oaisoftwarealliance/oai-amf
+        repository: docker.io/oaisoftwarealliance/oai-nrf
         image_tag: v2.2.0
       exposed_ports:
         sbi:
           port: 80
           protocol: TCP
-        n2:
-          port: 38412
-          protocol: SCTP
       namespace: oai-core
       node_selector:
         node-type.5g.blueprint/core: 'true'
@@ -102,17 +116,11 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-    nrf:
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-nrf
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
 ran_deployment:
   components:
+    cu1: {}
+    cuup: {}
+    du1: {}
     gnb: {}
+    du2: {}
+    cucp: {}

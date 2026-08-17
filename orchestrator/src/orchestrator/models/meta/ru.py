@@ -14,39 +14,62 @@ class RUType(StrEnum):
     """Supported Radio Unit vendor types."""
 
     SIMULATED = auto()
+    """Simulated Radio Unit."""
+
     USRP = auto()
+    """Ettus/USRP Radio Unit."""
+
     AW2S = auto()
+    """AW2S Radio Unit."""
+
     BENETEL = auto()
+    """Benetel Radio Unit."""
+
     LITEON = auto()
+    """Liteon Radio Unit."""
 
 
 class USRPModel(StrEnum):
     """Supported Ettus/USRP models."""
 
     B210 = auto()
+    """USRP B210 model."""
+
     B205 = auto()
+    """USRP B205 model."""
+
     N300 = auto()
+    """USRP N300 model."""
+
     N320 = auto()
+    """USRP N320 model."""
 
 
 class AW2SModel(StrEnum):
     """Supported AW2S models."""
 
     JAGUAR = auto()
+    """AW2S Jaguar model."""
+
     PANTHER = auto()
+    """AW2S Panther model."""
 
 
 class BenetelModel(StrEnum):
     """Supported Benetel models."""
 
     RAN550 = auto()
+    """Benetel RAN550 model."""
+
     RAN650 = auto()
+    """Benetel RAN650 model."""
 
 
 class LiteonModel(StrEnum):
     """Supported Liteon models."""
 
     FLEXFI = auto()
+    """Liteon FlexFi model."""
 
 
 # types used to tell pydantic to validate the correct RU model based on its type

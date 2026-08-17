@@ -1,11 +1,12 @@
 """5G core meta models."""
 
 from enum import StrEnum, auto
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     Field,
     computed_field,
+    field_serializer,
     field_validator,
     model_validator,
 )
@@ -13,6 +14,8 @@ from pydantic import (
 from orchestrator.models.common import (
     BlueprintBaseModel,
     BlueprintTolerantBaseModel,
+    parse_hex_int,
+    serialize_hex_int,
 )
 from orchestrator.models.meta.common import (
     NGAP,
@@ -193,32 +196,51 @@ class PLMN(BlueprintTolerantBaseModel):
         - 3GPP TS 29.571
     """
 
-    mcc: str = Field(pattern=r"^\d{3}$", default="001")
-    """Mobile Country Code (MCC) (3 digits string)."""
+    mcc: int = Field(default=1, ge=0, le=999)
+    """Mobile Country Code (MCC) (3 digits)."""
 
-    mnc: str = Field(pattern=r"^\d{2,3}$", default="01")
-    """Mobile Network Code (MNC) (2 to 3 digits string)."""
+    mnc: int = Field(default=1, ge=0, le=999)
+    """Mobile Network Code (MNC) (2 to 3 digits)."""
 
     @computed_field
     @property
     def mncLength(self) -> int:
         """Length of the MNC field (2 or 3)."""
-        return len(self.mnc)
+
+        return 2 if self.mnc < 100 else 3
 
     @computed_field
     @property
     def plmnId(self) -> str:
-        """PLMN identity (mcc + mnc)."""
-        return f"{self.mcc}{self.mnc}"
+        """PLMN identity (MCC + MNC)."""
+
+        return f"{self.mcc:03d}{self.mnc:02d}" if self.mnc < 100 else f"{self.mcc:03d}{self.mnc:03d}"
+
 
     @field_validator("mcc", "mnc", mode="before")
     @classmethod
-    def normalize_codes(cls, value):
-        """Convert integer MCC/MNC values to strings before validation."""
+    def parse_code(cls, value):
+        """Convert string MCC and MNC values to integers."""
 
-        if isinstance(value, int):
-            return str(value)
+        if isinstance(value, str):
+            if not value.isdigit():
+                raise ValueError("MCC and MNC must contain only digits.")
+            return int(value)
         return value
+
+
+    @field_serializer("mcc")
+    def serialize_mcc(self, value: int) -> str:
+        """Serialize MCC as a three-digit string."""
+
+        return f"{value:03d}"
+
+
+    @field_serializer("mnc")
+    def serialize_mnc(self, value: int) -> str:
+        """Serialize MNC as a two or three-digit string."""
+
+        return f"{value:02d}" if value < 100 else f"{value:03d}"
 
 
 class PLMNSupportItem(BlueprintBaseModel):
@@ -268,14 +290,39 @@ class GUAMI(BlueprintBaseModel):
     plmnId: PLMN = Field(default_factory=PLMN)
     """PLMN Identity."""
 
-    amfRegionId: str = Field(default="02", pattern=r"^[A-Fa-f0-9]{2}$")
-    """AMF Region Identifier (8 bits in hexadecimal)."""
+    amfRegionId: int = Field(default=0x02, ge=0, le=0xFF)
+    """AMF Region Identifier (8 bits)."""
 
-    amfSetId: str = Field(default="001", pattern=r"^[A-Fa-f0-9]{3}$")
-    """AMF Set Identifier (10 bits represented as 3 hexadecimal digits)."""
+    amfSetId: int = Field(default=0x001, ge=0, le=0x3FF)
+    """AMF Set Identifier (10 bits)."""
 
-    amfPointer: str = Field(default="00", pattern=r"^[0-3][A-Fa-f0-9]$")
-    """AMF Pointer (6 bits represented as a hexadecimal digit)."""
+    amfPointer: int = Field(default=0x00, ge=0, le=0x3F)
+    """AMF Pointer (6 bits)."""
+
+    @field_validator("amfRegionId", "amfSetId", "amfPointer", mode="before")
+    @classmethod
+    def normalize_hex_values(cls, value):
+        """Convert hexadecimal strings to integers."""
+
+        return parse_hex_int(value)
+
+    @field_serializer("amfRegionId")
+    def serialize_amf_region_id(self, value: int) -> str:
+        """Serialize AMF Region ID as hexadecimal."""
+
+        return serialize_hex_int(value, 2)
+
+    @field_serializer("amfSetId")
+    def serialize_amf_set_id(self, value: int) -> str:
+        """Serialize AMF Set ID as hexadecimal."""
+
+        return serialize_hex_int(value, 3)
+
+    @field_serializer("amfPointer")
+    def serialize_amf_pointer(self, value: int) -> str:
+        """Serialize AMF Pointer as hexadecimal."""
+
+        return serialize_hex_int(value, 2)
 
 
 class NetworkName(BlueprintBaseModel):
@@ -401,43 +448,32 @@ class NRFConfig(CoreComponentConfig):
 class GenericAdvancedCoreConfig(BlueprintBaseModel):
     """Generic 5G core advanced configuration (implementation-specific)."""
 
-    implementation: CoreType | None = Field(default=None)
-    """5G core implementation."""
 
-    type: CoreComponentType | None = Field(default=None)
-    """5G core component type."""
-
-
-class GenericOAIAdvancedCoreConfig(GenericAdvancedCoreConfig):
+class GenericOAIAdvancedCoreConfig(BlueprintBaseModel):
     """Generic advanced configuration for OAI core."""
 
-    implementation: Literal[CoreType.OAI] = Field(default=Literal[CoreType.OAI], frozen=True)
     log_level: dict[str, str] | None = Field(default=None)
     register_nf: dict[str, str] | None = Field(default=None)
     http_version: int | None = Field(default=None)
-    nfs: dict | None = Field(default=None)
+    nfs: dict[str, Any] | None = Field(default=None)
 
 
-class GenericOpen5GSAdvancedCoreConfig(GenericAdvancedCoreConfig):
+class GenericOpen5GSAdvancedCoreConfig(BlueprintBaseModel):
     """Generic advanced configuration for Open5GS core."""
 
-    implementation: Literal[CoreType.OPEN5GS] = Field(default=Literal[CoreType.OPEN5GS], frozen=True)
+    # TODO
 
 
-class GenericFree5GCAdvancedCoreConfig(GenericAdvancedCoreConfig):
+class GenericFree5GCAdvancedCoreConfig(BlueprintBaseModel):
     """Generic advanced configuration for Free5GC core."""
 
-    implementation: Literal[CoreType.FREE5GC] = Field(default=Literal[CoreType.OAI], frozen=True)
-
-
-type AdvancedCoreConfig = Annotated[GenericOAIAdvancedCoreConfig | GenericOpen5GSAdvancedCoreConfig | GenericFree5GCAdvancedCoreConfig, Field(discriminator="implementation")]
+    # TODO
 
 
 class OAIAdvancedAMFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI AMF."""
 
-    type: Literal[CoreComponentType.AMF] = Field(default=Literal[CoreComponentType.AMF], frozen=True)
-    database: dict | None = Field(default=None)
+    database: dict[str, Any] | None = Field(default=None)
     support_features_options: dict[str, str] | None = Field(default=None)
     relative_capacity: int | None = Field(default=None)
     statistics_timer_interval: int | None = Field(default=None)
@@ -447,17 +483,15 @@ class OAIAdvancedAMFConfig(GenericOAIAdvancedCoreConfig):
 class OAIAdvancedSMFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI SMF."""
 
-    type: Literal[CoreComponentType.SMF] = Field(default=Literal[CoreComponentType.SMF], frozen=True)
     support_features: dict[str, str] | None = Field(default=None)
     ue_mtu: int | None = Field(default=None)
-    upfs: dict | None = Field(default=None)
-    ue_dns: dict | None = Field(default=None)
+    upfs: dict[str, Any] | None = Field(default=None)
+    ue_dns: dict[str, Any] | None = Field(default=None)
 
 
 class OAIAdvancedUPFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI UPF."""
 
-    type: Literal[CoreComponentType.UPF] = Field(default=Literal[CoreComponentType.UPF], frozen=True)
     support_features: dict[str, str] | None = Field(default=None)
     remote_n6_gw: str | None = Field(default=None)
 
@@ -465,21 +499,18 @@ class OAIAdvancedUPFConfig(GenericOAIAdvancedCoreConfig):
 class OAIAdvancedPCFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI PCF."""
 
-    type: Literal[CoreComponentType.PCF] = Field(default=Literal[CoreComponentType.PCF], frozen=True)
     local_policy: dict[str, str] | None = Field(default=None)
 
 
 class OAIAdvancedNSSFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI NSSF."""
 
-    type: Literal[CoreComponentType.NSSF] = Field(default=Literal[CoreComponentType.NSSF], frozen=True)
     slice_config_path: dict[str, str] | None = Field(default=None)
 
 
 class OAIAdvancedLMFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI LMF."""
 
-    type: Literal[CoreComponentType.LMF] = Field(default=Literal[CoreComponentType.LMF], frozen=True)
     http_threads_count: int | None = Field(default=None)
     gnb_id_bits_count: int | None = Field(default=None)
     num_gnb: int | None = Field(default=None)
@@ -492,11 +523,10 @@ class OAIAdvancedLMFConfig(GenericOAIAdvancedCoreConfig):
 class OAIAdvancedUDRConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI UDR."""
 
-    type: Literal[CoreComponentType.UDR] = Field(default=Literal[CoreComponentType.UDR], frozen=True)
-    database: dict | None = Field(default=None)
+    database: dict[str, Any] | None = Field(default=None)
 
 
-ADVANCED_CORE_CONFIG_MAPPING: dict[CoreType, CoreComponentType] = {
+ADVANCED_CORE_CONFIG_MAPPING: dict[CoreType, dict[CoreComponentType, type[GenericAdvancedCoreConfig]]] = {
     CoreType.OAI: {
         CoreComponentType.AMF: OAIAdvancedAMFConfig,
         CoreComponentType.SMF: OAIAdvancedSMFConfig,
@@ -523,7 +553,7 @@ class CoreComponent(Component5G):
     config: CoreComponentConfig = Field(default_factory=CoreComponentConfig)
     """Core component configuration."""
 
-    advanced_config: AdvancedCoreConfig | dict | None = Field(default=None)
+    advanced_config: dict[str, Any] | None = Field(default=None)
     """Core component configuration specific to the implementation."""
 
 
@@ -536,35 +566,35 @@ class CoreComponent(Component5G):
 
         model = ADVANCED_CORE_CONFIG_MAPPING.get(self.implementation, {}).get(self.type)
         if model:
-            self.advanced_config = model(**self.advanced_config)
+            self.advanced_config = model.model_validate(self.advanced_config)
         return self
 
 
 class AMFComponent(CoreComponent):
     """AMF component."""
 
-    type: Literal[CoreComponentType.AMF] = Field(default=CoreComponentType.AMF, frozen=True)
+    type: Literal[CoreComponentType.AMF] = Field(frozen=True)
     config: AMFConfig = Field(default_factory=AMFConfig)
 
 
 class SMFComponent(CoreComponent):
     """SMF component."""
 
-    type: Literal[CoreComponentType.SMF] = Field(default=CoreComponentType.SMF, frozen=True)
+    type: Literal[CoreComponentType.SMF] = Field(frozen=True)
     config: SMFConfig = Field(default_factory=SMFConfig)
 
 
 class UPFComponent(CoreComponent):
     """UPF component."""
 
-    type: Literal[CoreComponentType.UPF] = Field(default=CoreComponentType.UPF, frozen=True)
+    type: Literal[CoreComponentType.UPF] = Field(frozen=True)
     config: UPFConfig = Field(default_factory=UPFConfig)
 
 
 class NRFComponent(CoreComponent):
     """NRF component."""
 
-    type: Literal[CoreComponentType.NRF] = Field(default=CoreComponentType.NRF, frozen=True)
+    type: Literal[CoreComponentType.NRF] = Field(frozen=True)
     config: NRFConfig = Field(default_factory=NRFConfig)
 
 
@@ -579,10 +609,10 @@ class Core(Network5G):
     """Core type."""
 
     components: dict[str, ValidatedCoreComponent | CoreComponent] = Field(default_factory=lambda: {
-        "amf": AMFComponent(),
-        "smf": SMFComponent(),
-        "upf": UPFComponent(),
-        "nrf": NRFComponent(),
+        "amf": AMFComponent(type=CoreComponentType.AMF),
+        "smf": SMFComponent(type=CoreComponentType.SMF),
+        "upf": UPFComponent(type=CoreComponentType.UPF),
+        "nrf": NRFComponent(type=CoreComponentType.NRF),
     })
     """Core components."""
 

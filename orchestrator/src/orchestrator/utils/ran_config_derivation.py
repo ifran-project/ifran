@@ -96,7 +96,7 @@ def derive_oai_ran_config(component: RANComponent) -> dict:
     radio_config: RadioConfiguration = component.config.radioConfiguration
 
     bandwidth_rb = NRB.get(radio_config.subcarrierSpacingKhz, {}).get(radio_config.channelBandwidthMhz)
-    if bandwidth_rb is None and radio_config.implementation == RANType.OAI:
+    if bandwidth_rb is None and radio_config.implementation is RANType.OAI:
         raise ValueError(
             "Cannot derive number of resource blocks from given SCS "
             f"'{radio_config.subcarrierSpacingKhz.value}Khz' and bandwidth '{radio_config.channelBandwidthMhz}Mhz'."
@@ -106,7 +106,7 @@ def derive_oai_ran_config(component: RANComponent) -> dict:
     radio = OAI_RADIO_BY_RU.get(ru.type, {}).get(ru.model, "")
 
     # additional flags for rfsim
-    if ru.type == RUType.SIMULATED and (
+    if ru.type is RUType.SIMULATED and (
         component.advanced_config is None or component.advanced_config.useAdditionalOptions is None):
         additional_flags = "-E --rfsim"
     else:
@@ -118,9 +118,9 @@ def derive_oai_ran_config(component: RANComponent) -> dict:
         "additional_flags": additional_flags,
     }
 
-    if radio_config.duplexMode == DuplexMode.TDD:
+    if radio_config.duplexMode is DuplexMode.TDD:
         tdd = radio_config.tddConfiguration
-        period = tdd.periodicityMilliseconds
+        period = tdd.periodicityMilliseconds.value
 
         oai_tdd_periodicity = OAI_TDD_PERIODICITY.get(period)
         if oai_tdd_periodicity is None:
@@ -139,9 +139,9 @@ def derive_srs_ran_config(component: RANComponent) -> dict[str, Any]:
     radio_config: RadioConfiguration = component.config.radioConfiguration
 
     derived = {}
-    if radio_config.duplexMode == DuplexMode.TDD:
+    if radio_config.duplexMode is DuplexMode.TDD:
         tdd = radio_config.tddConfiguration
-        period = tdd.periodicityMilliseconds
+        period = tdd.periodicityMilliseconds.value
         period_slots = round(period / (15.0 / radio_config.subcarrierSpacingKhz.value))
         derived["tdd_period_slots"] = period_slots
 
