@@ -344,6 +344,167 @@ class NetworkName(BlueprintBaseModel):
     """Short Network Name."""
 
 
+class NSIInformation(BlueprintBaseModel):
+    """
+    Network Slice Instance information.
+
+    3GPP References:
+        - 3GPP TS 29.531
+        - 3GPP TS 29.571
+    """
+
+    nrfId: str = Field(default="http://cn5g-nrf:8080/nnrf-disc/v1/nf-instances")
+    """NRF discovery URI used to discover Network Functions."""
+
+    nsiId: str = Field(default="1")
+    """Network Slice Instance identifier."""
+
+    nrfNfMgtUri: str | None = Field(default="http://cn5g-nrf:8080/nnrf-nfm/v1/nf-instances")
+    """NRF NF management URI."""
+
+
+class NSIInfo(BlueprintBaseModel):
+    """
+    Network Slice Instance information associated with an S-NSSAI.
+
+    3GPP References:
+        - 3GPP TS 29.531
+    """
+
+    snssai: Slice | str = Field(default="internet")
+    """S-NSSAI associated with the Network Slice Instance."""
+
+    nsiInformationList: NSIInformation = Field(default_factory=NSIInformation)
+    """Network Slice Instance information."""
+
+
+class RestrictedSNSSAIList(BlueprintBaseModel):
+    """
+    Restricted S-NSSAI list associated with a home PLMN.
+
+    3GPP References:
+        - 3GPP TS 29.531
+    """
+
+    homePlmnId: PLMN = Field(default_factory=PLMN)
+    """Home PLMN identity for which the S-NSSAI restriction applies."""
+
+    snssaiList: list[Slice | str] = Field(default_factory=lambda: ["internet"])
+    """List of restricted S-NSSAIs."""
+
+
+class SupportedTAIItem(BlueprintBaseModel):
+    """
+    S-NSSAI information supported by a Tracking Area.
+
+    3GPP References:
+        - 3GPP TS 29.531
+    """
+
+    tai: TAI = Field(default_factory=TAI)
+    """Tracking Area Identity."""
+
+    snssaiList: list[Slice | str] = Field(default_factory=lambda: ["internet"])
+    """List of supported S-NSSAIs."""
+
+
+class ExtendedSupportedTAIItem(SupportedTAIItem):
+    """
+    S-NSSAI information supported by a Tracking Area.
+
+    3GPP References:
+        - 3GPP TS 29.531
+    """
+
+    restrictedSnssaiList: list[RestrictedSNSSAIList] = Field(default_factory=list)
+    """List of restricted S-NSSAIs."""
+
+
+class SupportedNSSAIAvailabilityData(BlueprintBaseModel):
+    """
+    Supported S-NSSAI availability information for an AMF.
+
+    3GPP References:
+        - 3GPP TS 29.531
+    """
+
+    tai: TAI = Field(default_factory=TAI)
+    """Tracking Area Identity for the supported S-NSSAI availability information."""
+
+    snssaiList: list[Slice | str] = Field(default_factory=lambda: ["internet"])
+    """List of S-NSSAIs supported in the Tracking Area."""
+
+    taiList: list[SupportedTAIItem] | None = Field(default=None)
+    """Additional list of TAIs supported by the AMF."""
+
+class AMFInfo(BlueprintBaseModel):
+    """
+    AMF information associated with an AMF Set.
+
+    3GPP References:
+        - 3GPP TS 29.531
+        - 3GPP TS 29.571
+    """
+
+    nfId: str = Field(default="405e8251-cc5a-45dd-a494-efb9eaf1cd58")
+    """NF Instance ID of the AMF."""
+
+    supportedNssaiAvailabilityData: SupportedNSSAIAvailabilityData = Field(default_factory=SupportedNSSAIAvailabilityData)
+    """Supported S-NSSAI availability information advertised by the AMF."""
+
+
+class AMFInfoSet(BlueprintBaseModel):
+    """
+    AMF Set information used by the NSSF.
+
+    3GPP References:
+        - 3GPP TS 29.531
+    """
+
+    targetAmfSet: int = Field(default=0x001, ge=0, le=0x3FF)
+    """Target AMF Set identifier."""
+
+    nrfAmfSet: str = Field(default="")
+    """NRF discovery URI for the AMF Set."""
+
+    nrfAmfSetNfMgtUri: str = Field(default="")
+    """NRF NF management URI for the AMF Set."""
+
+    amfList: list[AMFInfo] = Field(default_factory=lambda: [AMFInfo()])
+    """List of AMFs belonging to the AMF Set."""
+
+
+    @field_validator("targetAmfSet", mode="before")
+    @classmethod
+    def normalize_hex_values(cls, value) -> int | Any:
+        """Convert hexadecimal strings to integers."""
+
+        return parse_hex_int(value)
+
+
+    @field_serializer("targetAmfSet")
+    def serialize_target_amf_set_id(self, value: int) -> str:
+        """Serialize target AMF Set ID as hexadecimal."""
+
+        return serialize_hex_int(value, 3)
+
+
+class PLMNInfo(BlueprintBaseModel):
+    """
+    PLMN information configured in the NSSF.
+
+    3GPP References:
+        - 3GPP TS 29.531
+        - 3GPP TS 29.571
+    """
+
+    operatorName: str = Field(default="")
+    """Operator name."""
+
+    homePlmnId: PLMN = Field(default_factory=PLMN)
+    """Home PLMN identity."""
+
+
 class CoreComponentConfig(BlueprintBaseModel):
     """
     Generic 5G Core Network Function configuration.
@@ -444,6 +605,29 @@ class NRFConfig(CoreComponentConfig):
 
     plmnList: list[PLMNSupportItem] = Field(default_factory=lambda: [PLMNSupportItem()])
     """List of supported PLMN identities and S-NSSAIs."""
+
+
+class NSSFConfig(CoreComponentConfig):
+    """
+    Network Slice Selection Function configuration.
+
+    3GPP References:
+        - 3GPP TS 23.501
+        - 3GPP TS 29.531
+        - 3GPP TS 29.571
+    """
+
+    nsiInfoList: list[NSIInfo] = Field(default_factory=lambda: [NSIInfo()])
+    """List of Network Slice Instance information."""
+
+    taInfoList: list[ExtendedSupportedTAIItem] = Field(default_factory=lambda: [ExtendedSupportedTAIItem()])
+    """List of Tracking Area and S-NSSAI information."""
+
+    amfInfoList: list[AMFInfoSet] = Field(default_factory=lambda: [AMFInfoSet()])
+    """List of AMF Set information."""
+
+    plmnInfoList: list[PLMNInfo] = Field(default_factory=lambda: [PLMNInfo()])
+    """List of PLMN information."""
 
 
 class GenericAdvancedCoreConfig(BlueprintBaseModel):
@@ -592,8 +776,22 @@ class NRFComponent(CoreComponent):
     config: NRFConfig = Field(default_factory=NRFConfig)
 
 
+class NSSFComponent(CoreComponent):
+    """NSSF component."""
+
+    type: Literal[CoreComponentType.NSSF] = Field(frozen=True)
+    config: NSSFConfig = Field(default_factory=NSSFConfig)
+
+
 # components with their specific validated config
-type ValidatedCoreComponent = Annotated[AMFComponent | SMFComponent | UPFComponent | NRFComponent, Field(discriminator="type")]
+type ValidatedCoreComponent = Annotated[
+    AMFComponent |
+    SMFComponent |
+    UPFComponent |
+    NRFComponent |
+    NSSFComponent,
+    Field(discriminator="type")
+]
 
 
 class Core(Network5G):
@@ -603,10 +801,13 @@ class Core(Network5G):
     """Core implementation."""
 
     components: dict[str, ValidatedCoreComponent | CoreComponent] = Field(default_factory=lambda: {
+        "nrf": NRFComponent(type=CoreComponentType.NRF),
+        "udm": CoreComponent(type=CoreComponentType.UDM),
+        "udr": CoreComponent(type=CoreComponentType.UDR),
         "amf": AMFComponent(type=CoreComponentType.AMF),
+        "ausf": CoreComponent(type=CoreComponentType.AUSF),
         "smf": SMFComponent(type=CoreComponentType.SMF),
         "upf": UPFComponent(type=CoreComponentType.UPF),
-        "nrf": NRFComponent(type=CoreComponentType.NRF),
     })
     """Core components."""
 

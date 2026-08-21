@@ -5,6 +5,7 @@ kind: Service
 metadata:
   name: {{ .Chart.Name }}
   labels:
+    app: {{ .Release.Name }}
     {{- include "oai-upf.labels" . | nindent 4 }}
 spec:
   type: ClusterIP

@@ -17,18 +17,16 @@ from orchestrator.models.meta.common import (
 )
 from orchestrator.models.meta.core import (
     CoreComponent,
-    CoreComponentConfig,
     CoreComponentType,
-    PLMNSupportItem,
+    NSSFConfig,
 )
 from orchestrator.models.meta.ran import (
     RANComponent,
-    RANComponentConfig,
     RANComponentType,
 )
 from orchestrator.models.meta.ru import RU, RUType
 from orchestrator.models.meta.slice import Slice
-from orchestrator.models.meta.ue import UEType
+from orchestrator.models.meta.ue import UE, UEType
 from orchestrator.utils.common import (
     InvalidResourceStateError,
     ReferenceNotFounError,
@@ -108,57 +106,158 @@ def resolve_ru_reference(
     )
 
 
+def resolve_snssai_reference(
+        component_name: str,
+        component_meta: Component5G,
+        slices: dict[str, Slice],
+        value: Slice | str,
+        field_name: str,
+    ) -> Slice:
+    """Resolve a single slice reference by name."""
+
+    if isinstance(value, Slice):
+        return value
+
+    if value in slices:
+        return slices[value]
+
+    raise ReferenceNotFounError(
+        f"{component_meta.category.value.capitalize()} component "
+        f"{component_name!r} references undefined slice {value!r} "
+        f"in {field_name!r}."
+    )
+
+
 def resolve_snssai_list(
         component_name: str,
-        component_meta: CoreComponent | RANComponent,
+        component_meta: Component5G,
         slices: dict[str, Slice],
-        config: CoreComponentConfig | RANComponentConfig | PLMNSupportItem | None = None,
+        config: Any,
     ) -> None:
-    """Resolve slices references by name in 'snssai_list' field of 5G components."""
+    """Resolve slice references by name in an S-NSSAI list."""
 
-    if config is None:
-        config = component_meta.config
     if hasattr(config, "snssaiList"):
         snssai_list: list[Slice | str] = config.snssaiList
-        for i in range(len(snssai_list)):
-            slice_name = snssai_list[i]
-            if isinstance(slice_name, str):
-                if slices.get(slice_name):
-                    config.snssaiList[i] = slices[slice_name]
-                else:
-                    raise ReferenceNotFounError(f"{component_meta.category.value.capitalize()} component "
-                                                f"{component_name!r} refrences undefined slice {slice_name!r} in 'snssaiList'.")
+
+        for i, snssai in enumerate(snssai_list):
+            config.snssaiList[i] = resolve_snssai_reference(
+                component_name=component_name,
+                component_meta=component_meta,
+                slices=slices,
+                value=snssai,
+                field_name="snssaiList",
+            )
 
 
 def resolve_plmn_list(        
         component_name: str,
-        component_meta: CoreComponent | RANComponent,
+        component_meta: Component5G,
         slices: dict[str, Slice],
     ) -> None:
-    """Resolve slices references by name in 'plmn_list' field of 5G components."""
+    """Resolve slices references by name in 'plmnList' field of 5G components."""
 
     config = component_meta.config
-    if hasattr(config, "plmnList"):
-        plmn_list: list[PLMNSupportItem] = config.plmnList
-        for plmn_item in plmn_list:
+
+    for plmn_item in config.plmnList:
+        resolve_snssai_list(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+            config=plmn_item,
+        )
+
+
+def resolve_nssf_slices(
+        component_name: str,
+        component_meta: CoreComponent,
+        slices: dict[str, Slice],
+    ) -> None:
+    """Resolve slice references in an NSSF component configuration."""
+
+    config = component_meta.config
+
+    if not isinstance(config, NSSFConfig):
+        return
+
+    # nsiInfoList[*].snssai
+    for nsi_info in config.nsiInfoList:
+        nsi_info.snssai = resolve_snssai_reference(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+            value=nsi_info.snssai,
+            field_name="nsiInfoList.snssai",
+        )
+
+    # taInfoList[*]
+    for ta_info in config.taInfoList:
+        resolve_snssai_list(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+            config=ta_info,
+        )
+
+        resolve_snssai_list(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+            config=ta_info.restrictedSnssaiList,
+        )
+
+    # amfInfoList[*].amfList[*]
+    for amf_info_set in config.amfInfoList:
+        for amf_info in amf_info_set.amfList:
             resolve_snssai_list(
                 component_name=component_name,
                 component_meta=component_meta,
                 slices=slices,
-                config=plmn_item,
+                config=amf_info.supportedNssaiAvailabilityData,
             )
+
+
+def resolve_ue_slices_dnns(
+        component_name: str,
+        component_meta: UE,
+        slices: dict[str, Slice],
+    ) -> None:
+    """Resolve UE slices and DNNs."""
+
+    ue_config = component_meta.config
+
+    for subscription in ue_config.subscriptions:
+        subscription.snssai = resolve_snssai_reference(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+            value=subscription.snssai,
+            field_name="subscription.snssai",
+        )
+
+        if isinstance(subscription.dnn, str):
+            subscription_dnn = subscription.snssai.dnns.get(subscription.dnn)
+            if subscription_dnn is None:
+                raise ReferenceNotFounError(f"UE {component_name!r} references undefined DNN {subscription.dnn!r}.")
+
+            subscription.dnn = subscription_dnn
 
 
 def resolve_component_slices(        
         component_name: str,
-        component_meta: CoreComponent | RANComponent,
+        component_meta: Component5G,
         slices: dict[str, Slice],
     ) -> None:
     """Resolve slice references in 5G components."""
 
     args = {"component_name": component_name, "component_meta": component_meta, "slices": slices}
-    resolve_snssai_list(**args)
-    resolve_plmn_list(**args)
+    if component_meta.type is CoreComponentType.NSSF:
+        resolve_nssf_slices(**args)
+    if component_meta.type in [CoreComponentType.SMF, CoreComponentType.UPF]:
+        resolve_snssai_list(**args, config=component_meta.config)
+    if component_meta.type in [CoreComponentType.AMF, CoreComponentType.NRF] or component_meta.category is Category5G.RAN:
+        resolve_plmn_list(**args)
+    if component_meta.category is Category5G.UE:
+        resolve_ue_slices_dnns(**args)
 
 
 def populate_default_images(
@@ -211,19 +310,18 @@ def reconcile_5g_component(
         component_name: str,
         component_meta: Component5G,
         component_k8s: K8SComponent,
-        slices: dict[str, Slice] | None = None,
+        slices: dict[str, Slice],
     ) -> None:
     """
     Ensure the 5G component Kubernetes deployment model is ready for deployment.
     Is slices is None, slices name references are not resolved.
     """
 
-    if slices: # UEs should resolve their slices references differently
-        resolve_component_slices(
-            component_name=component_name,
-            component_meta=component_meta,
-            slices=slices,
-        )
+    resolve_component_slices(
+        component_name=component_name,
+        component_meta=component_meta,
+        slices=slices,
+    )
 
     populate_default_images(
         component_name=component_name,

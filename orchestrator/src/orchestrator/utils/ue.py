@@ -6,11 +6,11 @@ from orchestrator.models.deployment.provisioning import ProvisionableRU
 from orchestrator.models.deployment.ue import UEDeployment
 from orchestrator.models.meta.ran import DUComponent, GNBComponent
 from orchestrator.models.meta.ru import RU
-from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEType
 from orchestrator.utils.common import ReferenceNotFounError
 from orchestrator.utils.common_5g import (
     K8SComponent,
+    Slice,
     reconcile_5g_component,
     resolve_component_reference,
     resolve_ru_reference,
@@ -67,30 +67,6 @@ def resolve_gnb_reference(
             raise ReferenceNotFounError(f"UE {ue_name!r} references gNB {gnb_reference!r} with unresolved network information.")
 
 
-def resolve_slices_dnns(
-        ue_name: str,
-        ue_meta: UE,
-        slices: dict[str, Slice],
-    ) -> None:
-    """Resolve UE slices and DNNs."""
-
-    ue_config = ue_meta.config
-    for subscription in ue_config.subscriptions:
-        if isinstance(subscription.snssai, str):
-            subscription_slice = slices.get(subscription.snssai)
-            if subscription_slice is None:
-                raise ReferenceNotFounError(f"UE {ue_name!r} references undefined slice {subscription.slice!r}.")
-
-            subscription.snssai = subscription_slice
-
-        if isinstance(subscription.dnn, str):
-            subscription_dnn = subscription.snssai.dnns.get(subscription.dnn)
-            if subscription_dnn is None:
-                raise ReferenceNotFounError(f"UE {ue_name!r} references undefined DNN {subscription.dnn!r}.")
-
-            subscription.dnn = subscription_dnn
-
-
 def reconcile_ues(
         ues_meta: dict[str, UE],
         ues_k8s: dict[str, UEDeployment],
@@ -103,11 +79,6 @@ def reconcile_ues(
     """Ensure UEs are ready to be managed by resolving their configs."""
 
     for name, ue_meta in ues_meta.items():
-        resolve_slices_dnns(
-            ue_name=name,
-            ue_meta=ue_meta,
-            slices=slices,
-        )
 
         if ue_meta.type is UEType.CONTAINERIZED:
             resolve_gnb_reference(
@@ -128,6 +99,7 @@ def reconcile_ues(
                 component_name=name,
                 component_meta=ue_meta,
                 component_k8s=ues_k8s[name], # ues meta and deployment keys should be synced by this point
+                slices=slices,
             )
 
             # derive implementation-specific radio paramaters for ue after ru name reference resolution

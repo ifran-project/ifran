@@ -13,11 +13,13 @@ spec:
   clusterIP: None
   {{- end }}{{ end }}
   ports:
-    - name: http
-      # Port accessible outside cluster
-      port: {{ .Values.exposedPorts.sbi }}
-      # Port to forward to inside the pod
-      targetPort: {{ .Values.exposedPorts.sbi }}
-      protocol: TCP
+    {{- range $name, $port := .Values.exposedPorts }}
+    - name: {{ $name }}
+      port: {{ $port.port }}
+      targetPort: {{ $port.port }}
+      {{- if $port.protocol }}
+      protocol: {{ $port.protocol }}
+      {{- end }}
+    {{- end }}
   selector:
     {{- include "oai-ausf.selectorLabels" . | nindent 4 }}

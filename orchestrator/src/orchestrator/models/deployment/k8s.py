@@ -404,5 +404,5 @@ class K8SComponent(BlueprintBaseModel):
         """Ensure insatlled component has network status."""
 
         if self.is_installed and self.network_info is None:
-            raise ValueError(f"Component {self.name!r} is installed but has no 'network_status'.")
+            raise ValueError("Component is installed but has no 'network_status'.")
         return self

@@ -9,7 +9,8 @@ metadata:
     app: {{ .Release.Name }}
 data:
   {{ (.Files.Glob "config.yaml").AsConfig | indent 2 | trim }}
-  {{ (.Files.Glob "scripts/nssf_slice_config.yaml").AsConfig | indent 2 | trim }}
+  nssf_slice_config.yaml: |
+{{ .Values.nssf_slice_config | nindent 4 }}
 {{- else }}
 apiVersion: v1
 kind: ConfigMap
@@ -18,5 +19,6 @@ metadata:
   labels:
     app: {{ .Release.Name }}
 data:
-  {{ (.Files.Glob "scripts/nssf_slice_config.yaml").AsConfig | indent 2 | trim }}
+  nssf_slice_config.yaml: |
+{{ .Values.nssf_slice_config | nindent 4 }}
 {{- end }}

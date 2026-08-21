@@ -14,7 +14,7 @@ class ProvisioningManagement(BaseBlueprintManagement):
 
     async def run_action(
             self,
-            action: Literal["provision", "unprovision"] = "provision",
+            action: Literal["provision", "unprovision"],
             resources: dict[Literal['nodes', 'rus', 'ues'], list[str]] | None = None,
             force: bool = False,
             ignore_invalid_states: bool = True,

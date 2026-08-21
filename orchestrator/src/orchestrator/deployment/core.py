@@ -18,8 +18,21 @@ from orchestrator.utils.core import (
 )
 
 CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
-    CoreComponentType.AMF: frozenset({CoreComponentType.NRF, CoreComponentType.UDM}),
-    CoreComponentType.SMF: frozenset({CoreComponentType.NRF, CoreComponentType.UDM}),
+    CoreComponentType.AMF: frozenset({
+        CoreComponentType.NRF,
+        CoreComponentType.UDM,
+        CoreComponentType.UDR
+    }),
+    CoreComponentType.AUSF: frozenset({
+        CoreComponentType.NRF,
+        CoreComponentType.UDM,
+        CoreComponentType.UDR
+    }),
+    CoreComponentType.SMF: frozenset({
+        CoreComponentType.NRF,
+        CoreComponentType.UDM,
+        CoreComponentType.UDR
+    }),
 }
 
 

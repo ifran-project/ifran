@@ -228,3 +228,108 @@ annotations:
 {% else %}
   {}
 {% endif %}
+
+nssf_slice_config: |
+  # SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
+  # Reference:- TS 29.531 R16.0.0., Section- 6.1.6 Data Model
+
+  info:
+    version: 1.4.0
+    description: OAI-NSSF Release v1.4.0
+
+  configuration:
+    nsiInfoList:
+{% for nsi_info in component.config.nsiInfoList %}
+      - snssai:
+          sst: {{ nsi_info.snssai.sst }}
+{% if nsi_info.snssai.sd %}
+          sd: '{{ nsi_info.snssai.sd }}'
+{% endif %}
+        nsiInformationList:
+          nrfId: {{ nsi_info.nsiInformationList.nrfId }}
+          nsiId: '{{ nsi_info.nsiInformationList.nsiId }}'
+{% if nsi_info.nsiInformationList.nrfNfMgtUri %}
+          nrfNfMgtUri: {{ nsi_info.nsiInformationList.nrfNfMgtUri }}
+{% endif %}
+{% endfor %}
+
+    taInfoList:
+{% for ta_info in component.config.taInfoList %}
+      - tai:
+          plmnId:
+            mcc: '{{ ta_info.tai.plmnId.mcc }}'
+            mnc: '{{ ta_info.tai.plmnId.mnc }}'
+          tac: '{{ ta_info.tai.tac }}'
+        supportedSnssaiList:
+{% for snssai in ta_info.snssaiList %}
+        - sst: {{ snssai.sst }}
+{% if snssai.sd %}
+          sd: '{{ snssai.sd }}'
+{% endif %}
+{% endfor %}
+{% if ta_info.restrictedSnssaiList %}
+        restrictedSnssaiList:
+{% for restricted in ta_info.restrictedSnssaiList %}
+        - homePlmnId:
+            mcc: {{ restricted.homePlmnId.mcc }}
+            mnc: {{ restricted.homePlmnId.mnc }}
+          sNssaiList:
+{% for snssai in restricted.snssaiList %}
+          - sst: {{ snssai.sst }}
+{% if snssai.sd %}
+            sd: '{{ snssai.sd }}'
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+    amfInfoList:
+{% for amf_info in component.config.amfInfoList %}
+      - targetAmfSet: {{ amf_info.targetAmfSet }}
+        nrfAmfSet: {{ amf_info.nrfAmfSet }}
+        nrfAmfSetNfMgtUri: {{ amf_info.nrfAmfSetNfMgtUri }}
+        amfList:
+{% for amf in amf_info.amfList %}
+          - nfId: {{ amf.nfId }}
+            supportedNssaiAvailabilityData:
+              tai:
+                plmnId:
+                  mcc: {{ amf.supportedNssaiAvailabilityData.tai.plmnId.mcc }}
+                  mnc: {{ amf.supportedNssaiAvailabilityData.tai.plmnId.mnc }}
+                tac: {{ amf.supportedNssaiAvailabilityData.tai.tac }}
+              supportedSnssaiList:
+{% for snssai in amf.supportedNssaiAvailabilityData.snssaiList %}
+                - sst: {{ snssai.sst }}
+{% if snssai.sd %}
+                  sd: '{{ snssai.sd }}'
+{% endif %}
+{% endfor %}
+{% if amf.supportedNssaiAvailabilityData.taiList %}
+              taiList:
+{% for tai_info in amf.supportedNssaiAvailabilityData.taiList %}
+                - tai:
+                    plmnId:
+                      mcc: {{ tai_info.tai.plmnId.mcc }}
+                      mnc: {{ tai_info.tai.plmnId.mnc }}
+                    tac: {{ tai_info.tai.tac }}
+                  supportedSnssaiList:
+{% for snssai in tai_info.snssaiList %}
+                  - sst: {{ snssai.sst }}
+{% if snssai.sd %}
+                    sd: '{{ snssai.sd }}'
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+    plmnInfoList:
+{% for plmn_info in component.config.plmnInfoList %}
+      - operatorName: {{ plmn_info.operatorName }}
+        homePlmnId:
+          mcc: '{{ plmn_info.homePlmnId.mcc }}'
+          mnc: '{{ plmn_info.homePlmnId.mnc }}'
+{% endfor %}

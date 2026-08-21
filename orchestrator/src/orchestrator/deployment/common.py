@@ -1,4 +1,4 @@
-"""Common deployment management classes and utilities."""
+"""Common deployment management class and utilities."""
 
 import json
 from collections import defaultdict
@@ -29,11 +29,8 @@ class BaseBlueprintManagement:
     """Base class for the 5G blueprint deployment lifecycle management classes."""
 
     def __init__(self, metamodel: MetaModel, deployment_model: DeploymentModel) -> None:
-        self.metamodel = metamodel.model_copy(deep=True)
 
-        # original metamodel should not be mutated to maintain integrity
-        # use a mutable one that will be used to resolve references and prepare for deployment
-        self.mutatable_metamodel = metamodel.model_copy(deep=True)
+        self.metamodel = metamodel.model_copy(deep=True)
 
         # deployment model is allowed to mutate to keep track of changes
         self.deployment_model = deployment_model.model_copy(deep=True)
@@ -83,6 +80,10 @@ class BaseBlueprintManagement:
             source_dict=self.metamodel.rics,
             default_factory=RICDeployment,
         )
+
+        # original metamodel should not be mutated to maintain integrity
+        # use a mutable one that will be used to resolve references and prepare for deployment
+        self.mutatable_metamodel = self.metamodel.model_copy(deep=True)
 
 
     def output(self) -> tuple[MetaModel, DeploymentModel]:

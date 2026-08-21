@@ -17,12 +17,13 @@ from orchestrator.utils.common import InvalidResourceStateError
 from orchestrator.utils.common_5g import reconcile_5g_component
 
 
+# wrapper function that might be extended later
 def reconcile_core_component(
         component_name: str,
         component_meta: CoreComponent,
         component_k8s: K8SComponent,
         slices: dict[str, Slice],
-    ) -> None: # wrapper function that might be extended later
+    ) -> None:
     """Ensure the core component deployment model and meta model are ready for deployment."""
 
     reconcile_5g_component(
