@@ -25,15 +25,15 @@ RAN_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
 class RANManagement(HelmManagement):
     """RAN deployemnt lifecycle management class."""
 
-    def reconcile(self):
+    def reconcile(self) -> None:
         """Ensure the 5G RAN is ready for deployement by resolving its components' configs."""
 
         super().reconcile()
 
         # get amfs from metamodel
-        amfs = get_5g_components_by_type(self.metamodel.core).get(CoreComponentType.AMF, {})
+        amfs = get_5g_components_by_type(self.metamodel.core.components).get(CoreComponentType.AMF, {})
 
-        # get amfs from deployment model (keys of meta and deployment models should be in sync at this point)
+        # get amfs from deployment model (keys of meta and deployment models should be in sync by this point)
         amfs_deployment = {k: self.deployment_model.core_deployment.components[k] for k, v in amfs.items()}
 
         reconcile_ran(
@@ -49,12 +49,12 @@ class RANManagement(HelmManagement):
 
 
     async def run_action(
-        self,
-        action: Literal["prepare", "install", "uninstall"],
-        components: list[str] | None = None,
-        node: str | None = None,
-        **kwargs,
-        ):
+            self,
+            action: Literal["prepare", "install", "uninstall"],
+            components: list[str] | None = None,
+            node: str | None = None,
+            **kwargs,
+        ) -> None:
         """Run Helm action on RAN components."""
 
         await super().run_action(
@@ -66,17 +66,17 @@ class RANManagement(HelmManagement):
         )
 
 
-    async def prepare(self, components: list[str] | None = None, **kwargs):
+    async def prepare(self, components: list[str] | None = None, **kwargs) -> None:
         """Prepare Helm charts for 5G core components."""
         await self.run_action(action="prepare", components=components, **kwargs)
 
 
-    async def install(self, components: list[str] | None = None, **kwargs):
+    async def install(self, components: list[str] | None = None, **kwargs) -> None:
         """Install 5G core components via Helm."""
         await self.run_action(action="install", components=components, **kwargs)
 
 
-    async def uninstall(self, components: list[str] | None = None, **kwargs):
+    async def uninstall(self, components: list[str] | None = None, **kwargs) -> None:
         """Uninstall 5G core components via Helm."""
         await self.run_action(action="uninstall", components=components, **kwargs)
 
@@ -85,7 +85,7 @@ class RANManagement(HelmManagement):
             self,
             order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
             **kwargs,
-        ):
+        ) -> None:
         """Orchestrate full RAN deployment."""
 
         # prepare everything
@@ -96,6 +96,6 @@ class RANManagement(HelmManagement):
 
 
     # only for naming consistency
-    async def remove(self, **kwargs):
+    async def remove(self, **kwargs) -> None:
         """Remove/tear down RAN deployment."""
         await self.uninstall(**kwargs),

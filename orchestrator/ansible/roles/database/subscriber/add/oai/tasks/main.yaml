@@ -7,13 +7,6 @@
 
 # Output: None
 ---
-- name: Ensure necessary dependency 'python3-pymysql' is installed
-  ansible.builtin.apt:
-    name:
-    - python3-pymysql
-    state: present
-    update_cache: true
-
 - name: Add authentication subscription for UE '{{ ue_name }}' on OAI database
   community.mysql.mysql_query:
     login_host: "{{ database_ip }}"

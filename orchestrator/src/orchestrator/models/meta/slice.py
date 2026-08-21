@@ -3,6 +3,7 @@
 import re
 from enum import StrEnum, auto
 from ipaddress import IPv4Network
+from typing import Any
 
 from pydantic import Field, IPvAnyNetwork, field_serializer, field_validator
 
@@ -99,7 +100,7 @@ class BitRate(BlueprintBaseModel):
 
     @field_validator("uplink", "downlink", mode="before")
     @classmethod
-    def parse_bitrate(cls, value: int | str) -> int:
+    def parse_bitrate(cls, value: int | str) -> int | Any:
         """Convert a bitrate string to integer bits per second."""
 
         if isinstance(value, int):
@@ -243,7 +244,7 @@ class SNSSAI(BlueprintBaseModel):
 
     @field_validator("sd", mode="before")
     @classmethod
-    def normalize_sd(cls, value):
+    def normalize_sd(cls, value) -> int | Any:
         """Convert SD hexadecimal strings to integers."""
 
         return parse_hex_int(value)
@@ -273,7 +274,7 @@ class Slice(SNSSAI):
 
     @field_validator("dnns", mode="before")
     @classmethod
-    def populate_dnn_names(cls, value):
+    def populate_dnn_names(cls, value) -> dict[str, Any] | Any:
         """Populate dnn names with dnns dict keys before validation."""
 
         if isinstance(value, dict):

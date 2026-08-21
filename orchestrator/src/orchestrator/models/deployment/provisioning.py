@@ -357,7 +357,7 @@ class ProvisionableResource(BlueprintBaseModel):
 class ProvisionableNode(ProvisionableResource):
     """Node provisioning."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
+    category: Literal[ProvisioningCategory.NODE] = Field(default=ProvisioningCategory.NODE, frozen=True)
 
     provisioner: str = Field(default="bi")
     """Node provisioner's name."""
@@ -375,7 +375,7 @@ class ProvisionableNode(ProvisionableResource):
 class ProvisionableRU(ProvisionableResource):
     """Radio Unit (RU) provisionig."""
 
-    category: Literal[ProvisioningCategory.RU] = Field(frozen=True)
+    category: Literal[ProvisioningCategory.RU] = Field(default=ProvisioningCategory.RU, frozen=True)
 
     provisioner: str = Field(default="r2lab")
     """RU provisioner's name."""
@@ -384,7 +384,7 @@ class ProvisionableRU(ProvisionableResource):
 class ProvisionableUE(ProvisionableResource):
     """User Equipment (UE) provisionig."""
 
-    category: Literal[ProvisioningCategory.UE] = Field(frozen=True)
+    category: Literal[ProvisioningCategory.UE] = Field(default=ProvisioningCategory.UE, frozen=True)
 
     provisioner: str = Field(default="r2lab")
     """UE provisioner's name."""

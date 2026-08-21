@@ -1,4 +1,4 @@
-
+"""Provisioning utilities and helpers."""
 
 import asyncio
 import os
@@ -45,7 +45,7 @@ def resolve_provisioner(
         resource_name: str,
         resource_data: ProvisionableResource,
         provisioners: dict[str, Provisioner],
-        ) -> Provisioner:
+    ) -> Provisioner:
     """Resolve resource provisioner and merge provisioning parameters."""
 
     if resource_data.provisioner is None:
@@ -72,7 +72,7 @@ async def run_single_provisioning_action(
         provisioning_params: dict[str, Any],
         ansible_params: AnsibleParams,
         force: bool = False,
-        ):
+    ) -> None:
     """Run the Ansible role of the provisioner corresponding to the given action on a single resource."""
 
     if not force and (
@@ -97,7 +97,7 @@ async def run_single_provisioning_action(
         "role": f"provisioning/{provisioner.category.value}/{provisioner.type.value}/{action}",
         "inputs": {
             "resource_name": resource_name,
-            **merged_prov_params.model_dump(mode="json")
+            **merged_prov_params.model_dump(mode="json"),
         },
         "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}} if merged_prov_params.extra_path else None,
         "output_keys": ["ssh_info"] if action == "provision" else None,
@@ -131,7 +131,7 @@ async def run_parallel_provisioning_action(
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
-        ):
+    ) -> None:
     """Provision or unprovision action on provided provisionable resources in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}

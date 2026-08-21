@@ -7,6 +7,8 @@ from orchestrator.models.deployment.k8s import (
     ExposedPort,
     K8SComponent,
 )
+from orchestrator.models.deployment.provisioning import ProvisionableRU
+from orchestrator.models.deployment.ric import RICType
 from orchestrator.models.meta.common import (
     EXPOSED_COMPONENT_INTERFACES,
     Category5G,
@@ -14,21 +16,19 @@ from orchestrator.models.meta.common import (
     TransportEndpoint,
 )
 from orchestrator.models.meta.core import (
-    Core,
     CoreComponent,
     CoreComponentConfig,
     CoreComponentType,
     PLMNSupportItem,
 )
 from orchestrator.models.meta.ran import (
-    RAN,
     RANComponent,
     RANComponentConfig,
     RANComponentType,
 )
 from orchestrator.models.meta.ru import RU, RUType
 from orchestrator.models.meta.slice import Slice
-from orchestrator.models.meta.ue import UE
+from orchestrator.models.meta.ue import UEType
 from orchestrator.utils.common import (
     InvalidResourceStateError,
     ReferenceNotFounError,
@@ -36,6 +36,7 @@ from orchestrator.utils.common import (
 from orchestrator.utils.defaults import (
     DEFAULT_CORE_IMAGES,
     DEFAULT_RAN_IMAGES,
+    DEFAULT_UE_IMAGES,
     POD_PRIVELEGES,
 )
 
@@ -47,7 +48,7 @@ def resolve_component_reference(
         registry: dict[str, Any],
         ready_attribute: str | None = None,
         value_attribute: str | None = None,
-        ):
+    ) -> None:
     """Resolve a single string reference on a component config."""
 
     # skip if component doesn't have 'ref_attribute' or is None
@@ -62,7 +63,7 @@ def resolve_component_reference(
     target = registry.get(reference)
 
     if target is None:
-        raise ReferenceNotFounError(f"{component_meta.category.value.capitalize()} component {component_name!r} "
+        raise ReferenceNotFounError(f"{component_meta.category.value.upper()} component {component_name!r} "
                                     f"refrences undefined {ref_attribute.upper()} {reference!r}.")
 
     # optionally verify that the referenced target is ready via 'ready_attribute' if it is True
@@ -75,12 +76,44 @@ def resolve_component_reference(
     setattr(component_meta.config, ref_attribute, value)
 
 
+class _TempMergedRU(ProvisionableRU):
+    """RU merged model to temporarily resolve the RU reference."""
+    resolved_reference: RU
+
+
+def resolve_ru_reference(
+        component_name: str,
+        component_meta: K8SComponent,
+        rus_meta: dict[str, RU],
+        rus_provisioning: dict[str, ProvisionableRU],
+    ) -> None:
+    """Resolve RU name reference in a 5G component."""
+
+    # merge rus (we need the meta for ran config parameters and provisioning for readiness state)
+    rus: dict[str, _TempMergedRU] = {}
+    for ru_name, ru_meta in rus_meta.items():
+        if ru_meta.type is RUType.SIMULATED:
+            ru_prov = {"is_provisioned": True} # simulated rus are not part of deployment model, so we just consider them as "provisioned"
+        else:
+            ru_prov = rus_provisioning[ru_name].model_dump(mode="json") # ru_meta and rus_provisioning are supposed to be synchronized by this point
+        rus[ru_name] = _TempMergedRU.model_validate({**ru_prov, "resolved_reference": ru_meta})
+
+    resolve_component_reference(
+        component_name=component_name,
+        component_meta=component_meta,
+        ref_attribute="ru",
+        registry=rus,
+        ready_attribute="is_provisioned",
+        value_attribute="resolved_reference",
+    )
+
+
 def resolve_snssai_list(
         component_name: str,
         component_meta: CoreComponent | RANComponent,
         slices: dict[str, Slice],
         config: CoreComponentConfig | RANComponentConfig | PLMNSupportItem | None = None,
-        ):
+    ) -> None:
     """Resolve slices references by name in 'snssai_list' field of 5G components."""
 
     if config is None:
@@ -101,7 +134,7 @@ def resolve_plmn_list(
         component_name: str,
         component_meta: CoreComponent | RANComponent,
         slices: dict[str, Slice],
-        ):
+    ) -> None:
     """Resolve slices references by name in 'plmn_list' field of 5G components."""
 
     config = component_meta.config
@@ -120,7 +153,7 @@ def resolve_component_slices(
         component_name: str,
         component_meta: CoreComponent | RANComponent,
         slices: dict[str, Slice],
-        ):
+    ) -> None:
     """Resolve slice references in 5G components."""
 
     args = {"component_name": component_name, "component_meta": component_meta, "slices": slices}
@@ -132,7 +165,7 @@ def populate_default_images(
         component_name: str,
         component_meta: Component5G,
         component_k8s: K8SComponent,
-    ):
+    ) -> None:
     """Populate 5G component image from default images."""
 
     # if not implementation is defined raise an error
@@ -142,26 +175,32 @@ def populate_default_images(
             f"has no defined {component_meta.category.value} implementation."
         )
 
-    if (
-        component_meta.category is Category5G.CORE and
-        component_k8s.image is None and
-        DEFAULT_CORE_IMAGES.get(component_meta.implementation)
-        ):
-            component_k8s.image = DEFAULT_CORE_IMAGES.get(component_meta.implementation, {}
-                                                          ).get(component_meta.type)
+    match component_meta.category:
+        case Category5G.CORE:
+            if component_k8s.image is None and DEFAULT_CORE_IMAGES.get(component_meta.implementation):
+                component_k8s.image = DEFAULT_CORE_IMAGES.get(component_meta.implementation, {}
+                                                              ).get(component_meta.type)
 
+        case Category5G.RAN:
+            # for RAN components, RU is supposed to be resolved before this
+            config = component_meta.config
+            if hasattr(config, "ru") and isinstance(config.ru, RU):
+                ru_type = config.ru.type
+            else:
+                # NOTE CUs, CU-CPs and CU-UPs dont have and ru field, so give them simulated one for simplicity
+                ru_type = RUType.SIMULATED
 
-    if component_meta.category is Category5G.RAN:
-        # for RAN components, RU is supposed to be resolved before this
-        # NOTE CUs, CU-CPs and CU-UPs dont have and ru field, so give them simulated one instead
-        config = component_meta.config
-        if hasattr(config, "ru") and isinstance(config.ru, RU):
-            ru_type = config.ru.type
-        else:
-            ru_type = RUType.SIMULATED
+                component_k8s.image = DEFAULT_RAN_IMAGES.get(component_meta.implementation, {}
+                                                            ).get(ru_type, {}).get(component_meta.type)
 
-            component_k8s.image = DEFAULT_RAN_IMAGES.get(component_meta.implementation, {}
-                                                         ).get(ru_type, {}).get(component_meta.type)
+        case Category5G.UE:
+            if component_k8s.image is None and DEFAULT_UE_IMAGES.get(component_meta.implementation):
+                component_k8s.image = DEFAULT_UE_IMAGES.get(component_meta.implementation, {}
+                                                              ).get(component_meta.type)
+
+        case Category5G.RIC:
+            # TODO
+            pass
 
     # if not default image is available, it stays None but is required
     if component_k8s.image is None:
@@ -172,15 +211,19 @@ def reconcile_5g_component(
         component_name: str,
         component_meta: Component5G,
         component_k8s: K8SComponent,
-        slices: dict[str, Slice],
-    ):
-    """Ensure the 5G component Kubernetes deployment model is ready for deployment."""
+        slices: dict[str, Slice] | None = None,
+    ) -> None:
+    """
+    Ensure the 5G component Kubernetes deployment model is ready for deployment.
+    Is slices is None, slices name references are not resolved.
+    """
 
-    resolve_component_slices(
-        component_name=component_name,
-        component_meta=component_meta,
-        slices=slices,
-    )
+    if slices: # UEs should resolve their slices references differently
+        resolve_component_slices(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+        )
 
     populate_default_images(
         component_name=component_name,
@@ -202,7 +245,7 @@ def reconcile_5g_component(
 
     component_k8s.node_selector = selector
 
-    # add exposed interfaces (unecessary for now but might be useful later)
+    # add exposed interfaces (used only to document k8s pod for now but might be useful later)
     for iface in EXPOSED_COMPONENT_INTERFACES.get(component_meta.category, []):
         if hasattr(component_meta.config, iface) and getattr(component_meta.config, iface) is not None: # some might be None
             iface_meta: TransportEndpoint = getattr(component_meta.config, iface)
@@ -216,35 +259,13 @@ def reconcile_5g_component(
                                                                   ).get(component_meta.type)
 
 
-def resolve_ue_slices_dnns(
-        ue_name: str,
-        ue_meta: UE,
-        slices: dict[str, Slice],
-        ):
-    """Resolve UE slices and DNNs."""
-
-    ue_config = ue_meta.config
-    for subscription in ue_config.subscriptions:
-        if isinstance(subscription.snssai, str):
-            subscription_slice = slices.get(subscription.snssai)
-            if subscription_slice is None:
-                raise ReferenceNotFounError(f"UE {ue_name!r} references undefined slice {subscription.slice!r}.")
-
-            subscription.snssai = subscription_slice
-
-        if isinstance(subscription.dnn, str):
-            subscription_dnn = subscription.snssai.dnns.get(subscription.dnn)
-            if subscription_dnn is None:
-                raise ReferenceNotFounError(f"UE {ue_name!r} references undefined DNN {subscription.dnn!r}.")
-
-            subscription.dnn = subscription_dnn
-
-
-def get_5g_components_by_type(network5g: Core | RAN) -> dict[CoreComponentType | RANComponentType, dict[str, CoreComponent | RANComponent]]:
-    """Get 5G components by their type from core or ran."""
+def get_5g_components_by_type(
+        components: dict[str, Component5G]
+    ) -> dict[CoreComponentType | RANComponentType | UEType | RICType, dict[str, Component5G]]:
+    """Get 5G components (core, ran, ues, rics) by their type."""
 
     groups = defaultdict(dict)
-    for c_name, c_data  in network5g.components.items():
+    for c_name, c_data  in components.items():
         groups[c_data.type][c_name] = c_data
 
     return groups

@@ -1,5 +1,8 @@
 # Role to prepare/render Helm chart on Kubernetes cluster
 
+# Assumes that {{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }} exists in files and in templates
+# e.g. core/oai/oai-amf
+
 # Input:
 # - component_name: str
 # - component: K8S5GComponent

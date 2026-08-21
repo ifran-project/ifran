@@ -1,9 +1,11 @@
 """Common models."""
 
 import json
+from typing import Annotated, Any, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, PlainSerializer, WithJsonSchema
+from pydantic_core import core_schema
 
 
 class BlueprintBaseModel(BaseModel):
@@ -12,23 +14,23 @@ class BlueprintBaseModel(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     @classmethod
-    def from_json(cls, text: str):
+    def from_json(cls, text: str) -> Self:
         """Load model from JSON."""
         return cls.model_validate_json(text)
 
     @classmethod
-    def from_yaml(cls, text: str):
+    def from_yaml(cls, text: str) -> Self:
         """Load model from YAML."""
         return cls.model_validate(yaml.safe_load(text))
 
     @classmethod
-    def from_json_file(cls, path: str):
+    def from_json_file(cls, path: str) -> Self:
         """Load model from JSON file."""
         with open(path, encoding="utf-8") as f:
             return cls.model_validate(json.load(f))
 
     @classmethod
-    def from_yaml_file(cls, path: str):
+    def from_yaml_file(cls, path: str) -> Self:
         """Load model from YAML file."""
         with open(path, encoding="utf-8") as f:
             return cls.model_validate(yaml.safe_load(f))
@@ -51,11 +53,11 @@ class BlueprintBaseModel(BaseModel):
 class BlueprintTolerantBaseModel(BlueprintBaseModel):
     """5G blueprint basemodel with extra fields tolerance."""
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
 
 # utils
-def parse_hex_int(value: int | str) -> int:
+def parse_hex_int(value: str | Any) -> int | Any:
     """Convert an integer or hexadecimal string to an integer."""
 
     if isinstance(value, str):
@@ -69,3 +71,53 @@ def serialize_hex_int(value: int | None, width: int) -> str | None:
     if value is None:
         return None
     return f"{value:0{width}X}"
+
+
+def serialize_libconfig_scalar(value: Any) -> str:
+    """Serialize a scalar Python value to libconfig syntax."""
+
+    if isinstance(value, bool):
+        return "true" if value else "false"
+
+    if isinstance(value, str):
+        escaped = (
+            value
+            .replace("\\", "\\\\")
+            .replace('"', '\\"')
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+        )
+        return f'"{escaped}"'
+
+    if value is None:
+        return "NULL"
+
+    return str(value)
+
+
+def serialize_libconfig(value: Any) -> str:
+    """Serialize Python data to libconfig syntax."""
+
+    if isinstance(value, dict):
+        fields = "; ".join(
+            f"{key} = {serialize_libconfig(child)}"
+            for key, child in value.items()
+        )
+
+        return f"{{ {fields}; }}"
+
+    if isinstance(value, list):
+        values = ", ".join(serialize_libconfig(item) for item in value)
+
+        return f"( {values} )"
+
+    return serialize_libconfig_scalar(value)
+
+
+type SerializableLibconfigDict = Annotated[
+    dict[str, Any],
+    PlainSerializer(serialize_libconfig, return_type=str),
+    WithJsonSchema({'type': 'string'}, mode='serialization'),
+]
+"""Python dictionary type for Pydantic that can be serialized into a libconfig block."""

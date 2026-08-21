@@ -28,7 +28,7 @@ from orchestrator.utils.common import deep_merge, sync_dict_keys
 class BaseBlueprintManagement:
     """Base class for the 5G blueprint deployment lifecycle management classes."""
 
-    def __init__(self, metamodel: MetaModel, deployment_model: DeploymentModel):
+    def __init__(self, metamodel: MetaModel, deployment_model: DeploymentModel) -> None:
         self.metamodel = metamodel.model_copy(deep=True)
 
         # original metamodel should not be mutated to maintain integrity
@@ -42,7 +42,7 @@ class BaseBlueprintManagement:
         self.reconcile()
 
 
-    def reconcile(self):
+    def reconcile(self) -> None:
         """
         Reconcile deployment model based on metamodel data.
         This is meant to synchronize both models at the start if it's not the case.
@@ -69,12 +69,12 @@ class BaseBlueprintManagement:
         # ues
         sync_dict_keys(
             target_dict=self.deployment_model.ues,
-            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.REAL}, # only real ues are provisionable
+            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.COTS}, # only real ues are provisionable
             default_factory=lambda: ProvisionableUE(category=ProvisioningCategory.UE),
         )
         sync_dict_keys(
             target_dict=self.deployment_model.simulated_ues,
-            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.SIMULATED},
+            source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.CONTAINERIZED},
             default_factory=UEDeployment,
         )
         # rics

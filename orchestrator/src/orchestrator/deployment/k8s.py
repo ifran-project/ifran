@@ -17,7 +17,7 @@ class K8SSetupManagement(BaseBlueprintManagement):
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
-        ):
+        ) -> None:
         """Run Kubernetes setup action on all nodes or a given subset."""
 
         target_nodes = (
@@ -37,12 +37,12 @@ class K8SSetupManagement(BaseBlueprintManagement):
         )
 
 
-    async def prepare(self, nodes: list[str] | None = None, **kwargs):
+    async def prepare(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Prepare nodes for Kubernetes setup."""
         await self.run_action(action="prepare", nodes=nodes, **kwargs)
 
 
-    async def create(self, master_node: str | None = None, **kwargs):
+    async def create(self, master_node: str | None = None, **kwargs) -> None:
         """
         Create Kubernetes control plane on the master node.
         The master node is taken from 'k8s_params' by default or a the one given as argument.
@@ -63,16 +63,16 @@ class K8SSetupManagement(BaseBlueprintManagement):
         await self.run_action(action="create", nodes=[master_node], **kwargs)
 
 
-    async def join(self, nodes: list[str] | None = None, **kwargs):
+    async def join(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Join worker nodes to the Kubernetes cluster."""
         await self.run_action(action="join", nodes=nodes, **kwargs)
 
 
     async def deploy(
-        self,
-        nodes: list[str] | None = None,
-        **kwargs
-        ):
+            self,
+            nodes: list[str] | None = None,
+            **kwargs
+        ) -> None:
         """Orchestrate full Kubernetes cluster setup on target nodes (prepare, create, join)."""
 
         # run prepare in parallel on target nodes
@@ -114,6 +114,6 @@ class K8SSetupManagement(BaseBlueprintManagement):
         await self.join(nodes=worker_nodes, **kwargs)
 
 
-    async def remove(self, nodes: list[str] | None = None, **kwargs):
+    async def remove(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Tear down/remove Kubernetes setup from nodes."""
         await self.run_action(action="remove", nodes=nodes, **kwargs)

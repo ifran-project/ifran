@@ -21,7 +21,7 @@ class HelmManagement(BaseBlueprintManagement):
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
-    ):
+    ) -> None:
         """Run Helm action on 5G components of a specific category."""
         
         # k8s master node is the deployment entry point by default
@@ -44,7 +44,11 @@ class HelmManagement(BaseBlueprintManagement):
                 all_k8s = self.deployment_model.ran_deployment.components
 
             case Category5G.UE:
-                all_meta = {ue for ue in self.mutatable_metamodel.ues if ue.type is UEType.SIMULATED}
+                all_meta = {
+                    ue_name: ue_meta
+                    for ue_name, ue_meta in self.mutatable_metamodel.ues.items()
+                    if ue_meta.type is UEType.CONTAINERIZED
+                } # only simulated UEs are k8s-deployable
                 all_k8s = self.deployment_model.simulated_ues
 
             case Category5G.RIC:

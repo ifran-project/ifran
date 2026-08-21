@@ -33,6 +33,7 @@
       - ethtool
       - python3-debian # required by deb822_repository Ansible module
       - python3-kubernetes # required by kubernetes Ansible module
+      - python3-pymysql # required by mysql Ansible module used later on to add/remove OAI subcribers
     state: present
     update_cache: true
 

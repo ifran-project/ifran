@@ -1,7 +1,14 @@
 """RIC deployment models."""
 
+from enum import StrEnum
 
 from orchestrator.models.deployment.k8s import K8SComponent
+
+
+class RICType(StrEnum):
+    """Supported RAN Intelligent Controller types."""
+
+    # TODO
 
 
 # TODO later

@@ -1,5 +1,7 @@
 """Meta Model."""
 
+from typing import Any
+
 from pydantic import Field, field_validator
 
 from orchestrator.models.common import BlueprintBaseModel
@@ -8,7 +10,7 @@ from orchestrator.models.meta.ran import RAN
 from orchestrator.models.meta.ric import RIC
 from orchestrator.models.meta.ru import RU
 from orchestrator.models.meta.slice import Slice
-from orchestrator.models.meta.ue import UE, SimulatedUE, UEType
+from orchestrator.models.meta.ue import UE, UEType
 
 
 class MetaModel(BlueprintBaseModel):
@@ -23,7 +25,7 @@ class MetaModel(BlueprintBaseModel):
     rus: dict[str, RU] = Field(default_factory=lambda: {"sim_ru": RU()})
     """Radio Units."""
 
-    ues: dict[str, UE] = Field(default_factory=lambda: {"sim_ue": SimulatedUE(type=UEType.SIMULATED)})
+    ues: dict[str, UE] = Field(default_factory=lambda: {"sim_ue": UE()})
     """User Equipements."""
 
     slices: dict[str, Slice] = Field(default_factory=lambda: {"internet": Slice()})
@@ -47,7 +49,7 @@ class MetaModel(BlueprintBaseModel):
 
     @field_validator("ues", mode="before")
     @classmethod
-    def default_ue_type(cls, value):
+    def default_ue_type(cls, value) -> dict[str, UE] | Any:
         """Make default UE type a simulated one."""
 
         if not isinstance(value, dict):
@@ -55,6 +57,6 @@ class MetaModel(BlueprintBaseModel):
 
         for ue_data in value.values():
             if isinstance(ue_data, dict) and "type" not in ue_data:
-                ue_data["type"] = UEType.SIMULATED
+                ue_data["type"] = UEType.CONTAINERIZED
 
         return value

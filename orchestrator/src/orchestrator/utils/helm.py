@@ -25,6 +25,12 @@ from orchestrator.utils.common_5g import (
 )
 
 
+def build_safe_helm_name(name: str) -> str:
+    """Build a valid Helm release/chart name."""
+
+    return name.lower().replace("_", "-")
+
+
 async def run_single_helm_action(
         component_name: str,
         component_meta: Component5G,
@@ -35,8 +41,10 @@ async def run_single_helm_action(
         ansible_params: AnsibleParams,
         helm_params: HelmParams | None = None,
         force: bool = False,
-        ):
+    ) -> None:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
+
+    safe_component_name = build_safe_helm_name(component_name)
 
     # preparing a prepared component is not considered in the check given the idempotence
     if not force and (
@@ -47,15 +55,15 @@ async def run_single_helm_action(
 
     if helm_params is None:
         helm_params = HelmParams(
-            chart_name=f"{component_meta.implementation}-{component_name}",
-            helm_build_dir=f"/root/helm-charts/{component_meta.category}/{component_meta.implementation}-{component_name}",
+            chart_name=f"{component_meta.implementation}-{safe_component_name}",
+            helm_build_dir=f"/root/helm-charts/{component_meta.category}/{component_meta.implementation}-{safe_component_name}",
             output_with_multus=component_k8s.multus.enabled,
         )
 
     args = {
         "role": f"helm/{action}",
         "inputs": {
-            "component_name": component_name,
+            "component_name": safe_component_name,
             "component": {**(component_meta.model_dump(mode="json") | component_k8s.model_dump(mode="json"))}, # merge component
             **helm_params.model_dump(mode="json")
         },
@@ -99,7 +107,7 @@ async def run_parallel_helm_action(
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
-        ) -> dict[str, K8SComponent]:
+    ) -> dict[str, K8SComponent]:
     """Run Helm action in parallel on provided 5G components."""
 
     levels = resolve_component_dependency_levels(

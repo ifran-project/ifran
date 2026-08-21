@@ -1,6 +1,7 @@
 """Common deployment-related models."""
 
 import re
+from typing import Any
 
 from pydantic import Field, model_validator
 
@@ -25,7 +26,7 @@ class Version(BlueprintBaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_string_or_dict(cls, data):
+    def parse_string_or_dict(cls, data) -> dict[str, Any] | Any:
         """Parse version string directly into initialisation dict before validation."""
 
         if isinstance(data, str):

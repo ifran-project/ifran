@@ -1,6 +1,5 @@
 """RAN deployment models."""
 
-
 from pydantic import Field
 
 from orchestrator.models.common import BlueprintBaseModel

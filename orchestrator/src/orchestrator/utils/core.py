@@ -9,7 +9,7 @@ from orchestrator.models.deployment.ansible import AnsibleParams
 from orchestrator.models.deployment.core import CoreDeployment
 from orchestrator.models.deployment.k8s import HelmParams, K8SComponent
 from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.core import Core, CoreComponent, CoreType
+from orchestrator.models.meta.core import Core, CoreComponent, CoreImplementation
 from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEConfiguration
 from orchestrator.utils.ansible import handle_ansible_result_exception, run_ansible_role
@@ -22,7 +22,7 @@ def reconcile_core_component(
         component_meta: CoreComponent,
         component_k8s: K8SComponent,
         slices: dict[str, Slice],
-    ): # wrapper function that might be extended later
+    ) -> None: # wrapper function that might be extended later
     """Ensure the core component deployment model and meta model are ready for deployment."""
 
     reconcile_5g_component(
@@ -37,13 +37,12 @@ def reconcile_core(
         core_meta: Core,
         core_deployment: CoreDeployment,
         slices: dict[str, Slice],
-    ):
+    ) -> None:
     """Ensure 5G core is ready for deployment."""
 
-    for name, (component_meta, component_k8s) in {
-        k:(core_meta.components[k], core_deployment.components[k])
-        for k in (core_meta.components.keys() & core_deployment.components.keys()) # keys supposed to match
-        }.items():
+    for name, component_meta in core_meta.components.items():
+        # meta and deployment keys are supposed to be synced by this point
+        component_k8s = core_deployment.components[name]
 
         reconcile_core_component(
             component_name=name,
@@ -61,7 +60,7 @@ async def run_core_database_helm_action(
         inventory: str,
         ansible_params: AnsibleParams,
         force: bool = False,
-        ):
+    ) -> None:
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
     if not force and (
@@ -71,15 +70,15 @@ async def run_core_database_helm_action(
         raise InvalidResourceStateError(f"5G core database is already {action}ed.")
 
     helm_params = HelmParams(
-        chart_name=f"{core_meta.type.value}-database",
-        helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_meta.type.value}-database",
+        chart_name=f"{core_meta.implementation.value}-database",
+        helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_meta.implementation.value}-database",
         render=False
     ).model_dump(mode="json")
 
     component = {
             "category": Category5G.CORE.value,
-            "implementation": core_meta.type.value,
-            "namespace": f"{core_meta.type.value}-{Category5G.CORE.value}",
+            "implementation": core_meta.implementation.value,
+            "namespace": f"{core_meta.implementation.value}-{Category5G.CORE.value}",
             "type": "database",
             }
 
@@ -114,14 +113,14 @@ async def run_core_database_helm_action(
 async def run_single_database_subscriber_action(
         ue_name: str,
         ue_config: UEConfiguration,
-        core_implementation: CoreType,
+        core_implementation: CoreImplementation,
         action: Literal["add", "remove"],
         database_ip: IPvAnyAddress,
         node: str,
         inventory: str,
         ansible_params: AnsibleParams,
         force: bool = False,
-        ):
+    ) -> None:
     """Add/remove a single UE/subscriber on the 5G core database."""
 
     if not force and database_ip is None:
@@ -144,7 +143,7 @@ async def run_single_database_subscriber_action(
 
 async def run_parallel_database_subscriber_action(
         ues: dict[str, UE],
-        core_implementation: CoreType,
+        core_implementation: CoreImplementation,
         action: Literal["add", "remove"],
         database_ip: IPvAnyAddress,
         node: str,
@@ -153,7 +152,7 @@ async def run_parallel_database_subscriber_action(
         force: bool = False,
         ignore_invalid_states: bool = False,
         ignore_failures: bool = False,
-        ):
+    ) -> None:
     """Add/remove multiple UEs/subscribers in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}

@@ -2,9 +2,10 @@
 
 from enum import StrEnum, auto
 from ipaddress import IPv4Address
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from pydantic import (
+    BaseModel,
     Field,
     IPvAnyAddress,
     model_validator,
@@ -319,7 +320,7 @@ class Component5G(BlueprintBaseModel):
     type: str = Field()
     """Component type in the 5G category it's in (e.g. amf, upf, gnb, ... etc)."""
 
-    # populated by parent metamodel validator before validation
+    # populated by parent metamodel validator before validation if its a core or ran component
     implementation: str | None = Field(default=None)
     """Component 5G category's implementation (e.g. oai, open5gs, srsran, ... etc)."""
 
@@ -336,28 +337,43 @@ class Component5G(BlueprintBaseModel):
 class Network5G(BlueprintBaseModel):
     """Base class for 5G network core and RAN."""
 
-    type: str | None = Field(default=None)
-    """5G network type."""
+    implementation: str | None = Field(default=None)
+    """5G network implementation."""
 
     components: dict[str, Component5G] = Field(default_factory=dict)
     """5G network components."""
 
 
     @model_validator(mode="after")
-    def populate_component_implementation(self):
+    def populate_component_implementation(self) -> Self:
         """Populate 5G network component implementation after validation."""
 
-        if self.type: # if network type is None, each component should define its implementation
+        if self.implementation: # if network implementation is None, each component should define its implementation
             for component in self.components.values():
                 if component.implementation is None:
-                    component.implementation = self.type
+                    component.implementation = self.implementation
         return self
 
 
-    def validate_supported_component_types(self, supported: dict):
+    def validate_supported_component_types(self, supported: dict) -> Self:
         """Validate if requested 5G network component types are available for given implementation."""
 
         for name, component in self.components.items():
-            if component.type not in supported[self.type]:
-                raise ValueError(f"Requested component {name!r} of type {component.type!r} is not supported in {self.type!r} implementation.")
+            if component.type not in supported[self.implementation]:
+                raise ValueError(f"Requested component {name!r} of type {component.type!r} is not supported in {self.implementation!r} implementation.")
         return self
+
+
+
+def validate_component_advanced_config(component: Component5G, mapping: dict) -> Component5G:
+    """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
+
+    # advanced config can be none
+    if not isinstance(component.advanced_config, dict):
+        return component
+
+    model: BaseModel = mapping.get(component.implementation, {}).get(component.type)
+    if model:
+        component.advanced_config = model.model_validate(component.advanced_config)
+
+    return component

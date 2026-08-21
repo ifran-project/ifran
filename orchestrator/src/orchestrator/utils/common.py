@@ -33,7 +33,7 @@ def generate_random_ip(network: IPvAnyNetwork, used: set[IPvAnyAddress] | None =
             return address
 
 
-def sync_dict_keys(target_dict: dict, source_dict: dict, default_factory):
+def sync_dict_keys(target_dict: dict, source_dict: dict, default_factory) -> None:
     """Synchronize target_dict keys with source_dict keys."""
 
     missing_keys = source_dict.keys() - target_dict.keys()
@@ -66,7 +66,7 @@ def _to_jsonable(value: Any) -> Any:
     return value
 
 
-def deep_merge(left: dict[str, Any] | BaseModel, right: dict[str, Any] | BaseModel) -> dict:
+def deep_merge(left: dict[str, Any] | BaseModel, right: dict[str, Any] | BaseModel) -> dict[str, Any]:
     """
     Recursively merge two dictionaries or pydantic models (converted to dictionaries).
     Values from 'right' dict take precedence when the same leaf field exists in both dicts.

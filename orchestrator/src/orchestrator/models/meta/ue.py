@@ -1,28 +1,34 @@
-"""User Equipment provisioning models."""
+"""UE provisioning models."""
 
 from enum import StrEnum, auto
-from ipaddress import IPv6Network
-from typing import Annotated, Literal
+from ipaddress import IPv4Network, IPv6Network
+from typing import Any, Literal, Self
 
-from pydantic import Field, IPvAnyAddress
+from pydantic import Field, IPvAnyAddress, model_validator
 
 from orchestrator.models.common import (
     BlueprintBaseModel,
+    SerializableLibconfigDict,
     parse_hex_int,
     serialize_hex_int,
 )
-from orchestrator.models.meta.common import Category5G, Component5G
+from orchestrator.models.meta.common import (
+    Category5G,
+    Component5G,
+    validate_component_advanced_config,
+)
+from orchestrator.models.meta.ran import RU, CommonGNBComponent
 from orchestrator.models.meta.slice import DNN, BitRate, Slice
 
 
 class UEType(StrEnum):
     """Supported UE types."""
 
-    SIMULATED = auto()
-    """Simulated UE."""
+    CONTAINERIZED = auto()
+    """Software-based UE stack deployed as Kubernetes pod (can be simulated or real RF)."""
 
-    REAL = auto()
-    """Real UE."""
+    COTS = auto()
+    """Physical Commercial Off-The-Shelf (COTS) UE."""
 
 
 class UEImplementation(StrEnum):
@@ -71,10 +77,10 @@ class UESubscriptionData(BlueprintBaseModel):
         - 3GPP TS 29.503
     """
 
-    snssai: Slice | str = Field()
+    snssai: Slice | str = Field(default="internet")
     """S-NSSAI associated with this PDU Session (can be a reference to a defined slice)."""
 
-    dnn: DNN | str = Field()
+    dnn: DNN | str = Field(default="internet")
     """DNN associated with this PDU Session (can be a reference to a defined DNN)."""
 
 
@@ -115,7 +121,7 @@ class UEAuthenticationData(BlueprintBaseModel):
 
     @field_validator("amf", "sqn", mode="before")
     @classmethod
-    def normalize_hex_int(cls, value):
+    def normalize_hex_int(cls, value) -> int | Any:
         """Convert hexadecimal strings to integers."""
 
         return parse_hex_int(value)
@@ -134,7 +140,7 @@ class UEAuthenticationData(BlueprintBaseModel):
 
     @field_validator("k", "opc", "op", mode="before")
     @classmethod
-    def normalize_hex_bytes(cls, value):
+    def normalize_hex_bytes(cls, value) -> bytes | Any:
         """Convert hexadecimal strings to bytes."""
 
         if isinstance(value, str):
@@ -163,13 +169,13 @@ class UEPDUSession(BlueprintBaseModel):
         - 3GPP TS 24.501
     """
 
-    subscriptionIndex: int | UESubscriptionData = Field(ge=0)
+    subscriptionIndex: int = Field(ge=0, default=0)
     """
     Index of the UE subscription data used by this PDU Session.
     The referenced subscription provides the S-NSSAI and DNN.
     """
 
-    ueIPv4Address: IPvAnyAddress | None = Field(default=None)
+    ueIPv4Address: IPv4Network | None = Field(default=None)
     """UE IPv4 address allocated to this PDU Session."""
 
     ueIPv6Prefix: IPv6Network | None = Field(default=None)
@@ -197,6 +203,9 @@ class UEConfiguration(BlueprintBaseModel):
         - 3GPP TS 24.501
     """
 
+    timeZone: str = Field(default="Europe/Paris")
+    """UE timezone."""
+
     supi: str = Field(default="001010000000100", pattern=r"^[0-9]{15}$")
     """UE Subscription Permanent Identifier (SUPI). For IMSI-based SUPI, this contains the IMSI digits."""
 
@@ -206,38 +215,92 @@ class UEConfiguration(BlueprintBaseModel):
     authenticationData: UEAuthenticationData = Field(default_factory=UEAuthenticationData)
     """UE authentication subscription data."""
 
-    subscriptions: list[UESubscriptionData] = Field(default_factory=list)
+    subscriptions: list[UESubscriptionData] = Field(default_factory=lambda: [UESubscriptionData()])
     """S-NSSAI/DNN subscription data available to the UE."""
 
-    pduSessions: list[UEPDUSession] = Field(default_factory=list)
+    pduSessions: list[UEPDUSession] = Field(default_factory=lambda: [UEPDUSession()])
     """List of UE PDU Sessions."""
 
+    gnb: tuple[IPvAnyAddress, CommonGNBComponent] | str | None = Field(default="gnb")
+    """GNB/DU component to connect the UE to. Only relevant for containerized UEs."""
 
-class GenericUE(Component5G):
-    """Base class for real and simulated UEs."""
+    ru: RU | str | None = Field(default="sim_ru")
+    """RU to be used by the UE. Only relevant for containerized UEs."""
+
+
+    @model_validator(mode="after")
+    def validate_pdu_session_subscription_indexes(self) -> Self:
+        """Ensure that PDU sessions 'subscriptionIndex' reference valid subscriptions."""
+
+        if self.pduSessions:
+            max_index = max(session.subscriptionIndex for session in self.pduSessions)
+
+            if max_index >= len(self.subscriptions):
+                raise ValueError(
+                    f"UE 'pduSessions' references out of range 'subscriptionIndex' ({max_index} > {len(self.subscriptions) - 1})."
+                    )
+
+        return self
+
+
+class GenericAdvancedUEConfig(BlueprintBaseModel):
+    """Generic UE advanced configuration (implementation-specific)."""
+
+
+class OAIAdvancedUEConfig(GenericAdvancedUEConfig):
+    """Advanced configuration for OAI NR UE."""
+
+    position0: SerializableLibconfigDict | None = Field(default=None)
+    channelmod: SerializableLibconfigDict | None = Field(default=None)
+    gdbstack: int | None = Field(default=None)
+    thread_pool: str | None = Field(default=None)
+    tune_offset: float | None = Field(default=None)
+    if_freq: int | None = Field(default=None)
+    if_offset: int | None = Field(default=None)
+
+
+ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {
+    UEImplementation.OAI: {
+        UEType.CONTAINERIZED: OAIAdvancedUEConfig,
+    },
+}
+
+
+class UE(Component5G):
+    """User Equipement."""
 
     category: Literal[Category5G.UE] = Field(default=Category5G.UE, frozen=True)
+
+    type: UEType = Field(default=UEType.CONTAINERIZED)
+    """UE type."""
+
+    implementation: UEImplementation | None = Field(default=UEImplementation.OAI)
+    """UE implementation. Only relevant for simulated UEs."""
 
     config: UEConfiguration = Field(default_factory=UEConfiguration)
     """UE configuration."""
 
+    advanced_config: dict[str, Any] | None = Field(default=None)
+    """RAN component configuration specific to the implementation."""
 
-class RealUE(GenericUE):
-    """Real UE."""
-
-    type: Literal[UEType.REAL] = Field(frozen=True)
-
-    implementation: None = Field(default=None, frozen=True)
-    """Real UE doesn't have an implementation."""
+    derived_radio_config: dict[str, Any] | None = Field(default=None)
+    """Automatically derived implementation-specific radio parameters. Only relevant for containerized UEs."""
 
 
-class SimulatedUE(GenericUE):
-    """Simulated UE."""
+    @model_validator(mode="after")
+    def validate_gnb_and_ru(self) -> Self:
+        """Ensure that 'gnb' and 'ru' are set for containerized UEs."""
 
-    type: Literal[UEType.SIMULATED] = Field(frozen=True)
+        if self.type is UEType.CONTAINERIZED:
+            if self.config.gnb is None:
+                raise ValueError("'gnb' is required for containerized UE.")
+            if self.config.ru is None:
+                raise ValueError("'ru' is required for containerized UE.")
 
-    implementation: UEImplementation = Field(default=UEImplementation.OAI)
-    """Simulated UE implementation."""
+        return self
 
 
-type UE = Annotated[RealUE | SimulatedUE, Field(discriminator="type")]
+    @model_validator(mode="after")
+    def validate_advanced_config(self) -> Self:
+        """Validate advanced configuration based on what is supported."""
+        return validate_component_advanced_config(self, ADVANCED_UE_CONFIG_MAPPING)

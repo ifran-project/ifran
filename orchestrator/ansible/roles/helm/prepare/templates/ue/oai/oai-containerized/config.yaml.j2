@@ -1,0 +1,77 @@
+# plain text config overwrites everything
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+# SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
+uicc0 = {
+    imsi = "{{ component.config.supi }}";
+    key = "{{ component.config.authenticationData.k }}";
+    opc = "{{ component.config.authenticationData.opc }}";
+
+    pdu_sessions = (
+{% for pdu_session in component.config.pduSessions %}
+        {
+            dnn = "{{ component.config.subscriptions[pdu_session.subscriptionIndex].dnn.name }}";
+            nssai_sst = {{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sst }};
+{% if component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd is not none %}
+            nssai_sd = 0x{{ "%06x" | format(component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd) }};
+{% endif %}
+            type = "{{ component.config.subscriptions[pdu_session.subscriptionIndex].dnn.pduSessionType | upper }}";
+        }{% if not loop.last %},{% endif %}
+{% endfor %}
+    );
+}
+
+RUs = (
+    {
+        nb_tx = {{ component.config.ru.numberOfTxPorts }};
+        nb_rx = {{ component.config.ru.numberOfRxPorts }};
+        att_tx = {{ component.config.ru.txAttenuationDB }};
+        att_rx = {{ component.config.ru.rxAttenuationDB }};
+        max_rxgain = {{ component.config.ru.rxGainDB }};
+        clock_src = "{{ component.config.ru.clockSource }}";
+        time_src = "{{ component.config.ru.timeSource }}";
+        tune_offset = {{ component.advanced_config.tune_offset | default(0.0) }};
+        if_freq = {{ component.advanced_config.if_freq | default(0) }};
+        if_offset = {{ component.advanced_config.if_offset | default(0) }};
+{% if component.config.ru.ip %}
+        sdr_addrs = "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}";
+{% endif %}
+    }
+);
+
+{% if component.config.ru.type == "simulated" %}
+rfsimulator = (
+    {
+        serveraddr = "{{ component.config.gnb[0] }}";
+        serverport = 4043;
+    }
+);
+{% endif %}
+
+cells = (
+    {
+        ru_id = 0;
+        band = {{ component.config.gnb[1].config.radioConfiguration.nrBand }};
+        rf_freq = {{ component.derived_radio_config.dl_carrier_freq_hz }}L;
+        rf_offset = {{ component.derived_radio_config.offset_hz }};
+        numerology = {{ component.derived_radio_config.numerology }};
+        N_RB_DL = {{ component.derived_radio_config.bandwidth_rb }};
+        ssb_start = {{ component.derived_radio_config.ssb_start }};
+    }
+);
+
+{% if component.advanced_config and component.advanced_config.position0 %}
+position0 = {{ component.advanced_config.position0 }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channelmod %}
+channelmod = {{ component.advanced_config.channelmod }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.thread_pool %}
+thread-pool = {{ component.advanced_config.thread_pool }}
+{% endif %}
+
+{% endif %}

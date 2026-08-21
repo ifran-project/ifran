@@ -19,7 +19,7 @@ class ProvisioningManagement(BaseBlueprintManagement):
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
-        ):
+        ) -> None:
         """Run provisioning action on all provisionable resources or a given subset."""
 
         target_resources = get_provisionable_resources(
@@ -39,12 +39,12 @@ class ProvisioningManagement(BaseBlueprintManagement):
         )
 
 
-    async def provision(self, **kwargs):
+    async def provision(self, **kwargs) -> None:
         """Provision all nodes, RUs, and UEs."""
         await self.run_action(action="provision", resources=None, **kwargs)
 
 
-    async def unprovision(self, **kwargs):
+    async def unprovision(self, **kwargs) -> None:
         """Unprovision all nodes, RUs, and UEs."""
         await self.run_action(action="unprovision", resources=None, **kwargs)
 
@@ -55,7 +55,7 @@ class ProvisioningManagement(BaseBlueprintManagement):
             action: Literal["provision", "unprovision"],
             names: list[str] | None = None,
             **kwargs,
-        ):
+        ) -> None:
         """Internal helper to dispatch action for a single resource type."""
 
         # if no specific names passed, default to all keys for that resource type
@@ -69,31 +69,31 @@ class ProvisioningManagement(BaseBlueprintManagement):
         )
 
 
-    async def provision_nodes(self, names: list[str] | None = None, **kwargs):
+    async def provision_nodes(self, names: list[str] | None = None, **kwargs) -> None:
         """Provision all or a targeted list of nodes."""
         await self._run_type_action("nodes", "provision", names, **kwargs)
 
 
-    async def unprovision_nodes(self, names: list[str] | None = None, **kwargs):
+    async def unprovision_nodes(self, names: list[str] | None = None, **kwargs) -> None:
         """Unprovision all or a targeted list of nodes."""
         await self._run_type_action("nodes", "unprovision", names, **kwargs)
 
 
-    async def provision_rus(self, names: list[str] | None = None, **kwargs):
+    async def provision_rus(self, names: list[str] | None = None, **kwargs) -> None:
         """Provision all or a targeted list of RUs."""
         await self._run_type_action("rus", "provision", names, **kwargs)
 
 
-    async def unprovision_rus(self, names: list[str] | None = None, **kwargs):
+    async def unprovision_rus(self, names: list[str] | None = None, **kwargs) -> None:
         """Unprovision all or a targeted list of RUs."""
         await self._run_type_action("rus", "unprovision", names, **kwargs)
 
 
-    async def provision_ues(self, names: list[str] | None = None, **kwargs):
+    async def provision_ues(self, names: list[str] | None = None, **kwargs) -> None:
         """Provision all or a targeted list of UEs."""
         await self._run_type_action("ues", "provision", names, **kwargs)
 
 
-    async def unprovision_ues(self, names: list[str] | None = None, **kwargs):
+    async def unprovision_ues(self, names: list[str] | None = None, **kwargs) -> None:
         """Unprovision all or a targeted list of UEs."""
         await self._run_type_action("ues", "unprovision", names, **kwargs)

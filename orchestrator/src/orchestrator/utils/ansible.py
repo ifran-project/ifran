@@ -16,7 +16,7 @@ from orchestrator.utils.common import InvalidResourceStateError
 def get_ansible_inventory_line(
         resource_name: str,
         resource_data: ProvisionableResource,
-        ) -> str:
+    ) -> str:
     """Return Ansible .ini inventory line to SSH access a provisionable resource."""
 
     ssh_info = resource_data.ssh_info
@@ -59,40 +59,40 @@ async def run_ansible_playbook(
         output_keys: list[str] | None = None,
         roles_path: str | None = None,
         inventory: str | dict[str, Any] | list | None = None,
-        ) -> dict[str, Any] | None:
-        """Run an Ansible playbook."""
+    ) -> dict[str, Any] | None:
+    """Run an Ansible playbook."""
 
-        # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overriden by other ansible runs if using the same private_data_dir
-        # ensure runner path exists
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S.%fZ") # add timestamp for more meaningful log collection
-        run_path = Path(runner_path) / timestamp
-        run_path.mkdir(parents=True, exist_ok=True)
+    # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overriden by other ansible runs if using the same private_data_dir
+    # ensure runner path exists
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S.%fZ") # add timestamp for more meaningful log collection
+    run_path = Path(runner_path) / timestamp
+    run_path.mkdir(parents=True, exist_ok=True)
 
-        run_args = {
-            "private_data_dir": run_path,
-            "roles_path": roles_path,
-            "inventory": inventory,
-            "playbook": playbook,
-            "extravars": inputs,
-        }
+    run_args = {
+        "private_data_dir": run_path,
+        "roles_path": roles_path,
+        "inventory": inventory,
+        "playbook": playbook,
+        "extravars": inputs,
+    }
 
-        thread, runner = ansible_runner.run_async(**run_args)
+    thread, runner = ansible_runner.run_async(**run_args)
 
-        # wait until runnng ansible thread terminates
-        await asyncio.to_thread(thread.join)
-        if runner.status != "successful" or runner.rc != 0:
-            raise RuntimeError(f"Playbook run not successful (status: {runner.status!r}, return code: {runner.rc!r})")
+    # wait until runnng ansible thread terminates
+    await asyncio.to_thread(thread.join)
+    if runner.status != "successful" or runner.rc != 0:
+        raise RuntimeError(f"Playbook run not successful (status: {runner.status!r}, return code: {runner.rc!r})")
 
-        if output_keys is None:
-            return
+    if output_keys is None:
+        return
 
-        output = {}
-        for key in output_keys:
-            output[key] = get_ansible_output(runner=runner, output_keys=output_keys).get(key)
-            if output[key] is None:
-                raise RuntimeError(f"Playbook run completed but did not return expected output for {key!r}")
+    output = {}
+    for key in output_keys:
+        output[key] = get_ansible_output(runner=runner, output_keys=output_keys).get(key)
+        if output[key] is None:
+            raise RuntimeError(f"Playbook run completed but did not return expected output for {key!r}")
 
-        return output
+    return output
 
 
 async def run_ansible_role(
@@ -105,7 +105,7 @@ async def run_ansible_role(
         hosts: str = "localhost",
         inventory: str | dict[str, Any] | list | None = None,
         become: bool = False,
-        ) -> dict[str, Any] | None:
+    ) -> dict[str, Any] | None:
     """Run an Ansible role."""
 
     playbook = [
@@ -133,7 +133,7 @@ def handle_ansible_result_exception(
         result: Exception,
         ignore_invalid_states: bool,
         ignore_failures: bool,
-        ) -> Exception | None:
+    ) -> Exception | None:
     """Handle Ansible run exception based on its type and provided options."""
 
     if isinstance(result, InvalidResourceStateError):

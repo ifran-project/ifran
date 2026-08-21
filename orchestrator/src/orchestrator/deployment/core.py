@@ -26,7 +26,7 @@ CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
 class CoreManagement(HelmManagement):
     """5G core deployemnt lifecycle management class."""
 
-    def reconcile(self):
+    def reconcile(self) -> None:
         """Ensure the 5G core is ready for deployement by resolving its components' configs."""
 
         super().reconcile()
@@ -55,17 +55,17 @@ class CoreManagement(HelmManagement):
         )
 
 
-    async def prepare(self, components: list[str] | None = None, **kwargs):
+    async def prepare(self, components: list[str] | None = None, **kwargs) -> None:
         """Prepare Helm charts for 5G core components."""
         await self.run_action(action="prepare", components=components, **kwargs)
 
 
-    async def install(self, components: list[str] | None = None, **kwargs):
+    async def install(self, components: list[str] | None = None, **kwargs) -> None:
         """Install 5G core components via Helm."""
         await self.run_action(action="install", components=components, **kwargs)
 
 
-    async def uninstall(self, components: list[str] | None = None, **kwargs):
+    async def uninstall(self, components: list[str] | None = None, **kwargs) -> None:
         """Uninstall 5G core components via Helm."""
         await self.run_action(action="uninstall", components=components, **kwargs)
 
@@ -90,7 +90,7 @@ class CoreManagement(HelmManagement):
             node: str | None = None,
             force: bool = False,
             **kwargs,
-        ):
+        ) -> None:
         """Run 5G core database Helm action."""
 
         target_node, node_inventory = self._get_master_node(node)
@@ -118,7 +118,7 @@ class CoreManagement(HelmManagement):
             ues: list[str] | None = None,
             node: str | None = None,
             **kwargs,
-        ):
+        ) -> None:
         """Add/remove UEs/subscribers on the 5G core database."""
 
         target_node, node_inventory = self._get_master_node(node)
@@ -133,7 +133,7 @@ class CoreManagement(HelmManagement):
 
         await run_parallel_database_subscriber_action(
             ues=target_ues,
-            core_implementation=self.metamodel.core.type,
+            core_implementation=self.metamodel.core.implementation,
             database_ip=self.deployment_model.core_deployment.database_ip,
             action=action,
             node=target_node,
@@ -143,12 +143,12 @@ class CoreManagement(HelmManagement):
             )
 
 
-    async def add_ues(self, ues: list[str] | None = None, node: str | None = None, **kwargs):
+    async def register_ues(self, ues: list[str] | None = None, node: str | None = None, **kwargs) -> None:
         """Add UEs/subscribers to the 5G core database."""
         await self.run_database_subscriber_action("add", ues, node, **kwargs)
 
 
-    async def remove_ues(self, ues: list[str] | None = None, node: str | None = None, **kwargs):
+    async def unregister_ues(self, ues: list[str] | None = None, node: str | None = None, **kwargs) -> None:
         """Remove UEs/subscribers from the 5G core database."""
         await self.run_database_subscriber_action("remove", ues, node, **kwargs)
 
@@ -160,7 +160,7 @@ class CoreManagement(HelmManagement):
             force: bool = False,
             order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
             **kwargs,
-        ):
+        ) -> None:
         """
         Orchestrate full 5G core deployment.
         Prepares all charts (database + components), installs the database first, then installs 5G core components.
@@ -179,7 +179,7 @@ class CoreManagement(HelmManagement):
         await self.install(components=components, node=node, force=force, order=order, **kwargs)
 
         # add subscribers
-        await self.add_ues(node=node)
+        await self.register_ues(node=node)
 
 
     async def remove(
@@ -187,7 +187,7 @@ class CoreManagement(HelmManagement):
             components: list[str] | None = None,
             node: str | None = None,
             **kwargs,
-        ):
+        ) -> None:
         """Remove/tear down 5G core deployment."""
 
         await asyncio.gather(

@@ -3,7 +3,7 @@
 from enum import StrEnum, auto
 from ipaddress import IPv4Network
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from pydantic import (
     Field,
@@ -87,7 +87,7 @@ class K8SParams(BlueprintBaseModel):
     """Local path on Ansible controller where master's admin.conf is temporarily saved before distribution over workers if 'copy_kubeconfig_to_workers' is True."""
 
     @model_validator(mode="after")
-    def validate_k8s_version(self):
+    def validate_k8s_version(self) -> Self:
         """Ensure Kubernetes version has extension needed to install packages."""
 
         if not self.k8s_version.extension:
@@ -400,7 +400,7 @@ class K8SComponent(BlueprintBaseModel):
 
 
     @model_validator(mode="after")
-    def ensure_network_status(self):
+    def ensure_network_status(self) -> Self:
         """Ensure insatlled component has network status."""
 
         if self.is_installed and self.network_info is None:

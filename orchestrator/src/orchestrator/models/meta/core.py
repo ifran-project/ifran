@@ -1,7 +1,7 @@
 """5G core meta models."""
 
 from enum import StrEnum, auto
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
     Field,
@@ -27,12 +27,13 @@ from orchestrator.models.meta.common import (
     Network5G,
     SecurityAlgorithmConfiguration,
     TransportEndpoint,
+    validate_component_advanced_config,
 )
 from orchestrator.models.meta.slice import Slice
 
 
-class CoreType(StrEnum):
-    """Supported open-source 5G core types/implementations."""
+class CoreImplementation(StrEnum):
+    """Supported open-source 5G core implementations."""
 
     OAI = auto()
     """OpenAirInterface core."""
@@ -117,8 +118,8 @@ class CoreComponentType(StrEnum): # 23 of them
     """Trusted Non-3GPP Gateway Function."""
 
 
-SUPPORTED_CORE_COMPONENTS: dict[CoreType, list[CoreComponentType]] = {
-    CoreType.OAI: [
+SUPPORTED_CORE_COMPONENTS: dict[CoreImplementation, list[CoreComponentType]] = {
+    CoreImplementation.OAI: [
         CoreComponentType.AMF,
         CoreComponentType.AUSF,
         CoreComponentType.LMF,
@@ -130,8 +131,8 @@ SUPPORTED_CORE_COMPONENTS: dict[CoreType, list[CoreComponentType]] = {
         CoreComponentType.UDR,
         CoreComponentType.UPF,
     ],
-    CoreType.OPEN5GS: [], # TODO to be added later
-    CoreType.FREE5GC: [], # same
+    CoreImplementation.OPEN5GS: [], # TODO to be added later
+    CoreImplementation.FREE5GC: [], # same
 }
 
 
@@ -219,7 +220,7 @@ class PLMN(BlueprintTolerantBaseModel):
 
     @field_validator("mcc", "mnc", mode="before")
     @classmethod
-    def parse_code(cls, value):
+    def parse_code(cls, value) -> int | Any:
         """Convert string MCC and MNC values to integers."""
 
         if isinstance(value, str):
@@ -301,7 +302,7 @@ class GUAMI(BlueprintBaseModel):
 
     @field_validator("amfRegionId", "amfSetId", "amfPointer", mode="before")
     @classmethod
-    def normalize_hex_values(cls, value):
+    def normalize_hex_values(cls, value) -> int | Any:
         """Convert hexadecimal strings to integers."""
 
         return parse_hex_int(value)
@@ -526,8 +527,8 @@ class OAIAdvancedUDRConfig(GenericOAIAdvancedCoreConfig):
     database: dict[str, Any] | None = Field(default=None)
 
 
-ADVANCED_CORE_CONFIG_MAPPING: dict[CoreType, dict[CoreComponentType, type[GenericAdvancedCoreConfig]]] = {
-    CoreType.OAI: {
+ADVANCED_CORE_CONFIG_MAPPING: dict[CoreImplementation, dict[CoreComponentType, type[GenericAdvancedCoreConfig]]] = {
+    CoreImplementation.OAI: {
         CoreComponentType.AMF: OAIAdvancedAMFConfig,
         CoreComponentType.SMF: OAIAdvancedSMFConfig,
         CoreComponentType.UPF: OAIAdvancedUPFConfig,
@@ -544,7 +545,7 @@ class CoreComponent(Component5G):
 
     category: Literal[Category5G.CORE] = Field(default=Category5G.CORE, frozen=True)
 
-    implementation: CoreType | None = Field(default=None)
+    implementation: CoreImplementation | None = Field(default=None)
     """Core component implementation."""
 
     type: CoreComponentType = Field()
@@ -558,16 +559,9 @@ class CoreComponent(Component5G):
 
 
     @model_validator(mode="after")
-    def validate_advanced_config(self):
+    def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-
-        if not isinstance(self.advanced_config, dict):
-            return self
-
-        model = ADVANCED_CORE_CONFIG_MAPPING.get(self.implementation, {}).get(self.type)
-        if model:
-            self.advanced_config = model.model_validate(self.advanced_config)
-        return self
+        return validate_component_advanced_config(self, ADVANCED_CORE_CONFIG_MAPPING)
 
 
 class AMFComponent(CoreComponent):
@@ -605,8 +599,8 @@ type ValidatedCoreComponent = Annotated[AMFComponent | SMFComponent | UPFCompone
 class Core(Network5G):
     """5G core."""
 
-    type: CoreType = Field(default=CoreType.OAI)
-    """Core type."""
+    implementation: CoreImplementation = Field(default=CoreImplementation.OAI)
+    """Core implementation."""
 
     components: dict[str, ValidatedCoreComponent | CoreComponent] = Field(default_factory=lambda: {
         "amf": AMFComponent(type=CoreComponentType.AMF),
@@ -618,7 +612,7 @@ class Core(Network5G):
 
 
     @model_validator(mode="after")
-    def validate_supported_core_component_types(self):
+    def validate_supported_core_component_types(self) -> Self:
         """Validate if requested 5G core component types are available for given implementation."""
 
         self.validate_supported_component_types(supported=SUPPORTED_CORE_COMPONENTS)

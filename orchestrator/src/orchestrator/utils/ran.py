@@ -1,6 +1,5 @@
 """5G RAN utilities and helpers."""
 
-
 from pydantic import IPvAnyAddress, IPvAnyNetwork
 
 from orchestrator.models.deployment.k8s import K8SComponent
@@ -20,15 +19,11 @@ from orchestrator.utils.common import generate_random_ip
 from orchestrator.utils.common_5g import (
     reconcile_5g_component,
     resolve_component_reference,
+    resolve_ru_reference,
 )
-from orchestrator.utils.ran_config_derivation import (
-    derive_radio_config,
+from orchestrator.utils.radio import (
+    derive_ran_radio_config,
 )
-
-
-class TempMergedRU(ProvisionableRU):
-    """RU merged model to temporarily resolve the RU reference."""
-    meta: RU
 
 
 def resolve_ran_component_references(
@@ -38,35 +33,28 @@ def resolve_ran_component_references(
         rus_provisioning: dict[str, ProvisionableRU],
         amfs: dict[str, K8SComponent],
         rics: dict[str, K8SComponent],
-    ):
+    ) -> None:
+    """Resolve name references (ru, amf, ric) of 5G components in a RAN component."""
 
-    # merge rus (we need the meta for ran config parameters and provisioning for readiness state)
-    rus: dict[str, TempMergedRU] = {}
-    for ru_name, (ru_meta, ru_prov) in {
-        k: (rus_meta[k], rus_provisioning[k])
-        for k in (rus_meta.keys() & rus_provisioning.keys())
-    }.items():
-
-        rus[ru_name] = TempMergedRU.model_validate({**ru_prov.model_dump(mode="json"), "meta": ru_meta})
+    resolve_ru_reference(
+        component_name=component_name,
+        component_meta=component_meta,
+        rus_meta=rus_meta,
+        rus_provisioning=rus_provisioning,
+    )
 
     references = [
         {
-            "ref_attribute": "ru",
-            "registry": rus,
-            "ready_attribute": "is_provisioned",
-            "value_attribute": "meta"
-        },
-        {
-            "ref_attribute": "amf",
+            "ref_attribute": "amf", # XXX amfs are assumed to not be using multus. That case should be handled by the advanced user!
             "registry": amfs,
             "ready_attribute": "is_installed",
-            "value_attribute": "network_info"
+            "value_attribute": "network_info",
         },
         {
-            "ref_attribute": "ric",
+            "ref_attribute": "ric", # XXX same for rics
             "registry": rics,
             "ready_attribute": "is_installed",
-            "value_attribute": "network_info"
+            "value_attribute": "network_info",
         },
     ]
 
@@ -82,7 +70,7 @@ def resolve_split_ran_references(
         ran_meta: RAN,
         ran_deployment: RANDeployment,
         pod_network_cidr: IPvAnyNetwork,
-    ):
+    ) -> None:
     """Resolve the cyclic dependencies between split RAN components by assigning them static IPs."""
 
     split_types = {
@@ -95,21 +83,13 @@ def resolve_split_ran_references(
     # assign a static ip to every split component if not already set
     # if user wants to go with Multus, it's up to them to resolve this
     used_ips: set[IPvAnyAddress] = set()
+    ip_mapping: dict[str, IPvAnyAddress] = {}
     for name, component_meta in ran_meta.components.items():
         if component_meta.type in split_types:
             component_k8s = ran_deployment.components[name] # meta and deployment should be in sync by this point
             component_k8s.static_pod_ip = component_k8s.static_pod_ip or generate_random_ip(pod_network_cidr, used_ips)
+            ip_mapping[name] = component_k8s.static_pod_ip # build mapping between component names and ips
             used_ips.add(component_k8s.static_pod_ip)
-
-    # build mapping between component names and ips
-    ip_mapping: dict[str, IPvAnyAddress] = {
-        name: component_k8s.static_pod_ip
-        for name, (component_k8s, component_meta) in {
-            k: (ran_deployment.components[k], ran_meta.components[k])
-            for k in (ran_deployment.components.keys() & ran_meta.components.keys())
-        }.items()
-        if component_meta.type in split_types
-    }
 
     # resolve the inter-component references
     for name, component_meta in ran_meta.components.items():
@@ -143,7 +123,7 @@ def reconcile_ran(
         rus_provisioning: dict[str, ProvisionableRU],
         amfs: dict[str, K8SComponent],
         rics: dict[str, K8SComponent],
-    ):
+    ) -> None:
     """Ensure RAN is ready for deployment."""
 
     resolve_split_ran_references(
@@ -159,20 +139,19 @@ def reconcile_ran(
         if ru.type is RUType.SIMULATED
         }
 
-    for component_name, (component_meta, component_k8s) in {
-        k:(ran_meta.components[k], ran_deployment.components[k])
-        for k in (ran_meta.components.keys() & ran_deployment.components.keys()) # keys assumed to match
-        }.items():
+    for name, component_meta in ran_meta.components.items():
+        # meta and deployment model ran component keys are suppposed to be synced by thi point
+        component_k8s = ran_deployment.components[name]
 
         reconcile_5g_component(
-            component_name=component_name,
+            component_name=name,
             component_meta=component_meta,
             component_k8s=component_k8s,
             slices=slices,
         )
 
         resolve_ran_component_references(
-            component_name=component_name,
+            component_name=name,
             component_meta=component_meta,
             rus_meta=rus_meta,
             rus_provisioning=merged_rus,
@@ -182,4 +161,4 @@ def reconcile_ran(
 
         # derive implementation-specific radio paramaters for gnb and du after ru name reference resolution
         if component_meta.type in [RANComponentType.GNB, RANComponentType.DU]:
-            derive_radio_config(component_meta)
+            derive_ran_radio_config(component_meta)

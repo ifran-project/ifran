@@ -45,7 +45,7 @@ gNBs:
         dl_offstToCarrier: {{ component.advanced_config.dl_offstToCarrier | default(0) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
-        dl_subcarrierSpacing: {{ component.config.radioConfiguration.numerology }}
+        dl_subcarrierSpacing: {{ component.derived_radio_config.numerology }}
         dl_carrierBandwidth: {{ component.derived_radio_config.bandwidth_rb }}
         #initialDownlinkBWP
         #genericParameters
@@ -60,11 +60,14 @@ gNBs:
         #uplinkConfigCommon
         #frequencyInfoUL
         ul_frequencyBand: {{ component.config.radioConfiguration.nrBand }}
+{% if component.config.radioConfiguration.duplexMode == "fdd" %}
+        ul_absoluteFrequencyPointA: {{ component.cderived_radio_config.ul_point_a_arfcn }}
+{% endif %}
         #scs-SpecificCarrierList
         ul_offstToCarrier: {{ component.advanced_config.ul_offstToCarrier | default(0) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
-        ul_subcarrierSpacing: {{ component.config.radioConfiguration.numerology }}
+        ul_subcarrierSpacing: {{ component.derived_radio_config.numerology }}
         ul_carrierBandwidth: {{ component.derived_radio_config.bandwidth_rb }}
         pMax: {{ component.advanced_config.pMax | default(20) }}
         #initialUplinkBWP
@@ -72,14 +75,14 @@ gNBs:
         initialULBWPlocationAndBandwidth: {{ component.advanced_config.initialULBWPlocationAndBandwidth | default(28875) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
-        initialULBWPsubcarrierSpacing: {{ component.config.radioConfiguration.numerology }}
+        initialULBWPsubcarrierSpacing: {{ component.derived_radio_config.numerology }}
         #rach-ConfigCommon
         #rach-ConfigGeneric
-        prach_ConfigurationIndex: {{ component.advanced_config.prach_ConfigurationIndex | default(98) }}
+        prach_ConfigurationIndex: {{ component.config.radioConfiguration.prachConfigurationIndex }}
         #prach_msg1_FDM
         #0 = one, 1=two, 2=four, 3=eight
-        prach_msg1_FDM: 0
-        prach_msg1_FrequencyStart: {{ component.advanced_config.prach_msg1_FrequencyStart | default(0) }}
+        prach_msg1_FDM: {{ component.advanced_config.prach_msg1_FDM | default(0) }}
+        prach_msg1_FrequencyStart: {{ component.config.radioConfiguration.msg1FrequencyStartPrb }}
         zeroCorrelationZoneConfig: {{ component.advanced_config.zeroCorrelationZoneConfig | default(12) }}
         preambleReceivedTargetPower: {{ component.advanced_config.preambleReceivedTargetPower | default(-104) }}
         #preamblTransMax (0...10) = (3,4,5,6,7,8,10,20,50,100,200)
@@ -101,7 +104,7 @@ gNBs:
         prach_RootSequenceIndex_PR: {{ component.advanced_config.prach_RootSequenceIndex_PR | default(2) }}
         prach_RootSequenceIndex: {{ component.advanced_config.prach_RootSequenceIndex | default(1) }}
         # SCS for msg1, can only be 15 for 30 kHz < 6 GHz, takes precendence over the one derived from prach-ConfigIndex
-        msg1_SubcarrierSpacing: {{ component.config.radioConfiguration.numerology }}
+        msg1_SubcarrierSpacing: {{ component.derived_radio_config.ssb_numerology }}
         # restrictedSetConfig
         # 0=unrestricted, 1=restricted type A, 2=restricted type B
         restrictedSetConfig: {{ component.advanced_config.restrictedSetConfig | default(0) }}
@@ -116,17 +119,18 @@ gNBs:
         ssb_PositionsInBurst_Bitmap: {{ component.advanced_config.ssb_PositionsInBurst_Bitmap | default(1) }}
         # ssb_periodicityServingCell
         # 0 = ms5, 1=ms10, 2=ms20, 3=ms40, 4=ms80, 5=ms160, 6=spare2, 7=spare1
-        ssb_periodicityServingCell: {{ component.advanced_config.ssb_periodicityServingCell | default(2) }}
+        ssb_periodicityServingCell: {{ component.derived_radio_config.oai_ssb_periodicity }}
         # dmrs_TypeA_position
         # 0 = pos2, 1 = pos3
         dmrs_TypeA_Position: {{ component.advanced_config.dmrs_TypeA_Position | default(0) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
-        subcarrierSpacing: {{ component.config.radioConfiguration.numerology }}
+        subcarrierSpacing: {{ component.derived_radio_config.numerology }}
         #tdd-UL-DL-ConfigurationCommon
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
-        referenceSubcarrierSpacing: {{ component.config.radioConfiguration.numerology }}
+        referenceSubcarrierSpacing: {{ component.derived_radio_config.numerology }}
+{% if component.config.radioConfiguration.duplexMode == "tdd" %}
         # pattern1
         # dl_UL_TransmissionPeriodicity
         # 0=ms0p5, 1=ms0p625, 2=ms1, 3=ms1p25, 4=ms2, 5=ms2p5, 6=ms5, 7=ms10
@@ -135,7 +139,9 @@ gNBs:
         nrofDownlinkSymbols: {{ component.config.radioConfiguration.tddConfiguration.nrofDownlinkSymbols }}
         nrofUplinkSlots: {{ component.config.radioConfiguration.tddConfiguration.nrofUplinkSlots }}
         nrofUplinkSymbols: {{ component.config.radioConfiguration.tddConfiguration.nrofUplinkSymbols }}
-        ssPBCH_BlockPower: {{ component.advanced_config.ssPBCH_BlockPower | default(-25) }}
+{% endif %}
+        ssPBCH_BlockPower: {{ component.config.radioConfiguration.ssbPbchBlockPowerDbm }}
+
     SCTP:
       SCTP_INSTREAMS: {{ component.config.sctpConfiguration.inStreams }}
       SCTP_OUTSTREAMS: {{ component.config.sctpConfiguration.outStreams }}
@@ -177,14 +183,17 @@ RUs:
     eNB_instances: {{ component.config.ru.eNB_instances | default([0]) }}
     sf_extension: {{ component.config.ru.sf_extension | default(0) }}
 {% if component.config.ru.ip %}
-    sdr_addrs: "fpga=XG,mgmt_addr={{ component.config.ru.ip }},addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+    sdr_addrs: "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
 {% endif %}
 
+{% if component.config.ru.type == "simulated" %}
 rfsimulator:
 {% if component.advanced_config and component.advanced_config.rfsimulator %}
 {{ component.advanced_config.rfsimulator | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   - serveraddr: server
+    serverport: 4043
+{% endif %}
 {% endif %}
 
 {% if component.config.ric %}
@@ -212,6 +221,11 @@ fhi_72:
 
 {% if component.advanced_config and component.advanced_config.thread_pool %}
 thread-pool: {{ component.advanced_config.thread_pool }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channelmod %}
+channelmod:
+{{ component.advanced_config.channelmod | to_nice_yaml(indent=2) | indent(2, True) }}
 {% endif %}
 
 {% endif %}

@@ -1,6 +1,5 @@
 """Kubernetes setup utilities and helpers."""
 
-
 import asyncio
 from typing import Literal
 
@@ -26,8 +25,8 @@ async def run_single_k8s_setup_action(
         action: Literal["prepare", "create", "join", "remove"],
         k8s_params: K8SParams,
         ansible_params: AnsibleParams,
-        force: bool = False
-        ):
+        force: bool = False,
+    ) -> None:
     """Run Kubernetes setup Ansible role corresponding to the given action on a single provisioned node_data."""
 
     if not force:
@@ -51,9 +50,9 @@ async def run_single_k8s_setup_action(
         "inputs": {
             "node": {
                 "name": node_name,
-                **node_data.model_dump(mode="json")
+                **node_data.model_dump(mode="json"),
             },
-            **merged_params.model_dump(mode="json")
+            **merged_params.model_dump(mode="json"),
         },
         "output_keys": ["join_command"] if action == "create" else None, # retrieve the join command
         "runner_path": f"{ansible_params.runner_path}/{node_data.category.value}/{node_name}/k8s/{action}",
@@ -90,7 +89,7 @@ async def run_parallel_k8s_setup_action(
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
-        ):
+    ) -> None:
     """Run Kubernetes setup action in parallel on provided nodes."""
 
     tasks: dict[str, asyncio.Task] = {}
@@ -102,7 +101,7 @@ async def run_parallel_k8s_setup_action(
                 action=action,
                 k8s_params=k8s_params,
                 ansible_params=ansible_params,
-                force=force
+                force=force,
         ))
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
@@ -112,5 +111,5 @@ async def run_parallel_k8s_setup_action(
             handle_ansible_result_exception(
                 result=result,
                 ignore_invalid_states=ignore_invalid_states,
-                ignore_failures=ignore_failures
+                ignore_failures=ignore_failures,
             )

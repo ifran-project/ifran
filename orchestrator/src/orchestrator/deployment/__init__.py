@@ -7,6 +7,7 @@ from orchestrator.deployment.k8s import K8SSetupManagement
 from orchestrator.deployment.miscellaneous import Miscellaneous
 from orchestrator.deployment.provisioning import ProvisioningManagement
 from orchestrator.deployment.ran import RANManagement
+from orchestrator.deployment.ue import UEManagement
 
 __all__ = [
     "BaseBlueprintManagement",
@@ -16,4 +17,5 @@ __all__ = [
     "Miscellaneous",
     "ProvisioningManagement",
     "RANManagement",
+    "UEManagement",
 ]

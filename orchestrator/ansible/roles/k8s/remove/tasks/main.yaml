@@ -58,7 +58,7 @@
       - containerd
       - python3-debian
       - python3-kubernetes
-      - python3-pymysql # might have been installed by database role
+      - python3-pymysql
     state: absent
     autoremove: true
     allow_change_held_packages: true
