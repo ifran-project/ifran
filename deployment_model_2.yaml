@@ -3,10 +3,9 @@ params:
     experiment: tst
 nodes:
   node1:
-    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.46.143
+      hostname: 10.123.101.202
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -16,10 +15,9 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
   node2:
-    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.93.30
+      hostname: 10.123.32.111
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -29,10 +27,9 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
   node3:
-    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.2.153
+      hostname: 10.123.250.88
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -44,16 +41,14 @@ nodes:
 core_deployment:
   components:
     amf: {}
-    smf: {}
+    udm: {}
     nrf: {}
     upf: {}
+    smf: {}
+    udr: {}
+    ausf: {}
 ran_deployment:
   components:
-    du1: {}
-    cucp: {}
     gnb: {}
-    cuup: {}
-    cu1: {}
-    du2: {}
 simulated_ues:
   sim_ue: {}

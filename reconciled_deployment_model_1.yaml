@@ -4,16 +4,14 @@ params:
 core_deployment:
   components:
     amf: {}
-    smf: {}
+    udm: {}
     nrf: {}
     upf: {}
+    smf: {}
+    udr: {}
+    ausf: {}
 ran_deployment:
   components:
-    du1: {}
-    cucp: {}
     gnb: {}
-    cuup: {}
-    cu1: {}
-    du2: {}
 simulated_ues:
   sim_ue: {}

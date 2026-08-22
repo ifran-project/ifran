@@ -125,6 +125,7 @@ nodes:
 core_deployment:
   components: {}
   is_database_present: false
+  database_ip: null
 ran_deployment:
   components: {}
 rus: {}

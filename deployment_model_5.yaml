@@ -1,16 +1,15 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.46.143:6443 --token pqeybm.7oc67zkzxnxj6jut
-      --discovery-token-ca-cert-hash sha256:242469e232cf2908c9035d105137b079a9802ae564fd11bf18084e83f4799072 '
+    join_command: 'kubeadm join 10.123.101.202:6443 --token 9kgh1r.1cievywkgjl13osi
+      --discovery-token-ca-cert-hash sha256:b65051634d6fbc986a81f262fc2b2714a667ec93d51e095351cd761714fb02ba '
   provisioning:
     experiment: tst
 nodes:
   node1:
-    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.46.143
+      hostname: 10.123.101.202
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -21,10 +20,9 @@ nodes:
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
   node2:
-    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.93.30
+      hostname: 10.123.32.111
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -35,10 +33,9 @@ nodes:
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
   node3:
-    category: node
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.2.153
+      hostname: 10.123.250.88
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -52,7 +49,7 @@ core_deployment:
   components:
     amf:
       is_installed: true
-      network_info: 10.244.104.4
+      network_info: 10.244.135.10
       image:
         repository: docker.io/oaisoftwarealliance/oai-amf
         image_tag: v2.2.0
@@ -66,25 +63,22 @@ core_deployment:
       namespace: oai-core
       node_selector:
         node-type.5g.blueprint/core: 'true'
-    smf:
+    udm:
       is_installed: true
-      network_info: 10.244.104.3
+      network_info: 10.244.104.9
       image:
-        repository: docker.io/oaisoftwarealliance/oai-smf
+        repository: docker.io/oaisoftwarealliance/oai-udm
         image_tag: v2.2.0
       exposed_ports:
         sbi:
           port: 80
           protocol: TCP
-        n4:
-          port: 8805
-          protocol: UDP
       namespace: oai-core
       node_selector:
         node-type.5g.blueprint/core: 'true'
     nrf:
       is_installed: true
-      network_info: 10.244.135.2
+      network_info: 10.244.135.8
       image:
         repository: docker.io/oaisoftwarealliance/oai-nrf
         image_tag: v2.2.0
@@ -97,7 +91,7 @@ core_deployment:
         node-type.5g.blueprint/core: 'true'
     upf:
       is_installed: true
-      network_info: 10.244.104.2
+      network_info: 10.244.135.7
       image:
         repository: docker.io/oaisoftwarealliance/oai-upf
         image_tag: v2.2.0
@@ -124,63 +118,56 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
+    smf:
+      is_installed: true
+      network_info: 10.244.135.9
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-smf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n4:
+          port: 8805
+          protocol: UDP
+      namespace: oai-core
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    udr:
+      is_installed: true
+      network_info: 10.244.104.8
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-udr
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    ausf:
+      is_installed: true
+      network_info: 10.244.104.10
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-ausf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
   is_database_present: true
+  database_ip: 10.244.104.7
 ran_deployment:
   components:
-    du1:
-      is_installed: true
-      static_pod_ip: 10.244.166.159
-      network_info: 10.244.166.159
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-gnb
-        image_tag: 2026.w31
-      exposed_ports:
-        f1c:
-          port: 38472
-          protocol: SCTP
-        f1u:
-          port: 2153
-          protocol: UDP
-      namespace: oai-ran
-      security_context:
-        capabilities:
-          add:
-          - SYS_NICE
-          - IPC_LOCK
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/ran: 'true'
-    cucp:
-      is_installed: true
-      static_pod_ip: 10.244.15.98
-      network_info: 10.244.15.98
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-gnb
-        image_tag: 2026.w31
-      exposed_ports:
-        e1:
-          port: 38462
-          protocol: SCTP
-        f1c:
-          port: 38472
-          protocol: SCTP
-        n2:
-          port: 38412
-          protocol: SCTP
-      namespace: oai-ran
-      security_context:
-        capabilities:
-          add:
-          - SYS_NICE
-          - IPC_LOCK
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/ran: 'true'
     gnb:
       is_installed: true
-      network_info: 10.244.135.3
+      static_pod_ip: 10.244.243.235
+      network_info: 10.244.243.235
       image:
         repository: docker.io/oaisoftwarealliance/oai-gnb
         image_tag: 2026.w31
@@ -190,87 +177,6 @@ ran_deployment:
           protocol: SCTP
         n3:
           port: 2152
-          protocol: UDP
-      namespace: oai-ran
-      security_context:
-        capabilities:
-          add:
-          - SYS_NICE
-          - IPC_LOCK
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/ran: 'true'
-    cuup:
-      is_installed: true
-      static_pod_ip: 10.244.139.10
-      network_info: 10.244.139.10
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-nr-cuup
-        image_tag: 2026.w31
-      exposed_ports:
-        e1:
-          port: 38462
-          protocol: SCTP
-        f1u:
-          port: 2153
-          protocol: UDP
-        n3:
-          port: 2152
-          protocol: UDP
-      namespace: oai-ran
-      security_context:
-        capabilities:
-          add:
-          - SYS_NICE
-          - IPC_LOCK
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/ran: 'true'
-    cu1:
-      is_installed: true
-      static_pod_ip: 10.244.160.235
-      network_info: 10.244.160.235
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-gnb
-        image_tag: 2026.w31
-      exposed_ports:
-        f1c:
-          port: 38472
-          protocol: SCTP
-        f1u:
-          port: 2153
-          protocol: UDP
-        n2:
-          port: 38412
-          protocol: SCTP
-        n3:
-          port: 2152
-          protocol: UDP
-      namespace: oai-ran
-      security_context:
-        capabilities:
-          add:
-          - SYS_NICE
-          - IPC_LOCK
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/ran: 'true'
-    du2:
-      is_installed: true
-      static_pod_ip: 10.244.89.148
-      network_info: 10.244.89.148
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-gnb
-        image_tag: 2026.w31
-      exposed_ports:
-        f1c:
-          port: 38472
-          protocol: SCTP
-        f1u:
-          port: 2153
           protocol: UDP
       namespace: oai-ran
       security_context:
