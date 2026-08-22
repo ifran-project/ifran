@@ -48,7 +48,7 @@ snssais:
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
 nfs:
   smf:
-    host: {{ component_name | default("oai-smf") }}
+    host: {{ chart_name }}
     sbi:
       port: {{ component.config.sbi.port }}
       api_version: {{ component.config.sbi.apiVersion }}
@@ -72,29 +72,20 @@ smf:
     discover_upf: yes
 {% endif %}
   # we resolve from NRF, this is just to configure usage_reporting
-  upfs:
+
 {% if component.advanced_config and component.advanced_config.upfs %}
+  upfs:
 {{ component.advanced_config.upfs | to_nice_yaml(indent=4) | indent(4, True) }}
-{% else %}
-    - host: oai-upf
-      config:
-        enable_usage_reporting: no
 {% endif %}
-  ue_dns:
+
 {% if component.advanced_config and component.advanced_config.ue_dns %}
+  ue_dns:
 {{ component.advanced_config.ue_dns | to_nice_yaml(indent=4) | indent(4, True) }}
-{% else %}
-    primary_ipv4: "10.3.2.200"
-    primary_ipv6: "2001:4860:4860::8888"
-    secondary_ipv4: "8.8.8.8"
-    secondary_ipv6: "2001:4860:4860::8888"
 {% endif %}
-  ims:
+
 {% if component.advanced_config and component.advanced_config.ims %}
+  ims:
 {{ component.advanced_config.ims | to_nice_yaml(indent=4) | indent(4, True) }}
-{% else %}
-    pcscf_ipv4: "192.168.70.139"
-    pcscf_ipv6: "fe80::7915:f408:1787:db8b"
 {% endif %}
   # the DNN you configure here should be configured in "dnns"
   # follows the SmfInfo datatype from 3GPP TS 29.510

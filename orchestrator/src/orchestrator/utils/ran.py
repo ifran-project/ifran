@@ -68,34 +68,12 @@ def resolve_ran_component_references(
 
 def resolve_split_ran_references(
         ran_meta: RAN,
-        ran_deployment: RANDeployment,
-        pod_network_cidr: IPvAnyNetwork,
+        ip_mapping: dict[str, IPvAnyAddress],
     ) -> None:
     """Resolve the cyclic dependencies between split RAN components by assigning them static IPs."""
 
-    split_types = {
-        RANComponentType.CU,
-        RANComponentType.CU_CP,
-        RANComponentType.CU_UP,
-        RANComponentType.DU,
-    }
-
-    # assign a static ip to every split component if not already set
-    # if user wants to go with Multus, it's up to them to resolve this
-    used_ips: set[IPvAnyAddress] = set()
-    ip_mapping: dict[str, IPvAnyAddress] = {}
-    for name, component_meta in ran_meta.components.items():
-        if component_meta.type in split_types:
-            component_k8s = ran_deployment.components[name] # meta and deployment should be in sync by this point
-            component_k8s.static_pod_ip = component_k8s.static_pod_ip or generate_random_ip(pod_network_cidr, used_ips)
-            ip_mapping[name] = component_k8s.static_pod_ip # build mapping between component names and ips
-            used_ips.add(component_k8s.static_pod_ip)
-
     # resolve the inter-component references
     for name, component_meta in ran_meta.components.items():
-        if component_meta.type not in split_types:
-            continue
-
         for ref_attribute in ("du", "cu_cp", "cu_up"):
             if not hasattr(component_meta.config, ref_attribute):
                 continue
@@ -114,6 +92,19 @@ def resolve_split_ran_references(
             setattr(component_meta.config, ref_attribute, target_ip)
 
 
+def resolve_n2_n3(
+        component_meta: RANComponent,
+        component_k8s: K8SComponent,
+    ) -> None:
+    """Put assigned static IP address as N2 and N3 address."""
+
+    # NOTE if user goes with multus for n3, it's up to them to resolve this
+    if hasattr(component_meta.config, "n3"):
+        component_meta.config.n3.ipv4EndPointAddress = component_k8s.static_pod_ip
+    if hasattr(component_meta.config, "n2"):
+        component_meta.config.n2.ipv4EndPointAddress = component_k8s.static_pod_ip
+
+
 def reconcile_ran(
         ran_meta: RAN,
         ran_deployment: RANDeployment,
@@ -126,12 +117,6 @@ def reconcile_ran(
     ) -> None:
     """Ensure RAN is ready for deployment."""
 
-    resolve_split_ran_references(
-        ran_meta=ran_meta,
-        ran_deployment=ran_deployment,
-        pod_network_cidr=pod_network_cidr,
-    )
-
     # add simulated rus as provisioned to be considered as ready
     merged_rus = rus_provisioning | {
         name: ProvisionableRU(category=ProvisioningCategory.RU, is_provisioned=True)
@@ -139,9 +124,23 @@ def reconcile_ran(
         if ru.type is RUType.SIMULATED
         }
 
+    used_ips: set[IPvAnyAddress] = set()
+    ip_mapping: dict[str, IPvAnyAddress] = {}
+
     for name, component_meta in ran_meta.components.items():
         # meta and deployment model ran component keys are suppposed to be synced by thi point
         component_k8s = ran_deployment.components[name]
+
+        # all ran components are assigned static pod ip
+        component_k8s.static_pod_ip = component_k8s.static_pod_ip or generate_random_ip(pod_network_cidr, used_ips)
+
+        ip_mapping[name] = component_k8s.static_pod_ip # build mapping between component names and ips
+        used_ips.add(component_k8s.static_pod_ip)
+
+        resolve_n2_n3(
+            component_meta=component_meta,
+            component_k8s=component_k8s,
+        )
 
         reconcile_5g_component(
             component_name=name,
@@ -162,3 +161,9 @@ def reconcile_ran(
         # derive implementation-specific radio paramaters for gnb and du after ru name reference resolution
         if component_meta.type in [RANComponentType.GNB, RANComponentType.DU]:
             derive_ran_radio_config(component_meta)
+
+    # resolve split ran references after static ips have been assigned
+    resolve_split_ran_references(
+        ran_meta=ran_meta,
+        ip_mapping=ip_mapping,
+    )

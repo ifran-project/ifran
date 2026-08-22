@@ -21,7 +21,7 @@ DEFAULT_CORE_IMAGES: dict[CoreImplementation, dict[CoreComponentType, ContainerI
         CoreComponentType.UDR: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-udr", image_tag="v2.2.0"),
         CoreComponentType.PCF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.0"),
         CoreComponentType.AUSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.0"),
-        CoreComponentType.NSSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.0"), # NOTE works but scripts/nssf_slice_config.yaml file needs to be templated and rendered (hardcoded default one for now)
+        CoreComponentType.NSSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.0"),
         CoreComponentType.LMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-lmf", image_tag="v2.2.0"), # NOTE doesn't work, needs policy files in pcf container to be added
     },
     CoreImplementation.OPEN5GS: {

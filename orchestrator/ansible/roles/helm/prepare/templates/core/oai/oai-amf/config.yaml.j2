@@ -51,7 +51,7 @@ snssais:
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
 nfs:
   amf:
-    host: {{ component_name | default("oai-amf") }}
+    host: {{ chart_name }}
     sbi:
       port: {{ component.config.sbi.port }}
       api_version: {{ component.config.sbi.apiVersion }}

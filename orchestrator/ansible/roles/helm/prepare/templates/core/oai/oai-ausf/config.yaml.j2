@@ -27,7 +27,7 @@ http_version: {{ component.advanced_config.http_version | default(2) }}  # allow
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
 nfs:
   ausf:
-    host: {{ component_name | default("oai-ausf") }}
+    host: {{ chart_name }}
     sbi:
       port: {{ component.config.sbi.port }}
       api_version: {{ component.config.sbi.apiVersion }}
