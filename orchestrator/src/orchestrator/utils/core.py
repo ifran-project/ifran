@@ -8,11 +8,16 @@ from pydantic import IPvAnyAddress
 from orchestrator.models.deployment.ansible import AnsibleParams
 from orchestrator.models.deployment.core import CoreDeployment
 from orchestrator.models.deployment.k8s import HelmParams, K8SComponent
+from orchestrator.models.deployment.provisioning import ProvisionableNode
 from orchestrator.models.meta.common import Category5G
 from orchestrator.models.meta.core import Core, CoreComponent, CoreImplementation
 from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEConfiguration
-from orchestrator.utils.ansible import handle_ansible_result_exception, run_ansible_role
+from orchestrator.utils.ansible import (
+    get_ansible_inventory_line,
+    handle_ansible_result_exception,
+    run_ansible_role,
+)
 from orchestrator.utils.common import InvalidResourceStateError
 from orchestrator.utils.common_5g import reconcile_5g_component
 
@@ -57,8 +62,8 @@ async def run_core_database_helm_action(
         core_meta: Core,
         core_deployment: CoreDeployment,
         action: Literal["prepare", "install", "uninstall"],
-        node: str,
-        inventory: str,
+        node_name: str,
+        node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
         force: bool = False,
     ) -> None:
@@ -88,8 +93,8 @@ async def run_core_database_helm_action(
         "inputs": {"component": component, **helm_params},
         "runner_path": f"{ansible_params.runner_path}/{component["category"]}/database/helm/{action}",
         "roles_path": ansible_params.roles_path,
-        "hosts": node,
-        "inventory": inventory,
+        "hosts": node_name,
+        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
     }
 
@@ -117,8 +122,8 @@ async def run_single_database_subscriber_action(
         core_implementation: CoreImplementation,
         action: Literal["add", "remove"],
         database_ip: IPvAnyAddress,
-        node: str,
-        inventory: str,
+        node_name: str,
+        node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
         force: bool = False,
     ) -> None:
@@ -132,8 +137,8 @@ async def run_single_database_subscriber_action(
         "inputs": {"ue_name": ue_name, "ue_config": ue_config.model_dump(mode="json"), "database_ip": str(database_ip)},
         "runner_path": f"{ansible_params.runner_path}/core/database/subscriber/{action}",
         "roles_path": ansible_params.roles_path,
-        "hosts": node,
-        "inventory": inventory,
+        "hosts": node_name,
+        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
     }
     try:
@@ -147,8 +152,8 @@ async def run_parallel_database_subscriber_action(
         core_implementation: CoreImplementation,
         action: Literal["add", "remove"],
         database_ip: IPvAnyAddress,
-        node: str,
-        inventory: str,
+        node_name: str,
+        node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
         force: bool = False,
         ignore_invalid_states: bool = False,
@@ -165,8 +170,8 @@ async def run_parallel_database_subscriber_action(
                 core_implementation=core_implementation,
                 action=action,
                 database_ip=database_ip,
-                node=node,
-                inventory=inventory,
+                node_name=node_name,
+                node_data=node_data,
                 ansible_params=ansible_params,
                 force=force,
         ))

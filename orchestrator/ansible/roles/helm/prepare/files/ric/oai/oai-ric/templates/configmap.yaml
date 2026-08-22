@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-configmap
+  labels:
+    app: {{ .Release.Name }}
+data:
+  # even tough the file is a .conf, we put it in config.yaml for compatibility with all the other charts
+  flexric.conf: |-
+{{ .Files.Get "config.yaml" | nindent 4 }}

@@ -8,7 +8,6 @@ from orchestrator.models.deployment.k8s import (
     K8SComponent,
 )
 from orchestrator.models.deployment.provisioning import ProvisionableRU
-from orchestrator.models.deployment.ric import RICType
 from orchestrator.models.meta.common import (
     EXPOSED_COMPONENT_INTERFACES,
     Category5G,
@@ -32,9 +31,7 @@ from orchestrator.utils.common import (
     ReferenceNotFounError,
 )
 from orchestrator.utils.defaults import (
-    DEFAULT_CORE_IMAGES,
-    DEFAULT_RAN_IMAGES,
-    DEFAULT_UE_IMAGES,
+    DEFAULT_POD_IMAGES,
     POD_PRIVELEGES,
 )
 
@@ -122,7 +119,7 @@ def resolve_snssai_reference(
         return slices[value]
 
     raise ReferenceNotFounError(
-        f"{component_meta.category.value.capitalize()} component "
+        f"{component_meta.category.value.upper()} component "
         f"{component_name!r} references undefined slice {value!r} "
         f"in {field_name!r}."
     )
@@ -270,58 +267,52 @@ def populate_default_images(
     # if not implementation is defined raise an error
     if component_meta.implementation is None:
         raise ValueError(
-            f"{component_meta.category.value.capitalize()} component {component_name!r} "
+            f"{component_meta.category.value.upper()} component {component_name!r} "
             f"has no defined {component_meta.category.value} implementation."
         )
 
-    match component_meta.category:
-        case Category5G.CORE:
-            if component_k8s.image is None and DEFAULT_CORE_IMAGES.get(component_meta.implementation):
-                component_k8s.image = DEFAULT_CORE_IMAGES.get(component_meta.implementation, {}
-                                                              ).get(component_meta.type)
+    if component_meta.category is Category5G.RAN:
+        # for RAN components, RU is supposed to be resolved before this
+        config = component_meta.config
+        if hasattr(config, "ru") and isinstance(config.ru, RU):
+            ru_type = config.ru.type
+        else:
+            # NOTE CUs, CU-CPs and CU-UPs dont have and ru field, so give them simulated one for simplicity
+            ru_type = RUType.SIMULATED
 
-        case Category5G.RAN:
-            # for RAN components, RU is supposed to be resolved before this
-            config = component_meta.config
-            if hasattr(config, "ru") and isinstance(config.ru, RU):
-                ru_type = config.ru.type
-            else:
-                # NOTE CUs, CU-CPs and CU-UPs dont have and ru field, so give them simulated one for simplicity
-                ru_type = RUType.SIMULATED
+            component_k8s.image = DEFAULT_POD_IMAGES.get(component_meta.category
+                                                         ).get(component_meta.implementation, {}
+                                                               ).get(ru_type, {}
+                                                                     ).get(component_meta.type)
+    else:
+        if component_k8s.image is None and DEFAULT_POD_IMAGES.get(component_meta.category).get(component_meta.implementation):
+            component_k8s.image = DEFAULT_POD_IMAGES.get(component_meta.category
+                                                         ).get(component_meta.implementation, {}
+                                                               ).get(component_meta.type)
 
-                component_k8s.image = DEFAULT_RAN_IMAGES.get(component_meta.implementation, {}
-                                                            ).get(ru_type, {}).get(component_meta.type)
-
-        case Category5G.UE:
-            if component_k8s.image is None and DEFAULT_UE_IMAGES.get(component_meta.implementation):
-                component_k8s.image = DEFAULT_UE_IMAGES.get(component_meta.implementation, {}
-                                                              ).get(component_meta.type)
-
-        case Category5G.RIC:
-            # TODO
-            pass
 
     # if not default image is available, it stays None but is required
     if component_k8s.image is None:
-        raise ValueError(f"{component_meta.category.value.capitalize()} component {component_name!r} has no container image.")
+        raise ValueError(f"{component_meta.category.value.upper()} component {component_name!r} has no container image.")
 
 
 def reconcile_5g_component(
         component_name: str,
         component_meta: Component5G,
         component_k8s: K8SComponent,
-        slices: dict[str, Slice],
+        slices: dict[str, Slice] | None = None,
     ) -> None:
     """
     Ensure the 5G component Kubernetes deployment model is ready for deployment.
     Is slices is None, slices name references are not resolved.
     """
 
-    resolve_component_slices(
-        component_name=component_name,
-        component_meta=component_meta,
-        slices=slices,
-    )
+    if slices:
+        resolve_component_slices(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+        )
 
     populate_default_images(
         component_name=component_name,
@@ -359,8 +350,8 @@ def reconcile_5g_component(
 
 def get_5g_components_by_type(
         components: dict[str, Component5G]
-    ) -> dict[CoreComponentType | RANComponentType | UEType | RICType, dict[str, Component5G]]:
-    """Get 5G components (core, ran, ues, rics) by their type."""
+    ) -> dict[CoreComponentType | RANComponentType | UEType, dict[str, Component5G]]:
+    """Get 5G components (core, ran, ues) by their type."""
 
     groups = defaultdict(dict)
     for c_name, c_data  in components.items():

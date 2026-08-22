@@ -15,7 +15,6 @@ from orchestrator.models.common import (
 from orchestrator.models.meta.common import (
     Category5G,
     Component5G,
-    validate_component_advanced_config,
 )
 from orchestrator.models.meta.ran import RU, CommonGNBComponent
 from orchestrator.models.meta.slice import DNN, BitRate, Slice
@@ -303,4 +302,4 @@ class UE(Component5G):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return validate_component_advanced_config(self, ADVANCED_UE_CONFIG_MAPPING)
+        return super().validate_advanced_config(ADVANCED_UE_CONFIG_MAPPING)

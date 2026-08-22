@@ -21,7 +21,6 @@ from orchestrator.models.meta.common import (
     GTPUEndpoint,
     Network5G,
     SecurityAlgorithmConfiguration,
-    validate_component_advanced_config,
 )
 from orchestrator.models.meta.core import PLMNSupportItem
 from orchestrator.models.meta.ru import RU
@@ -391,7 +390,7 @@ class RANComponentConfig(BlueprintBaseModel):
     timeZone: str = Field(default="Europe/Paris")
     """Timezone."""
 
-    gnbId: int = Field(default=0, ge=0, le=4294967295)
+    gnbId: int = Field(default=1, ge=1, le=4294967295) # 2^32 - 1
     """gNB identity."""
 
     tac: int = Field(default=1, ge=0, le=65535)
@@ -671,7 +670,7 @@ class GenericRANComponent(Component5G):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return validate_component_advanced_config(self, ADVANCED_RAN_CONFIG_MAPPING)
+        return super().validate_advanced_config(ADVANCED_RAN_CONFIG_MAPPING)
 
 
 class CUCPComponent(GenericRANComponent):

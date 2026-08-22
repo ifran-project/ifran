@@ -27,7 +27,6 @@ from orchestrator.models.meta.common import (
     Network5G,
     SecurityAlgorithmConfiguration,
     TransportEndpoint,
-    validate_component_advanced_config,
 )
 from orchestrator.models.meta.slice import Slice
 
@@ -745,7 +744,7 @@ class CoreComponent(Component5G):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return validate_component_advanced_config(self, ADVANCED_CORE_CONFIG_MAPPING)
+        return super().validate_advanced_config(ADVANCED_CORE_CONFIG_MAPPING)
 
 
 class AMFComponent(CoreComponent):

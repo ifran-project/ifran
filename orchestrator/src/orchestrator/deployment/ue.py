@@ -1,7 +1,5 @@
 """UEs lifecycle management."""
 
-from typing import Literal
-
 from orchestrator.deployment.helm import HelmManagement
 from orchestrator.models.meta.common import Category5G
 from orchestrator.utils.common_5g import RANComponentType, get_5g_components_by_type
@@ -27,7 +25,7 @@ class UEManagement(HelmManagement):
 
         reconcile_ues(
             ues_meta=self.mutatable_metamodel.ues,
-            ues_k8s=self.deployment_model.simulated_ues,
+            ues_k8s=self.deployment_model.containerized_ues,
             slices=self.mutatable_metamodel.slices,
             gnb_components_meta=gnb_components_meta,
             gnb_components_k8s=gnb_components_k8s,
@@ -36,46 +34,6 @@ class UEManagement(HelmManagement):
         )
 
 
-    async def run_action(
-        self,
-        action: Literal["prepare", "install", "uninstall"],
-        ues: list[str] | None = None,
-        node: str | None = None,
-        **kwargs,
-        ) -> None:
-        """Run Helm action on simulated UEs."""
-
-        await super().run_action(
-            category=Category5G.UE,
-            action=action,
-            components=ues,
-            node=node,
-            **kwargs,
-        )
-
-
-    async def prepare(self, ues: list[str] | None = None, **kwargs) -> None:
-        """Prepare Helm charts for simulated UEs."""
-        await self.run_action(action="prepare", ues=ues, **kwargs)
-
-
-    async def install(self, ues: list[str] | None = None, **kwargs) -> None:
-        """Install simulated UEs via Helm."""
-        await self.run_action(action="install", ues=ues, **kwargs)
-
-
-    async def uninstall(self, ues: list[str] | None = None, **kwargs) -> None:
-        """Uninstall simulated UEs via Helm."""
-        await self.run_action(action="uninstall", ues=ues, **kwargs)
-
-
-    async def deploy(self, **kwargs) -> None:
-        """Prepare and install simulated UEs via Helm."""
-        await self.prepare(**kwargs)
-        await self.install(**kwargs)
-
-
-    # only for naming consistency
-    async def remove(self, **kwargs) -> None:
-        """Remove/uninstall simulated UEs via Helm."""
-        await self.uninstall(**kwargs)
+    async def run_action(self, **kwargs) -> None:
+        """Run Helm action on containerized UEs."""
+        await super().run_action(category=Category5G.UE, **kwargs)

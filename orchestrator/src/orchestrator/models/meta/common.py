@@ -304,10 +304,12 @@ class E2(TransportEndpoint):
 
 EXPOSED_CORE_INTERFACES = ["sbi", "n2", "n3", "n4", "n9"]
 EXPOSED_RAN_INTERFACES = ["e1", "e2", "f1c", "f1u", "n2", "n3"]
+EXPOSED_RIC_INTERFACES = ["e2"]
 
 EXPOSED_COMPONENT_INTERFACES = {
     Category5G.CORE: EXPOSED_CORE_INTERFACES,
     Category5G.RAN: EXPOSED_RAN_INTERFACES,
+    Category5G.RIC: EXPOSED_RIC_INTERFACES,
 }
 
 
@@ -332,6 +334,20 @@ class Component5G(BlueprintBaseModel):
 
     plain_text_config: str | None = Field(default=None)
     """Raw configuration file content."""
+
+
+    def validate_advanced_config(self, mapping: dict) -> Self:
+        """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
+
+        # advanced config can be none
+        if not isinstance(self.advanced_config, dict):
+            return self
+
+        model: BaseModel = mapping.get(self.implementation, {}).get(self.type)
+        if model:
+            self.advanced_config = model.model_validate(self.advanced_config)
+
+        return self
 
 
 class Network5G(BlueprintBaseModel):
@@ -363,17 +379,3 @@ class Network5G(BlueprintBaseModel):
                 raise ValueError(f"Requested component {name!r} of type {component.type!r} is not supported in {self.implementation!r} implementation.")
         return self
 
-
-
-def validate_component_advanced_config(component: Component5G, mapping: dict) -> Component5G:
-    """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
-
-    # advanced config can be none
-    if not isinstance(component.advanced_config, dict):
-        return component
-
-    model: BaseModel = mapping.get(component.implementation, {}).get(component.type)
-    if model:
-        component.advanced_config = model.model_validate(component.advanced_config)
-
-    return component

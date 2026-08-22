@@ -67,8 +67,8 @@ class DeploymentModel(BlueprintBaseModel):
     ues: dict[str, ProvisionableUE] = Field(default_factory=dict)
     """UEs provisioning."""
 
-    simulated_ues: dict[str, UEDeployment] = Field(default_factory=dict)
-    """UEs deployment."""
+    containerized_ues: dict[str, UEDeployment] = Field(default_factory=dict)
+    """Containerized UEs deployment."""
 
     rics: dict[str, RICDeployment] = Field(default_factory=dict)
     """RICs deployment."""

@@ -8,6 +8,7 @@ from orchestrator.models.deployment.k8s import (
 from orchestrator.models.meta.common import Category5G
 from orchestrator.models.meta.core import CoreComponentType, CoreImplementation
 from orchestrator.models.meta.ran import RANComponentType, RANImplementation
+from orchestrator.models.meta.ric import RICImplementation
 from orchestrator.models.meta.ru import RUType
 from orchestrator.models.meta.ue import UEImplementation, UEType
 
@@ -101,12 +102,24 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
 
 DEFAULT_UE_IMAGES: dict[UEImplementation, dict[UEType, ContainerImage]] = {
     UEImplementation.OAI: {
-        UEType.CONTAINERIZED: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nr-ue", image_tag="2026.w31")
+        UEType.CONTAINERIZED: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nr-ue", image_tag="2026.w31"),
     },
 }
 
 
-DEFAULT_RIC_IMAGES = {} # TODO
+DEFAULT_RIC_IMAGES: dict[RICImplementation, dict[str, ContainerImage]] = {
+    RICImplementation.OAI: {
+        "ric": ContainerImage(repository="docker.io/oaisoftwarealliance/oai-flexric", image_tag="develop"),
+    }
+}
+
+
+DEFAULT_POD_IMAGES = {
+    Category5G.CORE: DEFAULT_CORE_IMAGES,
+    Category5G.RAN: DEFAULT_RAN_IMAGES,
+    Category5G.UE: DEFAULT_UE_IMAGES,
+    Category5G.RIC: DEFAULT_RIC_IMAGES,
+}
 
 
 CORE_POD_PRIVELEGES: dict[CoreImplementation, dict[CoreComponentType, SecurityContext]] = {
@@ -134,9 +147,13 @@ UE_POD_PRIVELEGES: dict[UEImplementation, dict[UEType, SecurityContext]] = {
 }
 
 
+# no particular priveleges for now
+RIC_POD_PRIVELEGES: dict[RICImplementation, dict[str, SecurityContext]] = {}
+
+
 POD_PRIVELEGES = {
     Category5G.CORE: CORE_POD_PRIVELEGES,
     Category5G.RAN: RAN_POD_PRIVELEGES,
     Category5G.UE: UE_POD_PRIVELEGES,
-    Category5G.RIC: {}, # TODO
+    Category5G.RIC: RIC_POD_PRIVELEGES,
 }

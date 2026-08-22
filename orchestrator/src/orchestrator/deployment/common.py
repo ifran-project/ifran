@@ -70,7 +70,7 @@ class BaseBlueprintManagement:
             default_factory=lambda: ProvisionableUE(category=ProvisioningCategory.UE),
         )
         sync_dict_keys(
-            target_dict=self.deployment_model.simulated_ues,
+            target_dict=self.deployment_model.containerized_ues,
             source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.CONTAINERIZED},
             default_factory=UEDeployment,
         )
@@ -152,7 +152,7 @@ class BaseBlueprintManagement:
                         self.metamodel.ues,
                         deep_merge(
                             self.deployment_model.ues,
-                            self.deployment_model.simulated_ues,
+                            self.deployment_model.containerized_ues,
                         ),
             ),
             "rics": deep_merge(

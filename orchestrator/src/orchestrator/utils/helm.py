@@ -51,7 +51,7 @@ async def run_single_helm_action(
         (component_k8s.is_installed and action == "install") or 
         (not component_k8s.is_installed and action == "uninstall")
         ):
-        raise InvalidResourceStateError(f"{component_meta.category.value.capitalize()} component {component_name!r} is already {action}ed.")
+        raise InvalidResourceStateError(f"{component_meta.category.value.upper()} component {component_name!r} is already {action}ed.")
 
     if helm_params is None:
         helm_params = HelmParams(
@@ -81,7 +81,7 @@ async def run_single_helm_action(
     try:
         result = await run_ansible_role(**args)
     except Exception as e:
-        raise RuntimeError(f"{component_meta.category.value.capitalize()} component {component_name!r} Helm {action} not successful.") from e
+        raise RuntimeError(f"{component_meta.category.value.upper()} component {component_name!r} Helm {action} not successful.") from e
 
     # update component state
     if action == "install":

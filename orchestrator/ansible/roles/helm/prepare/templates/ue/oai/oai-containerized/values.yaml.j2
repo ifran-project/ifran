@@ -204,7 +204,7 @@ affinity:
   {}
 {% endif %}
 
-terminationGracePeriodSeconds: {{ termination_grace_period_seconds | default(5) }}
+terminationGracePeriodSeconds: 5
 
 nodeSelector:
 {% if component.node_selector %}

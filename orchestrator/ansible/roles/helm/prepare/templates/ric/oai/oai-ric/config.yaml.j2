@@ -1,0 +1,13 @@
+# plain text config overwrites everything
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+[NEAR-RIC]
+NEAR_RIC_IP = {{ component.advanced_config.NEAR_RIC_IP | default("127.0.0.1") }}
+
+[XAPP]
+DB_DIR = {{ component.advanced_config.DB_DIR | default("/tmp/") }}
+DB_NAME = {{ component.advanced_config.DB_NAME | default("xapp_db") }}
+
+{% endif %}

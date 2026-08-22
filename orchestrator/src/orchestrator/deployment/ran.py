@@ -1,7 +1,5 @@
 """RAN deployemnt lifecycle management."""
 
-from typing import Literal
-
 from orchestrator.deployment.helm import HelmManagement
 from orchestrator.models.meta.common import Category5G
 from orchestrator.models.meta.core import CoreComponentType
@@ -48,54 +46,16 @@ class RANManagement(HelmManagement):
         )
 
 
-    async def run_action(
-            self,
-            action: Literal["prepare", "install", "uninstall"],
-            components: list[str] | None = None,
-            node: str | None = None,
-            **kwargs,
-        ) -> None:
+    async def run_action(self, **kwargs) -> None:
         """Run Helm action on RAN components."""
-
-        await super().run_action(
-            category=Category5G.RAN,
-            action=action,
-            components=components,
-            node=node,
-            **kwargs,
-        )
+        await super().run_action(category=Category5G.RAN, **kwargs)
 
 
-    async def prepare(self, components: list[str] | None = None, **kwargs) -> None:
-        """Prepare Helm charts for 5G core components."""
-        await self.run_action(action="prepare", components=components, **kwargs)
-
-
-    async def install(self, components: list[str] | None = None, **kwargs) -> None:
-        """Install 5G core components via Helm."""
-        await self.run_action(action="install", components=components, **kwargs)
-
-
-    async def uninstall(self, components: list[str] | None = None, **kwargs) -> None:
-        """Uninstall 5G core components via Helm."""
-        await self.run_action(action="uninstall", components=components, **kwargs)
-
-
+    # override dependency graph
     async def deploy(
             self,
             order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
             **kwargs,
         ) -> None:
         """Orchestrate full RAN deployment."""
-
-        # prepare everything
-        await self.prepare(**kwargs)
-
-        # install ran components in order if desired
-        await self.install(order=order, **kwargs)
-
-
-    # only for naming consistency
-    async def remove(self, **kwargs) -> None:
-        """Remove/tear down RAN deployment."""
-        await self.uninstall(**kwargs),
+        await super().deploy(order=order, **kwargs)

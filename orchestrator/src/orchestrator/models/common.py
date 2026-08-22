@@ -5,7 +5,6 @@ from typing import Annotated, Any, Self
 
 import yaml
 from pydantic import BaseModel, ConfigDict, PlainSerializer, WithJsonSchema
-from pydantic_core import core_schema
 
 
 class BlueprintBaseModel(BaseModel):
