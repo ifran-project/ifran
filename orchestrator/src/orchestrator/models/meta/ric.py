@@ -20,6 +20,9 @@ class RICImplementation(StrEnum):
     OAI = auto()
     """OpenAireInterface's Flexible RAN Intelligent Controller (FlexRIC) and E2 Agent."""
 
+    ORAN_SC = auto() # TODO https://docs.o-ran-sc.org/projects/o-ran-sc-ric-plt-ric-dep/en/latest/installation-guides.html#installing-near-realtime-ric-in-ric-cluster
+    """O-RAN Software Community (SC) Near-Real-time RIC."""
+
 
 class RICConfig(BlueprintBaseModel):
     """RIC configuration."""
@@ -35,7 +38,6 @@ class GenericAdvancedRICConfig(BlueprintBaseModel):
 class OAIAdvancedRICConfig(GenericAdvancedRICConfig):
    """Advanced configuration for OAI FLEXRIC."""
 
-   NEAR_RIC_IP: str | None = Field(default=None)
    DB_DIR: str | None = Field(default=None)
    DB_NAME: str | None = Field(default=None)
 
@@ -60,4 +62,7 @@ class RIC(Component5G):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return super().validate_advanced_config(ADVANCED_RIC_CONFIG_MAPPING)
+        return super().validate_advanced_config(
+            mapping=ADVANCED_RIC_CONFIG_MAPPING,
+            default_model=GenericAdvancedRICConfig,
+        )
