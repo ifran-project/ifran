@@ -1,0 +1,12 @@
+nano=38000
+loglevel=error
+volume=log
+local-ip={{ component.service_name | replace("-", "") }}
+prometheusMode=pull
+prometheusPushTimeOut=10
+prometheusPushAddr=127.0.0.1:7676
+prometheusPort=8088
+trace=stop
+external-fqdn={{ component.service_name | replace("-", "") }}
+pod_name=E2TERM_POD_NAME
+sctp-port={{ component.config.e2.port }}

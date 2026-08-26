@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    {{- include "osc.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "osc.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "osc.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Chart.Name }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.componentName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.command }}
+          command: {{ toJson . }}
+          {{- end }}
+          {{- with .Values.args }}
+          args: {{ toJson . }}
+          {{- end }}
+          env:
+            {{- range $name, $value := .Values.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+          ports:
+            {{- range .Values.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol | default "TCP" }}
+            {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ (first .Values.ports).name }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: {{ (first .Values.ports).name }}
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.configMountPath .Values.routerMountPath .Values.dataMountPath }}
+          volumeMounts:
+            {{- with .Values.configMountPath }}
+            - name: configuration
+              mountPath: {{ . }}
+              subPath: application.conf
+            {{- end }}
+            {{- with .Values.routerMountPath }}
+            - name: configuration
+              mountPath: {{ . }}
+              subPath: router.txt
+            {{- end }}
+            {{- with .Values.dataMountPath }}
+            - name: data
+              mountPath: {{ . }}
+            {{- end }}
+          {{- end }}
+      {{- if or .Values.configMountPath .Values.routerMountPath .Values.dataMountPath }}
+      volumes:
+        {{- if or .Values.configMountPath .Values.routerMountPath }}
+        - name: configuration
+          configMap:
+            name: {{ .Chart.Name }}-config
+        {{- end }}
+        {{- with .Values.dataMountPath }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeName }}
+      nodeName: {{ . }}
+      {{- end }}

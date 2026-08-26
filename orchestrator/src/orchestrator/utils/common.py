@@ -15,6 +15,12 @@ class ReferenceNotFounError(Exception):
     """Exception when a resource references an undefined resource."""
 
 
+def build_safe_helm_name(name: str) -> str:
+    """Build a valid Helm release/chart name."""
+
+    return name.lower().replace("_", "-")
+
+
 def generate_random_ip(network: IPvAnyNetwork, used: set[IPvAnyAddress] | None = None) -> IPvAnyAddress:
     """Generate a random IP address inside a network."""
 

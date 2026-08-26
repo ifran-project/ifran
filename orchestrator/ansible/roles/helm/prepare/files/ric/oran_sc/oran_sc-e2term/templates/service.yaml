@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    {{- include "osc.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    {{- range .Values.ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .name }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
+  selector:
+    {{- include "osc.selectorLabels" . | nindent 4 }}
+---
+# DNS-safe identity used by E2Mgr and Routing Manager for the E2Term RMR endpoint.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.e2Identity }}
+  labels:
+    {{- include "osc.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: rmrdata
+      port: 38000
+      targetPort: rmrdata
+      protocol: TCP
+    - name: rmrroute
+      port: 4561
+      targetPort: rmrroute
+      protocol: TCP
+  selector:
+    {{- include "osc.selectorLabels" . | nindent 4 }}

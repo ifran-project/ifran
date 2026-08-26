@@ -32,9 +32,23 @@
     wait_sleep: 1
   register: pod_info
 
-- name: Set '{{ chart_name }}' pod IP as component network information
+- name: Read '{{ chart_name }}' RIC service
+  kubernetes.core.k8s_info:
+    kind: Service
+    namespace: "{{ component.namespace }}"
+    name: "{{ chart_name }}"
+  register: service_info
+  when:
+    - not output_with_multus
+    - component.category == 'ric'
+
+- name: Set '{{ chart_name }}' network information
   ansible.builtin.set_fact:
-    network_info: "{{ pod_info.resources[0].status.podIP }}"
+    # RIC E2 endpoints use the stable Service IP; other components keep the Pod IP.
+    network_info: >-
+      {{ service_info.resources[0].spec.clusterIP
+         if component.category == 'ric'
+         else pod_info.resources[0].status.podIP }}
   when: not output_with_multus
 
 - name: Set '{{ chart_name }}' Multus network information if Multus was used

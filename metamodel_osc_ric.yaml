@@ -1,0 +1,48 @@
+core:
+  implementation: oai
+  components:
+    nrf: {type: nrf}
+    udr: {type: udr}
+    udm: {type: udm}
+    ausf: {type: ausf}
+    amf: {type: amf}
+    smf: {type: smf}
+    upf: {type: upf}
+
+ran:
+  implementation: oai
+  components:
+    gnb:
+      type: gnb
+      config:
+        amf: amf
+        ric: osc
+        ru: sim_ru
+
+rus:
+  sim_ru:
+    type: simulated
+
+ues:
+  sim_ue:
+    type: containerized
+    implementation: oai
+    config:
+      gnb: gnb
+      ru: sim_ru
+
+slices:
+  internet:
+    dnns:
+      internet: {}
+
+rics:
+  osc:
+    implementation: oran_sc
+    components:
+      database: {type: dbaas}
+      application_manager: {type: appmgr}
+      routing_manager: {type: rtmgr}
+      e2_manager: {type: e2mgr}
+      e2_termination: {type: e2term}
+      subscription_manager: {type: submgr}

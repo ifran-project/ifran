@@ -9,6 +9,7 @@ from orchestrator.utils.common_5g import (
     get_5g_components_by_type,
 )
 from orchestrator.utils.ran import reconcile_ran
+from orchestrator.utils.ric import get_ric_e2_components
 
 RAN_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
     RANComponentType.DU: frozenset({
@@ -34,6 +35,11 @@ class RANManagement(HelmManagement):
         # get amfs from deployment model (keys of meta and deployment models should be in sync by this point)
         amfs_deployment = {k: self.deployment_model.core_deployment.components[k] for k, v in amfs.items()}
 
+        ric_e2_components = get_ric_e2_components(
+            rics_meta=self.metamodel.rics,
+            rics_k8s=self.deployment_model.rics,
+        )
+
         reconcile_ran(
             ran_meta=self.mutatable_metamodel.ran,
             ran_deployment=self.deployment_model.ran_deployment,
@@ -42,7 +48,7 @@ class RANManagement(HelmManagement):
             rus_meta=self.metamodel.rus,
             rus_provisioning=self.deployment_model.rus,
             amfs=amfs_deployment,
-            rics=self.deployment_model.rics,
+            rics=ric_e2_components,
         )
 
 

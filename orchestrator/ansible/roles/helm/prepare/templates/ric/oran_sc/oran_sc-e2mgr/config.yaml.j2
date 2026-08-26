@@ -1,0 +1,25 @@
+logging:
+  logLevel: info
+http:
+  port: 3800
+rmr:
+  port: 3801
+  maxMsgSize: 65536
+{% if 'rtmgr' in component.ric_type_services %}
+routingManager:
+  baseUrl: "http://{{ component.ric_type_services.rtmgr }}:3800/ric/v1/handles/"
+{% endif %}
+notificationResponseBuffer: 100
+bigRedButtonTimeoutSec: 5
+maxConnectionAttempts: 3
+maxRnibConnectionAttempts: 3
+rnibRetryIntervalMs: 10
+keepAliveResponseTimeoutMs: 360000
+keepAliveDelayMs: 120000
+globalRicId:
+  ricId: AACCE
+  mcc: "310"
+  mnc: "411"
+rnibWriter:
+  stateChangeMessageChannel: RAN_CONNECTION_STATUS_CHANGE
+  ranManipulationMessageChannel: RAN_MANIPULATION

@@ -23,12 +23,14 @@ from orchestrator.models.meta.ran import (
     RANComponent,
     RANComponentType,
 )
+from orchestrator.models.meta.ric import RICComponentType
 from orchestrator.models.meta.ru import RU, RUType
 from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEType
 from orchestrator.utils.common import (
     InvalidResourceStateError,
     ReferenceNotFounError,
+    build_safe_helm_name,
 )
 from orchestrator.utils.defaults import (
     DEFAULT_POD_IMAGES,
@@ -321,7 +323,7 @@ def reconcile_5g_component(
     )
 
     # add namespace
-    component_k8s.namespace = f"{component_meta.implementation}-{component_meta.category}"
+    component_k8s.namespace = build_safe_helm_name(f"{component_meta.implementation}-{component_meta.category}")
 
     # add corresponding labels
     label_base = "node-type.5g.blueprint"
@@ -360,7 +362,8 @@ def get_5g_components_by_type(
     return groups
 
 
-type ComponentDependencyGraph = dict[CoreComponentType | RANComponentType, frozenset[CoreComponentType | RANComponentType]]
+type ComponentType = CoreComponentType | RANComponentType | RICComponentType
+type ComponentDependencyGraph = dict[ComponentType, frozenset[ComponentType]]
 
 
 def resolve_component_dependency_levels(
@@ -387,7 +390,7 @@ def resolve_component_dependency_levels(
     available_types = {component.type for component in components.values()}
 
     remaining = dict(components) # components still to be resolved (be grouped in an execution level)
-    completed_types: set[CoreComponentType | RANComponentType] = set() # resolved types 
+    completed_types: set[ComponentType] = set() # resolved types
     levels: list[list[str]] = [] # levels / groups of independent components in order
 
     while remaining:

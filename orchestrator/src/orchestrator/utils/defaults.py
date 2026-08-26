@@ -8,7 +8,7 @@ from orchestrator.models.deployment.k8s import (
 from orchestrator.models.meta.common import Category5G
 from orchestrator.models.meta.core import CoreComponentType, CoreImplementation
 from orchestrator.models.meta.ran import RANComponentType, RANImplementation
-from orchestrator.models.meta.ric import RICImplementation
+from orchestrator.models.meta.ric import RICComponentType, RICImplementation
 from orchestrator.models.meta.ru import RUType
 from orchestrator.models.meta.ue import UEImplementation, UEType
 
@@ -107,10 +107,24 @@ DEFAULT_UE_IMAGES: dict[UEImplementation, dict[UEType, ContainerImage]] = {
 }
 
 
-DEFAULT_RIC_IMAGES: dict[RICImplementation, dict[str, ContainerImage]] = {
+DEFAULT_RIC_IMAGES: dict[RICImplementation, dict[RICComponentType, ContainerImage]] = {
     RICImplementation.OAI: {
-        "ric": ContainerImage(repository="docker.io/oaisoftwarealliance/oai-flexric", image_tag="develop"),
-    }
+        RICComponentType.RIC: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-flexric", image_tag="develop"),
+    },
+    RICImplementation.ORAN_SC: {
+        # Official: nexus3.o-ran-sc.org:10002/o-ran-sc/ric-plt-dbaas:0.6.5
+        RICComponentType.DBAAS: ContainerImage(repository="docker.io/orbitcon/ric-plt-dbaas", image_tag="0.6.2"),
+        # Official: nexus3.o-ran-sc.org:10002/o-ran-sc/ric-plt-e2mgr:6.0.7
+        RICComponentType.E2MGR: ContainerImage(repository="docker.io/orbitcon/ric-plt-e2mgr", image_tag="6.0.1"),
+        # Official: nexus3.o-ran-sc.org:10002/o-ran-sc/ric-plt-e2:6.0.7
+        RICComponentType.E2TERM: ContainerImage(repository="docker.io/orbitcon/ric-plt-e2", image_tag="6.0.1"),
+        # Official: nexus3.o-ran-sc.org:10002/o-ran-sc/ric-plt-rtmgr:0.9.7
+        RICComponentType.RTMGR: ContainerImage(repository="docker.io/orbitcon/ric-plt-rtmgr", image_tag="0.9.4"),
+        # Official: nexus3.o-ran-sc.org:10002/o-ran-sc/ric-plt-submgr:0.10.3
+        RICComponentType.SUBMGR: ContainerImage(repository="docker.io/orbitcon/ric-plt-submgr", image_tag="0.9.5"),
+        # Official: nexus3.o-ran-sc.org:10002/o-ran-sc/ric-plt-appmgr:0.5.9
+        RICComponentType.APPMGR: ContainerImage(repository="docker.io/orbitcon/ric-plt-appmgr", image_tag="0.5.7"),
+    },
 }
 
 

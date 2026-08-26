@@ -18,18 +18,11 @@ from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from orchestrator.utils.common import InvalidResourceStateError
+from orchestrator.utils.common import InvalidResourceStateError, build_safe_helm_name
 from orchestrator.utils.common_5g import (
     ComponentDependencyGraph,
     resolve_component_dependency_levels,
 )
-
-
-def build_safe_helm_name(name: str) -> str:
-    """Build a valid Helm release/chart name."""
-
-    return name.lower().replace("_", "-")
-
 
 async def run_single_helm_action(
         component_name: str,
@@ -54,8 +47,11 @@ async def run_single_helm_action(
         raise InvalidResourceStateError(f"{component_meta.category.value.upper()} component {component_name!r} is already {action}ed.")
 
     if helm_params is None:
+        chart_name = build_safe_helm_name(
+            f"{component_meta.implementation}-{safe_component_name}"
+        )
         helm_params = HelmParams(
-            chart_name=f"{component_meta.implementation}-{safe_component_name}",
+            chart_name=chart_name,
             helm_build_dir=f"/root/helm-charts/{component_meta.category}/{component_meta.implementation}-{safe_component_name}",
             output_with_multus=component_k8s.multus.enabled,
         )

@@ -1,0 +1,73 @@
+componentName: appmgr
+image:
+  repository: {{ component.image.repository }}
+  tag: {{ component.image.image_tag }}
+  pullPolicy: {{ component.image.image_pull_policy }}
+
+command: []
+args: []
+ports:
+  - {name: http, port: 8080, protocol: TCP}
+  - {name: rmrdata, port: 4560, protocol: TCP}
+  - {name: rmrroute, port: 4561, protocol: TCP}
+env:
+  NAME: xappmgr
+  RMR_RTG_SVC: "4561"
+  RMR_SRC_ID: {{ component.service_name }}
+{% if 'dbaas' in component.ric_type_services %}
+  DBAAS_SERVICE_HOST: {{ component.ric_type_services.dbaas }}
+  DBAAS_SERVICE_PORT: "6379"
+{% endif %}
+configMountPath: /opt/ric/config/appmgr.yaml
+routerMountPath: null
+dataMountPath: /tmp
+router: |-
+  newrt|start
+  newrt|end
+
+imagePullSecrets:
+{% if component.image.image_pull_secrets %}
+{% for secret in component.image.image_pull_secrets %}
+  - name: {{ secret.name }}
+{% endfor %}
+{% else %}
+  []
+{% endif %}
+
+podSecurityContext:
+  runAsUser: {{ component.pod_security_context.run_as_user }}
+  runAsGroup: {{ component.pod_security_context.run_as_group }}
+  runAsNonRoot: {{ component.pod_security_context.run_as_non_root | lower }}
+{% if component.pod_security_context.fs_group is not none %}
+  fsGroup: {{ component.pod_security_context.fs_group }}
+{% endif %}
+
+{% if component.security_context %}
+securityContext:
+  privileged: {{ component.security_context.privileged | lower }}
+{% else %}
+securityContext: {}
+{% endif %}
+
+{% if component.resources.define %}
+resources:
+  requests:
+    cpu: {{ component.resources.requests.nf.cpu }}
+    memory: {{ component.resources.requests.nf.memory }}
+  limits:
+    cpu: {{ component.resources.limits.nf.cpu }}
+    memory: {{ component.resources.limits.nf.memory }}
+{% else %}
+resources: {}
+{% endif %}
+
+{% if component.node_selector %}
+nodeSelector:
+{% for key, value in component.node_selector.items() %}
+  {{ key }}: "{{ value }}"
+{% endfor %}
+{% else %}
+nodeSelector: {}
+{% endif %}
+
+nodeName: {{ component.node_name if component.node_name else 'null' }}

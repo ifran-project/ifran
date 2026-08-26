@@ -1,0 +1,29 @@
+ran:
+  components:
+    gnb:
+      type: gnb
+      implementation: oai
+      config:
+        ric: osc
+rics:
+  osc:
+    implementation: oran_sc
+    components:
+      database:
+        type: dbaas
+        implementation: oran_sc
+      application_manager:
+        type: appmgr
+        implementation: oran_sc
+      routing_manager:
+        type: rtmgr
+        implementation: oran_sc
+      e2_manager:
+        type: e2mgr
+        implementation: oran_sc
+      e2_termination:
+        type: e2term
+        implementation: oran_sc
+      subscription_manager:
+        type: submgr
+        implementation: oran_sc
