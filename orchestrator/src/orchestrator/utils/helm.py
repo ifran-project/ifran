@@ -18,17 +18,14 @@ from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from orchestrator.utils.common import InvalidResourceStateError
+from orchestrator.utils.common import (
+    InvalidResourceStateError,
+    build_k8s_safe,
+)
 from orchestrator.utils.common_5g import (
     ComponentDependencyGraph,
     resolve_component_dependency_levels,
 )
-
-
-def build_safe_helm_name(name: str) -> str:
-    """Build a valid Helm release/chart name."""
-
-    return name.lower().replace("_", "-")
 
 
 async def run_single_helm_action(
@@ -39,12 +36,11 @@ async def run_single_helm_action(
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
-        helm_params: HelmParams | None = None,
         force: bool = False,
     ) -> None:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
 
-    safe_component_name = build_safe_helm_name(component_name)
+    safe_component_name = build_k8s_safe(component_name)
 
     # preparing a prepared component is not considered in the check given the idempotence
     if not force and (
@@ -53,12 +49,11 @@ async def run_single_helm_action(
         ):
         raise InvalidResourceStateError(f"{component_meta.category.value.upper()} component {component_name!r} is already {action}ed.")
 
-    if helm_params is None:
-        helm_params = HelmParams(
-            chart_name=f"{component_meta.implementation}-{safe_component_name}",
-            helm_build_dir=f"/root/helm-charts/{component_meta.category}/{component_meta.implementation}-{safe_component_name}",
-            output_with_multus=component_k8s.multus.enabled,
-        )
+    helm_params = HelmParams(
+        chart_name=f"{component_meta.implementation}-{safe_component_name}",
+        helm_build_dir=f"/root/helm-charts/{component_meta.category}/{component_meta.implementation}-{safe_component_name}",
+        output_with_multus=component_k8s.multus.enabled,
+    )
 
     args = {
         "role": f"helm/{action}",

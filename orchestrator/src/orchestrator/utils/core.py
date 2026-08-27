@@ -3,14 +3,19 @@
 import asyncio
 from typing import Literal
 
-from pydantic import IPvAnyAddress
+from pydantic import AnyUrl, IPvAnyAddress, IPvAnyNetwork
 
 from orchestrator.models.deployment.ansible import AnsibleParams
 from orchestrator.models.deployment.core import CoreDeployment
 from orchestrator.models.deployment.k8s import HelmParams, K8SComponent
 from orchestrator.models.deployment.provisioning import ProvisionableNode
 from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.core import Core, CoreComponent, CoreImplementation
+from orchestrator.models.meta.core import (
+    Core,
+    CoreComponent,
+    CoreImplementation,
+    SMFComponent,
+)
 from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEConfiguration
 from orchestrator.utils.ansible import (
@@ -18,44 +23,90 @@ from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from orchestrator.utils.common import InvalidResourceStateError
-from orchestrator.utils.common_5g import reconcile_5g_component
+from orchestrator.utils.common import InvalidResourceStateError, generate_random_ip
+from orchestrator.utils.common_5g import (
+    CoreComponentType,
+    get_5g_components_by_type,
+    reconcile_5g_component,
+)
 
 
-# wrapper function that might be extended later
-def reconcile_core_component(
-        component_name: str,
-        component_meta: CoreComponent,
-        component_k8s: K8SComponent,
-        slices: dict[str, Slice],
+def resolve_upf_references(
+        core_meta: Core,
+        ip_mapping: dict[str, IPvAnyAddress],
     ) -> None:
-    """Ensure the core component deployment model and meta model are ready for deployment."""
+    """Resolve UPF reference in SMF components."""
 
-    reconcile_5g_component(
-        component_name=component_name,
-        component_meta=component_meta,
-        component_k8s=component_k8s,
-        slices=slices,
-    )
+    smfs: dict[str, SMFComponent] = get_5g_components_by_type(core_meta.components).get(CoreComponentType.SMF, {})
+
+    for name, component_meta in smfs.items():
+        for i in range(len(component_meta.config.upfs)):
+            upf_reference = component_meta.config.upfs[i]
+            if isinstance(upf_reference, str):
+                target_ip = ip_mapping.get(upf_reference)
+                if target_ip is None:
+                    raise ValueError(f"Could not resolve IP for SMF component {name!r} reference to {upf_reference!r}.")
+                component_meta.config.upfs[i] = target_ip
+
+
+def populate_nrf_uri(
+        core_meta: Core,
+        nrf_uri: AnyUrl,
+    ) -> None:
+    """Populate 'nrfUri' field for all 5G core components."""
+
+    for component_meta in core_meta.components.values():
+        if component_meta.config.nrfUri is None:
+            component_meta.config.nrfUri = nrf_uri
 
 
 def reconcile_core(
         core_meta: Core,
         core_deployment: CoreDeployment,
+        pod_network_cidr: IPvAnyNetwork,
         slices: dict[str, Slice],
     ) -> None:
     """Ensure 5G core is ready for deployment."""
+
+    used_ips: set[IPvAnyAddress] = set()
+    ip_mapping: dict[str, IPvAnyAddress] = {}
+
+    nrf_uri = None
 
     for name, component_meta in core_meta.components.items():
         # meta and deployment keys are supposed to be synced by this point
         component_k8s = core_deployment.components[name]
 
-        reconcile_core_component(
+        reconcile_5g_component(
             component_name=name,
             component_meta=component_meta,
             component_k8s=component_k8s,
             slices=slices,
         )
+
+        if component_meta.type is CoreComponentType.UPF:
+            # upf components are assigned static pod ips
+            component_k8s.static_pod_ip = component_k8s.static_pod_ip or generate_random_ip(pod_network_cidr, used_ips)
+
+            ip_mapping[name] = component_k8s.static_pod_ip # build mapping between component names and ips
+            used_ips.add(component_k8s.static_pod_ip)
+
+        if component_meta.type is CoreComponentType.NRF:
+            # look for NRF components to populate nrfUri
+            scheme = "https" if component_meta.config.sbi.tls.enabled else "http"
+            nrf_uri = AnyUrl(f"{scheme}://{component_meta.implementation}-{name}:{component_meta.config.sbi.port}")
+
+    # resolve upf references after static ips have been assigned
+    resolve_upf_references(
+        core_meta=core_meta,
+        ip_mapping=ip_mapping,
+    )
+
+    # populate nrf uri field after nrf component has been found (latest one found takes precedence if many are given)
+    populate_nrf_uri(
+        core_meta=core_meta,
+        nrf_uri=nrf_uri,
+    )
 
 
 async def run_core_database_helm_action(
@@ -70,15 +121,15 @@ async def run_core_database_helm_action(
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
     if not force and (
-        (core_deployment.is_database_present and action == "install") or 
-        (not core_deployment.is_database_present and action == "uninstall")
+        (core_deployment.database.is_installed and action == "install") or 
+        (not core_deployment.database.is_installed and action == "uninstall")
         ):
         raise InvalidResourceStateError(f"5G core database is already {action}ed.")
 
     helm_params = HelmParams(
         chart_name=f"{core_meta.implementation.value}-database",
         helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_meta.implementation.value}-database",
-        render=False
+        rendered_files=["values.yaml"]
     ).model_dump(mode="json")
 
     component = {
@@ -90,7 +141,7 @@ async def run_core_database_helm_action(
 
     args = {
         "role": f"helm/{action}",
-        "inputs": {"component": component, **helm_params},
+        "inputs": {"component": component, "force_database_scheduling": core_deployment.database.force_database_scheduling, **helm_params},
         "runner_path": f"{ansible_params.runner_path}/{component["category"]}/database/helm/{action}",
         "roles_path": ansible_params.roles_path,
         "hosts": node_name,
@@ -109,11 +160,11 @@ async def run_core_database_helm_action(
 
     # update database status in core deployment
     if action == "install":
-        core_deployment.is_database_present = True
+        core_deployment.database.is_installed = True
         # retreive database pod ip
-        core_deployment.database_ip = IPvAnyAddress(result["network_info"])
+        core_deployment.database.ip = IPvAnyAddress(result["network_info"])
     elif action == "uninstall":
-        core_deployment.is_database_present = False
+        core_deployment.database.is_installed = False
 
 
 async def run_single_database_subscriber_action(

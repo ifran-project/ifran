@@ -1,10 +1,16 @@
 """UE provisioning models."""
 
 from enum import StrEnum, auto
-from ipaddress import IPv4Network, IPv6Network
+from ipaddress import IPv4Address, IPv6Address
 from typing import Any, Literal, Self
 
-from pydantic import Field, IPvAnyAddress, model_validator
+from pydantic import (
+    Field,
+    IPvAnyAddress,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from orchestrator.models.common import (
     BlueprintBaseModel,
@@ -34,13 +40,13 @@ class UEImplementation(StrEnum):
     """Supported UE implementations."""
 
     OAI = auto()
-    """OAI NR UE."""
+    """OpenAireInterface NR UE."""
 
     UERANSIM = auto()
     """UERANSIM UE."""
 
     SRS = auto()
-    """SRS UE."""
+    """Software Radio Systems (SRS) UE."""
 
 
 class AuthenticationMethod(StrEnum):
@@ -81,9 +87,6 @@ class UESubscriptionData(BlueprintBaseModel):
 
     dnn: DNN | str = Field(default="internet")
     """DNN associated with this PDU Session (can be a reference to a defined DNN)."""
-
-
-from pydantic import Field, field_serializer, field_validator
 
 
 class UEAuthenticationData(BlueprintBaseModel):
@@ -174,11 +177,11 @@ class UEPDUSession(BlueprintBaseModel):
     The referenced subscription provides the S-NSSAI and DNN.
     """
 
-    ueIPv4Address: IPv4Network | None = Field(default=None)
+    ueIPv4Address: IPv4Address | None = Field(default=None)
     """UE IPv4 address allocated to this PDU Session."""
 
-    ueIPv6Prefix: IPv6Network | None = Field(default=None)
-    """UE IPv6 prefix associated with this PDU Session."""
+    ueIPv6Address: IPv6Address | None = Field(default=None)
+    """UE IPv6 address allocated to this PDU Session."""
 
     ipAllocationMethod: Literal["DYNAMIC", "STATIC"] = Field(default="DYNAMIC")
     """UE IP address allocation method."""
@@ -219,6 +222,9 @@ class UEConfiguration(BlueprintBaseModel):
 
     pduSessions: list[UEPDUSession] = Field(default_factory=lambda: [UEPDUSession()])
     """List of UE PDU Sessions."""
+
+    ueAmbr: BitRate = Field(default=BitRate(uplink="1Gbps", downlink="1Gbps"))
+    """UE AMBR."""
 
     gnb: tuple[IPvAnyAddress, CommonGNBComponent] | str | None = Field(default="gnb")
     """GNB/DU component to connect the UE to. Only relevant for containerized UEs."""
@@ -302,4 +308,7 @@ class UE(Component5G):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return super().validate_advanced_config(ADVANCED_UE_CONFIG_MAPPING)
+        return super().validate_advanced_config(
+            mapping=ADVANCED_UE_CONFIG_MAPPING,
+            default_model=GenericAdvancedUEConfig,
+        )

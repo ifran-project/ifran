@@ -41,12 +41,7 @@ spec:
             cpu: {{ .Values.resources.limits.tcpdump.cpu | quote }}
         {{- end}}
         securityContext:
-           privileged: true
-           capabilities:
-              add:
-               - NET_ADMIN
-              drop:
-               - ALL
+            {{- toYaml .Values.securityContext | nindent 12 }}
         {{- if .Values.start.tcpdump}}
         command:
           - /bin/sh

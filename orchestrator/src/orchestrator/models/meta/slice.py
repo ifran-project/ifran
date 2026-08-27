@@ -2,10 +2,10 @@
 
 import re
 from enum import StrEnum, auto
-from ipaddress import IPv4Network
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Any
 
-from pydantic import Field, IPvAnyNetwork, field_serializer, field_validator
+from pydantic import Field, field_serializer, field_validator, model_validator
 
 from orchestrator.models.common import (
     BlueprintBaseModel,
@@ -26,10 +26,10 @@ class PreemptionCapability(StrEnum):
         - 3GPP TS 23.503
     """
 
-    NOT_PREEMPT = "NOT_PREEMPT"
+    NOT_PREEMPT = auto()
     """The QoS Flow shall not trigger pre-emption of another QoS Flow."""
 
-    MAY_PREEMPT = "MAY_PREEMPT"
+    MAY_PREEMPT = auto()
     """The QoS Flow may trigger pre-emption of another QoS Flow."""
 
 
@@ -45,10 +45,10 @@ class PreemptionVulnerability(StrEnum):
         - 3GPP TS 23.503
     """
 
-    NOT_PREEMPTABLE = "NOT_PREEMPTABLE"
+    NOT_PREEMPTABLE = auto()
     """The QoS Flow shall not be pre-empted."""
 
-    PREEMPTABLE = "PREEMPTABLE"
+    PREEMPTABLE = auto()
     """The QoS Flow may be pre-empted."""
 
 
@@ -211,17 +211,35 @@ class DNN(BlueprintBaseModel):
     pduSessionType: PDUSessionType = Field(default=PDUSessionType.IPV4)
     """PDU Session Type."""
 
-    ipv4Network: IPvAnyNetwork = Field(default=IPv4Network("11.1.1.0/24"))
+    ipv4Network: IPv4Network = Field(default=IPv4Network("11.1.1.0/24"))
     """IPv4 address pool associated with the DNN."""
 
-    ipv6Network: IPvAnyNetwork | None = Field(default=None)
+    ipv4Gateway: IPv4Address | None = Field(default=None)
+    """Gateway's IPv4 address associated with the DNN."""
+
+    ipv6Network: IPv6Network | None = Field(default=None)
     """IPv6 address pool associated with the DNN."""
+
+    ipv6Gateway: IPv6Address | None = Field(default=None)
+    """Gateway's IPv6 address associated with the DNN."""
 
     aggregateMaximumBitRate: BitRate = Field(default_factory=BitRate)
     """Aggregate Maximum Bit Rate (AMBR)."""
 
     qosFlows: list[QoSFlow] = Field(default_factory=lambda: [QoSFlow()])
     """QoS Flows configured for this DNN."""
+
+    @model_validator(mode="after")
+    def populate_gateways(self):
+        """Populate DNN gateways."""
+
+        if self.ipv4Gateway is None:
+            self.ipv4Gateway = IPv4Address(int(self.ipv4Network.network_address) + 1)
+
+        if self.ipv6Network is not None and self.ipv6Gateway is None:
+            self.ipv6Gateway = IPv6Address(int(self.ipv6Network.network_address) + 1)
+
+        return self
 
 
 class SNSSAI(BlueprintBaseModel):

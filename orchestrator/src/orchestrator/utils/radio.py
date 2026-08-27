@@ -173,7 +173,7 @@ def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
 
 
 def derive_srs_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
-    """Derive radio parameters specific to SRSRAN to put in derived configuration."""
+    """Derive radio parameters specific to SRS to put in derived configuration."""
 
     # TODO
 
@@ -200,7 +200,7 @@ def derive_ueransim_config(component: CommonGNBComponent) -> dict[str, Any]:
 # mapping of RAN implementation and callable radio config derive funtion
 RAN_CONFIG_DERIVATOR: dict[RANImplementation, Callable] = {
     RANImplementation.OAI: derive_oai_ran_config,
-    RANImplementation.SRSRAN: derive_srs_ran_config,
+    RANImplementation.SRS: derive_srs_ran_config,
     RANImplementation.UERANSIM: derive_ueransim_config,
 }
 

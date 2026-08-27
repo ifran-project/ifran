@@ -59,6 +59,9 @@ class RIC(Component5G):
     implementation: RICImplementation = Field(default=RICImplementation.OAI)
     """RIC implementation."""
 
+    config: RICConfig = Field(default_factory=RICConfig)
+    """RIC configuration."""
+
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""

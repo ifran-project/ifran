@@ -1,0 +1,136 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+logger:
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  file:
+    path: /opt/open5gs/var/log/open5gs/amf.log
+#  level: info   # fatal|error|warn|info(default)|debug|trace
+{% endif %}
+
+global:
+{% if component.advanced_config and component.advanced_config.global_config %}
+{{ component.advanced_config.global_config | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  max:
+    ue: 1024  # The number of UE can be increased depending on memory size.
+#    peer: 64
+{% endif %}
+
+amf:
+
+{% if component.config.sbi.tls.enabled %}
+  default:
+    tls:
+      server:
+        scheme: https
+        private_key: {{ component.config.sbi.tls.privateKey }}
+        cert: {{ component.config.sbi.tls.certificate }}
+        sslkeylogfile: {{ component.advanced_config.sslkeylogfile | default("/var/log/open5gs/tls/amf-server-sslkeylog.log") }}
+{% if component.advanced_config and component.advanced_config.tls_client %}
+      client:
+{{ component.advanced_config.tls_client | to_nice_yaml(indent=8) | indent(8, True) }}
+{% endif %}
+
+{% endif %}
+
+  sbi:
+    server:
+      - dev: {{ component.config.sbi.interfaceName }}
+        port: {{ component.config.sbi.port }}
+
+    client:
+{% if component.advanced_config and component.advanced_config.sbi_client %}
+{{ component.advanced_config.sbi_client | to_nice_yaml(indent=6) | indent(6, True) }}
+{% else %}
+      nrf:
+        - uri: {{ component.config.nrfUri }}
+{% endif %}
+
+  ngap:
+    server:
+      - dev: {{ component.config.n2.interfaceName }}
+        port: {{ component.config.n2.port }}
+
+  metrics:
+{% if component.advanced_config and component.advanced_config.metrics %}
+{{ component.advanced_config.metrics | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    server:
+      - dev: {{ component.config.n2.interfaceName }}
+        port: 9090
+{% endif %}
+
+  guami:
+{% for guami in component.config.guamiList %}
+    - plmn_id:
+        mcc: {{ guami.plmnId.mcc }}
+        mnc: {{ guami.plmnId.mnc }}
+      amf_id:
+        region: {{ guami.amfRegionId }}
+        set: {{ guami.amfSetId }}
+{% endfor %}
+
+  tai:
+{% for tai in component.config.taiList %}
+    - plmn_id:
+        mcc: {{ tai.plmnId.mcc }}
+        mnc: {{ tai.plmnId.mnc }}
+      tac: {{ tai.tac }}
+{% endfor %}
+
+  plmn_support:
+{% for plmn in component.config.plmnList %}
+    - plmn_id:
+        mcc: {{ plmn.plmnId.mcc }}
+        mnc: {{ plmn.plmnId.mnc }}
+      s_nssai:
+{% for slice in plmn.snssaiList %}
+        - sst: {{ slice.sst }}
+{% if slice.sd %}
+          sd: {{ slice.sd }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+  security:
+    integrity_order:
+{% for algorithm in component.config.securityAlgorithmConfiguration.integrityOrder %}
+      - {{ algorithm | upper }}
+{% endfor %}
+    ciphering_order:
+{% for algorithm in component.config.securityAlgorithmConfiguration.cipheringOrder %}
+      - {{ algorithm | upper }}
+{% endfor %}
+
+  network_name:
+    full: {{ component.config.networkName.fullNetworkName }}
+{% if component.config.networkName.shortNetworkName %}
+    short: {{ component.config.networkName.shortNetworkName }}
+{% endif %}
+
+  amf_name: {{ chart_name }}
+
+  time:
+{% if component.advanced_config and component.advanced_config.time %}
+{{ component.advanced_config.time | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+#    t3502:
+#      value: 720   # 12 minutes * 60 = 720 seconds
+    t3512:
+      value: 540    # 9 minutes * 60 = 540 seconds
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.access_control %}
+  access_control:
+{{ component.advanced_config.access_control | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.relative_capacity %}
+  relative_capacity: {{ component.advanced_config.relative_capacity }}
+{% endif %}
+
+{% endif %}

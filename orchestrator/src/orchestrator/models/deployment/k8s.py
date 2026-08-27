@@ -107,9 +107,8 @@ class HelmParams(BlueprintBaseModel):
     clean_helm_build_dir: bool = Field(default=False)
     """If True, 'helm_build_dir' will be cleaned after chart is installed."""
 
-    # for chart that don't need to be rendered (e.g. database)
-    render: bool = Field(default=True)
-    """If False, values and configuration files will not be rendered."""
+    rendered_files: list[str] = Field(default_factory=lambda: ["values.yaml", "config.yaml"])
+    """List of Helm chart files to be rendered."""
 
     output_with_multus: bool = Field(default=False)
     """If True, install role will output list of MultusNetworkStatus, else output pod IP string."""

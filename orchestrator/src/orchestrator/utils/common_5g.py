@@ -29,6 +29,7 @@ from orchestrator.models.meta.ue import UE, UEType
 from orchestrator.utils.common import (
     InvalidResourceStateError,
     ReferenceNotFounError,
+    build_k8s_safe,
 )
 from orchestrator.utils.defaults import (
     DEFAULT_POD_IMAGES,
@@ -321,7 +322,7 @@ def reconcile_5g_component(
     )
 
     # add namespace
-    component_k8s.namespace = f"{component_meta.implementation}-{component_meta.category}"
+    component_k8s.namespace = build_k8s_safe(f"{component_meta.implementation}-{component_meta.category}")
 
     # add corresponding labels
     label_base = "node-type.5g.blueprint"

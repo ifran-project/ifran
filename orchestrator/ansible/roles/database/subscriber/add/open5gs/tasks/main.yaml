@@ -1,0 +1,183 @@
+# Role to add a subscriber to Open5GS database (mongodb)
+
+# Reference: https://github.com/open5gs/open5gs/blob/d261bd43d859ec3d9c9f95a441dc295ce0814a7b/webui/server/models/subscriber.js
+
+# Input:
+# - ue_name: str
+# - ue_config: UEConfiguration
+# - database_ip: IPvAnyAddress
+
+# Output: None
+---
+- name: Add UE '{{ ue_name }}' to Open5GS database
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: open5gs
+    eval: |
+      db.subscribers.updateOne(
+        { "imsi": "{{ ue_config.supi }}" },
+        {
+          $setOnInsert: {
+            "schema_version": 1,
+
+            "imsi": "{{ ue_config.supi }}",
+
+            "security": {
+              "k": "{{ ue_config.authenticationData.k }}",
+            {% if ue_config.authenticationData.op %}
+              "op": "{{ ue_config.authenticationData.op }}",
+            {% endif %}
+              "opc": "{{ ue_config.authenticationData.opc }}",
+              "amf": "{{ ue_config.authenticationData.amf }}",
+              "sqn": Long("0x{{ ue_config.authenticationData.sqn }}"),
+            },
+
+            "ambr": {
+            {% set uplink = ue_config.ueAmbr.uplink %}
+            {% set downlink = ue_config.ueAmbr.downlink %}
+              "downlink": {
+              {% if downlink.endswith("Tbps") %}
+                "value": {{ downlink | regex_replace('Tbps$', '') }},
+                "unit": 4,
+              {% elif downlink.endswith("Gbps") %}
+                "value": {{ downlink | regex_replace('Gbps$', '') }},
+                "unit": 3,
+              {% elif downlink.endswith("Mbps") %}
+                "value": {{ downlink | regex_replace('Mbps$', '') }},
+                "unit": 2,
+              {% elif downlink.endswith("Kbps") %}
+                "value": {{ downlink | regex_replace('Kbps$', '') }},
+                "unit": 1,
+              {% else %}
+                "value": {{ downlink | regex_replace('bps$', '') }},
+                "unit": 0,
+              {% endif %}
+              },
+              "uplink": {
+              {% if uplink.endswith("Tbps") %}
+                "value": {{ uplink | regex_replace('Tbps$', '') }},
+                "unit": 4,
+              {% elif uplink.endswith("Gbps") %}
+                "value": {{ uplink | regex_replace('Gbps$', '') }},
+                "unit": 3,
+              {% elif uplink.endswith("Mbps") %}
+                "value": {{ uplink | regex_replace('Mbps$', '') }},
+                "unit": 2,
+              {% elif uplink.endswith("Kbps") %}
+                "value": {{ uplink | regex_replace('Kbps$', '') }},
+                "unit": 1,
+              {% else %}
+                "value": {{ uplink | regex_replace('bps$', '') }},
+                "unit": 0,
+              {% endif %}
+              },
+            },
+
+            "slice": [
+            {% for subscription in ue_config.subscriptions %}
+              {% set subscription_index = loop.index0 %}
+              {
+                "sst": {{ subscription.snssai.sst }},
+              {% if subscription.snssai.sd %}
+                "sd": "0x{{ subscription.snssai.sd | upper }}",
+              {% endif %}
+                "default_indicator": {{ "true" if loop.first else "false" }},
+                "session": [
+              {% for pdu_session in ue_config.pduSessions %}
+                {% if pdu_session.subscriptionIndex == subscription_index %}
+                  {% set dnn = subscription.dnn %}
+                  {
+                    "name": "{{ dnn.name }}",
+                  {% if dnn.pduSessionType == "ipv4" %}
+                    "type": 1,
+                  {% elif dnn.pduSessionType == "ipv6" %}
+                    "type": 2,
+                  {% elif dnn.pduSessionType == "ipv4v6" %}
+                    "type": 3,
+                  {% elif dnn.pduSessionType == "ethernet" %}
+                    "type": 4,
+                  {% elif dnn.pduSessionType == "unstructured" %}
+                    "type": 5,
+                  {% endif %}
+                  {% if dnn.qosFlows %}
+                    {% set qos = dnn.qosFlows[0] %}
+                    "qos": {
+                      "index":{{ qos.fiveQI }},
+                      "arp": {
+                        "priority_level": {{ qos.arp.priorityLevel }},
+                        "pre_emption_capability": {{ 1 if qos.arp.preemptionCapability == "not_preempt" else 2 }},
+                        "pre_emption_vulnerability": {{ 1 if qos.arp.preemptionVulnerability == "not_preemptable" else 2 }},
+                      }
+                    },
+                  {% endif %}
+                    "ambr": {
+                    {% if pdu_session.sessionAmbr %}
+                      {% set uplink = pdu_session.sessionAmbr.uplink %}
+                      {% set downlink = pdu_session.sessionAmbr.downlink %}
+                    {% else %}
+                      {% set uplink = dnn.aggregateMaximumBitRate.uplink %}
+                      {% set downlink = dnn.aggregateMaximumBitRate.downlink %}
+                    {% endif %}
+                      "downlink": {
+                      {% if downlink.endswith("Tbps") %}
+                        "value": {{ downlink | regex_replace('Tbps$', '') }},
+                        "unit": 4,
+                      {% elif downlink.endswith("Gbps") %}
+                        "value": {{ downlink | regex_replace('Gbps$', '') }},
+                        "unit": 3,
+                      {% elif downlink.endswith("Mbps") %}
+                        "value": {{ downlink | regex_replace('Mbps$', '') }},
+                        "unit": 2,
+                      {% elif downlink.endswith("Kbps") %}
+                        "value": {{ downlink | regex_replace('Kbps$', '') }},
+                        "unit": 1,
+                      {% else %}
+                        "value": {{ downlink | regex_replace('bps$', '') }},
+                        "unit": 0,
+                      {% endif %}
+                      },
+                      "uplink": {
+                      {% if uplink.endswith("Tbps") %}
+                        "value": {{ uplink | regex_replace('Tbps$', '') }},
+                        "unit": 4,
+                      {% elif uplink.endswith("Gbps") %}
+                        "value": {{ uplink | regex_replace('Gbps$', '') }},
+                        "unit": 3,
+                      {% elif uplink.endswith("Mbps") %}
+                        "value": {{ uplink | regex_replace('Mbps$', '') }},
+                        "unit": 2,
+                      {% elif uplink.endswith("Kbps") %}
+                        "value": {{ uplink | regex_replace('Kbps$', '') }},
+                        "unit": 1,
+                      {% else %}
+                        "value": {{ uplink | regex_replace('bps$', '') }},
+                        "unit": 0,
+                      {% endif %}
+                      },
+                    },
+                  {% if pdu_session.ueIPv4Address or pdu_session.ueIPv6Address %}
+                    "ue": {
+                    {% if pdu_session.ueIPv4Address %}
+                      "ipv4": "{{ pdu_session.ueIPv4Address }}",
+                    {% endif %}
+                    {% if pdu_session.ueIPv6Address %}
+                      "ipv6": "{{ pdu_session.ueIPv6Address }}",
+                    {% endif %}
+                    },
+                  {% endif %}
+                  },
+                {% endif %}
+              {% endfor %}
+                ]
+              },
+            {% endfor %}
+            ],
+
+            "__v": 0
+          }
+        },
+        { upsert: true },
+      )

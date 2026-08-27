@@ -197,7 +197,7 @@ class BIParams(GenericProvisionerParams):
     image: str = Field(default="Ubuntu 24.04.3")
     """BI image name."""
 
-    flavor: str = Field(default="medium")
+    flavor: str = Field(default="large")
     """BI flavor name."""
 
     project: str = Field(default="post5g-beta")
@@ -362,8 +362,11 @@ class ProvisionableNode(ProvisionableResource):
     provisioner: str = Field(default="bi")
     """Node provisioner's name."""
 
-    roles: list[Category5G | CoreComponentType | RANComponentType] = Field(default_factory=lambda: list(Category5G))
-    """Node roles. Can be either a 5G catefory (e.g. core) or 5G component type (e.g. upf)."""
+    roles: list[Category5G | CoreComponentType | RANComponentType | Literal["database"]] = Field(default_factory=lambda: list(Category5G))
+    """
+    Node roles. Can be either a 5G catefory (e.g. core) or 5G component type (e.g. upf).
+    Roles are added as "node-type.5g.blueprint/{role} = true" Kubernetes label for the node.
+    """
 
     k8s_status: K8SStatus = Field(default=K8SStatus.NOT_CONFIGURED)
     """Kubernetes status on node."""

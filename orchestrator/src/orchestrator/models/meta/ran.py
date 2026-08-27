@@ -32,8 +32,8 @@ class RANImplementation(StrEnum):
     OAI = auto()
     """OpenAirInterface RAN."""
 
-    SRSRAN = auto()
-    """SRS RAN."""
+    SRS= auto()
+    """Software Radio Systems (SRS) RAN."""
 
     UERANSIM = auto()
     """UERANSIM."""
@@ -66,7 +66,7 @@ SUPPORTED_RAN_COMPONENTS: dict[RANImplementation, list[RANComponentType]] = {
         RANComponentType.DU,
         RANComponentType.GNB,
     ],
-    RANImplementation.SRSRAN: [], # TODO to be added later
+    RANImplementation.SRS: [], # TODO to be added later
     RANImplementation.UERANSIM: [], # same
 }
 
@@ -549,8 +549,8 @@ class GenericOAIAdvancedRANConfig(GenericAdvancedRANConfig):
    log_config: dict[str, str] | None = Field(default=None)
 
 
-class GenericSRSRANAdvancedRANConfig(GenericAdvancedRANConfig):
-   """Generic advanced configuration for SRSRAN RAN."""
+class GenericSRSAdvancedRANConfig(GenericAdvancedRANConfig):
+   """Generic advanced configuration for SRS RAN."""
 
     # TODO
 
@@ -670,7 +670,10 @@ class GenericRANComponent(Component5G):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return super().validate_advanced_config(ADVANCED_RAN_CONFIG_MAPPING)
+        return super().validate_advanced_config(
+            mapping=ADVANCED_RAN_CONFIG_MAPPING,
+            default_model=GenericAdvancedRANConfig,
+        )
 
 
 class CUCPComponent(GenericRANComponent):

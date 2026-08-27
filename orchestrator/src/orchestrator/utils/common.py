@@ -15,6 +15,11 @@ class ReferenceNotFounError(Exception):
     """Exception when a resource references an undefined resource."""
 
 
+def build_k8s_safe(name: str) -> str:
+    """Build a valid Kuberenetes name by replacing '_' with '-'."""
+    return name.lower().replace("_", "-")
+
+
 def generate_random_ip(network: IPvAnyNetwork, used: set[IPvAnyAddress] | None = None) -> IPvAnyAddress:
     """Generate a random IP address inside a network."""
 

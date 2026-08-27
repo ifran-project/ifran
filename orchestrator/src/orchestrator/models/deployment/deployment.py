@@ -52,6 +52,7 @@ class DeploymentModel(BlueprintBaseModel):
         "node1": ProvisionableNode(category=ProvisioningCategory.NODE),
         "node2": ProvisionableNode(category=ProvisioningCategory.NODE),
         "node3": ProvisionableNode(category=ProvisioningCategory.NODE),
+        "node4": ProvisionableNode(category=ProvisioningCategory.NODE),
     })
     """Nodes provisioning."""
 

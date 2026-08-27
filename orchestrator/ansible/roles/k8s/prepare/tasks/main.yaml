@@ -239,3 +239,34 @@
     deb: "/tmp/k9s_linux_amd64.deb"
     state: present
   when: k9s_install
+
+# install mongosh to be used later on to add/remove Open5GS and Free5GC subcribers
+- name: Add MongoDB GPG key
+  ansible.builtin.get_url:
+    url: https://pgp.mongodb.com/server-8.0.asc
+    dest: /etc/apt/keyrings/mongodb-server-8.0.asc
+    mode: '0644'
+
+- name: Add MongoDB repository
+  ansible.builtin.deb822_repository:
+    name: mongodb
+    types: deb
+    uris:
+      - https://repo.mongodb.org/apt/ubuntu
+    suites:
+      - noble/mongodb-org/8.0
+    components:
+      - multiverse
+    architectures:
+      - amd64
+      - arm64
+    signed_by: /etc/apt/keyrings/mongodb-server-8.0.asc
+    state: present
+    enabled: true
+
+- name: Install mongosh
+  ansible.builtin.apt:
+    name:
+      - mongodb-mongosh
+    state: present
+    update_cache: true

@@ -9,7 +9,10 @@ from orchestrator.models.meta.core import CoreComponentType
 from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
 )
-from orchestrator.utils.common_5g import ComponentDependencyGraph
+from orchestrator.utils.common_5g import (
+    ComponentDependencyGraph,
+    resolve_component_slices,
+)
 from orchestrator.utils.core import (
     reconcile_core,
     run_core_database_helm_action,
@@ -17,20 +20,32 @@ from orchestrator.utils.core import (
 )
 
 CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
-    CoreComponentType.AMF: frozenset({
-        CoreComponentType.NRF,
-        CoreComponentType.UDM,
-        CoreComponentType.UDR
+    CoreComponentType.BSF: frozenset({
+        CoreComponentType.NSSF,
     }),
-    CoreComponentType.AUSF: frozenset({
-        CoreComponentType.NRF,
+    CoreComponentType.NSSF: frozenset({
+        CoreComponentType.UDR,
+    }),
+    CoreComponentType.UDR: frozenset({
         CoreComponentType.UDM,
-        CoreComponentType.UDR
+    }),
+    CoreComponentType.UDM: frozenset({
+        CoreComponentType.PCF,
+    }),
+    CoreComponentType.PCF: frozenset({
+        CoreComponentType.SMF,
     }),
     CoreComponentType.SMF: frozenset({
+        CoreComponentType.AUSF,
+    }),
+    CoreComponentType.AUSF: frozenset({
+        CoreComponentType.AMF,
+    }),
+    CoreComponentType.AMF: frozenset({
         CoreComponentType.NRF,
-        CoreComponentType.UDM,
-        CoreComponentType.UDR
+    }),
+    CoreComponentType.UPF: frozenset({
+        CoreComponentType.SMF,
     }),
 }
 
@@ -46,8 +61,17 @@ class CoreManagement(HelmManagement):
         reconcile_core(
             core_meta=self.mutatable_metamodel.core,
             core_deployment=self.deployment_model.core_deployment,
+            pod_network_cidr=self.deployment_model.params.k8s.pod_network_cidr,
             slices=self.mutatable_metamodel.slices,
         )
+
+        # resolve slices references in ues to prepare them for database registration
+        for ue_name, ue_meta in self.mutatable_metamodel.ues.items():
+            resolve_component_slices(
+                component_name=ue_name,
+                component_meta=ue_meta,
+                slices=self.mutatable_metamodel.slices,
+            )
 
 
     async def run_action(self, **kwargs) -> None:
@@ -60,7 +84,8 @@ class CoreManagement(HelmManagement):
             action: Literal["prepare", "install", "uninstall"],
             node: str | None = None,
             force: bool = False,
-            **kwargs,
+            ignore_invalid_states: bool = True,
+            ignore_failures: bool = False,
         ) -> None:
         """Run 5G core database Helm action."""
 
@@ -79,7 +104,8 @@ class CoreManagement(HelmManagement):
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,
-                **kwargs,
+                ignore_invalid_states=ignore_invalid_states,
+                ignore_failures=ignore_failures,
             )
 
 
@@ -94,7 +120,7 @@ class CoreManagement(HelmManagement):
 
         node_name, node_data = self._get_master_node(node)
 
-        all_ues = self.metamodel.ues
+        all_ues = self.mutatable_metamodel.ues
 
         # filter for specific components if requested
         if ues is None:
@@ -105,7 +131,7 @@ class CoreManagement(HelmManagement):
         await run_parallel_database_subscriber_action(
             ues=target_ues,
             core_implementation=self.metamodel.core.implementation,
-            database_ip=self.deployment_model.core_deployment.database_ip,
+            database_ip=self.deployment_model.core_deployment.database.ip,
             action=action,
             node_name=node_name,
             node_data=node_data,

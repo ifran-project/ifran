@@ -4,7 +4,9 @@ from enum import StrEnum, auto
 from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
+    AnyUrl,
     Field,
+    IPvAnyAddress,
     computed_field,
     field_serializer,
     field_validator,
@@ -20,6 +22,7 @@ from orchestrator.models.common import (
 from orchestrator.models.meta.common import (
     NGAP,
     PFCP,
+    TLS,
     Category5G,
     Component5G,
     GTPUEndpoint,
@@ -44,7 +47,7 @@ class CoreImplementation(StrEnum):
     """Free5GC core."""
 
 
-class CoreComponentType(StrEnum): # 23 of them
+class CoreComponentType(StrEnum): # 18 of them
     """Supported 5G core components."""
 
     AMF = auto()
@@ -92,21 +95,6 @@ class CoreComponentType(StrEnum): # 23 of them
     SCP = auto()
     """Service Communication Proxy."""
 
-    SGWC = auto()
-    """Serving Gateway Control Plane."""
-
-    SGWU = auto()
-    """Serving Gateway User Plane."""
-
-    HSS = auto()
-    """Home Subscriber Server."""
-
-    MME = auto()
-    """Mobility Management Entity."""
-
-    PCRF = auto()
-    """Policy and Charging Rules Function."""
-
     LMF = auto()
     """Location Management Function."""
 
@@ -118,6 +106,8 @@ class CoreComponentType(StrEnum): # 23 of them
 
 
 SUPPORTED_CORE_COMPONENTS: dict[CoreImplementation, list[CoreComponentType]] = {
+    # OAI NEF, UDSF, SCP and AF are planned in OAI's roadmap
+    # OAI NWDAF is not included in the official OAI Helm charts
     CoreImplementation.OAI: [
         CoreComponentType.AMF,
         CoreComponentType.AUSF,
@@ -130,31 +120,21 @@ SUPPORTED_CORE_COMPONENTS: dict[CoreImplementation, list[CoreComponentType]] = {
         CoreComponentType.UDR,
         CoreComponentType.UPF,
     ],
-    CoreImplementation.OPEN5GS: [], # TODO to be added later
+    CoreImplementation.OPEN5GS: [
+        CoreComponentType.AMF,
+        CoreComponentType.AUSF,
+        CoreComponentType.BSF,
+        CoreComponentType.NRF,
+        CoreComponentType.NSSF,
+        CoreComponentType.PCF,
+        CoreComponentType.SCP,
+        CoreComponentType.SMF,
+        CoreComponentType.UDM,
+        CoreComponentType.UDR,
+        CoreComponentType.UPF,
+    ],
     CoreImplementation.FREE5GC: [], # same
 }
-
-
-class TLS(BlueprintBaseModel):
-    """
-    Transport Layer Security (TLS) configuration.
-
-    Defines the TLS parameters used to secure Service-Based Interface (SBI)
-    communications over HTTPS.
-
-    3GPP References:
-        - 3GPP TS 29.500
-        - 3GPP TS 33.501
-    """
-
-    enabled: bool = Field(default=False)
-    """Enable Transport Layer Security (TLS)."""
-
-    certificate: str | None = Field(default=None)
-    """Path to the local X.509 certificate."""
-
-    privateKey: str | None = Field( default=None)
-    """Path to the local private key associated with the X.509 certificate."""
 
 
 class SBI(TransportEndpoint):
@@ -352,13 +332,13 @@ class NSIInformation(BlueprintBaseModel):
         - 3GPP TS 29.571
     """
 
-    nrfId: str = Field(default="http://cn5g-nrf:8080/nnrf-disc/v1/nf-instances")
+    nrfId: AnyUrl = Field(default=AnyUrl("http://cn5g-nrf:8080/nnrf-disc/v1/nf-instances"))
     """NRF discovery URI used to discover Network Functions."""
 
     nsiId: str = Field(default="1")
     """Network Slice Instance identifier."""
 
-    nrfNfMgtUri: str | None = Field(default="http://cn5g-nrf:8080/nnrf-nfm/v1/nf-instances")
+    nrfNfMgtUri: AnyUrl | None = Field(default=AnyUrl("http://cn5g-nrf:8080/nnrf-nfm/v1/nf-instances"))
     """NRF NF management URI."""
 
 
@@ -435,6 +415,7 @@ class SupportedNSSAIAvailabilityData(BlueprintBaseModel):
 
     taiList: list[SupportedTAIItem] | None = Field(default=None)
     """Additional list of TAIs supported by the AMF."""
+
 
 class AMFInfo(BlueprintBaseModel):
     """
@@ -516,6 +497,9 @@ class CoreComponentConfig(BlueprintBaseModel):
     sbi: SBI = Field(default_factory=SBI)
     """Service-Based Interface configuration."""
 
+    nrfUri: AnyUrl | None = Field(default=None)
+    """URI of the NRF."""
+
 
 class AMFConfig(CoreComponentConfig):
     """
@@ -564,6 +548,9 @@ class SMFConfig(CoreComponentConfig):
 
     snssaiList: list[Slice | str] = Field(default_factory=lambda: ["internet"])
     """List of references to defined slices."""
+
+    upfs: list[IPvAnyAddress | str] = Field(default_factory=lambda: ["upf"])
+    """List of UPFs to connect to."""
 
 
 class UPFConfig(CoreComponentConfig):
@@ -633,7 +620,7 @@ class GenericAdvancedCoreConfig(BlueprintBaseModel):
     """Generic 5G core advanced configuration (implementation-specific)."""
 
 
-class GenericOAIAdvancedCoreConfig(BlueprintBaseModel):
+class GenericOAIAdvancedCoreConfig(GenericAdvancedCoreConfig):
     """Generic advanced configuration for OAI core."""
 
     log_level: dict[str, str] | None = Field(default=None)
@@ -642,13 +629,17 @@ class GenericOAIAdvancedCoreConfig(BlueprintBaseModel):
     nfs: dict[str, Any] | None = Field(default=None)
 
 
-class GenericOpen5GSAdvancedCoreConfig(BlueprintBaseModel):
+class GenericOpen5GSAdvancedCoreConfig(GenericAdvancedCoreConfig):
     """Generic advanced configuration for Open5GS core."""
 
-    # TODO
+    logger: dict[str, Any] | None = Field(default=None)
+    global_config: dict[str, Any] | None = Field(default=None)
+    sslkeylogfile: str | None = Field(default=None)
+    tls_client: dict[str, Any] | None = Field(default=None)
+    sbi_client: dict[str, Any] | None = Field(default=None)
 
 
-class GenericFree5GCAdvancedCoreConfig(BlueprintBaseModel):
+class GenericFree5GCAdvancedCoreConfig(GenericAdvancedCoreConfig):
     """Generic advanced configuration for Free5GC core."""
 
     # TODO
@@ -710,6 +701,76 @@ class OAIAdvancedUDRConfig(GenericOAIAdvancedCoreConfig):
     database: dict[str, Any] | None = Field(default=None)
 
 
+class Open5GSAdvancedAMFConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS AMF."""
+
+    metrics: dict[str, Any] | None = Field(default=None)
+    time: dict[str, Any] | None = Field(default=None)
+    access_control: dict[str, Any] | None = Field(default=None)
+    relative_capacity: int | None = Field(default=None)
+
+
+class Open5GSAdvancedNRFConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS NRF."""
+
+    db_uri: str | None = Field(default=None)
+
+
+class Open5GSAdvancedSCPConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS SCP."""
+
+    db_uri: str | None = Field(default=None)
+    info: dict[str, Any] | None = Field(default=None)
+
+
+class Open5GSAdvancedSMFConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS SMF."""
+
+    metrics: dict[str, Any] | None = Field(default=None)
+    info: dict[str, Any] | None = Field(default=None)
+    pfcp_client: dict[str, Any] | None = Field(default=None)
+    gtpc: dict[str, Any] | None = Field(default=None)
+    gtpu: dict[str, Any] | None = Field(default=None)
+    dns: dict[str, Any] | None = Field(default=None)
+    mtu: int | None = Field(default=None)
+    p_cscf: dict[str, Any] | None = Field(default=None)
+    ctf: dict[str, Any] | None = Field(default=None)
+    freeDiameter: str | None = Field(default=None)
+    security_indication: dict[str, Any] | None = Field(default=None)
+
+
+class Open5GSAdvancedUDMConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS UDM."""
+
+    hnet: dict[str, Any] | None = Field(default=None)
+    discovery: dict[str, Any] | None = Field(default=None)
+
+
+class Open5GSAdvancedPCFConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS PCF."""
+
+    db_uri: str | None = Field(default=None)
+    qos_profiles: dict[str, Any] | None = Field(default=None)
+    policy: dict[str, Any] | None = Field(default=None)
+
+
+class Open5GSAdvancedUDRConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS UDR."""
+
+    db_uri: str | None = Field(default=None)
+
+
+class Open5GSAdvancedUPFConfig(GenericOpen5GSAdvancedCoreConfig):
+    """Advanced configuration for Open5GS UPF."""
+
+    metrics: dict[str, Any] | None = Field(default=None)
+    pfcp_client: dict[str, Any] | None = Field(default=None)
+    teid_range_indication: int
+    teid_range: int | None = Field(default=None)
+    network_instance: str | None = Field(default=None)
+    source_interface: int | None = Field(default=None)
+
+
 ADVANCED_CORE_CONFIG_MAPPING: dict[CoreImplementation, dict[CoreComponentType, type[GenericAdvancedCoreConfig]]] = {
     CoreImplementation.OAI: {
         CoreComponentType.AMF: OAIAdvancedAMFConfig,
@@ -719,7 +780,17 @@ ADVANCED_CORE_CONFIG_MAPPING: dict[CoreImplementation, dict[CoreComponentType, t
         CoreComponentType.NSSF: OAIAdvancedNSSFConfig,
         CoreComponentType.LMF: OAIAdvancedLMFConfig,
         CoreComponentType.UDR: OAIAdvancedLMFConfig,
-    }
+    },
+    CoreImplementation.OPEN5GS: {
+        CoreComponentType.AMF: Open5GSAdvancedAMFConfig,
+        CoreComponentType.NRF: Open5GSAdvancedNRFConfig,
+        CoreComponentType.PCF: Open5GSAdvancedPCFConfig,
+        CoreComponentType.SCP: Open5GSAdvancedSCPConfig,
+        CoreComponentType.SMF: Open5GSAdvancedSMFConfig,
+        CoreComponentType.UDM: Open5GSAdvancedUDMConfig,
+        CoreComponentType.UDR: Open5GSAdvancedUDRConfig,
+        CoreComponentType.UPF: Open5GSAdvancedUPFConfig,
+    },
 }
 
 
@@ -744,7 +815,10 @@ class CoreComponent(Component5G):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return super().validate_advanced_config(ADVANCED_CORE_CONFIG_MAPPING)
+        return super().validate_advanced_config(
+            mapping=ADVANCED_CORE_CONFIG_MAPPING,
+            default_model=GenericAdvancedCoreConfig,
+        )
 
 
 class AMFComponent(CoreComponent):
@@ -796,17 +870,20 @@ type ValidatedCoreComponent = Annotated[
 class Core(Network5G):
     """5G core."""
 
-    implementation: CoreImplementation = Field(default=CoreImplementation.OAI)
+    implementation: CoreImplementation = Field(default=CoreImplementation.OPEN5GS)
     """Core implementation."""
 
     components: dict[str, ValidatedCoreComponent | CoreComponent] = Field(default_factory=lambda: {
-        "nrf": NRFComponent(type=CoreComponentType.NRF),
-        "udm": CoreComponent(type=CoreComponentType.UDM),
-        "udr": CoreComponent(type=CoreComponentType.UDR),
         "amf": AMFComponent(type=CoreComponentType.AMF),
         "ausf": CoreComponent(type=CoreComponentType.AUSF),
+        "bsf": CoreComponent(type=CoreComponentType.BSF),
+        "nssf": NSSFComponent(type=CoreComponentType.NSSF),
+        "nrf": NRFComponent(type=CoreComponentType.NRF),
+        "pcf": CoreComponent(type=CoreComponentType.PCF),
         "smf": SMFComponent(type=CoreComponentType.SMF),
         "upf": UPFComponent(type=CoreComponentType.UPF),
+        "udm": CoreComponent(type=CoreComponentType.UDM),
+        "udr": CoreComponent(type=CoreComponentType.UDR),
     })
     """Core components."""
 

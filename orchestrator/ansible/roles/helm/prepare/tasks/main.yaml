@@ -8,9 +8,7 @@
 # - component: K8S5GComponent
 # - chart_name: str
 # - helm_build_dir: str
-# - helm_wait: bool
-# - helm_wait_timeout: bool
-# - render: bool
+# - rendered_files: list[str]
 
 # Output: None
 ---
@@ -31,18 +29,10 @@
     src: "Chart.yaml.j2"
     dest: "{{ helm_build_dir }}/Chart.yaml"
     mode: "0600"
-  when: render
 
-- name: Render '{{ chart_name }}' Helm values file from Jinja template
+- name: Render templated Helm files for '{{ chart_name }}'
   ansible.builtin.template:
-    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/values.yaml.j2"
-    dest: "{{ helm_build_dir }}/values.yaml"
+    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/{{ item }}.j2"
+    dest: "{{ helm_build_dir }}/{{ item }}"
     mode: "0600"
-  when: render
-
-- name: Render '{{ chart_name }}' configuration file from Jinja template
-  ansible.builtin.template:
-    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/config.yaml.j2"
-    dest: "{{ helm_build_dir }}/config.yaml"
-    mode: "0600"
-  when: render
+  loop: "{{ rendered_files }}"

@@ -7,7 +7,7 @@
 
 # Output: None
 ---
-- name: Add authentication subscription for UE '{{ ue_name }}' on OAI database
+- name: Add UE '{{ ue_name }}' to OAI AuthenticationSubscription table
   community.mysql.mysql_query:
     login_host: "{{ database_ip }}"
     login_user: test
@@ -45,5 +45,68 @@
         '{{ ue_config.supi }}'
       );
 
-# subscriber is not added in the 'SessionManagementSubscriptionData' table because a ue has no info about its serving plmn id
-# the subscription should work just fine as long as 'use_local_subscription_info' is set to 'yes' on the smf config
+- name: Add UE '{{ ue_name }}' to OAI SessionManagementSubscriptionData table
+  community.mysql.mysql_query:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_db: oai_db
+    query: |
+      INSERT IGNORE INTO SessionManagementSubscriptionData (
+        ueid,
+        servingPlmnid,
+        singleNssai,
+        dnnConfigurations
+      )
+      VALUES (
+        '{{ ue_config.supi }}',
+        '{{ item.0.plmnId.plmnId }}',
+        '{{ {
+          "sst": ue_config.subscriptions[item.1.subscriptionIndex].snssai.sst,
+          "sd": ue_config.subscriptions[item.1.subscriptionIndex].snssai.sd | upper if ue_config.subscriptions[item.1.subscriptionIndex].snssai.sd else "FFFFFF"
+        } | to_json }}',
+        '{{ {
+          ue_config.subscriptions[item.1.subscriptionIndex].dnn.name: {
+            "pduSessionTypes": {
+              "defaultSessionType": ue_config.subscriptions[item.1.subscriptionIndex].dnn.pduSessionType | upper
+            },
+            "sscModes": {
+              "defaultSscMode": "SSC_MODE_1"
+            },
+            "5gQosProfile": {
+              "5qi": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].fiveQI,
+              "arp": {
+                "priorityLevel": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.priorityLevel,
+                "preemptCap": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.preemptionCapability | upper,
+                "preemptVuln": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.preemptionVulnerability | upper
+              },
+              "priorityLevel": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.priorityLevel
+            } if ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows else {},
+            "sessionAmbr": {
+              "uplink": item.1.sessionAmbr.uplink,
+              "downlink": item.1.sessionAmbr.downlink
+            } if item.1.sessionAmbr else {
+              "uplink": ue_config.subscriptions[item.1.subscriptionIndex].dnn.aggregateMaximumBitRate.uplink,
+              "downlink": ue_config.subscriptions[item.1.subscriptionIndex].dnn.aggregateMaximumBitRate.downlink
+            }
+          }
+        } | combine(
+          {
+            ue_config.subscriptions[item.1.subscriptionIndex].dnn.name: {
+              "staticIpAddress": [
+                  {
+                    "ipv4Addr": item.1.ueIPv4Address
+                  }
+                ] if item.1.ueIPv4Address else []
+              + [
+                  {
+                    "ipv6Addr": item.1.ueIPv6Address
+                  }
+                ] if item.1.ueIPv6Address else []
+            }
+          }
+        ) | to_json }}'
+      );
+  loop: "{{ ue_config.gnb[1].plmnList | product(ue_config.pduSessions) | list }}"
+  loop_control:
+    label: "PLMN ID: {{ item.0.plmnId.plmnId }}, Session Index: {{ item.1.subscriptionIndex }}"

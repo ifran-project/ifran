@@ -15,21 +15,27 @@ from orchestrator.models.meta.ue import UEImplementation, UEType
 DEFAULT_CORE_IMAGES: dict[CoreImplementation, dict[CoreComponentType, ContainerImage]] = {
     CoreImplementation.OAI: {
         CoreComponentType.AMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-amf", image_tag="v2.2.0"),
-        CoreComponentType.SMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-smf", image_tag="v2.2.0"),
-        CoreComponentType.UPF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-upf", image_tag="v2.2.0"),
+        CoreComponentType.AUSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.0"),
         CoreComponentType.NRF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nrf", image_tag="v2.2.0"),
+        CoreComponentType.NSSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.0"),
+        CoreComponentType.PCF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.0"), # NOTE doesn't work, needs policy files in pcf container to be added
+        CoreComponentType.SMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-smf", image_tag="v2.2.0"),
         CoreComponentType.UDM: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-udm", image_tag="v2.2.0"),
         CoreComponentType.UDR: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-udr", image_tag="v2.2.0"),
-        CoreComponentType.PCF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.0"),
-        CoreComponentType.AUSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.0"),
-        CoreComponentType.NSSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.0"),
-        CoreComponentType.LMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-lmf", image_tag="v2.2.0"), # NOTE doesn't work, needs policy files in pcf container to be added
+        CoreComponentType.UPF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-upf", image_tag="v2.2.0"),
     },
     CoreImplementation.OPEN5GS: {
-        CoreComponentType.AMF: ContainerImage(repository="ghcr.io/niloysh/open5gs", image_tag="v2.6.4-aio"),
-        CoreComponentType.SMF: ContainerImage(repository="ghcr.io/niloysh/open5gs", image_tag="v2.6.4-aio"),
-        CoreComponentType.UPF: ContainerImage(repository="ghcr.io/niloysh/open5gs", image_tag="v2.6.4-aio"),
-        CoreComponentType.NRF: ContainerImage(repository="ghcr.io/niloysh/open5gs", image_tag="v2.6.4-aio"),
+        CoreComponentType.AMF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.AUSF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.BSF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.NRF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.NSSF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.PCF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.SCP: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.SMF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.UDM: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.UDR: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
+        CoreComponentType.UPF: ContainerImage(repository="docker.io/gradiant/open5gs", image_tag="2.8.0"),
     },
     CoreImplementation.FREE5GC: {
         CoreComponentType.AMF: ContainerImage(repository="free5gc/amf", image_tag="v4.2.3"),
@@ -71,7 +77,7 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
             RANComponentType.CU_UP: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
         },
     },
-    RANImplementation.SRSRAN: {
+    RANImplementation.SRS: {
         RUType.USRP: {
             RANComponentType.GNB: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-uhd", image_tag="v1.0"),
             RANComponentType.CU: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-uhd", image_tag="v1.0"),
@@ -124,6 +130,28 @@ DEFAULT_POD_IMAGES = {
 
 CORE_POD_PRIVELEGES: dict[CoreImplementation, dict[CoreComponentType, SecurityContext]] = {
     CoreImplementation.OAI: {
+        CoreComponentType.AMF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.AUSF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.LMF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.NRF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.NSSF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.PCF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.SMF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.UDM: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.UDR: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.UPF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN", "SYS_ADMIN"], drop=["ALL"])),
+    },
+    CoreImplementation.OPEN5GS: {
+        CoreComponentType.AMF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.AUSF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.BSF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.NRF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.NSSF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.PCF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.SCP: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.SMF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.UDM: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+        CoreComponentType.UDR: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
         CoreComponentType.UPF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN", "SYS_ADMIN"], drop=["ALL"])),
     },
 }

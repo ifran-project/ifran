@@ -100,6 +100,28 @@ class SecurityAlgorithmConfiguration(BlueprintBaseModel):
     """Preferred ciphering algorithms."""
 
 
+class TLS(BlueprintBaseModel):
+    """
+    Transport Layer Security (TLS) configuration.
+
+    Defines the TLS parameters used to secure Service-Based Interface (SBI)
+    communications over HTTPS.
+
+    3GPP References:
+        - 3GPP TS 29.500
+        - 3GPP TS 33.501
+    """
+
+    enabled: bool = Field(default=False)
+    """Enable Transport Layer Security (TLS)."""
+
+    certificate: str | None = Field(default=None)
+    """Path to the local X.509 certificate."""
+
+    privateKey: str | None = Field( default=None)
+    """Path to the local private key associated with the X.509 certificate."""
+
+
 class TransportEndpoint(BlueprintBaseModel):
     """
     Transport endpoint configuration.
@@ -336,16 +358,20 @@ class Component5G(BlueprintBaseModel):
     """Raw configuration file content."""
 
 
-    def validate_advanced_config(self, mapping: dict) -> Self:
+    def validate_advanced_config(self, mapping: dict, default_model: BaseModel) -> Self:
         """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
 
         # advanced config can be none
         if not isinstance(self.advanced_config, dict):
             return self
 
-        model: BaseModel = mapping.get(self.implementation, {}).get(self.type)
-        if model:
-            self.advanced_config = model.model_validate(self.advanced_config)
+        advanced_config_model: BaseModel = mapping.get(self.implementation, {}).get(self.type)
+        if advanced_config_model:
+            # use type-specific advanced config model
+            self.advanced_config = advanced_config_model.model_validate(self.advanced_config)
+        else:
+            # use implementation advanced config model
+            self.advanced_config = default_model.model_validate(self.advanced_config)
 
         return self
 

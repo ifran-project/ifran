@@ -1,0 +1,20 @@
+# Role to add a subscriber to Open5GS dataabse (mongodb)
+
+# Input:
+# - ue_name: str
+# - ue_config: UEConfiguration
+# - database_ip: IPvAnyAddress
+
+# Output: None
+---
+- name: Remove UE '{{ ue_name }}' from Open5GS database
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: open5gs
+    eval: |
+      db.subscribers.deleteOne({
+        "imsi": "{{ ue_config.supi }}"
+      })

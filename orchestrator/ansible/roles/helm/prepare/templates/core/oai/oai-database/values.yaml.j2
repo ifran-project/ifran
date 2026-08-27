@@ -82,8 +82,11 @@ imagePullSecrets:
 
 ## Node selector
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
-#nodeSelector:
-#  env: dev
+nodeSelector:
+  node-type.5g.blueprint/core: "true"
+{% if force_database_scheduling%}
+  node-type.5g.blueprint/database: "true"
+{% endif %}
 
 ## Affinity
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity

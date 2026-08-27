@@ -1,0 +1,98 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+logger:
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  file:
+    path: /opt/open5gs/var/log/open5gs/upf.log
+#  level: info   # fatal|error|warn|info(default)|debug|trace
+{% endif %}
+
+global:
+{% if component.advanced_config and component.advanced_config.global_config %}
+{{ component.advanced_config.global_config | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  max:
+    ue: 1024  # The number of UE can be increased depending on memory size.
+#    peer: 64
+{% endif %}
+
+upf:
+
+{% if component.config.sbi.tls.enabled %}
+  default:
+    tls:
+      server:
+        scheme: https
+        private_key: {{ component.config.sbi.tls.privateKey }}
+        cert: {{ component.config.sbi.tls.certificate }}
+        sslkeylogfile: {{ component.advanced_config.sslkeylogfile | default("/var/log/open5gs/tls/amf-server-sslkeylog.log") }}
+{% if component.advanced_config and component.advanced_config.tls_client %}
+      client:
+{{ component.advanced_config.tls_client | to_nice_yaml(indent=8) | indent(8, True) }}
+{% endif %}
+
+{% endif %}
+
+  metrics:
+{% if component.advanced_config and component.advanced_config.metrics %}
+{{ component.advanced_config.metrics | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    server:
+      - dev: {{ component.config.n4.interfaceName }}
+        port: 9090
+{% endif %}
+
+  pfcp:
+    server:
+      - dev: {{ component.config.n4.interfaceName }}
+        port: {{ component.config.n4.port }}
+
+{% if component.advanced_config and component.advanced_config.pfcp_client %}
+    client:
+{{ component.advanced_config.pfcp_client | to_nice_yaml(indent=6) | indent(6, True) }}
+{% endif %}
+
+  gtpu:
+    server:
+      - dev: {{ component.config.n3.interfaceName }}
+        port: {{ component.config.n3.port }}
+{% if component.advanced_config and component.advanced_config.teid_range_indication %}
+        teid_range_indication: {{ component.advanced_config.teid_range_indication }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.teid_range %}
+        teid_range: {{ component.advanced_config.teid_range }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.network_instance %}
+        network_instance: {{ component.advanced_config.network_instance }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.source_interface %}
+        source_interface: {{ component.advanced_config.source_interface }}
+{% endif %}
+
+
+{% if component.advanced_config and component.advanced_config.gtpu_client %}
+    client:
+{{ component.advanced_config.gtpu_client | to_nice_yaml(indent=6) | indent(6, True) }}
+{% endif %}
+
+
+  session:
+{% for slice in component.config.snssaiList %}
+{% for dnn in slice.dnns.values() %}
+    - subnet: {{ dnn.ipv4Network }}
+      gateway: {{ dnn.ipv4Gateway }}
+      dnn: {{ dnn.name }}
+{% if dnn.ipv6Network %}
+    - subnet: {{ dnn.ipv6Network }}
+      gateway: {{ dnn.ipv6Gateway }}
+      dnn: {{ dnn.name }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+
+{% endif %}

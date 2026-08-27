@@ -1,0 +1,52 @@
+image:
+  repository: mongo
+  tag: "8.3"
+  pullPolicy: IfNotPresent
+
+# Name of the database open5gs will connect to (used by the init script)
+open5gsDatabase: open5gs
+
+# Auth is disabled by default to keep things simple, matching most
+# open5gs quickstart deployments. Enable it if you need credentials.
+auth:
+  enabled: true
+  rootUsername: test
+  rootPassword: test
+
+service:
+  type: ClusterIP
+  port: 27017
+
+persistence:
+  enabled: false
+  # size: 8Gi
+  # storageClassName: ""
+  # accessModes:
+  #   - ReadWriteOnce
+
+resources: {}
+  # requests:
+  #   cpu: 250m
+  #   memory: 512Mi
+  # limits:
+  #   cpu: 1
+  #   memory: 1Gi
+
+## Node selector
+## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+nodeSelector:
+  node-type.5g.blueprint/core: "true"
+{% if force_database_scheduling%}
+  node-type.5g.blueprint/database: "true"
+{% endif %}
+
+tolerations: []
+
+affinity: {}
+
+podAnnotations: {}
+
+securityContext:
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999

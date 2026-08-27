@@ -1,0 +1,31 @@
+# Reference: https://open5gs.org/open5gs/docs/guide/01-quickstart/
+{{- if not .Values.global }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-configmap
+  labels:
+    app: {{ .Release.Name }}
+data:
+  {{ (.Files.Glob "config.yaml").AsConfig | indent 2 | trim }}
+  entrypoint.sh: |
+    #!/bin/bash
+
+    ip tuntap add name ogstun mode tun
+    sysctl -w net.ipv4.ip_forward=1
+  
+{{ range .Values.config.subnets }}
+{{- $prefix := (splitList "/" .network | last) }}
+{{- if .gateway }}
+    ip addr add {{ .gateway }}/{{ $prefix }} dev ogstun
+{{- end }}
+{{- if contains ":" .network }}
+    ip6tables -t nat -A POSTROUTING -s {{ .network }} ! -o ogstun -j MASQUERADE
+{{- else }}
+    sysctl -w net.ipv6.conf.all.disable_ipv6=1
+    iptables -t nat -A POSTROUTING -s {{ .network }} ! -o ogstun -j MASQUERADE
+{{- end }}
+{{ end }}
+
+    ip link set ogstun up
+{{- end }}
