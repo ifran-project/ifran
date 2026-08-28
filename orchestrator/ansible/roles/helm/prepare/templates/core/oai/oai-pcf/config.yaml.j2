@@ -36,18 +36,29 @@ nfs:
 {{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
+#### Common for UDR and AMF and PCF
+database:
+{% if component.advanced_config and component.advanced_config.database %}
+{{ component.advanced_config.database | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  host: oai-database
+  user: test
+  type: mysql
+  password: test
+  database_name: oai_db
+  generate_random: true
+  connection_timeout: 300 # seconds
+{% endif %}
+
 ############## NF-specific configuration
 pcf:
-  pcf_name: oai-{{ component_name }}
+  pcf_name: {{ chart_name }}
 
+  enable_policy_provisioning_api: {{ component.advanced_config.enable_policy_provisioning_api | default("yes") }} # Use db instead of yaml, enables dynamic pcc rule creation via API
 
-local_policy:
+  local_policy:
 {% if component.advanced_config and component.advanced_config.local_policy %}
-{{ component.advanced_config.local_policy | to_nice_yaml(indent=2) | indent(2, True) }}
-{% else %}
-  policy_decisions_path: /openair-pcf/policies/policy_decisions
-  pcc_rules_path: /openair-pcf/policies/pcc_rules
-  traffic_rules_path: /openair-pcf/policies/traffic_rules
+{{ component.advanced_config.local_policy | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
 {% endif %}

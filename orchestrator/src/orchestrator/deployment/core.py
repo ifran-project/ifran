@@ -6,6 +6,7 @@ from typing import Literal
 from orchestrator.deployment.helm import HelmManagement
 from orchestrator.models.meta.common import Category5G
 from orchestrator.models.meta.core import CoreComponentType
+from orchestrator.models.meta.ran import RANComponentType
 from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
 )
@@ -14,10 +15,12 @@ from orchestrator.utils.common_5g import (
     resolve_component_slices,
 )
 from orchestrator.utils.core import (
+    get_5g_components_by_type,
     reconcile_core,
     run_core_database_helm_action,
     run_parallel_database_subscriber_action,
 )
+from orchestrator.utils.ue import resolve_gnb_reference
 
 CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
     CoreComponentType.BSF: frozenset({
@@ -65,12 +68,24 @@ class CoreManagement(HelmManagement):
             slices=self.mutatable_metamodel.slices,
         )
 
-        # resolve slices references in ues to prepare them for database registration
+        # get gnbs and dus from metamodel
+        grouped = get_5g_components_by_type(self.mutatable_metamodel.ran.components)
+        gnbs = grouped.get(RANComponentType.GNB, {})
+        dus = grouped.get(RANComponentType.DU, {})
+        gnb_components_meta = gnbs | dus # gnbs + dus
+
+        # resolve slices references and gnb reference in ues to prepare them for database registration
         for ue_name, ue_meta in self.mutatable_metamodel.ues.items():
             resolve_component_slices(
                 component_name=ue_name,
                 component_meta=ue_meta,
                 slices=self.mutatable_metamodel.slices,
+            )
+
+            resolve_gnb_reference(
+                ue_name=ue_name,
+                ue_meta=ue_meta,
+                gnb_components_meta=gnb_components_meta,
             )
 
 

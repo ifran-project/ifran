@@ -27,17 +27,35 @@ def resolve_gnb_reference(
         ue_name: str,
         ue_meta: UE,
         gnb_components_meta: dict[str, GNBComponent | DUComponent],
-        gnb_components_k8s: dict[str, K8SComponent],
+        gnb_components_k8s: dict[str, K8SComponent] | None = None,
     ) -> None:
-    """Resolve gNB name reference in a simulated UE."""
+    """Resolve gNB name reference in a containerized UE."""
 
-    gnb_reference = ue_meta.config.gnb
+
+    if gnb_components_k8s is None:
+        # if the gnb hasn't been installed yet
+        # this case is mainly used for the core to be able to resolve the gnb reference before it is installed
+        resolve_component_reference(
+            component_name=ue_name,
+            component_meta=ue_meta,
+            ref_attribute="gnb",
+            registry=gnb_components_meta,
+        )
+        # add placeholder ip to respect the expected tuple structure
+        ue_meta.config.gnb = IPvAnyAddress("0.0.0.0"), ue_meta.config.gnb
+        return
 
     # merge gnbs (we need the meta for ran config parameters and k8s deployment for readiness state and network info)
-    gnb_components: dict[str, _TempMergedGNB] = {}
-    for gnb_name, gnb_meta in gnb_components_meta.items():
-        gnb_k8s = gnb_components_k8s[gnb_name] # ran meta and deployment models are supposed to be synchronized by this point
-        gnb_components[gnb_name] = _TempMergedGNB.model_validate({**gnb_k8s.model_dump(mode="json"), "resolved_reference": (gnb_k8s.network_info, gnb_meta)})
+    # ran meta and deployment models are supposed to be synchronized by this point
+    gnb_components : dict[str, _TempMergedGNB] = {
+        gnb_name: _TempMergedGNB.model_validate({
+            **gnb_components_k8s[gnb_name].model_dump(mode="json"),
+            "resolved_reference": (gnb_components_k8s[gnb_name].network_info, gnb_meta)
+            })
+        for gnb_name, gnb_meta in gnb_components_meta.items()
+        }
+
+    gnb_reference = ue_meta.config.gnb # used only for error handling if smth goes wrong
 
     resolve_component_reference( # also manages the case where the referenced gnb is None (not needed) or is not found in the registry 
         component_name=ue_name,

@@ -674,7 +674,9 @@ class OAIAdvancedUPFConfig(GenericOAIAdvancedCoreConfig):
 class OAIAdvancedPCFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI PCF."""
 
+    database: dict[str, Any] | None = Field(default=None)
     local_policy: dict[str, str] | None = Field(default=None)
+    enable_policy_provisioning_api: str | None = Field(default=None)
 
 
 class OAIAdvancedNSSFConfig(GenericOAIAdvancedCoreConfig):

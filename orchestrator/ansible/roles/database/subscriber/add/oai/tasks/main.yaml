@@ -88,25 +88,23 @@
             } if item.1.sessionAmbr else {
               "uplink": ue_config.subscriptions[item.1.subscriptionIndex].dnn.aggregateMaximumBitRate.uplink,
               "downlink": ue_config.subscriptions[item.1.subscriptionIndex].dnn.aggregateMaximumBitRate.downlink
-            }
+            },
+            "staticIpAddress": (
+              [
+                {
+                  "ipv4Addr": item.1.ueIPv4Address
+                }
+              ] if item.1.ueIPv4Address else []
+              ) + (
+              [
+                {
+                  "ipv6Addr": item.1.ueIPv6Address
+                }
+              ] if item.1.ueIPv6Address else []
+            )
           }
-        } | combine(
-          {
-            ue_config.subscriptions[item.1.subscriptionIndex].dnn.name: {
-              "staticIpAddress": [
-                  {
-                    "ipv4Addr": item.1.ueIPv4Address
-                  }
-                ] if item.1.ueIPv4Address else []
-              + [
-                  {
-                    "ipv6Addr": item.1.ueIPv6Address
-                  }
-                ] if item.1.ueIPv6Address else []
-            }
-          }
-        ) | to_json }}'
+        } | to_json }}'
       );
-  loop: "{{ ue_config.gnb[1].plmnList | product(ue_config.pduSessions) | list }}"
+  loop: "{{ ue_config.gnb[1].config.plmnList | product(ue_config.pduSessions) | list }}"
   loop_control:
     label: "PLMN ID: {{ item.0.plmnId.plmnId }}, Session Index: {{ item.1.subscriptionIndex }}"

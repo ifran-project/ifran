@@ -16,9 +16,10 @@ DEFAULT_CORE_IMAGES: dict[CoreImplementation, dict[CoreComponentType, ContainerI
     CoreImplementation.OAI: {
         CoreComponentType.AMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-amf", image_tag="v2.2.0"),
         CoreComponentType.AUSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.0"),
+        CoreComponentType.LMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-lmf", image_tag="v2.2.0"),
         CoreComponentType.NRF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nrf", image_tag="v2.2.0"),
         CoreComponentType.NSSF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.0"),
-        CoreComponentType.PCF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.0"), # NOTE doesn't work, needs policy files in pcf container to be added
+        CoreComponentType.PCF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.0"),
         CoreComponentType.SMF: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-smf", image_tag="v2.2.0"),
         CoreComponentType.UDM: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-udm", image_tag="v2.2.0"),
         CoreComponentType.UDR: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-udr", image_tag="v2.2.0"),

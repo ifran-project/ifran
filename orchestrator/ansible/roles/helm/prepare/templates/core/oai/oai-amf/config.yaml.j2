@@ -78,7 +78,7 @@ database:
 
 ############## NF-specific configuration
 amf:
-  amf_name: oai-{{ component_name }}
+  amf_name: {{ chart_name }}
   # This really depends on if we want to keep the "mini" version or not
   support_features_options:
 {% if component.advanced_config and component.advanced_config.support_features_options %}
