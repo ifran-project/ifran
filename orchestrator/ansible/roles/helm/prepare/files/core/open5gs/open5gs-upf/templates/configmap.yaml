@@ -13,6 +13,7 @@ data:
 
     ip tuntap add name ogstun mode tun
     sysctl -w net.ipv4.ip_forward=1
+    sysctl -w net.ipv6.conf.all.forwarding=1
   
 {{ range .Values.config.subnets }}
 {{- $prefix := (splitList "/" .network | last) }}
@@ -22,7 +23,6 @@ data:
 {{- if contains ":" .network }}
     ip6tables -t nat -A POSTROUTING -s {{ .network }} ! -o ogstun -j MASQUERADE
 {{- else }}
-    sysctl -w net.ipv6.conf.all.disable_ipv6=1
     iptables -t nat -A POSTROUTING -s {{ .network }} ! -o ogstun -j MASQUERADE
 {{- end }}
 {{ end }}
