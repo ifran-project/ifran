@@ -102,7 +102,7 @@ gNBs:
         #1 = 839, 2 = 139
         prach_RootSequenceIndex_PR: {{ component.advanced_config.prach_RootSequenceIndex_PR | default(2) }}
         prach_RootSequenceIndex: {{ component.advanced_config.prach_RootSequenceIndex | default(1) }}
-        # SCS for msg1, can only be 15 for 30 kHz < 6 GHz, takes precendence over the one derived from prach-ConfigIndex
+        # SCS for msg1, can only be 15 for 30 kHz < 6 GHz, takes precedence over the one derived from prach-ConfigIndex
         msg1_SubcarrierSpacing: {{ component.derived_radio_config.ssb_numerology }}
         # restrictedSetConfig
         # 0=unrestricted, 1=restricted type A, 2=restricted type B

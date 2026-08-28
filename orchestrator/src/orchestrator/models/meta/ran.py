@@ -325,7 +325,7 @@ class RadioConfiguration(BlueprintBaseModel):
         """Derive duplex mode if not defined from the configured NR band."""
 
         if self.duplexMode is None:
-            # band can support both -> tdd takes precedednce
+            # band can support both -> tdd takes precedence
             if self.nrBand in TDD_BANDS:
                 self.duplexMode = DuplexMode.TDD
             elif self.nrBand in FDD_BANDS:

@@ -89,7 +89,7 @@
     - /tmp/k9s_linux_amd64.deb
     - /etc/kubernetes/calico-installation.yaml
 
-# mainly for unfinished preapre roles executions
+# mainly for unfinished prepare roles executions
 - name: Repair dpkg state on '{{ node.name }}'
   ansible.builtin.command: dpkg --configure -a
   changed_when: false

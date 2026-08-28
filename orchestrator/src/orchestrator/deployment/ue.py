@@ -15,7 +15,7 @@ class UEManagement(HelmManagement):
         super().reconcile()
 
         # get gnbs and dus from metamodel
-        grouped = get_5g_components_by_type(self.mutatable_metamodel.ran.components)
+        grouped = get_5g_components_by_type(self.mutable_metamodel.ran.components)
         gnbs = grouped.get(RANComponentType.GNB, {})
         dus = grouped.get(RANComponentType.DU, {})
         gnb_components_meta = gnbs | dus # gnbs + dus
@@ -24,12 +24,12 @@ class UEManagement(HelmManagement):
         gnb_components_k8s = {k: self.deployment_model.ran_deployment.components[k] for k, v in gnb_components_meta.items()}
 
         reconcile_ues(
-            ues_meta=self.mutatable_metamodel.ues,
+            ues_meta=self.mutable_metamodel.ues,
             ues_k8s=self.deployment_model.containerized_ues,
-            slices=self.mutatable_metamodel.slices,
+            slices=self.mutable_metamodel.slices,
             gnb_components_meta=gnb_components_meta,
             gnb_components_k8s=gnb_components_k8s,
-            rus_meta=self.mutatable_metamodel.rus,
+            rus_meta=self.mutable_metamodel.rus,
             rus_provisioning=self.deployment_model.rus,
         )
 

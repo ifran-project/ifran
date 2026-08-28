@@ -14,7 +14,7 @@ class RICManagement(HelmManagement):
         super().reconcile()
 
         reconcile_rics(
-            rics_meta=self.mutatable_metamodel.rics,
+            rics_meta=self.mutable_metamodel.rics,
             rics_k8s=self.deployment_model.rics,
         )
 

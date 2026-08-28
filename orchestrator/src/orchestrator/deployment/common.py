@@ -83,7 +83,7 @@ class BaseBlueprintManagement:
 
         # original metamodel should not be mutated to maintain integrity
         # use a mutable one that will be used to resolve references and prepare for deployment
-        self.mutatable_metamodel = self.metamodel.model_copy(deep=True)
+        self.mutable_metamodel = self.metamodel.model_copy(deep=True)
 
 
     def output(self) -> tuple[MetaModel, DeploymentModel]:

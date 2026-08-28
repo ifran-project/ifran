@@ -1,4 +1,4 @@
-"""Miscellaneous executions using the MetaModel and DeploymenModel as inouts."""
+"""Miscellaneous executions using the MetaModel and DeploymenModel as inputs."""
 
 from typing import Any
 

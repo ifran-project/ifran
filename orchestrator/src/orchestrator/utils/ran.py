@@ -128,7 +128,7 @@ def reconcile_ran(
     ip_mapping: dict[str, IPvAnyAddress] = {}
 
     for name, component_meta in ran_meta.components.items():
-        # meta and deployment model ran component keys are suppposed to be synced by thi point
+        # meta and deployment model ran component keys are supposed to be synced by this point
         component_k8s = ran_deployment.components[name]
 
         # all ran components are assigned static pod ip
@@ -158,7 +158,7 @@ def reconcile_ran(
             rics=rics,
         )
 
-        # derive implementation-specific radio paramaters for gnb and du after ru name reference resolution
+        # derive implementation-specific radio parameters for gnb and du after ru name reference resolution
         if component_meta.type in [RANComponentType.GNB, RANComponentType.DU]:
             derive_ran_radio_config(component_meta)
 

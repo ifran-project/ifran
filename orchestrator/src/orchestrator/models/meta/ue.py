@@ -272,7 +272,7 @@ ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdva
 
 
 class UE(Component5G):
-    """User Equipement."""
+    """User Equipment."""
 
     category: Literal[Category5G.UE] = Field(default=Category5G.UE, frozen=True)
 

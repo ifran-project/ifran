@@ -16,9 +16,9 @@ from orchestrator.models.common import (
 
 class PreemptionCapability(StrEnum):
     """
-    Allocation and Retention Priority (ARP) pre-emption capability.
+    Allocation and Retention Priority (ARP) preemption capability.
 
-    Indicates whether a QoS Flow may trigger pre-emption of another
+    Indicates whether a QoS Flow may trigger preemption of another
     QoS Flow with lower priority.
 
     3GPP References:
@@ -27,17 +27,17 @@ class PreemptionCapability(StrEnum):
     """
 
     NOT_PREEMPT = auto()
-    """The QoS Flow shall not trigger pre-emption of another QoS Flow."""
+    """The QoS Flow shall not trigger preemption of another QoS Flow."""
 
     MAY_PREEMPT = auto()
-    """The QoS Flow may trigger pre-emption of another QoS Flow."""
+    """The QoS Flow may trigger preemption of another QoS Flow."""
 
 
 class PreemptionVulnerability(StrEnum):
     """
-    Allocation and Retention Priority (ARP) pre-emption vulnerability.
+    Allocation and Retention Priority (ARP) preemption vulnerability.
 
-    Indicates whether a QoS Flow may be pre-empted by another QoS Flow
+    Indicates whether a QoS Flow may be preempted by another QoS Flow
     with higher priority.
 
     3GPP References:
@@ -46,10 +46,10 @@ class PreemptionVulnerability(StrEnum):
     """
 
     NOT_PREEMPTABLE = auto()
-    """The QoS Flow shall not be pre-empted."""
+    """The QoS Flow shall not be preempted."""
 
     PREEMPTABLE = auto()
-    """The QoS Flow may be pre-empted."""
+    """The QoS Flow may be preempted."""
 
 
 class PDUSessionType(StrEnum):
@@ -149,8 +149,8 @@ class ARP(BlueprintBaseModel):
     """
     Allocation and Retention Priority (ARP).
 
-    Defines QoS resource allocation priority and pre-emption
-    behaviour.
+    Defines QoS resource allocation priority and preemption
+    behavior.
 
     3GPP References:
         - 3GPP TS 23.501 clause 5.7.2.2
@@ -161,10 +161,10 @@ class ARP(BlueprintBaseModel):
     """ARP priority level (1 to 15)."""
 
     preemptionCapability: PreemptionCapability = Field(default=PreemptionCapability.NOT_PREEMPT)
-    """ARP pre-emption capability."""
+    """ARP preemption capability."""
 
     preemptionVulnerability: PreemptionVulnerability = Field(default=PreemptionVulnerability.PREEMPTABLE)
-    """ARP pre-emption vulnerability."""
+    """ARP preemption vulnerability."""
 
 
 class QoSFlow(BlueprintBaseModel):

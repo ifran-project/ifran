@@ -1,4 +1,4 @@
-"""5G core deployemnt lifecycle management."""
+"""5G core deployment lifecycle management."""
 
 import asyncio
 from typing import Literal
@@ -54,32 +54,32 @@ CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
 
 
 class CoreManagement(HelmManagement):
-    """5G core deployemnt lifecycle management class."""
+    """5G core deployment lifecycle management class."""
 
     def reconcile(self) -> None:
-        """Ensure the 5G core is ready for deployement by resolving its components' configs."""
+        """Ensure the 5G core is ready for deployment by resolving its components' configs."""
 
         super().reconcile()
 
         reconcile_core(
-            core_meta=self.mutatable_metamodel.core,
+            core_meta=self.mutable_metamodel.core,
             core_deployment=self.deployment_model.core_deployment,
             pod_network_cidr=self.deployment_model.params.k8s.pod_network_cidr,
-            slices=self.mutatable_metamodel.slices,
+            slices=self.mutable_metamodel.slices,
         )
 
         # get gnbs and dus from metamodel
-        grouped = get_5g_components_by_type(self.mutatable_metamodel.ran.components)
+        grouped = get_5g_components_by_type(self.mutable_metamodel.ran.components)
         gnbs = grouped.get(RANComponentType.GNB, {})
         dus = grouped.get(RANComponentType.DU, {})
         gnb_components_meta = gnbs | dus # gnbs + dus
 
         # resolve slices references and gnb reference in ues to prepare them for database registration
-        for ue_name, ue_meta in self.mutatable_metamodel.ues.items():
+        for ue_name, ue_meta in self.mutable_metamodel.ues.items():
             resolve_component_slices(
                 component_name=ue_name,
                 component_meta=ue_meta,
-                slices=self.mutatable_metamodel.slices,
+                slices=self.mutable_metamodel.slices,
             )
 
             resolve_gnb_reference(
@@ -135,7 +135,7 @@ class CoreManagement(HelmManagement):
 
         node_name, node_data = self._get_master_node(node)
 
-        all_ues = self.mutatable_metamodel.ues
+        all_ues = self.mutable_metamodel.ues
 
         # filter for specific components if requested
         if ues is None:

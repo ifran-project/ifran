@@ -1,4 +1,4 @@
-"""RAN deployemnt lifecycle management."""
+"""RAN deployment lifecycle management."""
 
 from orchestrator.deployment.helm import HelmManagement
 from orchestrator.models.meta.common import Category5G
@@ -21,10 +21,10 @@ RAN_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
 
 
 class RANManagement(HelmManagement):
-    """RAN deployemnt lifecycle management class."""
+    """RAN deployment lifecycle management class."""
 
     def reconcile(self) -> None:
-        """Ensure the 5G RAN is ready for deployement by resolving its components' configs."""
+        """Ensure the 5G RAN is ready for deployment by resolving its components' configs."""
 
         super().reconcile()
 
@@ -35,7 +35,7 @@ class RANManagement(HelmManagement):
         amfs_deployment = {k: self.deployment_model.core_deployment.components[k] for k, v in amfs.items()}
 
         reconcile_ran(
-            ran_meta=self.mutatable_metamodel.ran,
+            ran_meta=self.mutable_metamodel.ran,
             ran_deployment=self.deployment_model.ran_deployment,
             pod_network_cidr=self.deployment_model.params.k8s.pod_network_cidr,
             slices=self.metamodel.slices,

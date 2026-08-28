@@ -21,7 +21,7 @@ class Category5G(StrEnum):
     """Core 5G network."""
 
     RAN = auto()
-    """Radio Acess Network."""
+    """Radio Access Network."""
 
     UE = auto()
     """User Equipment."""

@@ -26,7 +26,7 @@ class MetaModel(BlueprintBaseModel):
     """Radio Units."""
 
     ues: dict[str, UE] = Field(default_factory=lambda: {"sim_ue": UE()})
-    """User Equipements."""
+    """User Equipments."""
 
     slices: dict[str, Slice] = Field(default_factory=lambda: {"internet": Slice()})
     """Slices."""
@@ -38,7 +38,7 @@ class MetaModel(BlueprintBaseModel):
     @field_validator("slices", mode="after")
     @classmethod
     def populate_slice_names(cls, value: dict[str, Slice]) -> dict[str, Slice]:
-        """Populate slice names with slices dict keys aftre validation."""
+        """Populate slice names with slices dict keys after validation."""
 
         for slice_name, slice_data in value.items():
             if slice_data.name is None:

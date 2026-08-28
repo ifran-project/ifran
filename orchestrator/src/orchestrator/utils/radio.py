@@ -197,7 +197,7 @@ def derive_ueransim_config(component: CommonGNBComponent) -> dict[str, Any]:
     return {}
 
 
-# mapping of RAN implementation and callable radio config derive funtion
+# mapping of RAN implementation and callable radio config derive function
 RAN_CONFIG_DERIVATOR: dict[RANImplementation, Callable] = {
     RANImplementation.OAI: derive_oai_ran_config,
     RANImplementation.SRS: derive_srs_ran_config,
@@ -288,7 +288,7 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
     return derived
 
 
-# mapping of UE implementation and callable radio config derive funtion
+# mapping of UE implementation and callable radio config derive function
 UE_CONFIG_DERIVATOR: dict[UEImplementation, Callable] = {
     UEImplementation.OAI: derive_oai_ue_config,
 }

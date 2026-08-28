@@ -400,7 +400,7 @@ class K8SComponent(BlueprintBaseModel):
 
     @model_validator(mode="after")
     def ensure_network_status(self) -> Self:
-        """Ensure insatlled component has network status."""
+        """Ensure installed component has network status."""
 
         if self.is_installed and self.network_info is None:
             raise ValueError("Component is installed but has no 'network_status'.")

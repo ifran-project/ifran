@@ -18,7 +18,7 @@ from orchestrator.utils.ansible import (
 )
 from orchestrator.utils.common import (
     InvalidResourceStateError,
-    ReferenceNotFounError,
+    ReferenceNotFoundError,
 )
 
 
@@ -49,12 +49,12 @@ def resolve_provisioner(
     """Resolve resource provisioner and merge provisioning parameters."""
 
     if resource_data.provisioner is None:
-        raise ReferenceNotFounError(f"No provisioner reference found to resolve for {resource_data.category.value} {resource_name!r}.")
+        raise ReferenceNotFoundError(f"No provisioner reference found to resolve for {resource_data.category.value} {resource_name!r}.")
 
     provisioner = provisioners.get(resource_data.provisioner)
 
     if provisioner is None:
-        raise ReferenceNotFounError(f"{resource_data.category.value.capitalize()} {resource_name!r} references undefined provisioner {resource_data.provisioner!r}.")
+        raise ReferenceNotFoundError(f"{resource_data.category.value.capitalize()} {resource_name!r} references undefined provisioner {resource_data.provisioner!r}.")
 
     if provisioner.category != resource_data.category:
         raise ValueError(f"{resource_data.category.value.capitalize()} {resource_name!r} references "

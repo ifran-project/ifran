@@ -28,12 +28,12 @@ from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEType
 from orchestrator.utils.common import (
     InvalidResourceStateError,
-    ReferenceNotFounError,
+    ReferenceNotFoundError,
     build_k8s_safe,
 )
 from orchestrator.utils.defaults import (
     DEFAULT_POD_IMAGES,
-    POD_PRIVELEGES,
+    POD_PRIVILEGES,
 )
 
 
@@ -59,8 +59,8 @@ def resolve_component_reference(
     target = registry.get(reference)
 
     if target is None:
-        raise ReferenceNotFounError(f"{component_meta.category.value.upper()} component {component_name!r} "
-                                    f"refrences undefined {ref_attribute.upper()} {reference!r}.")
+        raise ReferenceNotFoundError(f"{component_meta.category.value.upper()} component {component_name!r} "
+                                    f"references undefined {ref_attribute.upper()} {reference!r}.")
 
     # optionally verify that the referenced target is ready via 'ready_attribute' if it is True
     if ready_attribute and not getattr(target, ready_attribute):
@@ -119,7 +119,7 @@ def resolve_snssai_reference(
     if value in slices:
         return slices[value]
 
-    raise ReferenceNotFounError(
+    raise ReferenceNotFoundError(
         f"{component_meta.category.value.upper()} component "
         f"{component_name!r} references undefined slice {value!r} "
         f"in {field_name!r}."
@@ -235,7 +235,7 @@ def resolve_ue_slices_dnns(
         if isinstance(subscription.dnn, str):
             subscription_dnn = subscription.snssai.dnns.get(subscription.dnn)
             if subscription_dnn is None:
-                raise ReferenceNotFounError(f"UE {component_name!r} references undefined DNN {subscription.dnn!r}.")
+                raise ReferenceNotFoundError(f"UE {component_name!r} references undefined DNN {subscription.dnn!r}.")
 
             subscription.dnn = subscription_dnn
 
@@ -341,10 +341,10 @@ def reconcile_5g_component(
             iface_meta: TransportEndpoint = getattr(component_meta.config, iface)
             component_k8s.exposed_ports.setdefault(iface, ExposedPort(port=iface_meta.port, protocol=iface_meta.protocol))
 
-    # add necessary priveleges if defined
+    # add necessary privileges if defined
     if component_k8s.security_context is None:
         # not defined => stays at None
-        component_k8s.security_context = POD_PRIVELEGES.get(component_meta.category, {}
+        component_k8s.security_context = POD_PRIVILEGES.get(component_meta.category, {}
                                                             ).get(component_meta.implementation, {}
                                                                   ).get(component_meta.type)
 
@@ -393,7 +393,7 @@ def resolve_component_dependency_levels(
 
     while remaining:
         # components that have resolved dependencies
-        # => the components of the types they depend on (if any) were already handeled in the previous levels and are considered as completed
+        # => the components of the types they depend on (if any) were already handled in the previous levels and are considered as completed
         ready = {
             name: component for name, component in remaining.items()
             if (dependencies.get(component.type, frozenset()) & available_types) <= completed_types

@@ -22,7 +22,7 @@
 
 - block:
   - name: Attempt reserving R2Lab for '{{ resource_name }}'
-    ansible.builtin.command: rhubarbe book --slice {{ r2lab_slice }} --email {{ email }} --password {{ passowrd }} {{ start }} {{ end }}
+    ansible.builtin.command: rhubarbe book --slice {{ r2lab_slice }} --email {{ email }} --password {{ password }} {{ start }} {{ end }}
     vars:
       # get current time
       start: "{{ now(fmt='%Y-%m-%dT%H:%M', tz='Europe/Paris') }}"
@@ -55,7 +55,7 @@
     ansible.builtin.set_stats:
       data:
         ssh_info:
-          hostaname: "{{ resource_name }}"
+          hostname: "{{ resource_name }}"
           port: 22
           user: "root"
           jumphost:

@@ -62,7 +62,7 @@ async def run_ansible_playbook(
     ) -> dict[str, Any] | None:
     """Run an Ansible playbook."""
 
-    # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overriden by other ansible runs if using the same private_data_dir
+    # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overridden by other ansible runs if using the same private_data_dir
     # ensure runner path exists
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S.%fZ") # add timestamp for more meaningful log collection
     run_path = Path(runner_path) / timestamp
@@ -78,7 +78,7 @@ async def run_ansible_playbook(
 
     thread, runner = ansible_runner.run_async(**run_args)
 
-    # wait until runnng ansible thread terminates
+    # wait until running ansible thread terminates
     await asyncio.to_thread(thread.join)
     if runner.status != "successful" or runner.rc != 0:
         raise RuntimeError(f"Playbook run not successful (status: {runner.status!r}, return code: {runner.rc!r})")

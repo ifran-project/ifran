@@ -1,4 +1,4 @@
-"""5G blueprint meta and deployement models."""
+"""5G blueprint meta and deployment models."""
 
 from orchestrator.models.deployment import DeploymentModel
 from orchestrator.models.meta import MetaModel

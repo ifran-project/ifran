@@ -14,10 +14,10 @@ class CoreDatabaseParams(BlueprintBaseModel):
     """5G core database deployment parameters."""
 
     is_installed: bool = Field(default=False)
-    """If 5G core databse is deployed or not."""
+    """If 5G core database is deployed or not."""
 
     ip: IPvAnyAddress | None = Field(default=None)
-    """5G core databse IP address."""
+    """5G core database IP address."""
 
     force_database_scheduling: bool = Field(default=False)
     """If True, label will be added to ensure scheduling only on nodes with database label AND core label."""

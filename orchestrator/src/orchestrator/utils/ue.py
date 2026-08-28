@@ -7,7 +7,7 @@ from orchestrator.models.deployment.ue import UEDeployment
 from orchestrator.models.meta.ran import DUComponent, GNBComponent
 from orchestrator.models.meta.ru import RU
 from orchestrator.models.meta.ue import UE, UEType
-from orchestrator.utils.common import ReferenceNotFounError
+from orchestrator.utils.common import ReferenceNotFoundError
 from orchestrator.utils.common_5g import (
     K8SComponent,
     Slice,
@@ -82,7 +82,7 @@ def resolve_gnb_reference(
             ue_meta.config.gnb[1] = gnb_ip
 
         if ue_meta.config.gnb[1] is None:
-            raise ReferenceNotFounError(f"UE {ue_name!r} references gNB {gnb_reference!r} with unresolved network information.")
+            raise ReferenceNotFoundError(f"UE {ue_name!r} references gNB {gnb_reference!r} with unresolved network information.")
 
 
 def reconcile_ues(
@@ -120,5 +120,5 @@ def reconcile_ues(
                 slices=slices,
             )
 
-            # derive implementation-specific radio paramaters for ue after ru name reference resolution
+            # derive implementation-specific radio parameters for ue after ru name reference resolution
             derive_ue_radio_config(ue_meta)

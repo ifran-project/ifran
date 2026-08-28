@@ -33,7 +33,7 @@
       - ethtool
       - python3-debian # required by deb822_repository Ansible module
       - python3-kubernetes # required by kubernetes Ansible module
-      - python3-pymysql # required by mysql Ansible module used later on to add/remove OAI subcribers
+      - python3-pymysql # required by mysql Ansible module used later on to add/remove OAI subscribers
     state: present
     update_cache: true
 
@@ -224,7 +224,7 @@
     mode: "0755"
     remote_src: true
 
-# use curl isntead of get_url to avoid "Connection failure: Remote end closed connection without response" error with thsi url
+# use curl instead of get_url to avoid "Connection failure: Remote end closed connection without response" error with this url
 - name: Download k9s deb package on '{{ node.name }}'
   ansible.builtin.command:
     cmd: >
@@ -240,7 +240,7 @@
     state: present
   when: k9s_install
 
-# install mongosh to be used later on to add/remove Open5GS and Free5GC subcribers
+# install mongosh to be used later on to add/remove Open5GS and Free5GC subscribers
 - name: Add MongoDB GPG key
   ansible.builtin.get_url:
     url: https://pgp.mongodb.com/server-8.0.asc

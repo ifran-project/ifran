@@ -129,7 +129,7 @@ DEFAULT_POD_IMAGES = {
 }
 
 
-CORE_POD_PRIVELEGES: dict[CoreImplementation, dict[CoreComponentType, SecurityContext]] = {
+CORE_POD_PRIVILEGES: dict[CoreImplementation, dict[CoreComponentType, SecurityContext]] = {
     CoreImplementation.OAI: {
         CoreComponentType.AMF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
         CoreComponentType.AUSF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
@@ -158,7 +158,7 @@ CORE_POD_PRIVELEGES: dict[CoreImplementation, dict[CoreComponentType, SecurityCo
 }
 
 
-RAN_POD_PRIVELEGES: dict[RANImplementation, dict[RANComponentType, SecurityContext]] = {
+RAN_POD_PRIVILEGES: dict[RANImplementation, dict[RANComponentType, SecurityContext]] = {
     RANImplementation.OAI: {
         RANComponentType.CU_CP: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK"], drop=["ALL"])),
         RANComponentType.CU_UP: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK"], drop=["ALL"])),
@@ -169,20 +169,20 @@ RAN_POD_PRIVELEGES: dict[RANImplementation, dict[RANComponentType, SecurityConte
 }
 
 
-UE_POD_PRIVELEGES: dict[UEImplementation, dict[UEType, SecurityContext]] = {
+UE_POD_PRIVILEGES: dict[UEImplementation, dict[UEType, SecurityContext]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN", "NET_RAW", "SYS_NICE", "IPC_LOCK"], drop=["ALL"])),
     },
 }
 
 
-# no particular priveleges for now
-RIC_POD_PRIVELEGES: dict[RICImplementation, dict[str, SecurityContext]] = {}
+# no particular privileges for now
+RIC_POD_PRIVILEGES: dict[RICImplementation, dict[str, SecurityContext]] = {}
 
 
-POD_PRIVELEGES = {
-    Category5G.CORE: CORE_POD_PRIVELEGES,
-    Category5G.RAN: RAN_POD_PRIVELEGES,
-    Category5G.UE: UE_POD_PRIVELEGES,
-    Category5G.RIC: RIC_POD_PRIVELEGES,
+POD_PRIVILEGES = {
+    Category5G.CORE: CORE_POD_PRIVILEGES,
+    Category5G.RAN: RAN_POD_PRIVILEGES,
+    Category5G.UE: UE_POD_PRIVILEGES,
+    Category5G.RIC: RIC_POD_PRIVILEGES,
 }

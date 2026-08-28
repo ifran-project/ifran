@@ -44,23 +44,23 @@ class HelmManagement(BaseBlueprintManagement):
         # resolve dictionaries based on category
         match category:
             case Category5G.CORE:
-                all_meta = self.mutatable_metamodel.core.components
+                all_meta = self.mutable_metamodel.core.components
                 all_k8s = self.deployment_model.core_deployment.components
 
             case Category5G.RAN:
-                all_meta = self.mutatable_metamodel.ran.components
+                all_meta = self.mutable_metamodel.ran.components
                 all_k8s = self.deployment_model.ran_deployment.components
 
             case Category5G.UE:
                 all_meta = {
                     ue_name: ue_meta
-                    for ue_name, ue_meta in self.mutatable_metamodel.ues.items()
+                    for ue_name, ue_meta in self.mutable_metamodel.ues.items()
                     if ue_meta.type is UEType.CONTAINERIZED
                 } # only containerized UEs are k8s-deployable
                 all_k8s = self.deployment_model.containerized_ues
 
             case Category5G.RIC:
-                all_meta = self.mutatable_metamodel.rics
+                all_meta = self.mutable_metamodel.rics
                 all_k8s = self.deployment_model.rics
 
         # filter for specific components if requested

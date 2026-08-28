@@ -11,12 +11,12 @@ class InvalidResourceStateError(Exception):
     """Exception when a resource's state/status contradicts the desired action to be done."""
 
 
-class ReferenceNotFounError(Exception):
+class ReferenceNotFoundError(Exception):
     """Exception when a resource references an undefined resource."""
 
 
 def build_k8s_safe(name: str) -> str:
-    """Build a valid Kuberenetes name by replacing '_' with '-'."""
+    """Build a valid Kubernetes name by replacing '_' with '-'."""
     return name.lower().replace("_", "-")
 
 
@@ -48,7 +48,7 @@ def sync_dict_keys(target_dict: dict, source_dict: dict, default_factory) -> Non
     for key in missing_keys:
         target_dict[key] = default_factory()
 
-    # remove exra keys
+    # remove extra keys
     for key in extra_keys:
         del target_dict[key]
 

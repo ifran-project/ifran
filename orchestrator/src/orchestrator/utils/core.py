@@ -7,12 +7,11 @@ from pydantic import AnyUrl, IPvAnyAddress, IPvAnyNetwork
 
 from orchestrator.models.deployment.ansible import AnsibleParams
 from orchestrator.models.deployment.core import CoreDeployment
-from orchestrator.models.deployment.k8s import HelmParams, K8SComponent
+from orchestrator.models.deployment.k8s import HelmParams
 from orchestrator.models.deployment.provisioning import ProvisionableNode
 from orchestrator.models.meta.common import Category5G
 from orchestrator.models.meta.core import (
     Core,
-    CoreComponent,
     CoreImplementation,
     SMFComponent,
 )
@@ -161,7 +160,7 @@ async def run_core_database_helm_action(
     # update database status in core deployment
     if action == "install":
         core_deployment.database.is_installed = True
-        # retreive database pod ip
+        # retrieve database pod ip
         core_deployment.database.ip = IPvAnyAddress(result["network_info"])
     elif action == "uninstall":
         core_deployment.database.is_installed = False

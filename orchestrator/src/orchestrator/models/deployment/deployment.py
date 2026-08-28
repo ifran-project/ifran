@@ -37,7 +37,7 @@ class DeploymentParams(BlueprintBaseModel):
 
 
 class DeploymentModel(BlueprintBaseModel):
-    """Model for 5G blueprint deployement parameters and status."""
+    """Model for 5G blueprint deployment parameters and status."""
 
     params: DeploymentParams = Field(default_factory=DeploymentParams)
     """Global deployment parameters."""
