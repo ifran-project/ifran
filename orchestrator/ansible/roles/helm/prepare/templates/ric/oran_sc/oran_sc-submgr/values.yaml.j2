@@ -12,7 +12,7 @@ ports:
   - {name: rmrroute, port: 4561, protocol: TCP}
 env:
   RMR_RTG_SVC: "4561"
-  RMR_SRC_ID: {{ component.service_name }}
+  RMR_SRC_ID: {{ component.service_name }}.{{ component.namespace }}
   RMR_SEED_RT: /cfg/router.txt
   CFG_FILE: /cfg/submgr-config.yaml
   SUBMGR_SEED_SN: "1"

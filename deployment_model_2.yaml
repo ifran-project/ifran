@@ -1,12 +1,15 @@
 params:
+  ansible:
+    roles_path: /Users/yassiramami/Downloads/temp_5gbp/orchestrator/ansible/roles
   provisioning:
-    experiment: tst
+    experiment: ric
+    extra_path: /Users/yassiramami/slices/bin
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.101.202
-      user: ziyad
+      hostname: 10.123.78.109
+      user: yamami
       jumphost:
         hostname: bastion1.theblueprintfactory.org
         user: proxy
@@ -17,8 +20,8 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.32.111
-      user: ziyad
+      hostname: 10.123.46.163
+      user: yamami
       jumphost:
         hostname: bastion1.theblueprintfactory.org
         user: proxy
@@ -29,8 +32,8 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.250.88
-      user: ziyad
+      hostname: 10.123.223.100
+      user: yamami
       jumphost:
         hostname: bastion1.theblueprintfactory.org
         user: proxy
@@ -40,15 +43,17 @@ nodes:
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
 core_deployment:
   components:
-    amf: {}
+    udr: {}
+    smf: {}
     udm: {}
     nrf: {}
-    upf: {}
-    smf: {}
-    udr: {}
     ausf: {}
+    upf: {}
+    amf: {}
 ran_deployment:
   components:
     gnb: {}
-simulated_ues:
+containerized_ues:
   sim_ue: {}
+rics:
+  osc: {}

@@ -14,6 +14,25 @@
 
 # Output: None
 ---
+- name: Select official O-RAN SC M-release chart
+  ansible.builtin.set_fact:
+    official_oran_sc_chart: >-
+      {{ component.category == 'ric'
+         and component.implementation == 'oran_sc'
+         and component.type in ['dbaas', 'rtmgr', 'e2mgr', 'e2term', 'submgr', 'a1mediator'] }}
+
+- name: Select Helm chart source
+  ansible.builtin.set_fact:
+    helm_chart_source: >-
+      {{ component.category ~ '/' ~ component.implementation ~ '/official_m/' ~ component.implementation ~ '-' ~ component.type
+         if official_oran_sc_chart
+         else component.category ~ '/' ~ component.implementation ~ '/' ~ component.implementation ~ '-' ~ component.type }}
+
+- name: Remove stale '{{ chart_name }}' Helm build directory
+  ansible.builtin.file:
+    path: "{{ helm_build_dir }}"
+    state: absent
+
 - name: Create Helm build directory for '{{ chart_name }}' chart
   ansible.builtin.file:
     path: "{{ helm_build_dir }}"
@@ -22,7 +41,7 @@
 
 - name: Copy local '{{ component.implementation }}-{{ component.type }}' Helm chart directory for '{{ chart_name }}'
   ansible.builtin.copy:
-    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/"
+    src: "{{ helm_chart_source }}/"
     dest: "{{ helm_build_dir }}"
     mode: "0755"
 
@@ -31,18 +50,26 @@
     src: "Chart.yaml.j2"
     dest: "{{ helm_build_dir }}/Chart.yaml"
     mode: "0600"
-  when: render
+  when:
+    - render
+    - not official_oran_sc_chart
 
 - name: Render '{{ chart_name }}' Helm values file from Jinja template
   ansible.builtin.template:
-    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/values.yaml.j2"
-    dest: "{{ helm_build_dir }}/values.yaml"
+    src: >-
+      {{ component.category ~ '/' ~ component.implementation ~ '/official_m/' ~ component.implementation ~ '-' ~ component.type ~ '/values.yaml.j2'
+         if official_oran_sc_chart
+         else component.category ~ '/' ~ component.implementation ~ '/' ~ component.implementation ~ '-' ~ component.type ~ '/values.yaml.j2' }}
+    dest: "{{ helm_build_dir }}/{{ 'orchestrator-values.yaml' if official_oran_sc_chart else 'values.yaml' }}"
     mode: "0600"
-  when: render
+  when:
+    - render
 
 - name: Render '{{ chart_name }}' configuration file from Jinja template
   ansible.builtin.template:
     src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/config.yaml.j2"
     dest: "{{ helm_build_dir }}/config.yaml"
     mode: "0600"
-  when: render
+  when:
+    - render
+    - not official_oran_sc_chart

@@ -1,0 +1,135 @@
+---
+- name: Create remote xApp descriptor directory
+  ansible.builtin.file:
+    path: "/tmp/orchestrator-xapps/{{ xapp_name }}"
+    state: directory
+    mode: "0700"
+
+- name: Copy xApp configuration descriptor
+  ansible.builtin.copy:
+    src: "{{ xapp_config_file }}"
+    dest: "/tmp/orchestrator-xapps/{{ xapp_name }}/config-file.json"
+    mode: "0600"
+
+- name: Copy xApp controls schema
+  ansible.builtin.copy:
+    src: "{{ xapp_schema_file }}"
+    dest: "/tmp/orchestrator-xapps/{{ xapp_name }}/schema.json"
+    mode: "0600"
+
+- name: Onboard, install, register, and verify xApp
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+
+      work_dir="/tmp/orchestrator-xapps/{{ xapp_name }}"
+      onboarder_pod="$(kubectl get pod -n {{ ric_namespace }} \
+        -l app.kubernetes.io/name={{ xapp_onboarder_service }} \
+        -o jsonpath='{.items[0].metadata.name}')"
+      pod_dir="/tmp/orchestrator-xapps/{{ xapp_name }}"
+
+      kubectl exec -n {{ ric_namespace }} "$onboarder_pod" -- mkdir -p "$pod_dir"
+      kubectl cp "$work_dir/config-file.json" \
+        "{{ ric_namespace }}/$onboarder_pod:$pod_dir/config-file.json"
+      kubectl cp "$work_dir/schema.json" \
+        "{{ ric_namespace }}/$onboarder_pod:$pod_dir/schema.json"
+
+      kubectl exec -n {{ ric_namespace }} "$onboarder_pod" -- \
+        dms_cli onboard "$pod_dir/config-file.json" "$pod_dir/schema.json"
+
+      expected_image="$(jq -r '.containers[0].image | "\(.registry)/\(.name):\(.tag)"' \
+        "$work_dir/config-file.json")"
+      installed_image="$(kubectl get deployment -n {{ xapp_namespace }} \
+        ricxapp-{{ xapp_name }} \
+        -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)"
+      if helm status {{ xapp_name }} -n {{ xapp_namespace }} >/dev/null 2>&1 && \
+          [ "$installed_image" != "$expected_image" ]; then
+        echo "Replacing {{ xapp_name }} image $installed_image with $expected_image"
+        helm uninstall {{ xapp_name }} -n {{ xapp_namespace }} --wait
+      fi
+      if ! helm status {{ xapp_name }} -n {{ xapp_namespace }} >/dev/null 2>&1; then
+        kubectl exec -n {{ ric_namespace }} "$onboarder_pod" -- \
+          dms_cli install {{ xapp_name }} {{ xapp_version }} {{ xapp_namespace }}
+      fi
+      kubectl rollout status -n {{ xapp_namespace }} \
+        deployment/ricxapp-{{ xapp_name }} --timeout=120s
+
+      register_file="$work_dir/register.json"
+      xapp_config="$(jq -c . "$work_dir/config-file.json")"
+      jq -n --arg config "$xapp_config" '{
+        appName: "{{ xapp_name }}",
+        appVersion: "{{ xapp_version }}",
+        appInstanceName: "{{ xapp_name }}",
+        httpEndpoint: "service-ricxapp-{{ xapp_name }}-http.{{ xapp_namespace }}:8080",
+        rmrEndpoint: "service-ricxapp-{{ xapp_name }}-rmr.{{ xapp_namespace }}:4560",
+        configPath: "/ric/v1/config",
+        config: $config
+      }' > "$register_file"
+
+      audit_pod="ric-xapp-audit-$RANDOM"
+      cleanup_audit_pod() {
+        kubectl delete pod -n {{ ric_namespace }} "$audit_pod" \
+          --ignore-not-found --wait=false >/dev/null 2>&1 || true
+      }
+      trap cleanup_audit_pod EXIT
+      kubectl run "$audit_pod" -n {{ ric_namespace }} --restart=Never \
+        --image=curlimages/curl --command -- sleep 360
+      kubectl wait -n {{ ric_namespace }} --for=condition=Ready \
+        "pod/$audit_pod" --timeout=60s
+
+      kubectl exec -i -n {{ ric_namespace }} "$audit_pod" -- \
+        curl --max-time 30 --fail-with-body -X POST \
+        http://{{ appmgr_service }}:8080/ric/v1/register \
+        -H 'Content-Type: application/json' --data-binary @- < "$register_file"
+
+      appmgr_result="$(kubectl exec -n {{ ric_namespace }} "$audit_pod" -- \
+        curl --max-time 10 --fail --silent \
+          http://{{ appmgr_service }}:8080/ric/v1/xapps)"
+      printf '%s\n' "$appmgr_result" | \
+        jq -e '.[] | select(.name == "{{ xapp_name }}" and .status == "deployed")'
+
+      rtmgr_pod="$(kubectl get endpoints -n {{ ric_namespace }} \
+        {{ rtmgr_service }} \
+        -o jsonpath='{.subsets[0].addresses[0].targetRef.name}')"
+      if [ -z "$rtmgr_pod" ]; then
+        echo "Routing Manager endpoint {{ rtmgr_service }} was not found in {{ ric_namespace }}" >&2
+        exit 1
+      fi
+
+      for _ in $(seq 1 24); do
+        if kubectl logs -n {{ ric_namespace }} pod/"$rtmgr_pod" --since=5m | \
+            grep -q "Update Routes to Endpoint: service-ricxapp-{{ xapp_name }}-rmr.{{ xapp_namespace }}:4560 successful"; then
+          break
+        fi
+        sleep 5
+      done
+      if ! kubectl logs -n {{ ric_namespace }} pod/"$rtmgr_pod" --since=5m | \
+          grep "Update Routes to Endpoint: service-ricxapp-{{ xapp_name }}-rmr.{{ xapp_namespace }}:4560 successful" | tail -1; then
+        echo "xApp {{ xapp_name }} is running and registered, but Routing Manager did not confirm its RMR route." >&2
+        kubectl logs -n {{ ric_namespace }} pod/"$rtmgr_pod" --since=5m | \
+          grep -E '{{ xapp_name }}|Update Routes|failed' | tail -80 >&2 || true
+        exit 43
+      fi
+
+      {% if wait_for_e2 | bool %}
+      for _ in $(seq 1 24); do
+        node_result="$(kubectl exec -n {{ ric_namespace }} "$audit_pod" -- \
+          curl --max-time 10 --fail --silent \
+            http://{{ e2mgr_service }}:3800/v1/nodeb/states)"
+        if printf '%s\n' "$node_result" | \
+            jq -e '.[] | select(.connectionStatus == "CONNECTED")' >/dev/null; then
+          break
+        fi
+        sleep 5
+      done
+      if ! printf '%s\n' "$node_result" | \
+          jq -e '.[] | select(.connectionStatus == "CONNECTED")' >/dev/null; then
+        echo "xApp {{ xapp_name }} {{ xapp_version }} was installed, registered, and routed successfully, but no E2 node reached CONNECTED state." >&2
+        echo "Check the OAI gNB E2 target and the E2Term SCTP association." >&2
+        printf 'E2 Manager node state: %s\n' "$node_result" >&2
+        exit 42
+      fi
+      {% endif %}
+      kubectl get pods,svc -n {{ xapp_namespace }}
+    executable: /bin/bash
+  changed_when: true

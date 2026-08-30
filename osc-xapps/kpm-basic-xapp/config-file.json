@@ -1,0 +1,66 @@
+{
+  "name": "kpm-basic-xapp",
+  "version": "0.3.7",
+  "APP_NAMESPACE": "ricxapp",
+  "containers": [
+    {
+      "name": "kpm-basic-xapp",
+      "image": {
+        "registry": "docker.io",
+        "name": "r2labuser/kpm-basic-xapp",
+        "tag": "0.3.0-orchestrator7"
+      }
+    }
+  ],
+  "messaging": {
+    "ports": [
+      {
+        "name": "http",
+        "container": "kpm-basic-xapp",
+        "port": 8080,
+        "description": "http service"
+      },
+      {
+        "name": "rmrroute",
+        "container": "kpm-basic-xapp",
+        "port": 4561,
+        "description": "rmr route port"
+      },
+      {
+        "name": "rmrdata",
+        "container": "kpm-basic-xapp",
+        "port": 4560,
+        "rxMessages": [
+          "RIC_SUB_RESP",
+          "RIC_SUB_FAILURE",
+          "RIC_SUB_DEL_RESP",
+          "RIC_INDICATION"
+        ],
+        "txMessages": [
+          "RIC_SUB_REQ",
+          "RIC_SUB_DEL_REQ"
+        ],
+        "mtypes": [
+          {
+            "name": "TESTNAME1",
+            "id": 55555
+          },
+          {
+            "name": "TESTNAME2",
+            "id": 55556
+          }
+        ],
+        "policies": [
+          1
+        ],
+        "description": "rmr data port for kpm-xapp"
+      }
+    ]
+  },
+  "controls": {
+    "subscription": {
+      "url": "http://service-ricxapp-kpm-basic-xapp-http.ricxapp:8080/",
+      "clientEndpoint": "service-ricxapp-kpm-basic-xapp-http.ricxapp"
+    }
+  }
+}

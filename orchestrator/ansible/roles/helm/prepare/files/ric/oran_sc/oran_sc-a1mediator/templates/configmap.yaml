@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  labels:
+    {{- include "osc.labels" . | nindent 4 }}
+data:
+  local.rt: |-
+{{ .Files.Get "config.yaml" | indent 4 }}
+  loglevel.txt: |-
+    log-level: INFO

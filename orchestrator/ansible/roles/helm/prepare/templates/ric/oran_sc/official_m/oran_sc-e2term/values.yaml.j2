@@ -1,0 +1,29 @@
+common:
+  namespace:
+    platform: {{ component.namespace }}
+    xapp: ricxapp
+    infra: ricinfra
+
+e2term:
+  alpha:
+    imagePullPolicy: {{ component.image.image_pull_policy }}
+    image:
+      registry: {{ component.image.repository.rsplit('/', 1)[0] }}
+      name: {{ component.image.repository.rsplit('/', 1)[1] }}
+      tag: {{ component.image.image_tag }}
+    privilegedmode: {{ (component.security_context.privileged if component.security_context else false) | lower }}
+    hostnetworkmode: false
+    replicaCount: 1
+    env:
+      print: "1"
+      messagecollectorfile: "/data/outgoing/"
+    dataVolSize: 100Mi
+    storageClassName: local-storage
+    pizpub:
+      enabled: false
+{% if component.node_selector %}
+    nodeselector:
+{% for key, value in component.node_selector.items() %}
+      {{ key }}: "{{ value }}"
+{% endfor %}
+{% endif %}

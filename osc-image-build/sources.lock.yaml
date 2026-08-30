@@ -1,0 +1,63 @@
+release: m
+architecture: linux/amd64
+image_registry: docker.io/r2labuser
+components:
+  builder_ubuntu:
+    repository: https://github.com/o-ran-sc/it-dev.git
+    commit: 913dfd67162776f82670cd6d39fb42d72fccdc97
+    image_tag: 1.0.0
+  builder_alpine:
+    repository: https://github.com/o-ran-sc/it-dev.git
+    commit: 45ee411da14af02b02aedcd70640847bf93e9d9a
+    image_tag: 2.0.0
+  appmgr:
+    repository: https://github.com/o-ran-sc/ric-plt-appmgr.git
+    commit: 2f70f24239e3f9281b899b7d5b4807cf36e062d1
+    image_tag: 0.5.9
+  appmgr_g_helm:
+    repository: https://hub.docker.com/r/orbitcon/ric-plt-appmgr
+    base_image_tag: 0.5.7
+    image_tag: 0.5.7-helm3
+    helm_version: 3.14.4
+  appmgr_m_helm:
+    repository: https://hub.docker.com/r/r2labuser/ric-plt-appmgr
+    base_image_tag: 0.5.9
+    image_tag: 0.5.9-helm3
+    helm_version: 3.14.4
+  xapp_onboarder_helm3:
+    repository: https://hub.docker.com/r/r2labuser/xapp-onboarder
+    base_image_tag: 1.0.8
+    image_tag: 1.0.8-helm3
+    helm_version: 3.14.4
+  dbaas:
+    repository: https://github.com/o-ran-sc/ric-plt-dbaas.git
+    commit: 23c983c62fa8f1677351ced9fbfe65c64375edb9
+    image_tag: 0.6.5
+  e2term:
+    repository: https://github.com/o-ran-sc/ric-plt-e2.git
+    commit: 6f2315b1a63e224c25c1a7202160e75d47d8bcdf
+    image_tag: 6.0.8
+  e2mgr:
+    repository: https://github.com/o-ran-sc/ric-plt-e2mgr.git
+    commit: e53b21660c881f07e93d153048181eee1b391fbb
+    image_tag: 6.0.8
+  rtmgr:
+    repository: https://github.com/o-ran-sc/ric-plt-rtmgr.git
+    commit: c794f21a206c6cab2e352128201333a5924aee61
+    image_tag: 0.9.7
+  submgr:
+    repository: https://github.com/o-ran-sc/ric-plt-submgr.git
+    commit: 708224f4ffcbfc5d79709ed175d2f271053c111b
+    image_tag: 0.10.4
+  a1mediator:
+    repository: https://github.com/o-ran-sc/ric-plt-a1.git
+    commit: 09a757b4fd63198d8690d50b52bfd04552d47f1f
+    image_tag: 3.2.3
+  xapp_onboarder:
+    repository: https://github.com/o-ran-sc/ric-plt-appmgr.git
+    commit: 2f70f24239e3f9281b899b7d5b4807cf36e062d1
+    image_tag: 1.0.8
+  hw_go:
+    repository: https://github.com/o-ran-sc/ric-app-hw-go.git
+    commit: 3ed9c493022ca077dadf036181bc1c7bc50faa3b
+    image_tag: 1.0.1

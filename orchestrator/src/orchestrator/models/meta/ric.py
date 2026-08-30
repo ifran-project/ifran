@@ -35,6 +35,9 @@ class RICComponentType(StrEnum):
     RTMGR = auto()
     SUBMGR = auto()
     APPMGR = auto()
+    CHARTMUSEUM = auto()
+    XAPP_ONBOARDER = auto()
+    A1MEDIATOR = auto()
 
 
 SUPPORTED_RIC_COMPONENTS: dict[RICImplementation, set[RICComponentType]] = {
@@ -46,6 +49,9 @@ SUPPORTED_RIC_COMPONENTS: dict[RICImplementation, set[RICComponentType]] = {
         RICComponentType.RTMGR,
         RICComponentType.SUBMGR,
         RICComponentType.APPMGR,
+        RICComponentType.CHARTMUSEUM,
+        RICComponentType.XAPP_ONBOARDER,
+        RICComponentType.A1MEDIATOR,
     },
 }
 
@@ -87,6 +93,9 @@ ADVANCED_RIC_CONFIG_MAPPING: dict[RICImplementation, dict[RICComponentType, type
         RICComponentType.RTMGR: ORANSCAdvancedRICConfig,
         RICComponentType.SUBMGR: ORANSCAdvancedRICConfig,
         RICComponentType.APPMGR: ORANSCAdvancedRICConfig,
+        RICComponentType.CHARTMUSEUM: ORANSCAdvancedRICConfig,
+        RICComponentType.XAPP_ONBOARDER: ORANSCAdvancedRICConfig,
+        RICComponentType.A1MEDIATOR: ORANSCAdvancedRICConfig,
     },
 }
 
@@ -125,7 +134,7 @@ class E2TermComponent(RICComponent):
     """O-RAN SC E2 Termination component."""
 
     type: Literal[RICComponentType.E2TERM] = Field(frozen=True)
-    # Match the E2 port used by the OAI/FlexRIC E2 agent.
+    # Match the SCTP port used by OAI's bundled FlexRIC E2 agent.
     config: RICConfig = Field(default_factory=lambda: RICConfig(e2=E2(port=36421)))
 
 

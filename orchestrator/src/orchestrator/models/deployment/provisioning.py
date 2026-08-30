@@ -209,10 +209,10 @@ class BIParams(GenericProvisionerParams):
     create_experiment: bool = Field(default=False)
     """If True, will create SLICES experiment and delete a previous one if it exists."""
 
-    experiment_duration: str = Field(default="24h", pattern=r"^\d+[mhdwy]$")
+    experiment_duration: str = Field(default="30d", pattern=r"^\d+[mhdwy]$")
     """SLICES experiment duration set if 'create_experiment' is True."""
 
-    node_duration: str = Field(default="3h", pattern=r"^\d+[mhdwy]$")
+    node_duration: str = Field(default="7d", pattern=r"^\d+[mhdwy]$")
     """BI node lifetime duration."""
 
 

@@ -12,7 +12,7 @@ ports:
   - {name: rmrroute, port: 4561, protocol: TCP}
 env:
   RMR_RTG_SVC: "4561"
-  RMR_SRC_ID: {{ component.service_name }}
+  RMR_SRC_ID: {{ component.service_name }}.{{ component.namespace }}
   RMR_SEED_RT: /opt/E2Manager/router.txt
 {% if 'dbaas' in component.ric_type_services %}
   DBAAS_SERVICE_HOST: {{ component.ric_type_services.dbaas }}
@@ -25,13 +25,13 @@ router: |-
   newrt|start
   rte|1080|{{ component.service_name }}:3801
 {% if 'e2term' in component.ric_type_services %}
-  rte|1090|{{ component.ric_type_services.e2term }}:38000
-  rte|1100|{{ component.ric_type_services.e2term }}:38000
-  rte|1101|{{ component.ric_type_services.e2term }}:38000
-  rte|12002|{{ component.ric_type_services.e2term }}:38000 # E2 Setup Response
-  rte|12003|{{ component.ric_type_services.e2term }}:38000 # E2 Setup Failure
-  rte|12010|{{ component.ric_type_services.e2term }}:38000
-  rte|12020|{{ component.ric_type_services.e2term }}:38000
+  rte|1090|{{ component.ric_type_services.e2term }}.{{ component.namespace }}:38000
+  rte|1100|{{ component.ric_type_services.e2term }}.{{ component.namespace }}:38000
+  rte|1101|{{ component.ric_type_services.e2term }}.{{ component.namespace }}:38000
+  rte|12002|{{ component.ric_type_services.e2term }}.{{ component.namespace }}:38000 # E2 Setup Response
+  rte|12003|{{ component.ric_type_services.e2term }}.{{ component.namespace }}:38000 # E2 Setup Failure
+  rte|12010|{{ component.ric_type_services.e2term }}.{{ component.namespace }}:38000
+  rte|12020|{{ component.ric_type_services.e2term }}.{{ component.namespace }}:38000
 {% endif %}
   newrt|end
 

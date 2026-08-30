@@ -72,10 +72,15 @@ spec:
               mountPath: {{ . }}
               subPath: router.txt
             {{- end }}
-            {{- with .Values.dataMountPath }}
+          {{- with .Values.dataMountPath }}
             - name: data
               mountPath: {{ . }}
-            {{- end }}
+          {{- end }}
+          {{- if .Values.helmRepository.enabled }}
+            - name: helm-repository-credentials
+              mountPath: /opt/ric/secret
+              readOnly: true
+          {{- end }}
           {{- end }}
       {{- if or .Values.configMountPath .Values.routerMountPath .Values.dataMountPath }}
       volumes:
@@ -87,6 +92,11 @@ spec:
         {{- with .Values.dataMountPath }}
         - name: data
           emptyDir: {}
+        {{- end }}
+        {{- if .Values.helmRepository.enabled }}
+        - name: helm-repository-credentials
+          secret:
+            secretName: {{ .Chart.Name }}-helm-repository
         {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}

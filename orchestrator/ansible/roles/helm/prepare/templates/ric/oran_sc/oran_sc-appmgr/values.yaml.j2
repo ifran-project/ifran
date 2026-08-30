@@ -12,6 +12,7 @@ ports:
   - {name: rmrroute, port: 4561, protocol: TCP}
 env:
   NAME: xappmgr
+  HELMVERSION: v3
   RMR_RTG_SVC: "4561"
   RMR_SRC_ID: {{ component.service_name }}
 {% if 'dbaas' in component.ric_type_services %}
@@ -24,6 +25,9 @@ dataMountPath: /tmp
 router: |-
   newrt|start
   newrt|end
+
+helmRepository:
+  enabled: {{ ('chartmuseum' in component.ric_type_services) | lower }}
 
 imagePullSecrets:
 {% if component.image.image_pull_secrets %}

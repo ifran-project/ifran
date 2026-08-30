@@ -1,17 +1,22 @@
 params:
+  ansible:
+    roles_path: /Users/yassiramami/Downloads/temp_5gbp/orchestrator/ansible/roles
   provisioning:
-    experiment: tst
+    experiment: ric
+    extra_path: /Users/yassiramami/slices/bin
 core_deployment:
   components:
-    amf: {}
+    udr: {}
+    smf: {}
     udm: {}
     nrf: {}
-    upf: {}
-    smf: {}
-    udr: {}
     ausf: {}
+    upf: {}
+    amf: {}
 ran_deployment:
   components:
     gnb: {}
-simulated_ues:
+containerized_ues:
   sim_ue: {}
+rics:
+  osc: {}

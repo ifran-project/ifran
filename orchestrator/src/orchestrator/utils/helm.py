@@ -87,7 +87,12 @@ async def run_single_helm_action(
             component_k8s.network_info = [MultusNetworkStatus.model_validate(item) for item in result["network_info"]]
         else:
             # if multus is not used, output ip address directly
-            component_k8s.network_info = IPvAnyAddress(result["network_info"])
+            network_info = result.get("network_info")
+            if network_info in (None, "", "None"):
+                raise RuntimeError(
+                    f"Component {component_name!r} installed, but Kubernetes returned no usable network address."
+                )
+            component_k8s.network_info = IPvAnyAddress(network_info)
     elif action == "uninstall":
         component_k8s.is_installed = False
 
@@ -110,6 +115,11 @@ async def run_parallel_helm_action(
         components=components_meta,
         dependencies=order,
     )
+    # Installation/prepare actions build from dependencies to dependents.
+    # Removal must do the opposite so no dependency is removed while a
+    # component that relies on it is still running.
+    if action == "uninstall":
+        levels.reverse()
 
     for level in levels:
         # components_meta and components_k8s are supposed to already be synced

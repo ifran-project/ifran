@@ -11,6 +11,8 @@ spec:
       {{- include "osc.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "osc.selectorLabels" . | nindent 8 }}
     spec:
@@ -72,6 +74,9 @@ spec:
               mountPath: {{ . }}
               subPath: router.txt
             {{- end }}
+            - name: configuration
+              mountPath: /etc/config/log-level.yaml
+              subPath: log-level.yaml
             {{- with .Values.dataMountPath }}
             - name: data
               mountPath: {{ . }}

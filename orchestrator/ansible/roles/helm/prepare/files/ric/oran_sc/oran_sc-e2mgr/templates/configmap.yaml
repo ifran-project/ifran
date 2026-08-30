@@ -9,3 +9,5 @@ data:
 {{ .Files.Get "config.yaml" | indent 4 }}
   router.txt: |-
 {{ .Values.router | indent 4 }}
+  log-level.yaml: |-
+    loglevel: 3

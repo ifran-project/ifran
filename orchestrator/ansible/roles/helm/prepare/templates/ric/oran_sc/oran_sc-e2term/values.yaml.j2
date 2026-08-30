@@ -1,5 +1,6 @@
 componentName: e2term
-e2Identity: {{ component.service_name | replace("-", "") }}
+e2ServiceAlias: {{ component.service_name | replace("-", "") }}
+e2Identity: {{ component.service_name | replace("-", "") }}.{{ component.namespace }}
 image:
   repository: {{ component.image.repository }}
   tag: {{ component.image.image_tag }}
@@ -13,7 +14,7 @@ ports:
   - {name: e2, port: {{ component.config.e2.port }}, protocol: SCTP}
 env:
   RMR_RTG_SVC: "4561"
-  RMR_SRC_ID: {{ component.service_name }}
+  RMR_SRC_ID: {{ component.service_name | replace("-", "") }}.{{ component.namespace }}
   RMR_SEED_RT: /opt/e2/router.txt
   RMR_VCTL_FILE: /tmp/rmr_verbose
   nano: "38000"
@@ -24,13 +25,23 @@ env:
 configMountPath: /opt/e2/config/config.conf
 routerMountPath: /opt/e2/router.txt
 dataMountPath: /data
+startupDependencies:
+{% if 'rtmgr' in component.ric_type_services %}
+  - {host: {{ component.ric_type_services.rtmgr }}, port: 3800}
+  - {host: {{ component.ric_type_services.rtmgr }}, port: 4560}
+{% endif %}
+{% if 'e2mgr' in component.ric_type_services %}
+  - {host: {{ component.ric_type_services.e2mgr }}, port: 3800}
+  - {host: {{ component.ric_type_services.e2mgr }}, port: 3801}
+{% endif %}
 router: |-
   newrt|start
 {% if 'e2mgr' in component.ric_type_services %}
-  rte|1080|{{ component.ric_type_services.e2mgr }}:3801
-  rte|1100|{{ component.ric_type_services.e2mgr }}:3801
-  rte|10020|{{ component.ric_type_services.e2mgr }}:3801
-  rte|12001|{{ component.ric_type_services.e2mgr }}:3801 # E2 Setup Request
+  rte|1080|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801
+  rte|1100|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801
+  rte|1102|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801 # E2Term Keep Alive Response
+  rte|10020|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801
+  rte|12001|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801 # E2 Setup Request
 {% endif %}
   newrt|end
 

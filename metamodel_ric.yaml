@@ -12,6 +12,12 @@ rics:
       database:
         type: dbaas
         implementation: oran_sc
+      chart_repository:
+        type: chartmuseum
+        implementation: oran_sc
+      xapp_onboarder:
+        type: xapp_onboarder
+        implementation: oran_sc
       application_manager:
         type: appmgr
         implementation: oran_sc
@@ -26,4 +32,7 @@ rics:
         implementation: oran_sc
       subscription_manager:
         type: submgr
+        implementation: oran_sc
+      a1_mediator:
+        type: a1mediator
         implementation: oran_sc

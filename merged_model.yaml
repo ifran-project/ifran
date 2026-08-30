@@ -491,7 +491,7 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
       extra_args: null
-      hostname: 10.123.101.202
+      hostname: 10.123.78.109
       jumphost:
         common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         extra_args: null
@@ -508,7 +508,7 @@ nodes:
       port: 22
       private_key_file: null
       sudo_password: null
-      user: ziyad
+      user: yamami
   node2:
     category: node
     is_provisioned: true
@@ -526,7 +526,7 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
       extra_args: null
-      hostname: 10.123.32.111
+      hostname: 10.123.46.163
       jumphost:
         common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         extra_args: null
@@ -543,7 +543,7 @@ nodes:
       port: 22
       private_key_file: null
       sudo_password: null
-      user: ziyad
+      user: yamami
   node3:
     category: node
     is_provisioned: true
@@ -561,7 +561,7 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
       extra_args: null
-      hostname: 10.123.250.88
+      hostname: 10.123.223.100
       jumphost:
         common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         extra_args: null
@@ -578,11 +578,11 @@ nodes:
       port: 22
       private_key_file: null
       sudo_password: null
-      user: ziyad
+      user: yamami
 params:
   ansible:
-    roles_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/ansible/roles
-    runner_path: /Users/zimabrou/.ansible-runner
+    roles_path: /Users/yassiramami/Downloads/temp_5gbp/orchestrator/ansible/roles
+    runner_path: /Users/yassiramami/.ansible-runner
   k8s:
     calico_version: 3.32.1
     cluster_name: 5gbp
@@ -599,14 +599,15 @@ params:
       patch: 2
     k9s_install: true
     k9s_version: 0.51.0
-    local_kubeconfig_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/.k8s-admin.conf
+    local_kubeconfig_path: /Users/yassiramami/Downloads/temp_5gbp/orchestrator/src/.k8s-admin.conf
     master_node: null
     multus_version: 4.3.0
     pod_network_cidr: 10.244.0.0/16
     service_cidr: 10.96.0.0/12
     timezone: Europe/Paris
   provisioning:
-    experiment: tst
+    experiment: ric
+    extra_path: /Users/yassiramami/slices/bin
 ran:
   components:
     gnb:
@@ -617,7 +618,7 @@ ran:
       config:
         amf: amf
         e2: null
-        gnbId: 0
+        gnbId: 1
         n2:
           interfaceName: eth0
           ipv4EndPointAddress: 0.0.0.0
@@ -661,7 +662,7 @@ ran:
             nrofUplinkSymbols: 4
             periodicityMilliseconds: 5.0
           uplinkArfcn: null
-        ric: null
+        ric: osc
         ru: sim_ru
         sctpConfiguration:
           inStreams: 2
@@ -716,7 +717,79 @@ ran:
       tolerations: []
       type: gnb
   implementation: oai
-rics: {}
+rics:
+  osc:
+    components:
+      a1_mediator:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: a1mediator
+      application_manager:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: appmgr
+      chart_repository:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: chartmuseum
+      database:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: dbaas
+      e2_manager:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: e2mgr
+      e2_termination:
+        advanced_config: null
+        category: ric
+        config:
+          e2:
+            interfaceName: eth0
+            ipv4EndPointAddress: 0.0.0.0
+            ipv6EndPointAddress: null
+            port: 36421
+            protocol: SCTP
+        implementation: oran_sc
+        plain_text_config: null
+        type: e2term
+      routing_manager:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: rtmgr
+      subscription_manager:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: submgr
+      xapp_onboarder:
+        advanced_config: null
+        category: ric
+        config: {}
+        implementation: oran_sc
+        plain_text_config: null
+        type: xapp_onboarder
+    implementation: oran_sc
 rus:
   sim_ru:
     capabilities: null

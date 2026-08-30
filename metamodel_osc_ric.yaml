@@ -41,8 +41,11 @@ rics:
     implementation: oran_sc
     components:
       database: {type: dbaas}
+      chart_repository: {type: chartmuseum}
+      xapp_onboarder: {type: xapp_onboarder}
       application_manager: {type: appmgr}
       routing_manager: {type: rtmgr}
       e2_manager: {type: e2mgr}
       e2_termination: {type: e2term}
       subscription_manager: {type: submgr}
+      a1_mediator: {type: a1mediator}
