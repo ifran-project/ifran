@@ -1,0 +1,191 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+gnb_id: {{ component.config.gnbId }}
+gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32) }}
+dryrun: {{ component.advanced_config.dryrun | lower | default("false") }}
+
+f1ap:
+{% if component.advanced_config and component.advanced_config.f1ap %}
+{{ component.advanced_config.f1ap | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  addrs: {{ component.config.cu_cp }}
+  bind_addrs: {{ component.config.f1c.ipv4EndPointAddress }}
+{% endif %}
+
+f1u:
+{% if component.advanced_config and component.advanced_config.f1u %}
+{{ component.advanced_config.f1u | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  bind_port: {{ component.config.f1u.port }}
+  socket:
+    - bind_addr: {{ component.config.f1u.ipv4EndPointAddress }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.cells %}
+cells:
+{{ component.advanced_config.cells | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.qos %}
+qos:
+{{ component.advanced_config.qos | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.srbs %}
+srbs:
+{{ component.advanced_config.srbs | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.du %}
+du:
+{{ component.advanced_config.du | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+cell_cfg:
+{% if component.advanced_config and component.advanced_config.cell_cfg %}
+{{ component.advanced_config.cell_cfg | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  dl_arfcn: {{ component.config.radioConfiguration.downlinkArfcn }}
+  band: {{ component.config.radioConfiguration.nrBand }}
+  channel_bandwidth_MHz: {{ component.config.radioConfiguration.channelBandwidthMhz }}
+  common_scs: {{ component.config.radioConfiguration.subcarrierSpacingKhz }}
+  plmn: "{{ component.config.plmnList[0].plmnId.plmnId }}"
+  tac: {{ component.config.tac }}
+  pci: {{ component.config.physicalCellId }}
+  nof_antennas_dl: {{ component.config.ru.numberOfTxPorts }}
+  nof_antennas_ul: {{ component.config.ru.numberOfRxPorts }}
+  prach:
+    prach_config_index: {{ component.config.radioConfiguration.prachConfigurationIndex }}
+  ssb:
+    ssb_period: {{ component.config.radioConfiguration.ssbPeriodicityMs }}
+{% if component.config.radioConfiguration.duplexMode == "tdd" %}
+  tdd_ul_dl_cfg:
+    dl_ul_tx_period: {{ component.derived_radio_config.tdd_period_slots }}
+    nof_dl_slots: {{ component.config.radioConfiguration.tddConfiguration.nrofDownlinkSlots }}
+    nof_dl_symbols: {{ component.config.radioConfiguration.tddConfiguration.nrofDownlinkSymbols }}
+    nof_ul_slots: {{ component.config.radioConfiguration.tddConfiguration.nrofUplinkSlots }}
+    nof_ul_symbols: {{ component.config.radioConfiguration.tddConfiguration.nrofUplinkSymbols }}
+{% endif %}
+  slicing:
+{% for plmn in component.config.plmnList %}
+{% for slice in plmn.snssaiList %}
+    - sst: {{ slice.sst }}
+{% if slice.sd %}
+      sd: {{ slice.sd | int(base=16) }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.e2 %}
+e2:
+{{ component.advanced_config.e2 | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+{% if component.config.ric %}
+e2:
+  enable_du_e2: true
+  addrs: {{ component.config.ric }}
+  port: {{ component.config.e2.port }}
+  bind_addrs: {{ component.config.e2.ipv4EndPointAddress }}
+{% endif %}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.ntn %}
+ntn:
+{{ component.advanced_config.ntn | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.custom_freq_bands %}
+custom_freq_bands:
+{{ component.advanced_config.custom_freq_bands | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.ru_ofh %}
+ru_ofh:
+{{ component.advanced_config.ru_ofh | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+ru_sdr:
+{% if component.advanced_config and component.advanced_config.ru_sdr %}
+{{ component.advanced_config.ru_sdr | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  srate: 61.44 # RF sample rate might need to be adjusted according to selected bandwidth.
+{% if component.derived_radio_config.device_driver %}
+  device_driver: {{ component.derived_radio_config.device_driver }}
+{% endif %}
+{% if component.config.ru.type == "usrp" %}
+  device_args: "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+  clock: {{ component.config.ru.clockSource }}
+  sync: {{ component.config.ru.timeSource }}
+  tx_gain: {{ component.config.ru.txGainDB }}
+  rx_gain: {{ component.config.ru.rxGainDB }}
+{% elif component.config.ru.type == "simulated" %}
+  device_args: tx_port=tcp://0.0.0.0:2000,rx_port=tcp://0.0.0.0:2001,base_srate=61.44e6
+  tx_gain: -12 # backoff from full scale, required by OAI fixed point FFT (https://docs.ocudu.org/tutorials/oaiue/#gnb)
+  rx_gain: 0
+{% endif %}
+{% endif %}
+
+
+{% if component.advanced_config and component.advanced_config.ru_dummy %}
+ru_dummy:
+{{ component.advanced_config.ru_dummy | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.hal %}
+hal:
+{{ component.advanced_config.hal | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.buffer_pool %}
+buffer_pool:
+{{ component.advanced_config.buffer_pool | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.expert_phy %}
+expert_phy:
+{{ component.advanced_config.expert_phy | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.expert_execution %}
+expert_execution:
+{{ component.advanced_config.expert_execution | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.remote_control %}
+remote_control:
+{{ component.advanced_config.remote_control | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.test_mode %}
+test_mode:
+{{ component.advanced_config.test_mode | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+log:
+{% if component.advanced_config and component.advanced_config.log %}
+{{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  filename: /tmp/du.log
+  all_level: warning
+  config_level: debug
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.pcap %}
+pcap:
+{{ component.advanced_config.pcap | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.metrics %}
+metrics:
+{{ component.advanced_config.metrics | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.trace %}
+trace:
+{{ component.advanced_config.trace | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% endif %}

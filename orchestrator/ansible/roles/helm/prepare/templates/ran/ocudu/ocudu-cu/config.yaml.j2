@@ -1,0 +1,86 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+gnb_id: {{ component.config.gnbId }}
+gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32) }}
+gnb_cu_up_id: {{ component.config.gnbCuUpId }}
+dryrun: {{ component.advanced_config.dryrun | lower | default("false") }}
+
+cu_cp:
+{% if component.advanced_config and component.advanced_config.cu_cp %}
+{{ component.advanced_config.cu_cp | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+  amf:
+    addr: {{ component.config.amf }}
+    port: {{ component.config.n2.port }}
+    bind_addr: {{ component.config.n2.ipv4EndPointAddress }}
+    supported_tracking_areas:
+{% for plmn in component.config.plmnList %}
+      - tac: {{ component.config.tac }}
+        plmn_list:
+          - plmn: "{{ plmn.plmnId.plmnId }}"
+            tai_slice_support_list:
+{% for slice in plmn.snssaiList %}
+              - sst: {{ slice.sst }}
+{% if slice.sd %}
+                sd: {{ slice.sd | int(base=16) }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+  f1ap:
+    bind_addrs: {{ component.config.f1c.ipv4EndPointAddress }}
+{% endif %}
+
+cu_up:
+{% if component.advanced_config and component.advanced_config.cu_up %}
+{{ component.advanced_config.cu_up | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+  ngu:
+    socket:
+      - bind_addr: {{ component.config.n3.ipv4EndPointAddress }}
+  f1u:
+    bind_port: {{ component.config.f1u.port }}
+    socket:
+      - bind_addr: {{ component.config.f1u.ipv4EndPointAddress }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.e2 %}
+e2:
+{{ component.advanced_config.e2 | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+{% if component.config.ric %}
+e2:
+  enable_cu_cp_e2: true
+  enable_cu_up_e2: true
+  addrs: {{ component.config.ric }}
+  port: {{ component.config.e2.port }}
+  bind_addrs: {{ component.config.e2.ipv4EndPointAddress }}
+{% endif %}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.remote_control %}
+remote_control:
+{{ component.advanced_config.remote_control | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+log:
+{% if component.advanced_config and component.advanced_config.log %}
+{{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  filename: /tmp/cu.log
+  all_level: warning
+  config_level: debug
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.pcap %}
+pcap:
+{{ component.advanced_config.pcap | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.metrics %}
+metrics:
+{{ component.advanced_config.metrics | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+
+{% endif %}

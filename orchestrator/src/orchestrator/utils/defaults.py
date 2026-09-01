@@ -78,21 +78,27 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
             RANComponentType.CU_UP: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
         },
     },
-    RANImplementation.SRS: {
+    RANImplementation.OCUDU: {
         RUType.USRP: {
-            RANComponentType.GNB: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-uhd", image_tag="v1.0"),
-            RANComponentType.CU: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-uhd", image_tag="v1.0"),
-            RANComponentType.DU: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-uhd", image_tag="v1.0"),
+            RANComponentType.GNB: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-uhd", image_tag="release_26_04"),
+            RANComponentType.CU: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu", image_tag="release_26_04"),
+            RANComponentType.DU: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-du-uhd", image_tag="release_26_04"),
+            RANComponentType.CU_CP: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu-cp", image_tag="release_26_04"),
+            RANComponentType.CU_UP: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu-up", image_tag="release_26_04"),
         },
         RUType.BENETEL: {
-            RANComponentType.GNB: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-dpdk", image_tag="v1.0"),
-            RANComponentType.CU: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-dpdk", image_tag="v1.0"),
-            RANComponentType.DU: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-dpdk", image_tag="v1.0"),
+            RANComponentType.GNB: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-dpdk", image_tag="release_26_04"),
+            RANComponentType.CU: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu", image_tag="release_26_04"),
+            RANComponentType.DU: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-du-dpdk", image_tag="release_26_04"),
+            RANComponentType.CU_CP: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu-cp", image_tag="release_26_04"),
+            RANComponentType.CU_UP: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu-up", image_tag="release_26_04"),
         },
         RUType.SIMULATED: {
-            RANComponentType.GNB: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-zmq", image_tag="v1.0"),
-            RANComponentType.CU: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-zmq", image_tag="v1.0"),
-            RANComponentType.DU: ContainerImage(repository="docker.io/r2labuser/srsran-gnb-zmq", image_tag="v1.0"),
+            RANComponentType.GNB: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-zmq", image_tag="release_26_04"),
+            RANComponentType.CU: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu", image_tag="release_26_04"),
+            RANComponentType.DU: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-du-zmq", image_tag="release_26_04"),
+            RANComponentType.CU_CP: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu-cp", image_tag="release_26_04"),
+            RANComponentType.CU_UP: ContainerImage(repository="ghcr.io/ziyad-mabrouk/ocudu-cu-up", image_tag="release_26_04"),
         },
     },
     RANImplementation.UERANSIM: {
@@ -165,6 +171,13 @@ RAN_POD_PRIVILEGES: dict[RANImplementation, dict[RANComponentType, SecurityConte
         RANComponentType.CU: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK"], drop=["ALL"])),
         RANComponentType.DU: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK"], drop=["ALL"])),
         RANComponentType.GNB: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK"], drop=["ALL"])),
+    },
+    RANImplementation.OCUDU: {
+        RANComponentType.CU_CP: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK", "PERFMON"], drop=["ALL"])),
+        RANComponentType.CU_UP: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK", "PERFMON"], drop=["ALL"])),
+        RANComponentType.CU: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK", "PERFMON"], drop=["ALL"])),
+        RANComponentType.DU: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK", "PERFMON"], drop=["ALL"])),
+        RANComponentType.GNB: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK", "PERFMON"], drop=["ALL"])),
     },
 }
 

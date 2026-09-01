@@ -41,12 +41,27 @@ RUs = (
 );
 
 {% if component.config.ru.type == "simulated" %}
+{% if component.config.gnb[1].implementation == "oai" %}
 rfsimulator = (
     {
         serveraddr = "{{ component.config.gnb[0] }}";
         serverport = 4043;
     }
 );
+{% endif %}
+{% if component.config.gnb[1].implementation == "ocudu" %}
+# for ocudu, zmq is used as rf simulator
+device = {
+  name = "oai_zmqdevif";
+};
+
+zmq = (
+  {
+    tx_channels = ( "tcp://0.0.0.0:2001" );
+    rx_channels = ( "tcp://{{ component.config.gnb[0] }}:2000" );
+  }
+);
+{% endif %}
 {% endif %}
 
 cells = (

@@ -32,8 +32,8 @@ class RANImplementation(StrEnum):
     OAI = auto()
     """OpenAirInterface RAN."""
 
-    SRS= auto()
-    """Software Radio Systems (SRS) RAN."""
+    OCUDU = auto()
+    """OCUDU RAN."""
 
     UERANSIM = auto()
     """UERANSIM."""
@@ -66,8 +66,14 @@ SUPPORTED_RAN_COMPONENTS: dict[RANImplementation, list[RANComponentType]] = {
         RANComponentType.DU,
         RANComponentType.GNB,
     ],
-    RANImplementation.SRS: [], # TODO to be added later
-    RANImplementation.UERANSIM: [], # same
+    RANImplementation.OCUDU: [
+        RANComponentType.CU,
+        RANComponentType.CU_CP,
+        RANComponentType.CU_UP,
+        RANComponentType.DU,
+        RANComponentType.GNB,
+    ],
+    RANImplementation.UERANSIM: [], # TODO
 }
 
 
@@ -311,7 +317,7 @@ class RadioConfiguration(BlueprintBaseModel):
     ssbPbchBlockPowerDbm: int = Field(default=-25, ge=-60, le=50)
     """SSB/PBCH block transmit power in dBm (ssb-PBCH-BlockPower in TS 38.331)."""
 
-    prachConfigurationIndex: int = Field(default=98, ge=0, le=255)
+    prachConfigurationIndex: int = Field(default=0, ge=0, le=255)
     """PRACH Configuration Index (TS 38.211 Table 6.3.3.2-1)."""
 
     msg1FrequencyStartPrb: int = Field(default=0, ge=0, le=274)
@@ -463,6 +469,9 @@ class CUUPConfig(CommonCUConfig):
 class CUConfig(CommonCUConfig):
     """Generic CU configuration."""
 
+    gnbCuUpId: int = Field(default=0, ge=0, le=4294967295)
+    """gNB CU-UP identity."""
+
     nrCellId: int = Field(default=0, ge=0)
     """NR Cell Identity."""
 
@@ -549,10 +558,17 @@ class GenericOAIAdvancedRANConfig(GenericAdvancedRANConfig):
    log_config: dict[str, str] | None = Field(default=None)
 
 
-class GenericSRSAdvancedRANConfig(GenericAdvancedRANConfig):
-   """Generic advanced configuration for SRS RAN."""
+class GenericOCUDUAdvancedRANConfig(GenericAdvancedRANConfig):
+   """Generic advanced configuration for OCUDU RAN."""
 
-    # TODO
+   gnb_id_bit_length: int | None = Field(default=None)
+   dryrun: bool | None = Field(default=None)
+   e2: dict[str, Any] | None = Field(default=None)
+   remote_control: dict[str, Any] | None = Field(default=None)
+   log: dict[str, Any] | None = Field(default=None)
+   pcap: dict[str, Any] | None = Field(default=None)
+   metrics: dict[str, Any] | None = Field(default=None)
+   
 
 
 class GenericUERANSIMAdvancedRANConfig(GenericAdvancedRANConfig):
@@ -638,6 +654,60 @@ class OAIAdvancedGNBConfig(OAIAdvancedCommonGNBConfig):
     sm_dir: str | None = Field(default=None)
 
 
+class OCUDUAdvancedCUCPConfig(GenericOCUDUAdvancedRANConfig):
+    """Advanced configuration for OCUDU CU-CP."""
+
+    cu_cp: dict[str, Any] | None = Field(default=None)
+
+
+class OCUDUAdvancedCUUPConfig(GenericOCUDUAdvancedRANConfig):
+    """Advanced configuration for OCUDU CU-UP."""
+
+    cu_up: dict[str, Any] | None = Field(default=None)
+
+
+class OCUDUAdvancedCUConfig(GenericOCUDUAdvancedRANConfig):
+    """Advanced configuration for OCUDU CU."""
+
+    cu_cp: dict[str, Any] | None = Field(default=None)
+    cu_up: dict[str, Any] | None = Field(default=None)
+
+
+class OCUDUAdvancedCommonGNBConfig(GenericOCUDUAdvancedRANConfig):
+   """OCUDU advanced configuration common for gNB and DU."""
+
+   cells: dict[str, Any] | None = Field(default=None)
+   qos: dict[str, Any] | None = Field(default=None)
+   srbs: dict[str, Any] | None = Field(default=None)
+   du: dict[str, Any] | None = Field(default=None)
+   cell_cfg: dict[str, Any] | None = Field(default=None)
+   ntn: dict[str, Any] | None = Field(default=None)
+   custom_freq_bands: dict[str, Any] | None = Field(default=None)
+   ru_ofh: dict[str, Any] | None = Field(default=None)
+   ru_sdr: dict[str, Any] | None = Field(default=None)
+   ru_dummy: dict[str, Any] | None = Field(default=None)
+   hal: dict[str, Any] | None = Field(default=None)
+   buffer_pool: dict[str, Any] | None = Field(default=None)
+   expert_phy: dict[str, Any] | None = Field(default=None)
+   expert_execution: dict[str, Any] | None = Field(default=None)
+   test_mode: dict[str, Any] | None = Field(default=None)
+   trace: dict[str, Any] | None = Field(default=None)
+
+
+class OCUDUAdvancedDUConfig(OCUDUAdvancedCommonGNBConfig):
+    """Advanced configuration for OCUDU DU."""
+
+    f1ap: dict[str, Any] | None = Field(default=None)
+    f1u: dict[str, Any] | None = Field(default=None)
+
+
+class OCUDUAdvancedGNBConfig(OCUDUAdvancedCommonGNBConfig):
+    """Advanced configuration for OCUDU GNB."""
+
+    cu_cp: dict[str, Any] | None = Field(default=None)
+    cu_up: dict[str, Any] | None = Field(default=None)
+
+
 ADVANCED_RAN_CONFIG_MAPPING: dict[RANImplementation, dict[RANComponentType, type[GenericAdvancedRANConfig]]] = {
     RANImplementation.OAI: {
         RANComponentType.CU_CP: OAIAdvancedCUCPConfig,
@@ -645,7 +715,14 @@ ADVANCED_RAN_CONFIG_MAPPING: dict[RANImplementation, dict[RANComponentType, type
         RANComponentType.CU: OAIAdvancedCUConfig,
         RANComponentType.DU: OAIAdvancedDUConfig,
         RANComponentType.GNB: OAIAdvancedGNBConfig,
-    }
+    },
+    RANImplementation.OCUDU: {
+        RANComponentType.CU_CP: OCUDUAdvancedCUCPConfig,
+        RANComponentType.CU_UP: OCUDUAdvancedCUUPConfig,
+        RANComponentType.CU: OCUDUAdvancedCUConfig,
+        RANComponentType.DU: OCUDUAdvancedDUConfig,
+        RANComponentType.GNB: OCUDUAdvancedGNBConfig,
+    },
 }
 
 

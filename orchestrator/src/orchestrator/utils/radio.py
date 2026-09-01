@@ -172,14 +172,22 @@ def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
     return derived
 
 
-def derive_srs_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
-    """Derive radio parameters specific to SRS to put in derived configuration."""
+def derive_ocudu_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
+    """Derive radio parameters specific to OCUDU RAN to put in derived configuration."""
 
-    # TODO
-
+    ru = component.config.ru
     radio_config: RadioConfiguration = component.config.radioConfiguration
 
-    derived = {}
+    if ru.type is RUType.SIMULATED:
+        device_driver = "zmq"
+    elif ru.type is RUType.USRP:
+        device_driver = "uhd"
+    else:
+        device_driver = None
+
+    derived = {
+        "device_driver": device_driver,
+    }
     if radio_config.duplexMode is DuplexMode.TDD:
         tdd = radio_config.tddConfiguration
         period = tdd.periodicityMilliseconds.value
@@ -200,7 +208,7 @@ def derive_ueransim_config(component: CommonGNBComponent) -> dict[str, Any]:
 # mapping of RAN implementation and callable radio config derive function
 RAN_CONFIG_DERIVATOR: dict[RANImplementation, Callable] = {
     RANImplementation.OAI: derive_oai_ran_config,
-    RANImplementation.SRS: derive_srs_ran_config,
+    RANImplementation.OCUDU: derive_ocudu_ran_config,
     RANImplementation.UERANSIM: derive_ueransim_config,
 }
 
@@ -269,7 +277,7 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
         radio = OAI_RADIO_BY_RU.get(ru.type, {}).get(ru.model, "") if ru else ""
 
         # additional flags for ru
-        if ru.type is RUType.SIMULATED and (
+        if ru.type is RUType.SIMULATED and ue.config.gnb[1].implementation is RANImplementation.OAI and (
             ue.advanced_config is None or ue.advanced_config.useAdditionalOptions is None):
             additional_flags = "-E --rfsim" # -E enables continuous synchronization/transmission optimizations
         else:
