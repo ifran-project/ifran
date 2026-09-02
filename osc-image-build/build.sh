@@ -10,7 +10,7 @@ save_images="${OSC_SAVE_IMAGES:-false}"
 
 image_prefix="${image_prefix%/}"
 
-components=(builder-ubuntu builder-alpine appmgr appmgr-g-helm appmgr-m-helm dbaas e2term e2mgr rtmgr submgr a1mediator xapp-onboarder xapp-onboarder-helm3 hw-go)
+components=(builder-ubuntu builder-alpine appmgr appmgr-g-helm appmgr-m-helm dbaas e2term e2mgr rtmgr submgr a1mediator xapp-onboarder xapp-onboarder-helm3)
 
 usage() {
   echo "usage: $0 <component|all|list> [--push]" >&2
@@ -47,7 +47,6 @@ fi
 repository_for() {
   case "$1" in
     builder-ubuntu|builder-alpine) echo "https://github.com/o-ran-sc/it-dev.git" ;;
-    hw-go) echo "https://github.com/o-ran-sc/ric-app-hw-go.git" ;;
     appmgr|xapp-onboarder) echo "https://github.com/o-ran-sc/ric-plt-appmgr.git" ;;
     dbaas) echo "https://github.com/o-ran-sc/ric-plt-dbaas.git" ;;
     e2term) echo "https://github.com/o-ran-sc/ric-plt-e2.git" ;;
@@ -62,7 +61,6 @@ commit_for() {
   case "$1" in
     builder-ubuntu) echo "913dfd67162776f82670cd6d39fb42d72fccdc97" ;;
     builder-alpine) echo "45ee411da14af02b02aedcd70640847bf93e9d9a" ;;
-    hw-go) echo "3ed9c493022ca077dadf036181bc1c7bc50faa3b" ;;
     appmgr|xapp-onboarder) echo "2f70f24239e3f9281b899b7d5b4807cf36e062d1" ;;
     dbaas) echo "23c983c62fa8f1677351ced9fbfe65c64375edb9" ;;
     e2term) echo "6f2315b1a63e224c25c1a7202160e75d47d8bcdf" ;;
@@ -76,7 +74,6 @@ commit_for() {
 source_name_for() {
   case "$1" in
     builder-ubuntu|builder-alpine) echo "it-dev" ;;
-    hw-go) echo "ric-app-hw-go" ;;
     appmgr|xapp-onboarder) echo "ric-plt-appmgr" ;;
     dbaas) echo "ric-plt-dbaas" ;;
     e2term) echo "ric-plt-e2" ;;
@@ -91,7 +88,6 @@ image_name_for() {
   case "$1" in
     builder-ubuntu) echo "bldr-ubuntu22-c-go:1.0.0" ;;
     builder-alpine) echo "bldr-alpine3-go:2.0.0" ;;
-    hw-go) echo "ric-app-hw-go:1.0.1" ;;
     appmgr) echo "ric-plt-appmgr:0.5.9" ;;
     appmgr-g-helm) echo "ric-plt-appmgr:0.5.7-helm3" ;;
     appmgr-m-helm) echo "ric-plt-appmgr:0.5.9-helm3" ;;
@@ -110,7 +106,6 @@ dockerfile_for() {
   case "$1" in
     builder-ubuntu) echo "bldr-imgs/bldr-ubuntu22-c-go/Dockerfile" ;;
     builder-alpine) echo "bldr-imgs/bldr-alpine3-go/Dockerfile" ;;
-    hw-go) echo "Dockerfile" ;;
     appmgr) echo "Dockerfile" ;;
     appmgr-g-helm) echo "appmgr-g-helm.Dockerfile" ;;
     appmgr-m-helm) echo "appmgr-m-helm.Dockerfile" ;;

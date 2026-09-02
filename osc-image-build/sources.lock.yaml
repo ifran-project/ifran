@@ -57,7 +57,3 @@ components:
     repository: https://github.com/o-ran-sc/ric-plt-appmgr.git
     commit: 2f70f24239e3f9281b899b7d5b4807cf36e062d1
     image_tag: 1.0.8
-  hw_go:
-    repository: https://github.com/o-ran-sc/ric-app-hw-go.git
-    commit: 3ed9c493022ca077dadf036181bc1c7bc50faa3b
-    image_tag: 1.0.1
