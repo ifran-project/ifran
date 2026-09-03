@@ -37,7 +37,7 @@ class UEType(StrEnum):
 
 
 class UEImplementation(StrEnum):
-    """Supported UE implementations."""
+    """Supported implementations for conatainerized UES."""
 
     OAI = auto()
     """OpenAireInterface NR UE."""
@@ -263,10 +263,30 @@ class OAIAdvancedUEConfig(GenericAdvancedUEConfig):
     if_freq: int | None = Field(default=None)
     if_offset: int | None = Field(default=None)
 
+class UERANSIMAdvancedUEConfig(GenericAdvancedUEConfig):
+    """Advanced configuration for UERANSIM UE."""
+
+    protectionScheme: int | None = Field(default=None)
+    homeNetworkPublicKey: str | None = Field(default=None)
+    homeNetworkPublicKeyId: str | None = Field(default=None)
+    routingIndicator: str | None = Field(default=None)
+    tunNetmask: str | None = Field(default=None)
+    useNamespace: bool | None = Field(default=None)
+    nsNamePrefix: str | None = Field(default=None)
+    gnbSearchList: dict[str, Any] | None = Field(default=None)
+    uacAic: dict[str, Any] | None = Field(default=None)
+    uacAcc: dict[str, Any] | None = Field(default=None)
+    integrity: dict[str, Any] | None = Field(default=None)
+    ciphering: dict[str, Any] | None = Field(default=None)
+    integrityMaxRate: dict[str, Any] | None = Field(default=None)
+
 
 ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: OAIAdvancedUEConfig,
+    },
+    UEImplementation.UERANSIM: {
+        UEType.CONTAINERIZED: UERANSIMAdvancedUEConfig,
     },
 }
 

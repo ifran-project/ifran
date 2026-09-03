@@ -1,0 +1,32 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+mcc: "{{ component.config.plmnList[0].plmnId.mcc }}"
+mnc: "{{ component.config.plmnList[0].plmnId.mnc }}"
+
+nci: 0x{{ "%x" | format(component.config.gnbId) }}
+idLength: 32        # NR gNB ID length in bits [22...32]
+tac: {{ component.config.tac }}
+
+linkIp: 0.0.0.0
+ngapIp: {{ component.config.n2.ipv4EndPointAddress }}
+gtpIp: {{ component.config.n3.ipv4EndPointAddress }}
+
+amfConfigs:
+  - address: {{ component.config.amf }}
+    port: {{ component.config.n2.port }}
+
+slices:
+{% for slice in component.config.plmnList[0].snssaiList %}
+  - sst: {{ slice.sst }}
+{% if slice.sd %}
+  sd: 0x{{ slice.sd | lower }}
+{% endif %}
+{% endfor %}
+
+ignoreStreamIds: {{ component.advanced_config.ignoreStreamIds | lower | default(true) }}
+
+cellAccessType: {{ component.advanced_config.cellAccessType | default("nr") }}
+
+{% endif %}

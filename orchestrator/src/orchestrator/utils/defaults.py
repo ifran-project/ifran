@@ -103,11 +103,7 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
     },
     RANImplementation.UERANSIM: {
         RUType.SIMULATED: {
-            RANComponentType.GNB: ContainerImage(repository="docker.io/free5gc/ueransim", image_tag="v4.2.3"),
-            RANComponentType.CU: ContainerImage(repository="docker.io/free5gc/ueransim", image_tag="v4.2.3"),
-            RANComponentType.DU: ContainerImage(repository="docker.io/free5gc/ueransim", image_tag="v4.2.3"),
-            RANComponentType.CU_CP: ContainerImage(repository="docker.io/free5gc/ueransim", image_tag="v4.2.3"),
-            RANComponentType.CU_UP: ContainerImage(repository="docker.io/free5gc/ueransim", image_tag="v4.2.3"),
+            RANComponentType.GNB: ContainerImage(repository="docker.io/gradiant/ueransim", image_tag="3.3.0"),
         },
     },
 }
@@ -116,6 +112,9 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
 DEFAULT_UE_IMAGES: dict[UEImplementation, dict[UEType, ContainerImage]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-nr-ue", image_tag="2026.w31"),
+    },
+    UEImplementation.UERANSIM: {
+        UEType.CONTAINERIZED: ContainerImage(repository="docker.io/gradiant/ueransim", image_tag="3.3.0"),
     },
 }
 
@@ -179,12 +178,18 @@ RAN_POD_PRIVILEGES: dict[RANImplementation, dict[RANComponentType, SecurityConte
         RANComponentType.DU: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK", "PERFMON"], drop=["ALL"])),
         RANComponentType.GNB: SecurityContext(capabilities=Capabilities(add=["SYS_NICE", "IPC_LOCK", "PERFMON"], drop=["ALL"])),
     },
+    RANImplementation.UERANSIM: {
+        RANComponentType.GNB: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+    },
 }
 
 
 UE_POD_PRIVILEGES: dict[UEImplementation, dict[UEType, SecurityContext]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN", "NET_RAW", "SYS_NICE", "IPC_LOCK"], drop=["ALL"])),
+    },
+    UEImplementation.UERANSIM: {
+        UEType.CONTAINERIZED: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
     },
 }
 

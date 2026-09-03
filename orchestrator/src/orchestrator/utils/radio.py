@@ -199,9 +199,6 @@ def derive_ocudu_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
 
 def derive_ueransim_config(component: CommonGNBComponent) -> dict[str, Any]:
     """Derive radio parameters specific to UERANSIM to put in derived configuration."""
-
-    # TODO
-
     return {}
 
 
@@ -295,10 +292,15 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
 
     return derived
 
+def derive_ueransim_ue_config(ue: UE) -> dict[str, Any]:
+    """Derive radio parameters specific to USERANSIM UE to put in derived configuration."""
+    return {}
+
 
 # mapping of UE implementation and callable radio config derive function
 UE_CONFIG_DERIVATOR: dict[UEImplementation, Callable] = {
     UEImplementation.OAI: derive_oai_ue_config,
+    UEImplementation.UERANSIM: derive_ueransim_ue_config,
 }
 
 

@@ -73,7 +73,9 @@ SUPPORTED_RAN_COMPONENTS: dict[RANImplementation, list[RANComponentType]] = {
         RANComponentType.DU,
         RANComponentType.GNB,
     ],
-    RANImplementation.UERANSIM: [], # TODO
+    RANImplementation.UERANSIM: [
+        RANComponentType.GNB,
+    ],
 }
 
 
@@ -497,7 +499,7 @@ class CUConfig(CommonCUConfig):
 class CommonGNBConfig(RANComponentConfig):
     """Common configuration between gNB and DU."""
 
-    nrCellId: int = Field(default=1, ge=0)
+    nrCellId: int = Field(default=1, ge=1, le=4294967295)
     """NR Cell Identity."""
 
     physicalCellId: int = Field(default=0, ge=0, le=1007)
@@ -568,13 +570,13 @@ class GenericOCUDUAdvancedRANConfig(GenericAdvancedRANConfig):
    log: dict[str, Any] | None = Field(default=None)
    pcap: dict[str, Any] | None = Field(default=None)
    metrics: dict[str, Any] | None = Field(default=None)
-   
 
 
 class GenericUERANSIMAdvancedRANConfig(GenericAdvancedRANConfig):
    """Generic advanced configuration for UERANSIM RAN."""
 
-    # TODO
+   ignoreStreamIds: bool | None = Field(default=None)
+   cellAccessType: str | None = Field(default=None)
 
 
 class OAIAdvancedCUCPConfig(GenericOAIAdvancedRANConfig):
@@ -722,6 +724,9 @@ ADVANCED_RAN_CONFIG_MAPPING: dict[RANImplementation, dict[RANComponentType, type
         RANComponentType.CU: OCUDUAdvancedCUConfig,
         RANComponentType.DU: OCUDUAdvancedDUConfig,
         RANComponentType.GNB: OCUDUAdvancedGNBConfig,
+    },
+    RANImplementation.UERANSIM: {
+        RANComponentType.GNB: GenericUERANSIMAdvancedRANConfig,
     },
 }
 

@@ -1,0 +1,109 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+supi: "imsi-{{ component.config.supi }}"
+mcc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mcc }}"
+mnc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mnc }}"
+protectionScheme: {{ component.advanced_config.protectionScheme | default(0) }}
+homeNetworkPublicKey: {{ component.advanced_config.homeNetworkPublicKey | default("5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650") }}
+homeNetworkPublicKeyId: {{ component.advanced_config.homeNetworkPublicKeyId | default(1) }}
+routingIndicator: {{ component.advanced_config.routingIndicator | default("0000") }}
+
+key: "{{ component.config.authenticationData.k }}"
+{% if component.config.authenticationData.op %}
+op: "{{ component.config.authenticationData.op }}"
+opType: "OP"
+{% else %}
+op: "{{ component.config.authenticationData.opc }}"
+opType: "OPC"
+{% endif %}
+amf: "{{ component.config.authenticationData.amf }}"
+imei: {{ component.config.pei | default("356938035643803") }}
+imeiSv: {{ component.config.pei | default("4370816125816151'") }}
+
+tunNetmask: {{ component.advanced_config.tunNetmask | default("255.255.255.0") }}
+
+useNamespace: {{ component.advanced_config.useNamespace | lower | default("false") }}
+
+nsNamePrefix: {{ component.advanced_config.nsNamePrefix | default("ueransim") }}
+
+gnbSearchList:
+{% if component.advanced_config and component.advanced_config.gnbSearchList %}
+{{ component.advanced_config.gnbSearchList | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  - "{{ component.config.gnb[0] }}"
+{% endif %}
+
+uacAic:
+{% if component.advanced_config and component.advanced_config.uacAic %}
+{{ component.advanced_config.uacAic | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  mps: false
+  mcs: false
+{% endif %}
+
+uacAcc:
+{% if component.advanced_config and component.advanced_config.uacAcc %}
+{{ component.advanced_config.uacAcc | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  normalClass: 0
+  class11: false
+  class12: false
+  class13: false
+  class14: false
+  class15: false
+{% endif %}
+
+sessions:
+{% for pdu_session in component.config.pduSessions %}
+  - type: "{{ component.config.subscriptions[pdu_session.subscriptionIndex].dnn.pduSessionType | upper | replace('V', 'v') }}"
+    apn: "{{ component.config.subscriptions[pdu_session.subscriptionIndex].dnn.name }}"
+    slice:
+      sst: {{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sst }}
+{% if component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd %}
+      sd: 0x{{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd | lower }}
+{% endif %}
+{% endfor %}
+
+configured-nssai:
+{% for subscription in component.config.subscriptions %}
+  - sst: {{ subscription.snssai.sst }}
+{% if subscription.snssai.sd %}
+    sd: 0x{{ subscription.snssai.sd | lower }}
+{% endif %}
+{% endfor %}
+
+default-nssai:
+  - sst: {{ component.config.subscriptions[0].snssai.sst }}
+{% if component.config.subscriptions[0].snssai.sd %}
+    sd: 0x{{ component.config.subscriptions[0].snssai.sd | lower }}
+{% endif %}
+
+integrity:
+{% if component.advanced_config and component.advanced_config.integrity %}
+{{ component.advanced_config.integrity | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  IA1: true
+  IA2: true
+  IA3: true
+{% endif %}
+
+ciphering:
+{% if component.advanced_config and component.advanced_config.ciphering %}
+{{ component.advanced_config.ciphering | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  EA1: true
+  EA2: true
+  EA3: true
+{% endif %}
+
+integrityMaxRate:
+{% if component.advanced_config and component.advanced_config.integrityMaxRate %}
+{{ component.advanced_config.integrityMaxRate | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  uplink: 'full'
+  downlink: 'full'
+{% endif %}
+
+{% endif %}
