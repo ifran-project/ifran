@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: MIT
-
 {{- $kubeDist := .Values.kubernetesDistribution }}
 
 {{- if and (hasKey .Values "global") (hasKey .Values.global "kubernetesDistribution") }}

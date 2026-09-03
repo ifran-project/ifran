@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: MIT
-
 {{- if .Values.testFramework.enabled  }}
 apiVersion: v1
 kind: Pod

@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: MIT
-
 {{- if .Values.multus.enabled }}
 {{- range .Values.multus.interfaces }}
 {{- if .enabled }}

@@ -62,7 +62,6 @@ Create the name of the service account to use
 {{- end -}}
 {{- end -}}
 
-
 {{/*
 Count enabled interfaces with defaultRoute defined and non-empty
 */}}
@@ -78,106 +77,4 @@ Count enabled interfaces with defaultRoute defined and non-empty
   {{- end }}
 {{- end }}
 {{- $count -}}
-{{- end }}
-
-{{/*
-Resolve F1c interface name
-- Uses enabled: true check
-- Falls back to other interfaces if F1c is disabled or missing
-- Defaults to eth0
-*/}}
-{{- define "ocudu-cu_cp.f1cIfName" -}}
-{{- if not .Values.multus.enabled -}}
-eth0
-{{- else -}}
-  {{- $f1c := "" -}}
-  {{- $n2 := "" -}}
-  {{- $e1 := "" -}}
-  {{- range $if := .Values.multus.interfaces }}
-    {{- if and (eq $if.name "f1c") $if.enabled }}{{- $f1c = $if.name -}}{{- end -}}
-    {{- if and (eq $if.name "n2") $if.enabled }}{{- $n2 = $if.name -}}{{- end -}}
-    {{- if and (eq $if.name "e1") $if.enabled }}{{- $e1 = $if.name -}}{{- end -}}
-  {{- end -}}
-  {{- if $f1c -}}
-{{ $f1c }}
-  {{- else if $n2 -}}
-{{ $n2 }}
-  {{- else if $e1 -}}
-{{ $e1 }}
-  {{- else -}}
-eth0
-  {{- end -}}
-{{- end -}}
-{{- end }}
-
-{{/*
-Resolve N2 interface name
-- Uses enabled: true check
-- Falls back to other interfaces if N2 is disabled or missing
-- Defaults to eth0
-*/}}
-{{- define "ocudu-cu_cp.n2IfName" -}}
-{{- if not .Values.multus.enabled -}}
-eth0
-{{- else -}}
-  {{- $n2 := "" -}}
-  {{- $e1 := "" -}}
-  {{- $f1c := "" -}}
-  {{- range $if := .Values.multus.interfaces }}
-    {{- if and (eq $if.name "n2") $if.enabled }}{{- $n2 = $if.name -}}{{- end -}}
-    {{- if and (eq $if.name "e1") $if.enabled }}{{- $e1 = $if.name -}}{{- end -}}
-    {{- if and (eq $if.name "f1c") $if.enabled }}{{- $f1c = $if.name -}}{{- end -}}
-  {{- end -}}
-  {{- if $n2 -}}
-{{ $n2 }}
-  {{- else if $f1c -}}
-{{ $f1c }}
-  {{- else if $e1 -}}
-{{ $e1 }}
-  {{- else -}}
-eth0
-  {{- end -}}
-{{- end -}}
-{{- end }}
-
-{{/*
-Resolve E1 interface name
-- Uses enabled: true check
-- Falls back to other interfaces if E1 is disabled or missing
-- Defaults to eth0
-*/}}
-{{- define "ocudu-cu_cp.e1IfName" -}}
-{{- if not .Values.multus.enabled -}}
-eth0
-{{- else -}}
-  {{- $e1 := "" -}}
-  {{- $n2 := "" -}}
-  {{- $f1c := "" -}}
-  {{- range $if := .Values.multus.interfaces }}
-    {{- if and (eq $if.name "e1") $if.enabled }}{{- $e1 = $if.name -}}{{- end -}}
-    {{- if and (eq $if.name "n2") $if.enabled }}{{- $n2 = $if.name -}}{{- end -}}
-    {{- if and (eq $if.name "f1c") $if.enabled }}{{- $f1c = $if.name -}}{{- end -}}
-  {{- end -}}
-  {{- if $e1 -}}
-{{ $e1 }}
-  {{- else if $f1c -}}
-{{ $f1c }}
-  {{- else if $n2 -}}
-{{ $n2 }}
-  {{- else -}}
-eth0
-  {{- end -}}
-{{- end -}}
-{{- end }}
-
-
-{{/*
-Resolve E2 interface name using `name` field
-*/}}
-{{- define "ocudu-cu_cp.e2IfName" -}}
-{{- if and .Values.multus.enabled (gt (len .Values.multus.interfaces) 3) (hasKey (index .Values.multus.interfaces 3) "name") -}}
-{{ (index .Values.multus.interfaces 3).name }}
-{{- else -}}
-eth0
-{{- end -}}
 {{- end }}
