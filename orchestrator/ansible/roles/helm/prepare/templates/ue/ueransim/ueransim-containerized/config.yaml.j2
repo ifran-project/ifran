@@ -2,32 +2,50 @@
 {{ component.plain_text_config }}
 {%- else %}
 
+# IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
 supi: "imsi-{{ component.config.supi }}"
+# Mobile Country Code value of HPLMN
 mcc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mcc }}"
+# Mobile Network Code value of HPLMN (2 or 3 digits)
 mnc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mnc }}"
+# SUCI Protection Scheme : 0 for Null-scheme, 1 for Profile A and 2 for Profile B
 protectionScheme: {{ component.advanced_config.protectionScheme | default(0) }}
+# Home Network Public Key for protecting with SUCI Profile A
 homeNetworkPublicKey: {{ component.advanced_config.homeNetworkPublicKey | default("5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650") }}
+# Home Network Public Key ID for protecting with SUCI Profile A
 homeNetworkPublicKeyId: {{ component.advanced_config.homeNetworkPublicKeyId | default(1) }}
+# Routing Indicator
 routingIndicator: {{ component.advanced_config.routingIndicator | default("0000") }}
 
+# Permanent subscription key
 key: "{{ component.config.authenticationData.k }}"
+# Operator code (OP or OPC) of the UE
 {% if component.config.authenticationData.op %}
 op: "{{ component.config.authenticationData.op }}"
+# This value specifies the OP type and it can be either 'OP' or 'OPC'
 opType: "OP"
 {% else %}
 op: "{{ component.config.authenticationData.opc }}"
+# This value specifies the OP type and it can be either 'OP' or 'OPC'
 opType: "OPC"
 {% endif %}
+# Authentication Management Field (AMF) value
 amf: "{{ component.config.authenticationData.amf }}"
+# IMEI number of the device. It is used if no SUPI is provided
 imei: {{ component.config.pei | default("356938035643803") }}
+# IMEISV number of the device. It is used if no SUPI and IMEI is provided
 imeiSv: {{ component.config.pei | default("4370816125816151'") }}
 
+# Network mask used for the UE's TUN interface to define the subnet size  
 tunNetmask: {{ component.advanced_config.tunNetmask | default("255.255.255.0") }}
 
+# Create the UE TUN interface inside a dedicated Linux network namespace.
 useNamespace: {{ component.advanced_config.useNamespace | lower | default("false") }}
 
+# Optional prefix used when deriving the namespace name.
 nsNamePrefix: {{ component.advanced_config.nsNamePrefix | default("ueransim") }}
 
+# List of gNB IP addresses for Radio Link Simulation
 gnbSearchList:
 {% if component.advanced_config and component.advanced_config.gnbSearchList %}
 {{ component.advanced_config.gnbSearchList | to_nice_yaml(indent=2) | indent(2, True) }}
@@ -35,6 +53,7 @@ gnbSearchList:
   - "{{ component.config.gnb[0] }}"
 {% endif %}
 
+# UAC Access Identities Configuration
 uacAic:
 {% if component.advanced_config and component.advanced_config.uacAic %}
 {{ component.advanced_config.uacAic | to_nice_yaml(indent=2) | indent(2, True) }}
@@ -43,6 +62,7 @@ uacAic:
   mcs: false
 {% endif %}
 
+# UAC Access Control Class
 uacAcc:
 {% if component.advanced_config and component.advanced_config.uacAcc %}
 {{ component.advanced_config.uacAcc | to_nice_yaml(indent=2) | indent(2, True) }}
@@ -55,6 +75,7 @@ uacAcc:
   class15: false
 {% endif %}
 
+# Initial PDU sessions to be established
 sessions:
 {% for pdu_session in component.config.pduSessions %}
   - type: "{{ component.config.subscriptions[pdu_session.subscriptionIndex].dnn.pduSessionType | upper | replace('V', 'v') }}"
@@ -66,6 +87,7 @@ sessions:
 {% endif %}
 {% endfor %}
 
+# Configured NSSAI for this UE by HPLMN
 configured-nssai:
 {% for subscription in component.config.subscriptions %}
   - sst: {{ subscription.snssai.sst }}
@@ -74,12 +96,14 @@ configured-nssai:
 {% endif %}
 {% endfor %}
 
+# Default Configured NSSAI for this UE
 default-nssai:
   - sst: {{ component.config.subscriptions[0].snssai.sst }}
 {% if component.config.subscriptions[0].snssai.sd %}
     sd: 0x{{ component.config.subscriptions[0].snssai.sd | lower }}
 {% endif %}
 
+# Supported integrity algorithms by this UE
 integrity:
 {% if component.advanced_config and component.advanced_config.integrity %}
 {{ component.advanced_config.integrity | to_nice_yaml(indent=2) | indent(2, True) }}
@@ -89,6 +113,7 @@ integrity:
   IA3: true
 {% endif %}
 
+# Supported encryption algorithms by this UE
 ciphering:
 {% if component.advanced_config and component.advanced_config.ciphering %}
 {{ component.advanced_config.ciphering | to_nice_yaml(indent=2) | indent(2, True) }}
@@ -98,6 +123,7 @@ ciphering:
   EA3: true
 {% endif %}
 
+# Integrity protection maximum data rate for user plane
 integrityMaxRate:
 {% if component.advanced_config and component.advanced_config.integrityMaxRate %}
 {{ component.advanced_config.integrityMaxRate | to_nice_yaml(indent=2) | indent(2, True) }}

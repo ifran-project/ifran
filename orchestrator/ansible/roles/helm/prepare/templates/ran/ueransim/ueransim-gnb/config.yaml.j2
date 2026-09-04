@@ -2,21 +2,23 @@
 {{ component.plain_text_config }}
 {%- else %}
 
-mcc: "{{ component.config.plmnList[0].plmnId.mcc }}"
-mnc: "{{ component.config.plmnList[0].plmnId.mnc }}"
+mcc: "{{ component.config.plmnList[0].plmnId.mcc }}"          # Mobile Country Code value
+mnc: "{{ component.config.plmnList[0].plmnId.mnc }}"           # Mobile Network Code value (2 or 3 digits)
 
-nci: 0x{{ "%x" | format(component.config.gnbId) }}
+nci: 0x{{ "%x" | format(component.config.gnbId) }}  # NR Cell Identity (36-bit)
 idLength: 32        # NR gNB ID length in bits [22...32]
-tac: {{ component.config.tac }}
+tac: {{ component.config.tac }}              # Tracking Area Code
 
-linkIp: 0.0.0.0
-ngapIp: {{ component.config.n2.ipv4EndPointAddress }}
-gtpIp: {{ component.config.n3.ipv4EndPointAddress }}
+linkIp: 0.0.0.0   # gNB's local IP address for Radio Link Simulation (Usually same with local IP)
+ngapIp: {{ component.config.n2.ipv4EndPointAddress }}   # gNB's local IP address for N2 Interface (Usually same with local IP)
+gtpIp: {{ component.config.n3.ipv4EndPointAddress }}    # gNB's local IP address for N3 Interface (Usually same with local IP)
 
+# List of AMF address information
 amfConfigs:
   - address: {{ component.config.amf }}
     port: {{ component.config.n2.port }}
 
+# List of supported S-NSSAIs by this gNB
 slices:
 {% for slice in component.config.plmnList[0].snssaiList %}
   - sst: {{ slice.sst }}
@@ -25,8 +27,12 @@ slices:
 {% endif %}
 {% endfor %}
 
+# Indicates whether or not SCTP stream number errors should be ignored.
 ignoreStreamIds: {{ component.advanced_config.ignoreStreamIds | lower | default(true) }}
 
+# Cell access type. When set to one of the satellite types (nr-leo, nr-meo,
+# nr-geo, nr-othersat), the gNB attaches the NR-NTN TAI Information extension
+# to every UserLocationInformationNR it sends to the AMF. Defaults to "nr".
 cellAccessType: {{ component.advanced_config.cellAccessType | default("nr") }}
 
 {% endif %}
