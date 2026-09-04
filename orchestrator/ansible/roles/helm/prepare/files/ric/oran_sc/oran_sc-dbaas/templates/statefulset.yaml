@@ -43,6 +43,8 @@ spec:
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
         app: {{ include "common.namespace.platform" . }}-{{ include "common.name.dbaas" . }}
         release: {{ .Release.Name }}
     spec:

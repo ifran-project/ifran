@@ -1,93 +1,33 @@
-componentName: e2term
-e2ServiceAlias: {{ component.service_name | replace("-", "") }}
-e2Identity: {{ component.service_name | replace("-", "") }}.{{ component.namespace }}
-image:
-  repository: {{ component.image.repository }}
-  tag: {{ component.image.image_tag }}
-  pullPolicy: {{ component.image.image_pull_policy }}
+{% set overrides_yaml %}
+common:
+  namespace:
+    platform: {{ component.namespace }}
+    xapp: ricxapp
+    infra: ricinfra
 
-command: []
-args: []
-ports:
-  - {name: rmrdata, port: 38000, protocol: TCP}
-  - {name: rmrroute, port: 4561, protocol: TCP}
-  - {name: e2, port: {{ component.config.e2.port }}, protocol: SCTP}
-env:
-  RMR_RTG_SVC: "4561"
-  RMR_SRC_ID: {{ component.service_name | replace("-", "") }}.{{ component.namespace }}
-  RMR_SEED_RT: /opt/e2/router.txt
-  RMR_VCTL_FILE: /tmp/rmr_verbose
-  nano: "38000"
-  print: "1"
-  volume: /data/outgoing/
-  SYSTEM_NAME: SEP
-  SERVICE_NAME: RIC_E2_TERM
-configMountPath: /opt/e2/config/config.conf
-routerMountPath: /opt/e2/router.txt
-dataMountPath: /data
-startupDependencies:
-{% if 'rtmgr' in component.ric_type_services %}
-  - {host: {{ component.ric_type_services.rtmgr }}, port: 3800}
-  - {host: {{ component.ric_type_services.rtmgr }}, port: 4560}
-{% endif %}
-{% if 'e2mgr' in component.ric_type_services %}
-  - {host: {{ component.ric_type_services.e2mgr }}, port: 3800}
-  - {host: {{ component.ric_type_services.e2mgr }}, port: 3801}
-{% endif %}
-router: |-
-  newrt|start
-{% if 'e2mgr' in component.ric_type_services %}
-  rte|1080|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801
-  rte|1100|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801
-  rte|1102|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801 # E2Term Keep Alive Response
-  rte|10020|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801
-  rte|12001|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}:3801 # E2 Setup Request
-{% endif %}
-  newrt|end
-
-imagePullSecrets:
-{% if component.image.image_pull_secrets %}
-{% for secret in component.image.image_pull_secrets %}
-  - name: {{ secret.name }}
-{% endfor %}
-{% else %}
-  []
-{% endif %}
-
-podSecurityContext:
-  runAsUser: {{ component.pod_security_context.run_as_user }}
-  runAsGroup: {{ component.pod_security_context.run_as_group }}
-  runAsNonRoot: {{ component.pod_security_context.run_as_non_root | lower }}
-{% if component.pod_security_context.fs_group is not none %}
-  fsGroup: {{ component.pod_security_context.fs_group }}
-{% endif %}
-
-{% if component.security_context %}
-securityContext:
-  privileged: {{ component.security_context.privileged | lower }}
-{% else %}
-securityContext: {}
-{% endif %}
-
-{% if component.resources.define %}
-resources:
-  requests:
-    cpu: {{ component.resources.requests.nf.cpu }}
-    memory: {{ component.resources.requests.nf.memory }}
-  limits:
-    cpu: {{ component.resources.limits.nf.cpu }}
-    memory: {{ component.resources.limits.nf.memory }}
-{% else %}
-resources: {}
-{% endif %}
-
+e2term:
+  alpha:
+    imagePullPolicy: {{ component.image.image_pull_policy }}
+    image:
+      registry: {{ component.image.repository.rsplit('/', 1)[0] }}
+      name: {{ component.image.repository.rsplit('/', 1)[1] }}
+      tag: {{ component.image.image_tag }}
+    privilegedmode: {{ (component.security_context.privileged if component.security_context else false) | lower }}
+    hostnetworkmode: false
+    replicaCount: 1
+    env:
+      print: "1"
+      messagecollectorfile: "/data/outgoing/"
+    dataVolSize: 100Mi
+    storageClassName: local-storage
+    pizpub:
+      enabled: false
 {% if component.node_selector %}
-nodeSelector:
+    nodeselector:
 {% for key, value in component.node_selector.items() %}
-  {{ key }}: "{{ value }}"
+      {{ key }}: "{{ value }}"
 {% endfor %}
-{% else %}
-nodeSelector: {}
 {% endif %}
-
-nodeName: {{ component.node_name if component.node_name else 'null' }}
+{% endset %}
+{% set defaults = lookup('ansible.builtin.file', role_path ~ '/files/ric/oran_sc/oran_sc-e2term/values.yaml') | from_yaml %}
+{{ defaults | combine(overrides_yaml | from_yaml, recursive=true) | to_nice_yaml }}

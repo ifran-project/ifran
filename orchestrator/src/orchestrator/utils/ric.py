@@ -1,12 +1,53 @@
 """RIC utilities and helpers."""
 
 from orchestrator.models.deployment.ric import K8SRICComponent, RICDeployment
-from orchestrator.models.meta.ric import RIC, RICComponentType, RICImplementation
+from orchestrator.models.meta.ric import RIC, RICComponent, RICComponentType, RICImplementation
 from orchestrator.utils.common import build_safe_helm_name, sync_dict_keys
-from orchestrator.utils.common_5g import reconcile_5g_component
+from orchestrator.utils.common_5g import ComponentDependencyGraph, reconcile_5g_component
+from orchestrator.utils.ansible import get_ansible_inventory_line, run_ansible_playbook
+from orchestrator.models.deployment.ansible import AnsibleParams
+from orchestrator.models.deployment.provisioning import ProvisionableNode
 
 
 E2_COMPONENT_TYPES = {RICComponentType.RIC, RICComponentType.E2TERM}
+
+
+RIC_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
+    RICComponentType.A1MEDIATOR: frozenset({
+        RICComponentType.DBAAS,
+    }),
+    RICComponentType.XAPP_ONBOARDER: frozenset({
+        RICComponentType.APPMGR,
+        RICComponentType.DBAAS,
+        RICComponentType.CHARTMUSEUM,
+    }),
+    RICComponentType.APPMGR: frozenset({
+        RICComponentType.DBAAS,
+        RICComponentType.CHARTMUSEUM,
+    }),
+    RICComponentType.RTMGR: frozenset({
+        RICComponentType.DBAAS,
+        RICComponentType.APPMGR,
+        RICComponentType.E2MGR,
+        RICComponentType.SUBMGR,
+    }),
+    RICComponentType.E2MGR: frozenset({
+        RICComponentType.DBAAS,
+        RICComponentType.APPMGR,
+    }),
+    RICComponentType.E2TERM: frozenset({
+        RICComponentType.DBAAS,
+        RICComponentType.APPMGR,
+        RICComponentType.RTMGR,
+        RICComponentType.E2MGR,
+    }),
+    RICComponentType.SUBMGR: frozenset({
+        RICComponentType.DBAAS,
+        RICComponentType.APPMGR,
+        RICComponentType.E2MGR,
+    }),
+}
+
 
 OFFICIAL_ORAN_SC_M_TYPES = {
     RICComponentType.A1MEDIATOR,
@@ -19,11 +60,75 @@ OFFICIAL_ORAN_SC_M_TYPES = {
 
 # Namespace names defined by the O-RAN SC deployment convention.  Keep these
 # here as the single source of truth: component reconciliation feeds the
-# namespace into Helm values, generated Service names, RAN E2 targets, and the
-# xApp lifecycle roles.
+# namespace into Helm values and generated Service names.
 ORAN_SC_PLATFORM_NAMESPACE = "ricplt"
 ORAN_SC_XAPP_NAMESPACE = "ricxapp"
-ORAN_SC_INFRA_NAMESPACE = "ricinfra"
+
+
+async def create_ric_namespaces(
+        components: dict[str, RICComponent],
+        node_name: str,
+        node_data: ProvisionableNode,
+        ansible_params: AnsibleParams,
+    ) -> None:
+    """Create the cross-namespace prerequisite when installing OSC components.
+
+    Use the existing remote runner and cluster credentials, without a new role
+    or shell commands. state=present also succeeds when the namespace exists.
+    The release namespace remains Helm's responsibility.
+    """
+    if not any(meta.implementation == RICImplementation.ORAN_SC for meta in components.values()):
+        return
+    await run_ansible_playbook(
+        playbook=[{
+            "hosts": node_name,
+            "gather_facts": False,
+            "become": True,
+            "tasks": [{
+                "name": "Create xApp namespace before OSC installation",
+                "kubernetes.core.k8s": {
+                    "api_version": "v1",
+                    "kind": "Namespace",
+                    "name": ORAN_SC_XAPP_NAMESPACE,
+                    "state": "present",
+                },
+            }],
+        }],
+        runner_path=f"{ansible_params.runner_path}/ric/namespaces",
+        inventory=get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        roles_path=ansible_params.roles_path,
+    )
+
+
+def build_ric_component_name(ric_name: str, component_name: str) -> str:
+    """Build the RIC-scoped key used by Helm and component selection."""
+    return f"{ric_name}-{component_name}"
+
+
+def get_ric_helm_inputs(meta: RICComponent) -> dict:
+    """Supply upstream chart conventions to the standard Helm roles."""
+    if meta.implementation == RICImplementation.ORAN_SC and meta.type in OFFICIAL_ORAN_SC_M_TYPES:
+        return {"rendered_files": ["values.yaml"]}
+    return {}
+
+
+def get_ric_helm_components(
+        rics_meta: dict[str, RIC],
+        rics_k8s: dict[str, RICDeployment],
+    ) -> tuple[dict[str, RICComponent], dict[str, K8SRICComponent]]:
+    """Flatten RIC components with matching, collision-checked deployment keys."""
+    meta, deployed = {}, {}
+    normalized_names = set()
+    for ric_name, ric_meta in rics_meta.items():
+        for component_name, component_meta in ric_meta.components.items():
+            name = build_ric_component_name(ric_name, component_name)
+            normalized = build_safe_helm_name(name)
+            if normalized in normalized_names:
+                raise ValueError(f"Duplicate normalized RIC component name: {name}")
+            normalized_names.add(normalized)
+            meta[name] = component_meta
+            deployed[name] = rics_k8s[ric_name].components[component_name]
+    return meta, deployed
 
 
 def build_official_oran_sc_service_name(
@@ -47,7 +152,7 @@ def build_ric_service_name(
     """Build the Helm-managed service name for a RIC component."""
 
     return build_safe_helm_name(
-        f"{ric_meta.implementation.value}-{ric_name}-{component_name}"
+        f"{ric_meta.implementation.value}-{build_ric_component_name(ric_name, component_name)}"
     )
 
 
@@ -139,5 +244,4 @@ def reconcile_rics(
         for component_name, component_meta in ric_meta.components.items():
             component_k8s = ric_k8s.components[component_name]
             component_k8s.service_name = ric_services[component_name]
-            component_k8s.ric_services = ric_services.copy()
             component_k8s.ric_type_services = ric_type_services.copy()

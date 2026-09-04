@@ -1,79 +1,15 @@
-componentName: rtmgr
-image:
-  repository: {{ component.image.repository }}
-  tag: {{ component.image.image_tag }}
-  pullPolicy: {{ component.image.image_pull_policy }}
+{% set overrides_yaml %}
+common:
+  namespace:
+    platform: {{ component.namespace }}
+    xapp: ricxapp
+    infra: ricinfra
 
-command: ["/run_rtmgr.sh"]
-args: []
-ports:
-  - {name: http, port: 3800, protocol: TCP}
-  - {name: rmrdata, port: 4560, protocol: TCP}
-  - {name: rmrroute, port: 4561, protocol: TCP}
-env:
-  RMR_SEED_RT: /cfg/router.txt
-  RMR_RTG_SVC: "4561"
-  RMR_SRC_ID: {{ component.service_name }}.{{ component.namespace }}.svc.cluster.local
-  CFGFILE: /cfg/rtmgr-config.yaml
-{% if 'dbaas' in component.ric_type_services %}
-  DBAAS_SERVICE_HOST: {{ component.ric_type_services.dbaas }}
-  DBAAS_SERVICE_PORT: "6379"
-{% endif %}
-configMountPath: /cfg/rtmgr-config.yaml
-routerMountPath: /cfg/router.txt
-dataMountPath: /db
-router: |-
-  newrt|start
-{% if 'e2mgr' in component.ric_type_services %}
-  rte|1080|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}.svc.cluster.local:3801
-  rte|1100|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}.svc.cluster.local:3801
-  rte|12001|{{ component.ric_type_services.e2mgr }}.{{ component.namespace }}.svc.cluster.local:3801
-{% endif %}
-  newrt|end
-
-imagePullSecrets:
-{% if component.image.image_pull_secrets %}
-{% for secret in component.image.image_pull_secrets %}
-  - name: {{ secret.name }}
-{% endfor %}
-{% else %}
-  []
-{% endif %}
-
-podSecurityContext:
-  runAsUser: {{ component.pod_security_context.run_as_user }}
-  runAsGroup: {{ component.pod_security_context.run_as_group }}
-  runAsNonRoot: {{ component.pod_security_context.run_as_non_root | lower }}
-{% if component.pod_security_context.fs_group is not none %}
-  fsGroup: {{ component.pod_security_context.fs_group }}
-{% endif %}
-
-{% if component.security_context %}
-securityContext:
-  privileged: {{ component.security_context.privileged | lower }}
-{% else %}
-securityContext: {}
-{% endif %}
-
-{% if component.resources.define %}
-resources:
-  requests:
-    cpu: {{ component.resources.requests.nf.cpu }}
-    memory: {{ component.resources.requests.nf.memory }}
-  limits:
-    cpu: {{ component.resources.limits.nf.cpu }}
-    memory: {{ component.resources.limits.nf.memory }}
-{% else %}
-resources: {}
-{% endif %}
-
-{% if component.node_selector %}
-nodeSelector:
-{% for key, value in component.node_selector.items() %}
-  {{ key }}: "{{ value }}"
-{% endfor %}
-{% else %}
-nodeSelector: {}
-{% endif %}
-
-nodeName: {{ component.node_name if component.node_name else 'null' }}
+rtmgr:
+  image:
+    registry: {{ component.image.repository.rsplit('/', 1)[0] }}
+    name: {{ component.image.repository.rsplit('/', 1)[1] }}
+    tag: {{ component.image.image_tag }}
+{% endset %}
+{% set defaults = lookup('ansible.builtin.file', role_path ~ '/files/ric/oran_sc/oran_sc-rtmgr/values.yaml') | from_yaml %}
+{{ defaults | combine(overrides_yaml | from_yaml, recursive=true) | to_nice_yaml }}

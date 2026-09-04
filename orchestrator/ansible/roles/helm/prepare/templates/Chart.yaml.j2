@@ -1,13 +1,11 @@
 apiVersion: v2
 name: {{ chart_name }}
-description: Helm chart for {{ component.implementation | upper }} {{ component.category }}  {{ component.type | upper }}
-
+description: Helm chart for {{ component.implementation | upper }} {{ component.category | upper }} {{ component.type | upper }}
 type: application
-
 version: 0.1.0
-
+{% if component.image is defined %}
 appVersion: {{ component.image.image_tag }}
-
+{% endif %}
 keywords:
   - {{ component.category | upper }}
   - {{ component.implementation | upper }}

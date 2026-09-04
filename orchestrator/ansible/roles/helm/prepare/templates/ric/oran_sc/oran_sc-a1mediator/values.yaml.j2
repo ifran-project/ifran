@@ -1,64 +1,19 @@
-image:
-  repository: {{ component.image.repository }}
-  tag: {{ component.image.image_tag }}
-  pullPolicy: {{ component.image.image_pull_policy }}
+{% set overrides_yaml %}
+common:
+  namespace:
+    platform: {{ component.namespace }}
+    xapp: ricxapp
+    infra: ricinfra
 
-env:
-  RMR_RTG_SVC: "4561"
-  RMR_SRC_ID: "{{ component.service_name }}.{{ component.namespace }}"
-  RMR_SEED_RT: /opt/route/local.rt
-  A1_RMR_RETRY_TIMES: "20"
-  INSTANCE_DELETE_NO_RESP_TTL: "5"
-  INSTANCE_DELETE_RESP_TTL: "10"
-  CONFIG_MAP_NAME: /opt/route/loglevel.txt
-{% if 'dbaas' in component.ric_type_services %}
-  DBAAS_SERVICE_HOST: "{{ component.ric_type_services.dbaas }}"
-  DBAAS_SERVICE_PORT: "6379"
-{% endif %}
-
-imagePullSecrets:
-{% if component.image.image_pull_secrets %}
-{% for secret in component.image.image_pull_secrets %}
-  - name: {{ secret.name }}
-{% endfor %}
-{% else %}
-  []
-{% endif %}
-
-podSecurityContext:
-  runAsUser: {{ component.pod_security_context.run_as_user }}
-  runAsGroup: {{ component.pod_security_context.run_as_group }}
-  runAsNonRoot: {{ component.pod_security_context.run_as_non_root | lower }}
-{% if component.pod_security_context.fs_group is not none %}
-  fsGroup: {{ component.pod_security_context.fs_group }}
-{% endif %}
-
-{% if component.security_context %}
-securityContext:
-  privileged: {{ component.security_context.privileged | lower }}
-{% else %}
-securityContext: {}
-{% endif %}
-
-{% if component.resources.define %}
-resources:
-  requests:
-    cpu: {{ component.resources.requests.nf.cpu }}
-    memory: {{ component.resources.requests.nf.memory }}
-  limits:
-    cpu: {{ component.resources.limits.nf.cpu }}
-    memory: {{ component.resources.limits.nf.memory }}
-{% else %}
-resources: {}
-{% endif %}
-
-{% if component.node_selector %}
-nodeSelector:
-{% for key, value in component.node_selector.items() %}
-  {{ key }}: "{{ value }}"
-{% endfor %}
-{% else %}
-nodeSelector: {}
-{% endif %}
-
-nodeName: {{ component.node_name if component.node_name else 'null' }}
+a1mediator:
+  image:
+    registry: {{ component.image.repository.rsplit('/', 1)[0] }}
+    name: {{ component.image.repository.rsplit('/', 1)[1] }}
+    tag: {{ component.image.image_tag }}
+  rmr_timeout_config:
+    a1_rcv_retry_times: 20
+    ins_del_no_resp_ttl: 5
+    ins_del_resp_ttl: 10
+{% endset %}
+{% set defaults = lookup('ansible.builtin.file', role_path ~ '/files/ric/oran_sc/oran_sc-a1mediator/values.yaml') | from_yaml %}
+{{ defaults | combine(overrides_yaml | from_yaml, recursive=true) | to_nice_yaml }}

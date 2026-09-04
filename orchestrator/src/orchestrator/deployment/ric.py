@@ -1,47 +1,17 @@
 """RICs lifecycle management."""
 
+from typing import Literal
+
 from orchestrator.deployment.helm import HelmManagement
-from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.ric import RICComponentType
 from orchestrator.utils.common_5g import ComponentDependencyGraph
-from orchestrator.utils.ric import reconcile_rics
-
-
-RIC_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
-    RICComponentType.A1MEDIATOR: frozenset({
-        RICComponentType.DBAAS,
-    }),
-    RICComponentType.XAPP_ONBOARDER: frozenset({
-        RICComponentType.APPMGR,
-        RICComponentType.DBAAS,
-        RICComponentType.CHARTMUSEUM,
-    }),
-    RICComponentType.APPMGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.CHARTMUSEUM,
-    }),
-    RICComponentType.RTMGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-        RICComponentType.E2MGR,
-        RICComponentType.SUBMGR,
-    }),
-    RICComponentType.E2MGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-    }),
-    RICComponentType.E2TERM: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-        RICComponentType.RTMGR,
-        RICComponentType.E2MGR,
-    }),
-    RICComponentType.SUBMGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-        RICComponentType.E2MGR,
-    }),
-}
+from orchestrator.utils.helm import run_parallel_helm_action
+from orchestrator.utils.ric import (
+    RIC_COMPONENT_DEPENDENCIES,
+    create_ric_namespaces,
+    get_ric_helm_components,
+    get_ric_helm_inputs,
+    reconcile_rics,
+)
 
 
 class RICManagement(HelmManagement):
@@ -58,9 +28,36 @@ class RICManagement(HelmManagement):
         )
 
 
-    async def run_action(self, **kwargs) -> None:
-        """Run Helm action on RICs."""
-        await super().run_action(category=Category5G.RIC, **kwargs)
+    async def run_action(
+            self,
+            action: Literal["prepare", "install", "uninstall"],
+            components: list[str] | None = None,
+            node: str | None = None,
+            **kwargs,
+        ) -> None:
+        """Deploy RIC components through the standard Helm roles."""
+        node_name, node_data = self._get_master_node(node)
+        all_meta, all_k8s = get_ric_helm_components(
+            self.mutatable_metamodel.rics, self.deployment_model.rics,
+        )
+        if components is not None:
+            all_meta = {key: value for key, value in all_meta.items() if key in components}
+            all_k8s = {key: value for key, value in all_k8s.items() if key in components}
+        if action == "install":
+            await create_ric_namespaces(all_meta, node_name, node_data, self.deployment_model.params.ansible)
+        await run_parallel_helm_action(
+            components_meta=all_meta,
+            components_k8s=all_k8s,
+            action=action,
+            node_name=node_name,
+            node_data=node_data,
+            ansible_params=self.deployment_model.params.ansible,
+            component_role_inputs={
+                name: get_ric_helm_inputs(meta)
+                for name, meta in all_meta.items()
+            },
+            **kwargs,
+        )
 
 
     async def deploy(
@@ -70,11 +67,6 @@ class RICManagement(HelmManagement):
         ) -> None:
         """Orchestrate RIC component deployment."""
         await super().deploy(order=order, **kwargs)
-
-
-    async def prepare(self, components: list[str] | None = None, **kwargs) -> None:
-        """Prepare RIC component Helm charts."""
-        await super().prepare(components=components, **kwargs)
 
 
     async def install(
@@ -95,8 +87,3 @@ class RICManagement(HelmManagement):
         ) -> None:
         """Uninstall RIC components in reverse dependency order."""
         await super().uninstall(components=components, order=order, **kwargs)
-
-
-    async def remove(self, **kwargs) -> None:
-        """Remove/uninstall RIC components."""
-        await self.uninstall(**kwargs)

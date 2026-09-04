@@ -78,7 +78,7 @@ async def run_core_database_helm_action(
     helm_params = HelmParams(
         chart_name=f"{core_meta.implementation.value}-database",
         helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_meta.implementation.value}-database",
-        render=False
+        rendered_files=[]
     ).model_dump(mode="json")
 
     component = {

@@ -1,32 +1,6 @@
-# Role to install Helm chart on Kubernetes cluster
-
-# Input:
-# - component: K8S5GComponent
-# - chart_name: str
-# - helm_build_dir: str
-# - output_with_multus: bool
-
-# Output:
-# - network_info: str if output_with_multus is False, else list[MultusNetworkStatus]
+# Generic Helm installation and network discovery.
 ---
-- name: Check for official chart overrides
-  ansible.builtin.stat:
-    path: "{{ helm_build_dir }}/orchestrator-values.yaml"
-  register: official_values
-
-- name: Ensure official O-RAN SC namespaces exist
-  kubernetes.core.k8s:
-    api_version: v1
-    kind: Namespace
-    name: "{{ item }}"
-    state: present
-  loop:
-    - "{{ component.namespace }}"
-    - ricxapp
-    - ricinfra
-  when: official_values.stat.exists
-
-- name: Deploy rendered '{{ chart_name }}' Helm chart in namespace '{{ component.namespace }}'
+- name: Deploy '{{ chart_name }}' Helm chart
   kubernetes.core.helm:
     name: "{{ chart_name }}"
     chart_ref: "{{ helm_build_dir }}"
@@ -34,40 +8,20 @@
     create_namespace: true
     state: present
     values_files:
-      - "{{ helm_build_dir }}/{{ 'orchestrator-values.yaml' if official_values.stat.exists else 'values.yaml' }}"
+      - "{{ helm_build_dir }}/values.yaml"
 
 - name: Wait for '{{ chart_name }}' pod to become ready
   kubernetes.core.k8s_info:
     kind: Pod
     namespace: "{{ component.namespace }}"
     label_selectors:
-      - >-
-        {{ 'app=' ~ component.namespace ~ '-' ~ component.type ~ ('-alpha' if component.type == 'e2term' else '')
-           if official_values.stat.exists
-           else 'app.kubernetes.io/name=' ~ chart_name }}
+      - "app.kubernetes.io/name={{ chart_name }}"
     wait: true
     wait_condition:
       type: Ready
     wait_timeout: 200
     wait_sleep: 1
   register: pod_info
-
-- name: Read '{{ chart_name }}' RIC service
-  kubernetes.core.k8s_info:
-    kind: Service
-    namespace: "{{ component.namespace }}"
-    name: >-
-      {{ ('service-' ~ component.namespace ~ '-e2term-sctp-alpha')
-         if official_values.stat.exists and component.type == 'e2term'
-         else ('service-' ~ component.namespace ~ '-dbaas-tcp')
-         if official_values.stat.exists and component.type == 'dbaas'
-         else ('service-' ~ component.namespace ~ '-' ~ component.type ~ '-http')
-         if official_values.stat.exists
-         else chart_name }}
-  register: service_info
-  when:
-    - not output_with_multus
-    - component.category == 'ric'
 
 - name: Collect assigned '{{ chart_name }}' pod IP addresses
   ansible.builtin.set_fact:
@@ -80,34 +34,15 @@
          | list }}
   when: not output_with_multus
 
-- name: Set '{{ chart_name }}' network information
+- name: Set '{{ chart_name }}' pod network information
   ansible.builtin.set_fact:
-    # RIC endpoints normally use a stable Service IP. Headless Services expose
-    # clusterIP=None, so report an actually assigned Pod IP instead. There can
-    # temporarily be both terminating and ready pods during a clean redeploy;
-    # never assume resources[0] has an address.
-    network_info: >-
-      {{ service_info.resources[0].spec.clusterIP
-         if component.category == 'ric'
-            and service_info.resources[0].spec.clusterIP not in [none, '', 'None']
-         else assigned_pod_ips | first }}
+    network_info: "{{ assigned_pod_ips | first | default('') }}"
   when: not output_with_multus
 
-- name: Set '{{ chart_name }}' Multus network information if Multus was used
+- name: Set '{{ chart_name }}' Multus network information
   ansible.builtin.set_fact:
     network_info: "{{ pod_info.resources[0].metadata.annotations['k8s.v1.cni.cncf.io/network-status'] | default('[]') | from_json }}"
   when: output_with_multus
-
-- name: Validate '{{ chart_name }}' network information
-  ansible.builtin.assert:
-    that:
-      - network_info is defined
-      - network_info is not none
-      - network_info | string | length > 0
-      - network_info | string != 'None'
-    fail_msg: >-
-      No usable Service or ready Pod IP was discovered for {{ chart_name }}
-      in namespace {{ component.namespace }}.
 
 - name: Return '{{ chart_name }}' network information
   ansible.builtin.set_stats:

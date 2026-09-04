@@ -34,6 +34,7 @@ async def run_single_helm_action(
         ansible_params: AnsibleParams,
         helm_params: HelmParams | None = None,
         force: bool = False,
+        role_inputs: dict | None = None,
     ) -> None:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
 
@@ -61,7 +62,8 @@ async def run_single_helm_action(
         "inputs": {
             "component_name": safe_component_name,
             "component": {**(component_meta.model_dump(mode="json") | component_k8s.model_dump(mode="json"))}, # merge component
-            **helm_params.model_dump(mode="json")
+            **helm_params.model_dump(mode="json"),
+            **(role_inputs or {}),
         },
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",
         "roles_path": ansible_params.roles_path,
@@ -108,6 +110,7 @@ async def run_parallel_helm_action(
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
+        component_role_inputs: dict[str, dict] | None = None,
     ) -> dict[str, K8SComponent]:
     """Run Helm action in parallel on provided 5G components."""
 
@@ -140,6 +143,7 @@ async def run_parallel_helm_action(
                     node_data=node_data,
                     ansible_params=ansible_params,
                     force=force,
+                    role_inputs=(component_role_inputs or {}).get(name),
                 )
                 for name, component_meta, component_k8s in level_components
             ),

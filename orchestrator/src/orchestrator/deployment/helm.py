@@ -59,15 +59,8 @@ class HelmManagement(BaseBlueprintManagement):
                 } # only containerized UEs are k8s-deployable
                 all_k8s = self.deployment_model.containerized_ues
 
-            case Category5G.RIC:
-                all_meta = {}
-                all_k8s = {}
-                for ric_name, ric_meta in self.mutatable_metamodel.rics.items():
-                    ric_k8s = self.deployment_model.rics[ric_name]
-                    for component_name, component_meta in ric_meta.components.items():
-                        deployment_name = f"{ric_name}-{component_name}"
-                        all_meta[deployment_name] = component_meta
-                        all_k8s[deployment_name] = ric_k8s.components[component_name]
+            case _:
+                raise ValueError(f"Unsupported shared Helm category: {category}")
 
         # filter for specific components if requested
         if components is None:
