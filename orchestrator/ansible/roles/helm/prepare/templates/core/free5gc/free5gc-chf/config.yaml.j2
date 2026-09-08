@@ -1,0 +1,96 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+info:
+{% if component.advanced_config and component.advanced_config.info %}
+{{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  version: 1.0.3
+  description: CHF initial local configuration
+{% endif %}
+
+configuration:
+  chfName: {{ chart_name }} # the name of this CHF
+
+  sbi: # Service-based interface information
+    scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
+    registerIPv4: {{ chart_name }} # IP used to register to NRF
+    bindingIPv4: {{ component.config.sbi.ipv4EndPointAddress }}  # IP used to bind the service
+    port: {{ component.config.sbi.port }} # port used to bind the service
+{% if component.config.sbi.tls.enabled %}
+    tls: # the local path of TLS key
+      pem: {{ component.config.sbi.tls.certificate }} # CHF TLS Certificate
+      key: {{ component.config.sbi.tls.privateKey }} # CHF TLS Private key
+{% endif %}
+
+  nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
+
+{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+  nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
+{% endif %}
+
+  serviceNameList: # the SBI services provided by this CHF, refer to TS 32.291
+{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    - nchf-convergedcharging # Nchf_ConvergedCharging service
+{% endif %}
+
+  mongodb: # the mongodb connected by this CHF
+    name: {{ component.advanced_config.mongodb_name | default("free5gc") }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin") }}     # a valid URL of the mongodb
+
+  quotaValidityTime: {{ component.advanced_config.quotaValidityTime | default(10000) }}
+  volumeLimit: {{ component.advanced_config.volumeLimit | default(50000) }}
+  volumeLimitPDU: {{ component.advanced_config.volumeLimitPDU | default(10000) }}
+  volumeThresholdRate: {{ component.advanced_config.volumeThresholdRate | default(0.8) }}
+
+  cgf:
+{% if component.advanced_config and component.advanced_config.cgf %}
+{{ component.advanced_config.cgf | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true
+    hostIPv4: {{ chart_name }} # billing server ftp server
+    port: 2121 # billing server listen on port 2121
+    listenPort: 2122 # cgf ftp server listen port
+    passiveTransferPortRange: # Range of ports used for passive FTP data transfer connections
+      start: 2123 # Starting port number for passive mode data connections
+      end: 2130 # Ending port number for passive mode data connections
+    cdrFilePath: /tmp
+{% endif %}
+
+  abmfDiameter:
+{% if component.advanced_config and component.advanced_config.abmfDiameter %}
+{{ component.advanced_config.abmfDiameter | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    protocol: tcp
+    hostIPv4: {{ chart_name }}
+    port: 3868
+    tls:
+      pem: cert/chf.pem
+      key: cert/chf.key
+{% endif %}
+
+  rfDiameter:
+{% if component.advanced_config and component.advanced_config.rfDiameter %}
+{{ component.advanced_config.rfDiameter | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    protocol: tcp
+    hostIPv4: {{ chart_name }}
+    port: 3869
+    tls:
+      pem: cert/chf.pem
+      key: cert/chf.key
+{% endif %}
+
+logger: # log output setting
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  enable: true # true or false
+  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  reportCaller: false # enable the caller report or not, value: true or false
+{% endif %}
+
+{% endif %}

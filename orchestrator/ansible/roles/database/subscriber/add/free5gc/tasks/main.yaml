@@ -1,0 +1,276 @@
+# Role to add a subscriber to Free5GC database (mongodb)
+
+# Input:
+# - ue_name: str
+# - ue_config: UEConfiguration
+# - database_ip: IPvAnyAddress
+
+# Output: None
+---
+- name: Add UE '{{ ue_name }}' to Free5GC 'subscriptionData.authenticationData.authenticationSubscription' collection
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    eval: |
+      db.getCollection("subscriptionData.authenticationData.authenticationSubscription").updateOne(
+        { "ueId": "imsi-{{ ue_config.supi }}" },
+        {
+          "$set": {
+            "ueId": "imsi-{{ ue_config.supi }}",
+            "authenticationMethod": "{{ ue_config.authenticationData.authenticationMethod }}",
+            "encPermanentKey": "{{ ue_config.authenticationData.k }}",
+            "encOpcKey": "{{ ue_config.authenticationData.opc }}",
+            "authenticationManagementField": "{{ ue_config.authenticationData.amf }}",
+            "sequenceNumber": {
+              "sqn": "{{ ue_config.authenticationData.sqn | lower }}",
+              "sqnScheme": "GENERAL",
+            }
+          }
+        },
+        { "upsert": true }
+      )
+
+- name: Add UE '{{ ue_name }}' to Free5GC 'subscriptionData.authenticationData.webAuthenticationSubscription' collection
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    eval: |
+      db.getCollection("subscriptionData.authenticationData.webAuthenticationSubscription").updateOne(
+        { "ueId": "imsi-{{ ue_config.supi }}" },
+        {
+          "$set": {
+            "ueId": "imsi-{{ ue_config.supi }}",
+            "authenticationMethod": "{{ ue_config.authenticationData.authenticationMethod }}",
+            "authenticationManagementField": "{{ ue_config.authenticationData.amf }}",
+            "sequenceNumber": "{{ ue_config.authenticationData.sqn | lower }}",
+            "permanentKey": {
+              "permanentKeyValue": "{{ ue_config.authenticationData.k }}",
+              "encryptionKey": 0,
+              "encryptionAlgorithm": 0,
+            },
+            "opc": {
+              "opcValue": "{{ ue_config.authenticationData.opc }}",
+              "encryptionKey": 0,
+              "encryptionAlgorithm": 0,
+            },
+            "milenage": {
+              "op": {
+                "opValue": "{{ ue_config.authenticationData.op }}",
+                "encryptionKey": 0,
+                "encryptionAlgorithm": 0,
+              },
+            },
+          }
+        },
+        { "upsert": true }
+      )
+
+- name: Add UE '{{ ue_name }}' to Free5GC 'subscriptionData.provisionedData.amData' collection
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    eval: |
+      db.getCollection("subscriptionData.provisionedData.amData").updateOne(
+        {
+          "ueId": "imsi-{{ ue_config.supi }}",
+          "servingPlmnId": "{{ item.plmnId.plmnId }}",
+        },
+        {
+          "$set": {
+            "ueId": "imsi-{{ ue_config.supi }}",
+            "servingPlmnId": "{{ item.plmnId.plmnId }}",
+            "subscribedUeAmbr": {
+              "uplink": "{{ ue_config.ueAmbr.uplink }} bps",
+              "downlink": "{{ ue_config.ueAmbr.downlink }} bps",
+            },
+            "nssai": {
+              "singleNssais": [],
+              "defaultSingleNssais": [
+              {% for subscription in ue_config.subscriptions %}
+                {
+                  "sst": {{ subscription.snssai.sst }},
+                {% if subscription.snssai.sd %}
+                  "sd": "{{ subscription.snssai.sd | lower }}",
+                {% endif %}
+                },
+              {% endfor %}
+              ],
+            },
+          }
+        },
+        { "upsert": true }
+      )
+  loop: "{{ ue_config.gnb[1].config.plmnList }}"
+  loop_control:
+    label: "PLMN ID: {{ item.plmnId.plmnId }}"
+
+- name: Add UE '{{ ue_name }}' to Free5GC 'subscriptionData.provisionedData.smData' collection
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    debug: true
+    eval: |
+      {% set subscription = ue_config.subscriptions[item.1.subscriptionIndex] %}
+      db.getCollection("subscriptionData.provisionedData.smData").updateOne(
+        {
+          "ueId": "imsi-{{ ue_config.supi }}",
+          "servingPlmnId": "{{ item.0.plmnId.plmnId }}",
+          "singleNssai": {
+            "sst": {{ subscription.snssai.sst }},
+          {% if subscription.snssai.sd %}
+            "sd": "{{ subscription.snssai.sd | lower }}",
+          {% endif %}
+          },
+        },
+        {
+          "$set": {
+            "ueId": "imsi-{{ ue_config.supi }}",
+            "servingPlmnId": "{{ item.0.plmnId.plmnId }}",
+            "singleNssai": {
+              "sst": {{ subscription.snssai.sst }},
+            {% if subscription.snssai.sd %}
+              "sd": "{{ subscription.snssai.sd | lower }}",
+            {% endif %}
+            },
+            "dnnConfigurations": {
+              "{{ subscription.dnn.name }}": {
+                "pduSessionTypes": {
+                  "defaultSessionType": "{{ subscription.dnn.pduSessionType | upper }}",
+                  "allowedSessionTypes": ["{{ subscription.dnn.pduSessionType | upper }}"],
+                },
+                sscModes: {
+                  defaultSscMode: "SSC_MODE_1",
+                  allowedSscModes: [
+                    "SSC_MODE_1",
+                    "SSC_MODE_2",
+                    "SSC_MODE_3",
+                  ],
+                },
+                "sessionAmbr": {
+                  "uplink": "{{ subscription.dnn.aggregateMaximumBitRate.uplink }} bps",
+                  "downlink": "{{ subscription.dnn.aggregateMaximumBitRate.downlink }} bps",
+                },
+              {% if subscription.dnn.qosFlows %}
+                "5gQosProfile": {
+                  "5qi": {{ subscription.dnn.qosFlows[0].fiveQI }},
+                  "arp": {
+                    "priorityLevel": {{ subscription.dnn.qosFlows[0].arp.priorityLevel }},
+                    "preemptCap": "{{ subscription.dnn.qosFlows[0].arp.preemptionCapability | upper }}",
+                    "preemptVuln": "{{ subscription.dnn.qosFlows[0].arp.preemptionVulnerability | upper }}",
+                  },
+                  "priorityLevel": {{ subscription.dnn.qosFlows[0].arp.priorityLevel }},
+                },
+              {% endif %}
+                staticIpAddress: [
+                {% if item.1.ueIPv4Address %}
+                  { "ipv4Addr": "{{ item.1.ueIPv4Address }}" },
+                {% endif %}
+                {% if item.1.ueIPv6Address %}
+                  { "ipv6Addr": "{{ item.1.ueIPv6Address }}" },
+                {% endif %}
+                ],
+              },
+            },
+          }
+        },
+        { "upsert": true }
+      )
+  loop: "{{ ue_config.gnb[1].config.plmnList | product(ue_config.pduSessions) | list }}"
+  loop_control:
+    label: "PLMN ID: {{ item.0.plmnId.plmnId }}, Session Index: {{ item.1.subscriptionIndex }}"
+
+- name: Add UE '{{ ue_name }}' to Free5GC 'subscriptionData.provisionedData.smfSelectionSubscriptionData' collection
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    eval: |
+      db.getCollection("subscriptionData.provisionedData.smfSelectionSubscriptionData").updateOne(
+        {
+          "ueId": "imsi-{{ ue_config.supi }}",
+          "servingPlmnId": "{{ item.plmnId.plmnId }}",
+        },
+        {
+          "$set": {
+            "ueId": "imsi-{{ ue_config.supi }}",
+            "servingPlmnId": "{{ item.plmnId.plmnId }}",
+            "subscribedSnssaiInfos": {
+            {% for subscription in ue_config.subscriptions %}
+              {% set snssai = '%02d' | format(subscription.snssai.sst) ~ subscription.snssai.sd | lower if subscription.snssai.sd else '%02d' | format(subscription.snssai.sst) %}
+              "{{ snssai }}": {
+                "dnnInfos": [{ "dnn": "{{ subscription.dnn.name }}" } ],
+              },
+            {% endfor %}
+            }
+          }
+        },
+        { "upsert": true }
+      )
+  loop: "{{ ue_config.gnb[1].config.plmnList }}"
+  loop_control:
+    label: "PLMN ID: {{ item.plmnId.plmnId }}"
+
+- name: Add UE '{{ ue_name }}' to Free5GC 'policyData.ues.amData' collection
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    eval: |
+      db.getCollection("policyData.ues.amData").updateOne(
+        { "ueId": "imsi-{{ ue_config.supi }}" },
+        {
+          "$set": {
+            "ueId": "imsi-{{ ue_config.supi }}",
+            "subscCats": [ "free5gc" ],
+          }
+        },
+        { "upsert": true }
+      )
+
+- name: Add UE '{{ ue_name }}' to Free5GC 'policyData.ues.smData' collection
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    eval: |
+      db.getCollection("policyData.ues.smData").updateOne(
+        { "ueId": "imsi-{{ ue_config.supi }}" },
+        {
+          "$set": {
+            "ueId": "imsi-{{ ue_config.supi }}",
+            "smPolicySnssaiData": {
+            {% for subscription in ue_config.subscriptions %}
+              {% set snssai = '%02d' | format(subscription.snssai.sst) ~ subscription.snssai.sd | lower if subscription.snssai.sd else '%02d' | format(subscription.snssai.sst) %}
+              "{{ snssai }}": {
+                "snssai": {
+                  "sst": {{ subscription.snssai.sst }},
+                {% if subscription.snssai.sd %}
+                  "sd": "{{ subscription.snssai.sd | lower }}",
+                {% endif %}
+                },
+                "smPolicyDnnData": { "{{ subscription.dnn.name }}": { "dnn": "{{ subscription.dnn.name }}" } }
+              },
+            {% endfor %}
+            }
+          }
+        },
+        { "upsert": true }
+      )

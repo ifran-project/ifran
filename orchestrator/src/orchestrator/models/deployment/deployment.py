@@ -32,7 +32,7 @@ class DeploymentParams(BlueprintBaseModel):
     k8s: K8SParams = Field(default_factory=K8SParams)
     """Kubernetes global default parameters."""
 
-    provisioning: dict[str, Any] | None = Field(default=None)
+    provisioning: dict[str, Any] = Field(default_factory=dict)
     """Global default provisioning parameters."""
 
 

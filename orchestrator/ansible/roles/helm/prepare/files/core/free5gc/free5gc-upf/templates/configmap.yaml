@@ -1,0 +1,29 @@
+# Reference: https://free5gc.org/guide/3-install-free5gc/#a-prerequisites
+{{- if not .Values.global }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-configmap
+  labels:
+    app: {{ .Release.Name }}
+data:
+  {{ (.Files.Glob "config.yaml").AsConfig | indent 2 | trim }}
+
+  entrypoint.sh: |
+    #!/bin/bash
+
+    apt update && apt install -y iptables procps
+    
+{{ range .Values.config.subnets }}
+{{ if contains ":" . }}
+    sysctl -w net.ipv6.conf.all.forwarding=1
+    ip6tables -A FORWARD -j ACCEPT
+    ip6tables -t nat -A POSTROUTING -s {{ . }} -o eth0 -j MASQUERADE
+{{ else }}
+    sysctl -w net.ipv4.ip_forward=1
+    iptables -A FORWARD -j ACCEPT
+    iptables -t nat -A POSTROUTING -s {{ . }} -o eth0 -j MASQUERADE
+{{ end }}
+{{ end }}
+
+{{- end }}

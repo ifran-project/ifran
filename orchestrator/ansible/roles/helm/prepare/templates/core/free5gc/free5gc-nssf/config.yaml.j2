@@ -1,0 +1,182 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+info:
+{% if component.advanced_config and component.advanced_config.info %}
+{{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  version: 1.0.2
+  description: NSSF initial local configuration
+{% endif %}
+
+configuration:
+  nssfName: {{ chart_name }} # the name of this NSSF
+
+  sbi: # Service-based interface information
+    scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
+    registerIPv4: {{ chart_name }} # IP used to register to NRF
+    bindingIPv4: {{ component.config.sbi.ipv4EndPointAddress }}  # IP used to bind the service
+    port: {{ component.config.sbi.port }} # port used to bind the service
+{% if component.config.sbi.tls.enabled %}
+    tls: # the local path of TLS key
+      pem: {{ component.config.sbi.tls.certificate }} # NSSF TLS Certificate
+      key: {{ component.config.sbi.tls.privateKey }} # NSSF TLS Private key
+{% endif %}
+
+  serviceNameList: # the SBI services provided by this SMF, refer to TS 29.531
+{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    - nnssf-nsselection # Nnssf_NSSelection service
+    - nnssf-nssaiavailability # Nnssf_NSSAIAvailability service
+{% endif %}
+
+  nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
+
+{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+  nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
+{% endif %}
+
+  supportedPlmnList: # the PLMNs (Public land mobile network) list supported by this NSSF
+{% for plmn_info in component.config.plmnInfoList %}
+    - mcc: '{{ plmn_info.homePlmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+      mnc: '{{ plmn_info.homePlmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+{% endfor %}
+
+  supportedNssaiInPlmnList: # Supported S-NSSAI List for each PLMN
+{% for plmn_info in component.config.plmnInfoList %}
+    - plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+        mcc: '{{ plmn_info.homePlmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: '{{ plmn_info.homePlmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      supportedSnssaiList: # Supported S-NSSAIs of the PLMN
+{% for nsi_info in component.config.nsiInfoList %}
+        - sst: {{ nsi_info.snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if nsi_info.snssai.sd %}
+          sd: '{{ nsi_info.snssai.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+  nsiList: # List of available Network Slice Instance (NSI)
+{% for nsi_info in component.config.nsiInfoList %}
+    - snssai: # S-NSSAI of this NSI
+        sst: {{ nsi_info.snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if nsi_info.snssai.sd %}
+        sd: '{{ nsi_info.snssai.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+      nsiInformationList: # Information list of this NSI
+{% for item in nsi_info.nsiInformationList %}
+        # the NRF to be used to select the NFs/services within the selected NSI, and an optional ID
+        - nrfId: {{ item.nrfId }}
+          nsiId: {{ item.nsiId }}
+{% endfor %}
+{% endfor %}
+
+  amfSetList: # List of AMF Sets that my be assigned by this NSSF
+{% for amf_info in component.config.amfInfoList %}
+    - amfSetId: {{ amf_info.targetAmfSet | lower | int(base=16) }} # the AMF Set identifier
+      amfList: # Instance ID of the AMFs in this set
+{% for amf in amf_info.amfList %}
+        - {{ amf.nfId }}
+{% endfor %}
+      # URI of the NRF used to determine the list of candidate AMF(s) from the AMF Set
+      nrfAmfSet: {{ amf_info.nrfAmfSet }}
+      # the Nssai availability data information per TA supported by the AMF
+      supportedNssaiAvailabilityData:
+{% for amf in amf_info.amfList %}
+        - tai: # Tracking Area Identifier
+            plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+              mcc: '{{ amf.supportedNssaiAvailabilityData.tai.plmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+              mnc: '{{ amf.supportedNssaiAvailabilityData.tai.plmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+            tac: {{ amf.supportedNssaiAvailabilityData.tai.tac }} # Tracking Area Code (uinteger, range: 0~16777215)
+          supportedSnssaiList: # Supported S-NSSAIs of the tracking area
+{% for snssai in amf.supportedNssaiAvailabilityData.snssaiList %}
+            - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if snssai.sd %}
+              sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+  amfList: # List of AMFs that may be assigned by this NSSF
+{% for amf_info in component.config.amfInfoList %}
+{% for amf in amf_info.amfList %}
+    - nfId: {{ amf.nfId }} # ID of this AMF
+      # The NSSAI availability data information per TA supported by the AMF
+      supportedNssaiAvailabilityData:
+        - tai: # Tracking Area Identifier
+            plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+              mcc: '{{ amf.supportedNssaiAvailabilityData.tai.plmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+              mnc: '{{ amf.supportedNssaiAvailabilityData.tai.plmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+            tac: {{ amf.supportedNssaiAvailabilityData.tai.tac }} # Tracking Area Code (uinteger, range: 0~16777215)
+          supportedSnssaiList: # Supported S-NSSAIs of the tracking area
+{% for snssai in amf.supportedNssaiAvailabilityData.snssaiList %}
+            - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if snssai.sd %}
+              sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+  taList: # List of supported tracking area and their related information of this NSSF instance
+{% for ta_info in component.config.taInfoList %}
+    - tai: # Tracking Area Identity
+        plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+          mcc: '{{ ta_info.tai.plmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+          mnc: '{{ ta_info.tai.plmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+        tac: {{ ta_info.tai.tac }} # Tracking Area Code (uinteger, range: 0~16777215)
+      accessType: 3GPP_ACCESS # Access type of the tracking area
+      supportedSnssaiList: # List of supported S-NSSAIs of the tracking area
+{% for snssai in ta_info.snssaiList %}
+        - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if snssai.sd %}
+          sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+{% endfor %}
+{% if ta_info.restrictedSnssaiList %}
+      restrictedSnssaiList: # List of restricted S-NSSAIs of the tracking area
+{% for restricted in ta_info.restrictedSnssaiList %}
+        - homePlmnId: # Home PLMN identifier
+            mcc: '{{ restricted.homePlmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+            mnc: '{{ restricted.homePlmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+          sNssaiList: # the S-NSSAIs List
+{% for snssai in restricted.snssaiList %}
+            - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if snssai.sd %}
+              sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+  # List of mappings of S-NSSAI in the serving network and the value of the home network
+  mappingListFromPlmn:
+{% for plmn_info in component.config.plmnInfoList %}
+    - operatorName: {{ plmn_info.operatorName }} # Home PLMN name
+      homePlmnId: # Home PLMN identifier
+        mcc: '{{ plmn_info.homePlmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: '{{ plmn_info.homePlmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      mappingOfSnssai: # List of S-NSSAIs mapping
+{% for nsi_info in component.config.nsiInfoList %}
+        - servingSnssai: # S-NSSAI in the serving network
+            sst: {{ nsi_info.snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if nsi_info.snssai.sd %}
+            sd: '{{ nsi_info.snssai.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+logger: # log output setting
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  enable: true # true or false
+  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  reportCaller: false # enable the caller report or not, value: true or false
+{% endif %}
+
+{% endif %}

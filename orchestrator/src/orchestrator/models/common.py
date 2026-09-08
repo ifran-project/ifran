@@ -4,7 +4,14 @@ import json
 from typing import Annotated, Any, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, PlainSerializer, WithJsonSchema
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    PlainSerializer,
+    UrlConstraints,
+    WithJsonSchema,
+)
 
 
 class BlueprintBaseModel(BaseModel):
@@ -54,6 +61,13 @@ class BlueprintTolerantBaseModel(BlueprintBaseModel):
 
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
+
+type URL = Annotated[AnyUrl, UrlConstraints(preserve_empty_path=True)]
+"""
+URL type without unwanted trailing slash at the end. See:
+    - https://github.com/pydantic/pydantic/issues/7186
+    - https://pydantic.dev/articles/pydantic-v2-12-release#preserve-empty-url-paths
+"""
 
 # utils
 def parse_hex_int(value: str | Any) -> int | Any:

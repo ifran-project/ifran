@@ -1,0 +1,227 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+info:
+{% if component.advanced_config and component.advanced_config.info %}
+{{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  version: 1.0.9
+  description: AMF initial local configuration
+{% endif %}
+
+configuration:
+  amfName: {{ chart_name }} # the name of this AMF
+  ngapIpList:  # the IP list of N2 interfaces on this AMF
+    - {{ component.config.n2.ipv4EndPointAddress }}
+  ngapPort: {{ component.config.n2.port }} # the SCTP port listened by NGAP
+
+  # Service-based Interface (SBI) Configuration
+  sbi:
+    scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
+    registerIPv4: {{ chart_name }} # IP used to register to NRF
+    bindingIPv4: {{ component.config.sbi.ipv4EndPointAddress }}  # IP used to bind the service
+    port: {{ component.config.sbi.port }} # port used to bind the service
+{% if component.config.sbi.tls.enabled %}
+    tls: # the local path of TLS key
+      pem: {{ component.config.sbi.tls.certificate }} # AMF TLS Certificate
+      key: {{ component.config.sbi.tls.privateKey }} # AMF TLS Private key
+{% endif %}
+
+  # SBI Services offered by this AMF, as per TS 29.518
+  serviceNameList:
+{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    - namf-comm # Namf_Communication service
+    - namf-evts # Namf_EventExposure service
+    - namf-mt   # Namf_MT service
+    - namf-loc  # Namf_Location service
+    - namf-oam  # OAM service
+    - namf-callback # Namf_Callback service
+{% endif %}
+
+  # Guami (Globally Unique AMF ID) list supported by this AMF
+  servedGuamiList:
+{% for guami in component.config.guamiList %}
+    # <GUAMI> = <MCC><MNC><AMF ID>
+    - plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+        mcc: '{{ guami.plmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: '{{ guami.plmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      amfId: '{{ guami.amfId | lower }}' # AMF identifier (3 bytes hex string, range: 000000~FFFFFF)
+{% endfor %}
+
+  # the TAI (Tracking Area Identifier) list supported by this AMF
+  supportTaiList:
+{% for tai in component.config.taiList %}
+    - plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+        mcc: '{{ tai.plmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: '{{ tai.plmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      tac: '{{ '%06x' | format(tai.tac | int) }}' # Tracking Area Code (3 bytes hex string, range: 000000~FFFFFF)
+{% endfor %}
+
+  # the PLMNs (Public land mobile network) list supported by this AMF
+  plmnSupportList:
+{% for plmn in component.config.plmnList %}
+    - plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+        mcc: '{{ plmn.plmnId.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: '{{ plmn.plmnId.mnc }}' # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      snssaiList:
+{% for slice in plmn.snssaiList %}
+        - sst: {{ slice.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if slice.sd %}
+          sd: '{{ slice.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+  # the DNN (Data Network Name) list supported by this AMF
+  supportDnnList:
+{% for plmn in component.config.plmnList %}
+{% for slice in plmn.snssaiList %}
+{% for dnn in slice.dnns.values() %}
+    - {{ dnn.name }}
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+  nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
+
+{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+  nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
+{% endif %}
+
+  # NAS Security Configuration
+  # the priority of integrity algorithms
+  # the priority of ciphering algorithms
+  security:
+    integrityOrder:
+{% for algorithm in component.config.securityAlgorithmConfiguration.integrityOrder %}
+      - {{ algorithm | upper }}
+{% endfor %}
+    cipheringOrder:
+{% for algorithm in component.config.securityAlgorithmConfiguration.cipheringOrder %}
+      - {{ algorithm | upper }}
+{% endfor %}
+
+  # Network Name Information
+  networkName:
+    full: {{ component.config.networkName.fullNetworkName }}
+{% if component.config.networkName.shortNetworkName %}
+    short: {{ component.config.networkName.shortNetworkName }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.ngapIE %}
+  # Optional NGAP Information Elements (IE)
+  ngapIE:
+{{ component.advanced_config.ngapIE | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.nasIE %}
+  # Optional NAS Information Elements (IE)
+  nasIE:
+{{ component.advanced_config.nasIE | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
+
+  t3502Value: {{ component.advanced_config.t3502Value | default(720) }}  # timer value (seconds) at UE side
+  t3512Value: {{ component.advanced_config.t3512Value | default(3600) }} # timer value (seconds) at UE side
+  non3gppDeregTimerValue: {{ component.advanced_config.non3gppDeregTimerValue | default(3240) }} # timer value (seconds) at UE side
+
+  # retransmission timer for paging message
+  t3513:
+{% if component.advanced_config and component.advanced_config.t3513 %}
+{{ component.advanced_config.t3513 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true     # true or false
+    expireTime: 6s   # default is 6 seconds
+    maxRetryTimes: 4 # the max number of retransmission
+{% endif %}
+
+  # retransmission timer for NAS Deregistration Request message
+  t3522:
+{% if component.advanced_config and component.advanced_config.t3522 %}
+{{ component.advanced_config.t3522 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true     # true or false
+    expireTime: 6s   # default is 6 seconds
+    maxRetryTimes: 4 # the max number of retransmission
+{% endif %}
+
+  # retransmission timer for NAS Registration Accept message
+  t3550:
+{% if component.advanced_config and component.advanced_config.t3550 %}
+{{ component.advanced_config.t3550 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true     # true or false
+    expireTime: 6s   # default is 6 seconds
+    maxRetryTimes: 4 # the max number of retransmission
+{% endif %}
+
+  # retransmission timer for NAS Configuration Update Command message
+  t3555:
+{% if component.advanced_config and component.advanced_config.t3555 %}
+{{ component.advanced_config.t3555 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true     # true or false
+    expireTime: 6s   # default is 6 seconds
+    maxRetryTimes: 4 # the max number of retransmission
+{% endif %}
+
+  # retransmission timer for NAS Authentication Request/Security Mode Command message
+  t3560:
+{% if component.advanced_config and component.advanced_config.t3560 %}
+{{ component.advanced_config.t3560 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true     # true or false
+    expireTime: 6s   # default is 6 seconds
+    maxRetryTimes: 4 # the max number of retransmission
+{% endif %}
+
+  # retransmission timer for NAS Notification message
+  t3565:
+{% if component.advanced_config and component.advanced_config.t3565 %}
+{{ component.advanced_config.t3565 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true     # true or false
+    expireTime: 6s   # default is 6 seconds
+    maxRetryTimes: 4 # the max number of retransmission
+{% endif %}
+
+  # retransmission timer for NAS Identity Request message
+  t3570:
+{% if component.advanced_config and component.advanced_config.t3570 %}
+{{ component.advanced_config.t3570 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true     # true or false
+    expireTime: 6s   # default is 6 seconds
+    maxRetryTimes: 4 # the max number of retransmission
+{% endif %}
+
+  locality: {{ component.advanced_config.locality | default("area1") }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
+
+  # set the sctp server setting <optional>, once this field is set, please also add maxInputStream, maxOsStream, maxAttempts, maxInitTimeOut
+  sctp:
+{% if component.advanced_config and component.advanced_config.sctp %}
+{{ component.advanced_config.sctp | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    numOstreams: 3 # the maximum out streams of each sctp connection
+    maxInstreams: 5 # the maximum in streams of each sctp connection
+    maxAttempts: 2 # the maximum attempts of each sctp connection
+    maxInitTimeout: 2 # the maximum init timeout of each sctp connection
+{% endif %}
+
+  defaultUECtxReq: {{ component.advanced_config.defaultUECtxReq | lower | default("false") }} # the default value of UE Context Request to decide when triggering Initial Context Setup procedure
+
+  ngapWorkerPoolSize: {{ component.advanced_config.ngapWorkerPoolSize | default(0) }} # (int), default equal to runtime.NumCPU()
+  ngapTaskBufferSize: {{ component.advanced_config.ngapTaskBufferSize | default(4096) }} # (int)
+
+logger: # log output setting
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  enable: true # true or false
+  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  reportCaller: false # enable the caller report or not, value: true or false
+{% endif %}
+
+{% endif %}

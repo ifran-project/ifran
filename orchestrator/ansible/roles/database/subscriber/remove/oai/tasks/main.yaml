@@ -1,4 +1,4 @@
-# Role to add a subscriber to OAI dataabse (mysql)
+# Role to remove a subscriber from OAI dataabse (mysql)
 
 # Input:
 # - ue_name: str

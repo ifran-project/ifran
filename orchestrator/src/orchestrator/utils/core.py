@@ -3,8 +3,9 @@
 import asyncio
 from typing import Literal
 
-from pydantic import AnyUrl, IPvAnyAddress, IPvAnyNetwork
+from pydantic import IPvAnyAddress, IPvAnyNetwork, TypeAdapter
 
+from orchestrator.models.common import URL
 from orchestrator.models.deployment.ansible import AnsibleParams
 from orchestrator.models.deployment.core import CoreDeployment
 from orchestrator.models.deployment.k8s import HelmParams
@@ -14,6 +15,7 @@ from orchestrator.models.meta.core import (
     Core,
     CoreImplementation,
     SMFComponent,
+    UPFComponent,
 )
 from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEConfiguration
@@ -36,21 +38,24 @@ def resolve_upf_references(
     ) -> None:
     """Resolve UPF reference in SMF components."""
 
-    smfs: dict[str, SMFComponent] = get_5g_components_by_type(core_meta.components).get(CoreComponentType.SMF, {})
+    grouped = get_5g_components_by_type(core_meta.components)
+    smfs: dict[str, SMFComponent] = grouped.get(CoreComponentType.SMF, {})
+    upfs: dict[str, UPFComponent] = grouped.get(CoreComponentType.UPF, {})
 
     for name, component_meta in smfs.items():
         for i in range(len(component_meta.config.upfs)):
             upf_reference = component_meta.config.upfs[i]
             if isinstance(upf_reference, str):
                 target_ip = ip_mapping.get(upf_reference)
-                if target_ip is None:
+                upf_meta = upfs.get(upf_reference)
+                if target_ip is None or upf_meta is None:
                     raise ValueError(f"Could not resolve IP for SMF component {name!r} reference to {upf_reference!r}.")
-                component_meta.config.upfs[i] = target_ip
+                component_meta.config.upfs[i] = target_ip, upf_meta
 
 
 def populate_nrf_uri(
         core_meta: Core,
-        nrf_uri: AnyUrl,
+        nrf_uri: URL,
     ) -> None:
     """Populate 'nrfUri' field for all 5G core components."""
 
@@ -93,7 +98,7 @@ def reconcile_core(
         if component_meta.type is CoreComponentType.NRF:
             # look for NRF components to populate nrfUri
             scheme = "https" if component_meta.config.sbi.tls.enabled else "http"
-            nrf_uri = AnyUrl(f"{scheme}://{component_meta.implementation}-{name}:{component_meta.config.sbi.port}")
+            nrf_uri = TypeAdapter(URL).validate_python(f"{scheme}://{component_meta.implementation}-{name}:{component_meta.config.sbi.port}")
 
     # resolve upf references after static ips have been assigned
     resolve_upf_references(

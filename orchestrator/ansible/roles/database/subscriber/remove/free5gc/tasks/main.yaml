@@ -1,0 +1,24 @@
+# Role to add a subscriber to Free5GC dataabse (mongodb)
+
+# Input:
+# - ue_name: str
+# - ue_config: UEConfiguration
+# - database_ip: IPvAnyAddress
+
+# Output: None
+---
+- name: Remove UE '{{ ue_name }}' from Free5GC database
+  community.mongodb.mongodb_shell:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_database: admin
+    db: free5gc
+    eval: |
+      db.getCollection("subscriptionData.authenticationData.authenticationSubscription").deleteMany({ "ueId": "imsi-{{ ue_config.supi }}" }),
+      db.getCollection("subscriptionData.authenticationData.webAuthenticationSubscription").deleteMany({ "ueId": "imsi-{{ ue_config.supi }}" }),
+      db.getCollection("subscriptionData.provisionedData.amData").deleteMany({ "ueId": "imsi-{{ ue_config.supi }}" }),
+      db.getCollection("subscriptionData.provisionedData.smData").deleteMany({ "ueId": "imsi-{{ ue_config.supi }}" }),
+      db.getCollection("subscriptionData.provisionedData.smfSelectionSubscriptionData").deleteMany({ "ueId": "imsi-{{ ue_config.supi }}" }),
+      db.getCollection("policyData.ues.amData").deleteMany({ "ueId": "imsi-{{ ue_config.supi }}" }),
+      db.getCollection("policyData.ues.smData").deleteMany({ "ueId": "imsi-{{ ue_config.supi }}" })

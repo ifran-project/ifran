@@ -1,0 +1,46 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+info:
+{% if component.advanced_config and component.advanced_config.info %}
+{{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  version: 1.1.0
+  description: UDR initial local configuration
+{% endif %}
+
+configuration:
+  sbi: # Service-based interface information
+    scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
+    registerIPv4: {{ chart_name }} # IP used to register to NRF
+    bindingIPv4: {{ component.config.sbi.ipv4EndPointAddress }}  # IP used to bind the service
+    port: {{ component.config.sbi.port }} # port used to bind the service
+{% if component.config.sbi.tls.enabled %}
+    tls: # the local path of TLS key
+      pem: {{ component.config.sbi.tls.certificate }} # UDM TLS Certificate
+      key: {{ component.config.sbi.tls.privateKey }} # UDM TLS Private key
+{% endif %}
+
+  dbConnectorType: {{ component.advanced_config.mongodb_name | default("mongodb") }}
+
+  mongodb:
+    name: {{ component.advanced_config.mongodb_name | default("free5gc") }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin") }}     # a valid URL of the mongodb
+
+  nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
+
+{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+  nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
+{% endif %}
+
+logger: # log output setting
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  enable: true # true or false
+  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  reportCaller: false # enable the caller report or not, value: true or false
+{% endif %}
+
+{% endif %}

@@ -1,0 +1,176 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+info:
+{% if component.advanced_config and component.advanced_config.info %}
+{{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  version: 1.0.7
+  description: SMF initial local configuration
+{% endif %}
+
+configuration:
+  smfName: {{ chart_name }} # the name of this SMF
+
+  # Service-based interface information
+  sbi:
+    scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
+    registerIPv4: {{ chart_name }} # IP used to register to NRF
+    bindingIPv4: {{ component.config.sbi.ipv4EndPointAddress }}  # IP used to bind the service
+    port: {{ component.config.sbi.port }} # port used to bind the service
+{% if component.config.sbi.tls.enabled %}
+    tls: # the local path of TLS key
+      pem: {{ component.config.sbi.tls.certificate }} # SMF TLS Certificate
+      key: {{ component.config.sbi.tls.privateKey }} # SMF TLS Private key
+{% endif %}
+
+  # the SBI services provided by this SMF, refer to TS 29.502
+  serviceNameList:
+{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    - nsmf-pdusession # Nsmf_PDUSession service
+    - nsmf-event-exposure # Nsmf_EventExposure services
+    - nsmf-oam # OAM service
+    - nsmf-callback
+{% endif %}
+
+  # the S-NSSAI (Single Network Slice Selection Assistance Information) list supported by this SMF
+  snssaiInfos:
+{% for slice in component.config.snssaiList %}
+    - sNssai: # S-NSSAI (Single Network Slice Selection Assistance Information)
+        sst: {{ slice.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if slice.sd %}
+        sd: '{{ slice.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+      dnnInfos: # DNN information list
+{% for dnn in slice.dnns.values() %}
+        - dnn: {{ dnn.name }} # Data Network Name
+          dns: # the IP address of DNS
+{% if component.advanced_config and component.advanced_config.dns %}
+{{ component.advanced_config.dns | to_nice_yaml(indent=12) | indent(12, True) }}
+{% else %}
+            ipv4: 8.8.8.8
+            ipv6: 2001:4860:4860::8888
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+  # Optional: PLMN IDs configuration.
+  plmnList:
+{% for plmn in component.config.plmnList %}
+    - mcc: '{{ plmn.mcc }}' # Mobile Country Code (3 digits string, digit: 0~9)
+      mnc: '{{ plmn.mnc }}'  # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+{% endfor %}
+
+  locality: {{ component.advanced_config.locality | default("area1") }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
+
+  # PFCP (Packet Forwarding Control Protocol) configuration for N4 interface.
+  pfcp:
+    # addr config is deprecated in smf config v1.0.3, please use the following config
+    nodeID: {{ chart_name }} # the Node ID of this SMF
+    listenAddr: {{ component.config.n4.ipv4EndPointAddress }} # the IP/FQDN of N4 interface on this SMF (PFCP)
+    externalAddr: {{ chart_name }} # the IP/FQDN of N4 interface on this SMF (PFCP)
+    assocFailAlertInterval: {{ component.advanced_config.assocFailAlertInterval | default("10s") }}
+    assocFailRetryInterval: {{ component.advanced_config.assocFailRetryInterval | default("30s") }}
+    heartbeatInterval: {{ component.advanced_config.heartbeatInterval | default("10s") }}
+
+  # Userplane nodes information, specifying details for AN and UPF.
+  userplaneInformation:
+{% if component.advanced_config and component.advanced_config.userplaneInformation %}
+{{ component.advanced_config.userplaneInformation | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    upNodes: # information of userplane node (AN or UPF)
+      gNB: # the name of the node
+        type: AN # the type of the node (AN or UPF)
+{% for upf in component.config.upfs %}
+      UPF{{ loop.index }}: # the name of the node
+        type: UPF # the type of the node (AN or UPF)
+        nodeID: {{ upf[0] }} # the Node ID of this UPF
+        addr: {{ upf[0] }} # the IP/FQDN of N4 interface on this UPF (PFCP)
+        sNssaiUpfInfos: # S-NSSAI information list for this UPF
+{% for slice in upf[1].config.snssaiList %}
+          - sNssai: # S-NSSAI (Single Network Slice Selection Assistance Information)
+              sst: {{ slice.sst }} # Slice/Service Type (uinteger, range: 0~255)
+{% if slice.sd %}
+              sd: '{{ slice.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+{% endif %}
+            dnnUpfInfoList: # DNN information list for this S-NSSAI
+{% for dnn in slice.dnns.values() %}
+              - dnn: {{ dnn.name }}
+                pools:
+                  - cidr: {{ dnn.ipv4Network }}
+{% if dnn.ipv6Network %}
+                  - cidr: {{ dnn.ipv6Network }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+        # The IP address for the N3 interface must match the IP bound in the UPF N3 interface.
+        # If UPF binds to a specific IP, set that same IP here.
+        # If UPF binds to all IPs (0.0.0.0), you can set any of the available UPF IPs here.
+        # Do NOT set 0.0.0.0 as this is not a valid routable address.
+        interfaces: # Interface list for this UPF
+          - interfaceType: N3 # the type of the interface (N3 or N9)
+            endpoints: # the IP address of this N3/N9 interface on this UPF
+              - {{ upf[0] }}
+            networkInstances: # Data Network Name (DNN)
+{% for slice in component.config.snssaiList %}
+{% for dnn in slice.dnns.values() %}
+              - {{ dnn.name }}
+{% endfor %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+    # the topology graph of userplane, A and B represent the two nodes of each link
+    links:
+{% if component.advanced_config and component.advanced_config.links %}
+{{ component.advanced_config.links | to_nice_yaml(indent=6) | indent(6, True) }}
+{% else %}
+{% for upf in component.config.upfs %}
+      - A: gNB
+        B: UPF{{ loop.index }}
+{% endfor %}
+{% endif %}
+
+  # retransmission timer for PDU session modification command
+  t3591:
+{% if component.advanced_config and component.advanced_config.t3591 %}
+{{ component.advanced_config.t3591 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true # true or false
+    expireTime: 16s # default is 6 seconds
+    maxRetryTimes: 3 # the max number of retransmission
+{% endif %}
+
+  # retransmission timer for PDU session release command
+  t3592:
+{% if component.advanced_config and component.advanced_config.t3592 %}
+{{ component.advanced_config.t3592 | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    enable: true # true or false
+    expireTime: 16s # default is 6 seconds
+    maxRetryTimes: 3 # the max number of retransmission
+{% endif %}
+
+  nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
+
+{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+  nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
+{% endif %}
+
+  urrPeriod: {{ component.advanced_config.urrPeriod | default(30) }} # default usage report period in seconds
+  urrThreshold: {{ component.advanced_config.urrThreshold | default(500000) }} # default usage report threshold in bytes
+  requestedUnit: {{ component.advanced_config.requestedUnit | default(1000) }}
+
+logger: # log output setting
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  enable: true # true or false
+  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  reportCaller: false # enable the caller report or not, value: true or false
+{% endif %}
+
+{% endif %}

@@ -7,7 +7,7 @@
 
 # Output: None
 ---
-- name: Add UE '{{ ue_name }}' to OAI AuthenticationSubscription table
+- name: Add UE '{{ ue_name }}' to OAI 'AuthenticationSubscription' table
   community.mysql.mysql_query:
     login_host: "{{ database_ip }}"
     login_user: test
@@ -45,7 +45,7 @@
         '{{ ue_config.supi }}'
       );
 
-- name: Add UE '{{ ue_name }}' to OAI SessionManagementSubscriptionData table
+- name: Add UE '{{ ue_name }}' to OAI 'SessionManagementSubscriptionData' table
   community.mysql.mysql_query:
     login_host: "{{ database_ip }}"
     login_user: test
@@ -59,35 +59,36 @@
         dnnConfigurations
       )
       VALUES (
+        {% set subscription = ue_config.subscriptions[item.1.subscriptionIndex] %}
         '{{ ue_config.supi }}',
         '{{ item.0.plmnId.plmnId }}',
         '{{ {
-          "sst": ue_config.subscriptions[item.1.subscriptionIndex].snssai.sst,
-          "sd": ue_config.subscriptions[item.1.subscriptionIndex].snssai.sd | upper if ue_config.subscriptions[item.1.subscriptionIndex].snssai.sd else "FFFFFF"
+          "sst": subscription.snssai.sst,
+          "sd": subscription.snssai.sd | upper if subscription.snssai.sd else "FFFFFF"
         } | to_json }}',
         '{{ {
-          ue_config.subscriptions[item.1.subscriptionIndex].dnn.name: {
+          subscription.dnn.name: {
             "pduSessionTypes": {
-              "defaultSessionType": ue_config.subscriptions[item.1.subscriptionIndex].dnn.pduSessionType | upper
+              "defaultSessionType": subscription.dnn.pduSessionType | upper
             },
             "sscModes": {
               "defaultSscMode": "SSC_MODE_1"
             },
             "5gQosProfile": {
-              "5qi": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].fiveQI,
+              "5qi": subscription.dnn.qosFlows[0].fiveQI,
               "arp": {
-                "priorityLevel": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.priorityLevel,
-                "preemptCap": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.preemptionCapability | upper,
-                "preemptVuln": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.preemptionVulnerability | upper
+                "priorityLevel": subscription.dnn.qosFlows[0].arp.priorityLevel,
+                "preemptCap": subscription.dnn.qosFlows[0].arp.preemptionCapability | upper,
+                "preemptVuln": subscription.dnn.qosFlows[0].arp.preemptionVulnerability | upper
               },
-              "priorityLevel": ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows[0].arp.priorityLevel
-            } if ue_config.subscriptions[item.1.subscriptionIndex].dnn.qosFlows else {},
+              "priorityLevel": subscription.dnn.qosFlows[0].arp.priorityLevel
+            } if subscription.dnn.qosFlows else {},
             "sessionAmbr": {
-              "uplink": item.1.sessionAmbr.uplink,
-              "downlink": item.1.sessionAmbr.downlink
+              "uplink": item.1.sessionAmbr.uplink ~ "bps",
+              "downlink": item.1.sessionAmbr.downlink ~ "bps"
             } if item.1.sessionAmbr else {
-              "uplink": ue_config.subscriptions[item.1.subscriptionIndex].dnn.aggregateMaximumBitRate.uplink,
-              "downlink": ue_config.subscriptions[item.1.subscriptionIndex].dnn.aggregateMaximumBitRate.downlink
+              "uplink": subscription.dnn.aggregateMaximumBitRate.uplink ~ "bps",
+              "downlink": subscription.dnn.aggregateMaximumBitRate.downlink ~ "bps"
             },
             "staticIpAddress": (
               [

@@ -36,43 +36,13 @@
             },
 
             "ambr": {
-            {% set uplink = ue_config.ueAmbr.uplink %}
-            {% set downlink = ue_config.ueAmbr.downlink %}
               "downlink": {
-              {% if downlink.endswith("Tbps") %}
-                "value": {{ downlink | regex_replace('Tbps$', '') }},
-                "unit": 4,
-              {% elif downlink.endswith("Gbps") %}
-                "value": {{ downlink | regex_replace('Gbps$', '') }},
-                "unit": 3,
-              {% elif downlink.endswith("Mbps") %}
-                "value": {{ downlink | regex_replace('Mbps$', '') }},
-                "unit": 2,
-              {% elif downlink.endswith("Kbps") %}
-                "value": {{ downlink | regex_replace('Kbps$', '') }},
-                "unit": 1,
-              {% else %}
-                "value": {{ downlink | regex_replace('bps$', '') }},
+                "value": {{ ue_config.ueAmbr.downlink }},
                 "unit": 0,
-              {% endif %}
               },
               "uplink": {
-              {% if uplink.endswith("Tbps") %}
-                "value": {{ uplink | regex_replace('Tbps$', '') }},
-                "unit": 4,
-              {% elif uplink.endswith("Gbps") %}
-                "value": {{ uplink | regex_replace('Gbps$', '') }},
-                "unit": 3,
-              {% elif uplink.endswith("Mbps") %}
-                "value": {{ uplink | regex_replace('Mbps$', '') }},
-                "unit": 2,
-              {% elif uplink.endswith("Kbps") %}
-                "value": {{ uplink | regex_replace('Kbps$', '') }},
-                "unit": 1,
-              {% else %}
-                "value": {{ uplink | regex_replace('bps$', '') }},
+                "value": {{ ue_config.ueAmbr.uplink }},
                 "unit": 0,
-              {% endif %}
               },
             },
 
@@ -122,40 +92,12 @@
                       {% set downlink = dnn.aggregateMaximumBitRate.downlink %}
                     {% endif %}
                       "downlink": {
-                      {% if downlink.endswith("Tbps") %}
-                        "value": {{ downlink | regex_replace('Tbps$', '') }},
-                        "unit": 4,
-                      {% elif downlink.endswith("Gbps") %}
-                        "value": {{ downlink | regex_replace('Gbps$', '') }},
-                        "unit": 3,
-                      {% elif downlink.endswith("Mbps") %}
-                        "value": {{ downlink | regex_replace('Mbps$', '') }},
-                        "unit": 2,
-                      {% elif downlink.endswith("Kbps") %}
-                        "value": {{ downlink | regex_replace('Kbps$', '') }},
-                        "unit": 1,
-                      {% else %}
-                        "value": {{ downlink | regex_replace('bps$', '') }},
+                        "value": {{ downlink }},
                         "unit": 0,
-                      {% endif %}
                       },
                       "uplink": {
-                      {% if uplink.endswith("Tbps") %}
-                        "value": {{ uplink | regex_replace('Tbps$', '') }},
-                        "unit": 4,
-                      {% elif uplink.endswith("Gbps") %}
-                        "value": {{ uplink | regex_replace('Gbps$', '') }},
-                        "unit": 3,
-                      {% elif uplink.endswith("Mbps") %}
-                        "value": {{ uplink | regex_replace('Mbps$', '') }},
-                        "unit": 2,
-                      {% elif uplink.endswith("Kbps") %}
-                        "value": {{ uplink | regex_replace('Kbps$', '') }},
-                        "unit": 1,
-                      {% else %}
-                        "value": {{ uplink | regex_replace('bps$', '') }},
+                        "value": {{ uplink }},
                         "unit": 0,
-                      {% endif %}
                       },
                     },
                   {% if pdu_session.ueIPv4Address or pdu_session.ueIPv6Address %}

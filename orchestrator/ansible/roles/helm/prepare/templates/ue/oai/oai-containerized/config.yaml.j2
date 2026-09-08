@@ -12,7 +12,7 @@ uicc0 = {
             dnn = "{{ component.config.subscriptions[pdu_session.subscriptionIndex].dnn.name }}";
             nssai_sst = {{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sst }};
 {% if component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd is not none %}
-            nssai_sd = 0x{{ "%06x" | format(component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd) }};
+            nssai_sd = 0x{{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd }};
 {% endif %}
             type = "{{ component.config.subscriptions[pdu_session.subscriptionIndex].dnn.pduSessionType | upper }}";
         }{% if not loop.last %},{% endif %}

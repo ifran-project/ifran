@@ -319,7 +319,7 @@ class RadioConfiguration(BlueprintBaseModel):
     ssbPbchBlockPowerDbm: int = Field(default=-25, ge=-60, le=50)
     """SSB/PBCH block transmit power in dBm (ssb-PBCH-BlockPower in TS 38.331)."""
 
-    prachConfigurationIndex: int = Field(default=0, ge=0, le=255)
+    prachConfigurationIndex: int = Field(default=98, ge=0, le=255)
     """PRACH Configuration Index (TS 38.211 Table 6.3.3.2-1)."""
 
     msg1FrequencyStartPrb: int = Field(default=0, ge=0, le=274)

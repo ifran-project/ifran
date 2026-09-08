@@ -1,4 +1,6 @@
-# Role to add a subscriber to Open5GS dataabse (mongodb)
+# Role to remove a subscriber from Open5GS dataabse (mongodb)
+
+# Reference: https://github.com/open5gs/open5gs/blob/d261bd43d859ec3d9c9f95a441dc295ce0814a7b/webui/server/models/subscriber.js
 
 # Input:
 # - ue_name: str

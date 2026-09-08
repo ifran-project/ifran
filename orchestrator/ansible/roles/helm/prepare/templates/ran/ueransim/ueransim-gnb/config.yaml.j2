@@ -23,7 +23,7 @@ slices:
 {% for slice in component.config.plmnList[0].snssaiList %}
   - sst: {{ slice.sst }}
 {% if slice.sd %}
-  sd: 0x{{ slice.sd | lower }}
+    sd: 0x{{ slice.sd | lower }}
 {% endif %}
 {% endfor %}
 

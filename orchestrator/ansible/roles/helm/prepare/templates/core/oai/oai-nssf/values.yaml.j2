@@ -228,8 +228,6 @@ annotations:
 {% endif %}
 
 nssf_slice_config: |
-    # Reference:- TS 29.531 R16.0.0., Section- 6.1.6 Data Model
-
   info:
     version: 1.4.0
     description: OAI-NSSF Release v1.4.0
@@ -237,17 +235,19 @@ nssf_slice_config: |
   configuration:
     nsiInfoList:
 {% for nsi_info in component.config.nsiInfoList %}
+{% for item in nsi_info.nsiInformationList %}
       - snssai:
           sst: {{ nsi_info.snssai.sst }}
 {% if nsi_info.snssai.sd %}
           sd: '{{ nsi_info.snssai.sd }}'
 {% endif %}
         nsiInformationList:
-          nrfId: {{ nsi_info.nsiInformationList.nrfId }}
-          nsiId: '{{ nsi_info.nsiInformationList.nsiId }}'
-{% if nsi_info.nsiInformationList.nrfNfMgtUri %}
-          nrfNfMgtUri: {{ nsi_info.nsiInformationList.nrfNfMgtUri }}
+          nrfId: {{ item.nrfId }}
+          nsiId: '{{ item.nsiId }}'
+{% if item.nrfNfMgtUri %}
+          nrfNfMgtUri: {{ item.nrfNfMgtUri }}
 {% endif %}
+{% endfor %}
 {% endfor %}
 
     taInfoList:
@@ -268,8 +268,8 @@ nssf_slice_config: |
         restrictedSnssaiList:
 {% for restricted in ta_info.restrictedSnssaiList %}
         - homePlmnId:
-            mcc: {{ restricted.homePlmnId.mcc }}
-            mnc: {{ restricted.homePlmnId.mnc }}
+            mcc: '{{ restricted.homePlmnId.mcc }}'
+            mnc: '{{ restricted.homePlmnId.mnc }}'
           sNssaiList:
 {% for snssai in restricted.snssaiList %}
           - sst: {{ snssai.sst }}

@@ -104,8 +104,8 @@ smf:
       dnn: "{{ dnn.name }}"
       qos_profile:
         5qi: {{ qos_flow.fiveQI }}
-        session_ambr_ul: "{{ dnn.aggregateMaximumBitRate.uplink }}"
-        session_ambr_dl: "{{ dnn.aggregateMaximumBitRate.downlink }}"
+        session_ambr_ul: "{{ dnn.aggregateMaximumBitRate.uplink }}bps"
+        session_ambr_dl: "{{ dnn.aggregateMaximumBitRate.downlink }}bps"
 {% endfor %}
 {% endfor %}
 {% endfor %}

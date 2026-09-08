@@ -8,7 +8,7 @@ logger:
 {% else %}
   file:
     path: /opt/open5gs/var/log/open5gs/nssf.log
-#  level: info   # fatal|error|warn|info(default)|debug|trace
+  level: debug   # fatal|error|warn|info(default)|debug|trace
 {% endif %}
 
 global:
@@ -51,12 +51,14 @@ nssf:
 {% endif %}
       nsi:
 {% for nsi_info in component.config.nsiInfoList %}
-        - uri: {{ nsi_info.nsiInformationList.nrfId }}
+{% for item in nsi_info.nsiInformationList %}
+        - uri: {{ item.nrfId }}
           s_nssai:
             sst: {{ nsi_info.snssai.sst }}
 {% if nsi_info.snssai.sd %}
             sd: {{ nsi_info.snssai.sd }}
 {% endif %}
+{% endfor %}
 {% endfor %}
 
 {% endif %}

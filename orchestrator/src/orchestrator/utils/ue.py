@@ -68,20 +68,20 @@ def resolve_gnb_reference(
 
     # handle gnb multus case
     if isinstance(ue_meta.config.gnb, tuple): # if the reference was resolved
-        if isinstance(ue_meta.config.gnb[1], list): # multus case
+        if isinstance(ue_meta.config.gnb[0], list): # multus case
             # get first ip from ips list of eth0 interface (pod interface)
             gnb_ip = next(
                 (
                     ip
-                    for item in ue_meta.config.gnb[1]
+                    for item in ue_meta.config.gnb[0]
                     if item.get("interface") == "eth0"
                     for ip in item.get("ips", [])
                 ),
                 None,
             )
-            ue_meta.config.gnb[1] = gnb_ip
+            ue_meta.config.gnb[0] = gnb_ip
 
-        if ue_meta.config.gnb[1] is None:
+        if ue_meta.config.gnb[0] is None:
             raise ReferenceNotFoundError(f"UE {ue_name!r} references gNB {gnb_reference!r} with unresolved network information.")
 
 

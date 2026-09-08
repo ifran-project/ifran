@@ -1,0 +1,57 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+info:
+{% if component.advanced_config and component.advanced_config.info %}
+{{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  version: 1.0.3
+  description: UDM initial local configuration
+{% endif %}
+
+configuration:
+  serviceNameList: # the SBI services provided by this UDM, refer to TS 29.503
+{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    - nudm-sdm # Nudm_SubscriberDataManagement service
+    - nudm-uecm # Nudm_UEContextManagement service
+    - nudm-ueau # Nudm_UEAuthenticationManagement service
+    - nudm-ee # Nudm_EventExposureManagement service
+    - nudm-pp # Nudm_ParameterProvisionDataManagement service
+{% endif %}
+
+  sbi: # Service-based interface information
+    scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
+    registerIPv4: {{ chart_name }} # IP used to register to NRF
+    bindingIPv4: {{ component.config.sbi.ipv4EndPointAddress }}  # IP used to bind the service
+    port: {{ component.config.sbi.port }} # port used to bind the service
+{% if component.config.sbi.tls.enabled %}
+    tls: # the local path of TLS key
+      pem: {{ component.config.sbi.tls.certificate }} # UDM TLS Certificate
+      key: {{ component.config.sbi.tls.privateKey }} # UDM TLS Private key
+{% endif %}
+
+  nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
+
+{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+  nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.SuciProfile %}
+  # test data set from TS33501-f60 Annex C.4
+  SuciProfile: # Home Network Public Key ID = slice index +1
+{{ component.advanced_config.SuciProfile | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
+
+logger: # log output setting
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  enable: true # true or false
+  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  reportCaller: false # enable the caller report or not, value: true or false
+{% endif %}
+
+{% endif %}

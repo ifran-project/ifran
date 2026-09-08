@@ -1,0 +1,59 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+version: {{ component.advanced_config.version | default("1.0.3") }}
+description: {{ component.advanced_config.description | default("UPF initial local configuration") }}
+
+# PFCP Configuration
+# The listen IP and nodeID of the N4 interface on this UPF (Can't set to 0.0.0.0)
+pfcp:
+  addr: {{ component.static_pod_ip }}   # IP addr for listening
+  nodeID: {{ component.static_pod_ip }} # External IP or FQDN can be reached
+  retransTimeout: {{ component.advanced_config.retransTimeout | default("1s") }} # retransmission timeout
+  maxRetrans: {{ component.advanced_config.maxRetrans | default(3) }} # the max number of retransmission
+
+# GTP-U Configuration
+gtpu:
+{% if component.advanced_config and component.advanced_config.gtpu %}
+{{ component.advanced_config.gtpu | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  forwarder: gtp5g
+  # The IP list of the N3/N9 interfaces on this UPF
+  # You can bind this to a specific IP from your available subnets (e.g., 10.10.0.1).
+  # Alternatively, you can bind it to all interfaces using 0.0.0.0.
+  # If you bind to a specific IP, ensure SMF uses the same IP in its N3 configuration.
+  # If you bind to all (0.0.0.0), SMF can use any of the available UPF IPs, but do not use 0.0.0.0 in SMF.
+  ifList:
+    - addr: {{ component.static_pod_ip }}
+      type: N3
+    - addr: {{ component.static_pod_ip }}
+      type: N9
+{% endif %}
+
+# Supported DNNs
+# List of Data Network Names (DNN) supported by this UPF.
+dnnList:
+{% for slice in component.config.snssaiList %}
+{% for dnn in slice.dnns.values() %}
+  - dnn: {{ dnn.name }} # Data Network Name
+    cidr: {{ dnn.ipv4Network }} # Classless Inter-Domain Routing for assigned IPv4 pool of UE
+{% if dnn.ipv6Network %}
+  - dnn: {{ dnn.name }} # Data Network Name
+    cidr: {{ dnn.ipv6Network }} # Classless Inter-Domain Routing for assigned IPv4 pool of UE
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+# Logging Configuration
+# Controls logging level and output for the UPF.
+logger:
+{% if component.advanced_config and component.advanced_config.logger %}
+{{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  enable: true # true or false
+  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  reportCaller: false # enable the caller report or not, value: true or false
+{% endif %}
+
+{% endif %}

@@ -1,0 +1,18 @@
+{{- if not .Values.global }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-configmap
+  labels:
+    app: {{ .Release.Name }}
+data:
+  {{ (.Files.Glob "config.yaml").AsConfig | indent 2 | trim }}
+
+  uerouting.yaml: |
+    info:
+      version: 1.0.7
+      description: Routing information for UE
+
+    ueRoutingInfo: {} # the list of UE routing information
+
+{{- end }}

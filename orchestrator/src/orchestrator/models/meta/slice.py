@@ -82,7 +82,7 @@ class PDUSessionType(StrEnum):
 
 class BitRate(BlueprintBaseModel):
     """
-    Bit Rate values.
+    Uplink and Downlink Bit Rate values.
 
     Represents uplink and downlink bit rates used in QoS profiles.
 
@@ -129,7 +129,6 @@ class BitRate(BlueprintBaseModel):
         return int(number * multiplier)
 
 
-    @field_serializer("uplink", "downlink")
     def serialize_bitrate(self, value: int) -> str:
         """Serialize integer bits per second to a human-readable bitrate."""
 
@@ -256,8 +255,8 @@ class SNSSAI(BlueprintBaseModel):
     sst: int = Field(default=1, ge=0, le=255)
     """Slice/Service Type (SST) (0 to 255)."""
 
-    sd: int | None = Field(default=None, ge=0, le=0xFFFFFF)
-    """Slice Differentiator (SD) in hex format (000001 to FFFFFF)."""
+    sd: int | None = Field(default=0xFFFFFF, ge=1, le=0xFFFFFF)
+    """Slice Differentiator (SD) in hex format (0x000001 to 0xFFFFFF)."""
 
 
     @field_validator("sd", mode="before")

@@ -38,6 +38,9 @@ CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
     CoreComponentType.PCF: frozenset({
         CoreComponentType.SMF,
     }),
+    CoreComponentType.UPF: frozenset({
+        CoreComponentType.SMF,
+    }),
     CoreComponentType.SMF: frozenset({
         CoreComponentType.AUSF,
     }),
@@ -47,8 +50,11 @@ CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
     CoreComponentType.AMF: frozenset({
         CoreComponentType.NRF,
     }),
-    CoreComponentType.UPF: frozenset({
-        CoreComponentType.SMF,
+    CoreComponentType.CHF: frozenset({
+        CoreComponentType.NRF,
+    }),
+    CoreComponentType.NEF: frozenset({
+        CoreComponentType.NRF,
     }),
 }
 
