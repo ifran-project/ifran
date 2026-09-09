@@ -49,6 +49,24 @@ class UEImplementation(StrEnum):
     """Software Radio Systems (SRS) UE."""
 
 
+class SSCMode(StrEnum):
+    """
+    Session and Service Continuity (SSC) mode.
+
+    3GPP References:
+        - 3GPP TS 23.501 clause 5.6.9
+    """
+
+    SSC_MODE_1 = auto()
+    """SSC mode 1: The core network maintains the established user plane connectivity."""
+
+    SSC_MODE_2 = auto()
+    """SSC mode 2: User plane connectivity is released before establishing new connectivity."""
+
+    SSC_MODE_3 = auto()
+    """SSC mode 3: Make-before-break; new connectivity is established before releasing old."""
+
+
 class AuthenticationMethod(StrEnum):
     """
     Authentication method used for 5GS access.
@@ -176,6 +194,9 @@ class UEPDUSession(BlueprintBaseModel):
     Index of the UE subscription data used by this PDU Session.
     The referenced subscription provides the S-NSSAI and DNN.
     """
+
+    sscMode: SSCMode = Field(default=SSCMode.SSC_MODE_1)
+    """SSC mode for this PDU Session."""
 
     ueIPv4Address: IPv4Address | None = Field(default=None)
     """UE IPv4 address allocated to this PDU Session."""

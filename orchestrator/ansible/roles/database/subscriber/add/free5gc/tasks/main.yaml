@@ -151,7 +151,7 @@
                   "allowedSessionTypes": ["{{ subscription.dnn.pduSessionType | upper }}"],
                 },
                 sscModes: {
-                  defaultSscMode: "SSC_MODE_1",
+                  defaultSscMode: "{{ item.1.sscMode | upper }}",
                   allowedSscModes: [
                     "SSC_MODE_1",
                     "SSC_MODE_2",

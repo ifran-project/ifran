@@ -72,7 +72,7 @@
               "defaultSessionType": subscription.dnn.pduSessionType | upper
             },
             "sscModes": {
-              "defaultSscMode": "SSC_MODE_1"
+              "defaultSscMode": "{{ item.1.sscMode | upper }}",
             },
             "5gQosProfile": {
               "5qi": subscription.dnn.qosFlows[0].fiveQI,
