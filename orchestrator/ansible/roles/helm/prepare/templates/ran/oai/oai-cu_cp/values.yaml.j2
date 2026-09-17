@@ -138,8 +138,8 @@ multus:
 # https://gitlab.eurecom.fr/oai/openairinterface5g/-/tree/develop/targets/PROJECTS/GENERIC-NR-5GC/CONF
 config:
   timeZone: {{ component.config.timeZone }}
-  useAdditionalOptions: {{ component.advanced_config.useAdditionalOptions | default("-E --rfsim --log_config.global_log_options level,nocolor,time") }}
-  gdbstack: {{ component.advanced_config.gdbstack | default(1) }}     # 1 to see gdb traces 
+  useAdditionalOptions: {{ component.advanced_config.useAdditionalOptions | default("-E --rfsim --log_config.global_log_options level,nocolor,time", true) }}
+  gdbstack: {{ component.advanced_config.gdbstack | default(1, true) }}     # 1 to see gdb traces 
 
 
 start:

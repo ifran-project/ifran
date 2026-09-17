@@ -38,13 +38,13 @@ configuration:
 {% endif %}
 
   mongodb: # the mongodb connected by this CHF
-    name: {{ component.advanced_config.mongodb_name | default("free5gc") }}                      # name of the mongodb
-    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin") }}     # a valid URL of the mongodb
+    name: {{ component.advanced_config.mongodb_name | default("free5gc", true) }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }}     # a valid URL of the mongodb
 
-  quotaValidityTime: {{ component.advanced_config.quotaValidityTime | default(10000) }}
-  volumeLimit: {{ component.advanced_config.volumeLimit | default(50000) }}
-  volumeLimitPDU: {{ component.advanced_config.volumeLimitPDU | default(10000) }}
-  volumeThresholdRate: {{ component.advanced_config.volumeThresholdRate | default(0.8) }}
+  quotaValidityTime: {{ component.advanced_config.quotaValidityTime | default(10000, true) }}
+  volumeLimit: {{ component.advanced_config.volumeLimit | default(50000, true) }}
+  volumeLimitPDU: {{ component.advanced_config.volumeLimitPDU | default(10000, true) }}
+  volumeThresholdRate: {{ component.advanced_config.volumeThresholdRate | default(0.8, true) }}
 
   cgf:
 {% if component.advanced_config and component.advanced_config.cgf %}

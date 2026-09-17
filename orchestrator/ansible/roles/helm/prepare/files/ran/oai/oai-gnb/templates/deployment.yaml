@@ -90,12 +90,12 @@ spec:
               mountPath: /tmp
           {{- end }}
           env:
-          - name: TZ
-            value: {{ .Values.config.timeZone | quote }}
-          - name: USE_ADDITIONAL_OPTIONS
-            value: {{ .Values.config.useAdditionalOptions | quote }}
-          - name: OAI_GDBSTACKS
-            value: "{{ .Values.config.gdbstack }}"
+            - name: TZ
+              value: {{ .Values.config.timeZone | quote }}
+            - name: USE_ADDITIONAL_OPTIONS
+              value: {{ .Values.config.useAdditionalOptions | quote }}
+            - name: OAI_GDBSTACKS
+              value: "{{ .Values.config.gdbstack }}"
           {{- if eq .Values.config.radio "b2xx" }}
             - name: USE_B2XX
               value: true

@@ -28,7 +28,7 @@ register_nf:
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ## general single_nssai configuration
 ## Defines YAML anchors, which are reused in the config file
@@ -88,9 +88,9 @@ amf:
     enable_nssf: no
     enable_smf_selection: yes
 {% endif %}
-  relative_capacity: {{ component.advanced_config.relative_capacity | default(30) }}
-  statistics_timer_interval: {{ component.advanced_config.statistics_timer_interval | default(20) }}  # in seconds
-  emergency_support: {{ component.advanced_config.emergency_support | default(false) | lower }}
+  relative_capacity: {{ component.advanced_config.relative_capacity | default(30, true) }}
+  statistics_timer_interval: {{ component.advanced_config.statistics_timer_interval | default(20, true) }}  # in seconds
+  emergency_support: {{ component.advanced_config.emergency_support | default(false, true) | lower }}
   served_guami_list:
 {% for guami in component.config.guamiList %}
     - mcc: {{ guami.plmnId.mcc }}

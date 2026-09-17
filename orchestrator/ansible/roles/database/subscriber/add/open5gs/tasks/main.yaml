@@ -52,7 +52,7 @@
               {
                 "sst": {{ subscription.snssai.sst }},
               {% if subscription.snssai.sd %}
-                "sd": "0x{{ subscription.snssai.sd | upper }}",
+                "sd": "0x{{ subscription.snssai.sd }}",
               {% endif %}
                 "default_indicator": {{ "true" if loop.first else "false" }},
                 "session": [

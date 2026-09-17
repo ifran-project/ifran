@@ -12,6 +12,7 @@ from orchestrator.models.meta.ran import (
     RAN,
     RANComponent,
     RANComponentType,
+    RANImplementation,
 )
 from orchestrator.models.meta.ru import RU, RUType
 from orchestrator.models.meta.slice import Slice
@@ -92,19 +93,6 @@ def resolve_split_ran_references(
             setattr(component_meta.config, ref_attribute, target_ip)
 
 
-def resolve_n2_n3(
-        component_meta: RANComponent,
-        component_k8s: K8SComponent,
-    ) -> None:
-    """Put assigned static IP address as N2 and N3 address."""
-
-    # NOTE if user goes with multus for n3, it's up to them to resolve this
-    if hasattr(component_meta.config, "n3"):
-        component_meta.config.n3.ipv4EndPointAddress = component_k8s.static_pod_ip
-    if hasattr(component_meta.config, "n2"):
-        component_meta.config.n2.ipv4EndPointAddress = component_k8s.static_pod_ip
-
-
 def reconcile_ran(
         ran_meta: RAN,
         ran_deployment: RANDeployment,
@@ -137,11 +125,6 @@ def reconcile_ran(
         ip_mapping[name] = component_k8s.static_pod_ip # build mapping between component names and ips
         used_ips.add(component_k8s.static_pod_ip)
 
-        resolve_n2_n3(
-            component_meta=component_meta,
-            component_k8s=component_k8s,
-        )
-
         reconcile_5g_component(
             component_name=name,
             component_meta=component_meta,
@@ -158,9 +141,22 @@ def reconcile_ran(
             rics=rics,
         )
 
-        # derive implementation-specific radio parameters for gnb and du after ru name reference resolution
         if component_meta.type in [RANComponentType.GNB, RANComponentType.DU]:
+            # derive implementation-specific radio parameters for gnb and du after ru name reference resolution
             derive_ran_radio_config(component_meta)
+
+            if component_meta.config.ru.type is RUType.SIMULATED and component_meta.implementation is RANImplementation.OCUDU:
+                # zmq in ocudu gnb/du needs ue ip
+                ue_ip = generate_random_ip(pod_network_cidr, used_ips)
+                used_ips.add(component_k8s.static_pod_ip)
+
+                if component_meta.advanced_config:
+                    component_meta.advanced_config.ue_ip = component_meta.advanced_config.ue_ip or ue_ip
+                else:
+                    # change advanced_config to add ue_ip but keep component-level validation
+                    component_meta.advanced_config = type(component_meta).model_validate(
+                        component_meta.model_dump(mode="json") | {"advanced_config": {"ue_ip": ue_ip}}
+                        )
 
     # resolve split ran references after static ips have been assigned
     resolve_split_ran_references(

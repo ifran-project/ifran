@@ -351,7 +351,8 @@ class Component5G(BlueprintBaseModel):
     config: dict[str, Any] = Field(default_factory=dict)
     """Component configuration."""
 
-    advanced_config: dict[str, Any] | None = Field(default=None)
+    # incoming advanced_config dictionary is validated into concrete model afterwards
+    advanced_config: Any | None = Field(default=None)
     """Component configuration specific to the implementation."""
 
     plain_text_config: str | None = Field(default=None)
@@ -362,7 +363,10 @@ class Component5G(BlueprintBaseModel):
         """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
 
         # advanced config can be none
-        if not isinstance(self.advanced_config, dict):
+        if self.advanced_config is None:
+            return self
+
+        if isinstance(self.advanced_config, BaseModel):
             return self
 
         advanced_config_model: BaseModel = mapping.get(self.implementation, {}).get(self.type)

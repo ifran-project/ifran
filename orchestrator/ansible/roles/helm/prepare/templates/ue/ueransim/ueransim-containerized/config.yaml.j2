@@ -9,13 +9,13 @@ mcc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mcc }}"
 # Mobile Network Code value of HPLMN (2 or 3 digits)
 mnc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mnc }}"
 # SUCI Protection Scheme : 0 for Null-scheme, 1 for Profile A and 2 for Profile B
-protectionScheme: {{ component.advanced_config.protectionScheme | default(0) }}
+protectionScheme: {{ component.advanced_config.protectionScheme | default(0, true) }}
 # Home Network Public Key for protecting with SUCI Profile A
-homeNetworkPublicKey: {{ component.advanced_config.homeNetworkPublicKey | default("5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650") }}
+homeNetworkPublicKey: {{ component.advanced_config.homeNetworkPublicKey | default("5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650", true) }}
 # Home Network Public Key ID for protecting with SUCI Profile A
-homeNetworkPublicKeyId: {{ component.advanced_config.homeNetworkPublicKeyId | default(1) }}
+homeNetworkPublicKeyId: {{ component.advanced_config.homeNetworkPublicKeyId | default(1, true) }}
 # Routing Indicator
-routingIndicator: {{ component.advanced_config.routingIndicator | default("0000") }}
+routingIndicator: {{ component.advanced_config.routingIndicator | default("0000", true) }}
 
 # Permanent subscription key
 key: "{{ component.config.authenticationData.k }}"
@@ -32,18 +32,18 @@ opType: "OPC"
 # Authentication Management Field (AMF) value
 amf: "{{ component.config.authenticationData.amf }}"
 # IMEI number of the device. It is used if no SUPI is provided
-imei: {{ component.config.pei | default("356938035643803", true) }}
+imei: {{ component.config.pei }}
 # IMEISV number of the device. It is used if no SUPI and IMEI is provided
-imeiSv: {{ component.config.pei | default("4370816125816151", true) }}
+imeiSv: {{ component.advanced_config.imeiSv | default("4370816125816151", true) }}
 
 # Network mask used for the UE's TUN interface to define the subnet size  
-tunNetmask: {{ component.advanced_config.tunNetmask | default("255.255.255.0") }}
+tunNetmask: {{ component.advanced_config.tunNetmask | default("255.255.255.0", true) }}
 
 # Create the UE TUN interface inside a dedicated Linux network namespace.
-useNamespace: {{ component.advanced_config.useNamespace | lower | default("false") }}
+useNamespace: {{ component.advanced_config.useNamespace | default("false", true) | lower }}
 
 # Optional prefix used when deriving the namespace name.
-nsNamePrefix: {{ component.advanced_config.nsNamePrefix | default("ueransim") }}
+nsNamePrefix: {{ component.advanced_config.nsNamePrefix | default("ueransim", true) }}
 
 # List of gNB IP addresses for Radio Link Simulation
 gnbSearchList:
@@ -83,7 +83,7 @@ sessions:
     slice:
       sst: {{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sst }}
 {% if component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd %}
-      sd: 0x{{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd | lower }}
+      sd: 0x{{ component.config.subscriptions[pdu_session.subscriptionIndex].snssai.sd }}
 {% endif %}
 {% endfor %}
 
@@ -92,7 +92,7 @@ configured-nssai:
 {% for subscription in component.config.subscriptions %}
   - sst: {{ subscription.snssai.sst }}
 {% if subscription.snssai.sd %}
-    sd: 0x{{ subscription.snssai.sd | lower }}
+    sd: 0x{{ subscription.snssai.sd }}
 {% endif %}
 {% endfor %}
 
@@ -100,7 +100,7 @@ configured-nssai:
 default-nssai:
   - sst: {{ component.config.subscriptions[0].snssai.sst }}
 {% if component.config.subscriptions[0].snssai.sd %}
-    sd: 0x{{ component.config.subscriptions[0].snssai.sd | lower }}
+    sd: 0x{{ component.config.subscriptions[0].snssai.sd }}
 {% endif %}
 
 # Supported integrity algorithms by this UE

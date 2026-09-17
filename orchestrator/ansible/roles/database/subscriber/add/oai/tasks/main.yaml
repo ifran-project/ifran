@@ -64,7 +64,7 @@
         '{{ item.0.plmnId.plmnId }}',
         '{{ {
           "sst": subscription.snssai.sst,
-          "sd": subscription.snssai.sd | upper if subscription.snssai.sd else "FFFFFF"
+          "sd": subscription.snssai.sd if subscription.snssai.sd else "FFFFFF"
         } | to_json }}',
         '{{ {
           subscription.dnn.name: {

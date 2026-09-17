@@ -3,8 +3,8 @@
 {%- else %}
 
 gnb_id: {{ component.config.gnbId }}
-gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32) }}
-dryrun: {{ component.advanced_config.dryrun | lower | default("false") }}
+gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32, true) }}
+dryrun: {{ component.advanced_config.dryrun | default("false", true) | lower }}
 
 cu_cp:
 {% if component.advanced_config and component.advanced_config.cu_cp %}

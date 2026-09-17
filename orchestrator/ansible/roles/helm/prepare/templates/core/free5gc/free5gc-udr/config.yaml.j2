@@ -22,11 +22,11 @@ configuration:
       key: {{ component.config.sbi.tls.privateKey }} # UDM TLS Private key
 {% endif %}
 
-  dbConnectorType: {{ component.advanced_config.mongodb_name | default("mongodb") }}
+  dbConnectorType: {{ component.advanced_config.mongodb_name | default("mongodb", true) }}
 
   mongodb:
-    name: {{ component.advanced_config.mongodb_name | default("free5gc") }}                      # name of the mongodb
-    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin") }}     # a valid URL of the mongodb
+    name: {{ component.advanced_config.mongodb_name | default("free5gc", true) }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }}     # a valid URL of the mongodb
 
   nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
 

@@ -19,7 +19,7 @@ register_nf:
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ############## SBI Interfaces
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
@@ -52,7 +52,7 @@ database:
 pcf:
   pcf_name: {{ chart_name }}
 
-  enable_policy_provisioning_api: {{ component.advanced_config.enable_policy_provisioning_api | default("yes") }} # Use db instead of yaml, enables dynamic pcc rule creation via API
+  enable_policy_provisioning_api: {{ component.advanced_config.enable_policy_provisioning_api | default("yes", true) }} # Use db instead of yaml, enables dynamic pcc rule creation via API
 
   local_policy:
 {% if component.advanced_config and component.advanced_config.local_policy %}

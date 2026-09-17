@@ -29,7 +29,7 @@ register_nf:
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ## general single_nssai configuration
 ## Defines YAML anchors, which are reused in the config file
@@ -60,7 +60,7 @@ nfs:
 
 ############## NF-specific configuration
 smf:
-  ue_mtu: {{ component.advanced_config.ue_mtu | default(1500) }}
+  ue_mtu: {{ component.advanced_config.ue_mtu | default(1500, true) }}
   support_features:
 {% if component.advanced_config and component.advanced_config.support_features %}
 {{ component.advanced_config.support_features | to_nice_yaml(indent=4) | indent(4, True) }}

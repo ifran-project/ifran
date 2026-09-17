@@ -41,9 +41,9 @@ configuration:
       mnc: '{{ plmn.mnc }}'  # Mobile Network Code (2 or 3 digits string, digit: 0~9)
 {% endfor %}
 
-  groupId: {{ component.advanced_config.groupId | default("ausfGroup001") }} # ID for the group of the AUSF
+  groupId: {{ component.advanced_config.groupId | default("ausfGroup001", true) }} # ID for the group of the AUSF
 
-  eapAkaSupiImsiPrefix: {{ component.advanced_config.eapAkaSupiImsiPrefix | lower | default("false") }} # including "imsi-" prefix or not when using the SUPI to do EAP-AKA' authentication
+  eapAkaSupiImsiPrefix: {{ component.advanced_config.eapAkaSupiImsiPrefix | default("false", true) | lower }} # including "imsi-" prefix or not when using the SUPI to do EAP-AKA' authentication
 
 logger: # log output setting
 {% if component.advanced_config and component.advanced_config.logger %}

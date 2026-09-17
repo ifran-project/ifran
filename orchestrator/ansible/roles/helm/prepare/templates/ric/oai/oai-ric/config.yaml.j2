@@ -6,7 +6,7 @@
 NEAR_RIC_IP = {{ component.config.e2.ipv4EndPointAddress }}
 
 [XAPP]
-DB_DIR = {{ component.advanced_config.DB_DIR | default("/tmp/") }}
-DB_NAME = {{ component.advanced_config.DB_NAME | default("xapp_db") }}
+DB_DIR = {{ component.advanced_config.DB_DIR | default("/tmp/", true) }}
+DB_NAME = {{ component.advanced_config.DB_NAME | default("xapp_db", true) }}
 
 {% endif %}

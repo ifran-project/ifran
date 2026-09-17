@@ -78,6 +78,10 @@ spec:
           volumeMounts:
             - name: configuration
               mountPath: /etc/config
+          {{- if eq .Values.config.radio "b2xx" }}
+            - name: radio
+              mountPath: /dev/bus/usb/
+          {{- end }}
             - name: host-mount
               mountPath: /mnt/
           {{- if .Values.resources.define }}
@@ -155,3 +159,8 @@ spec:
           hostPath:
             path: /mnt/
             type: Directory
+        {{- if eq .Values.config.radio "b2xx" }}
+        - name: radio
+          hostPath:
+            path: /dev/bus/usb/
+        {{- end }}

@@ -3,14 +3,13 @@
 from pydantic import IPvAnyAddress
 
 from orchestrator.models.deployment.provisioning import ProvisionableRU
-from orchestrator.models.deployment.ue import UEDeployment
-from orchestrator.models.meta.ran import DUComponent, GNBComponent
-from orchestrator.models.meta.ru import RU
+from orchestrator.models.deployment.ue import K8SComponent, UEDeployment
+from orchestrator.models.meta.ran import DUComponent, GNBComponent, RANImplementation
+from orchestrator.models.meta.ru import RU, RUType
+from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEType
 from orchestrator.utils.common import ReferenceNotFoundError
 from orchestrator.utils.common_5g import (
-    K8SComponent,
-    Slice,
     reconcile_5g_component,
     resolve_component_reference,
     resolve_ru_reference,
@@ -30,7 +29,6 @@ def resolve_gnb_reference(
         gnb_components_k8s: dict[str, K8SComponent] | None = None,
     ) -> None:
     """Resolve gNB name reference in a containerized UE."""
-
 
     if gnb_components_k8s is None:
         # if the gnb hasn't been installed yet
@@ -96,8 +94,9 @@ def reconcile_ues(
     ) -> None:
     """Ensure UEs are ready to be managed by resolving their configs."""
 
-    for name, ue_meta in ues_meta.items():
+    used_ips = set() # set used to ensure that only one ue per ocudu zmq gnb/du
 
+    for name, ue_meta in ues_meta.items():
         if ue_meta.type is UEType.CONTAINERIZED:
             resolve_gnb_reference(
                 ue_name=name,
@@ -122,3 +121,23 @@ def reconcile_ues(
 
             # derive implementation-specific radio parameters for ue after ru name reference resolution
             derive_ue_radio_config(ue_meta)
+
+            if ue_meta.config.ru.type is RUType.SIMULATED and ue_meta.config.gnb[1].implementation is RANImplementation.OCUDU:
+                # zmq in ocudu gnb/du needs both gnb ip and ue ip
+                # the gnb/du should have generated a ue_ip in their advanced_config by this point (ran reconciled)
+                adv_config = ue_meta.config.gnb[1].advanced_config
+
+                if not ues_k8s[name].static_pod_ip and (not adv_config or not adv_config.ue_ip):
+                    raise ValueError(f"UE {name} needs a static pod IP for ZMQ simulated RF with OCUDU RAN, but none was provided.")
+
+                ue_ip = ues_k8s[name].static_pod_ip or adv_config.ue_ip
+
+                if ue_ip in used_ips:
+                    raise ValueError(
+                        f"UE {name} can't get static pod IP {ue_ip} for ZMQ simulated RF with OCUDU RAN; "
+                        "another UE is already using it and only one UE is alloweed per OCUDU ZMQ GNB/DU."
+                        )
+
+                ues_k8s[name].static_pod_ip = ue_ip
+
+                used_ips.add(ues_k8s[name].static_pod_ip)

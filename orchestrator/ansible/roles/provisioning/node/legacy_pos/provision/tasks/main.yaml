@@ -21,7 +21,7 @@
     ansible_host: "{{ central_pos_ssh_info.hostname }}"
     ansible_user: "{{ central_pos_ssh_info.user }}"
     ansible_port: "{{ central_pos_ssh_info.port }}"
-    ansible_ssh_common_args: "{{ central_pos_ssh_info.common_args | default(omit) }}"
+    ansible_ssh_common_args: "{{ central_pos_ssh_info.common_args | default(omit, true) }}"
 
 - name: Read public key from localhost for '{{ resource_name }}'
   ansible.builtin.slurp:

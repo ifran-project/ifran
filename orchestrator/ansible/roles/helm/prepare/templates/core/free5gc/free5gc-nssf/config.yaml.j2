@@ -94,7 +94,7 @@ configuration:
 {% for snssai in amf.supportedNssaiAvailabilityData.snssaiList %}
             - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if snssai.sd %}
-              sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+              sd: '{{ snssai.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -115,7 +115,7 @@ configuration:
 {% for snssai in amf.supportedNssaiAvailabilityData.snssaiList %}
             - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if snssai.sd %}
-              sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+              sd: '{{ snssai.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -133,7 +133,7 @@ configuration:
 {% for snssai in ta_info.snssaiList %}
         - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if snssai.sd %}
-          sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+          sd: '{{ snssai.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
 {% endif %}
 {% endfor %}
 {% if ta_info.restrictedSnssaiList %}
@@ -146,7 +146,7 @@ configuration:
 {% for snssai in restricted.snssaiList %}
             - sst: {{ snssai.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if snssai.sd %}
-              sd: '{{ snssai.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+              sd: '{{ snssai.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
 {% endif %}
 {% endfor %}
 {% endfor %}

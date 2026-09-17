@@ -17,9 +17,14 @@ spec:
       labels:
         {{- include "oai-flexric.selectorLabels" . | nindent 8 }}
         app: {{ .Release.Name }}
+    {{- if or .Values.staticPodIp (and .Values.multus.enabled .Values.multus.interfaces) }}
       annotations:
-    {{- if and .Values.multus.enabled .Values.multus.interfaces }}
-      annotations:
+
+        {{- if .Values.staticPodIp }}
+        cni.projectcalico.org/ipAddrs: '["{{ .Values.staticPodIp }}"]'
+        {{- end }}
+
+        {{- if and .Values.multus.enabled .Values.multus.interfaces }}
         k8s.v1.cni.cncf.io/networks: |-
           [
           {{- $first := true }}
@@ -43,6 +48,7 @@ spec:
           {{- end }}
           {{- end }}
           ]
+        {{- end }}
     {{- end }}
     spec:
       securityContext:

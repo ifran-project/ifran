@@ -31,8 +31,8 @@ configuration:
 {% endif %}
 
   mongodb:
-    name: {{ component.advanced_config.mongodb_name | default("free5gc") }}                      # name of the mongodb
-    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin") }}     # a valid URL of the mongodb
+    name: {{ component.advanced_config.mongodb_name | default("free5gc", true) }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }}     # a valid URL of the mongodb
 
   metrics: # BSF metrics configuration
 {% if component.advanced_config and component.advanced_config.metrics %}

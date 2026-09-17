@@ -19,7 +19,7 @@ register_nf:
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ############## SBI Interfaces
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
@@ -36,12 +36,12 @@ nfs:
 
 ############### LMF Configuration 
 lmf:
-  http_threads_count: {{ component.advanced_config.http_threads_count | default(8) }}
-  gnb_id_bits_count: {{ component.advanced_config.gnb_id_bits_count | default(28) }}
-  num_gnb: {{ component.advanced_config.num_gnb | default(1) }}
-  trp_info_wait_ms: {{ component.advanced_config.trp_info_wait_ms | default(10000) }}
-  positioning_wait_ms: {{ component.advanced_config.positioning_wait_ms | default(10000) }}
-  measurement_wait_ms: {{ component.advanced_config.measurement_wait_ms | default(10000) }}
+  http_threads_count: {{ component.advanced_config.http_threads_count | default(8, true) }}
+  gnb_id_bits_count: {{ component.advanced_config.gnb_id_bits_count | default(28, true) }}
+  num_gnb: {{ component.advanced_config.num_gnb | default(1, true) }}
+  trp_info_wait_ms: {{ component.advanced_config.trp_info_wait_ms | default(10000, true) }}
+  positioning_wait_ms: {{ component.advanced_config.positioning_wait_ms | default(10000, true) }}
+  measurement_wait_ms: {{ component.advanced_config.measurement_wait_ms | default(10000, true) }}
   support_features:
 {% if component.advanced_config and component.advanced_config.support_features %}
 {{ component.advanced_config.support_features | to_nice_yaml(indent=4) | indent(4, True) }}

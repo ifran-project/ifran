@@ -3,8 +3,8 @@
 {%- else %}
 
 gnb_id: {{ component.config.gnbId }}
-gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32) }}
-dryrun: {{ component.advanced_config.dryrun | lower | default("false") }}
+gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32, true) }}
+dryrun: {{ component.advanced_config.dryrun | default("false", true) | lower }}
 
 f1ap:
 {% if component.advanced_config and component.advanced_config.f1ap %}
@@ -111,7 +111,7 @@ ru_sdr:
 {% if component.advanced_config and component.advanced_config.ru_sdr %}
 {{ component.advanced_config.ru_sdr | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
-  srate: 61.44 # RF sample rate might need to be adjusted according to selected bandwidth.
+  srate: {{ component.advanced_config.srate | default(61.44, true) }} # RF sample rate might need to be adjusted according to selected bandwidth.
 {% if component.derived_radio_config.device_driver %}
   device_driver: {{ component.derived_radio_config.device_driver }}
 {% endif %}
@@ -119,13 +119,11 @@ ru_sdr:
   device_args: "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
   clock: {{ component.config.ru.clockSource }}
   sync: {{ component.config.ru.timeSource }}
+{% elif component.config.ru.type == "simulated" %}
+  device_args: tx_port=tcp://{{ component.static_pod_ip }}:2000,rx_port=tcp://{{ component.advanced_config.ue_ip }}:2001,base_srate={{ component.advanced_config.base_srate | default("61.44e6", true) }}
+{% endif %}
   tx_gain: {{ component.config.ru.txGainDB }}
   rx_gain: {{ component.config.ru.rxGainDB }}
-{% elif component.config.ru.type == "simulated" %}
-  device_args: tx_port=tcp://0.0.0.0:2000,rx_port=tcp://0.0.0.0:2001,base_srate=61.44e6
-  tx_gain: -12 # backoff from full scale, required by OAI fixed point FFT (https://docs.ocudu.org/tutorials/oaiue/#gnb)
-  rx_gain: 0
-{% endif %}
 {% endif %}
 
 

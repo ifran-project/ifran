@@ -77,6 +77,6 @@
               "port": bi_node.ssh_logins[0].jump_proxy.port,
               "user": bi_node.ssh_logins[0].jump_proxy.username
             }
-            if (bi_node.ssh_logins[0].jump_proxy | default(none)) is not none
+            if (bi_node.ssh_logins[0].jump_proxy | default(none, true)) is not none
             else none
           }}

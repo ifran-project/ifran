@@ -136,12 +136,12 @@ multus:
 config:
   timeZone: {{ component.config.timeZone }}
   useAdditionalOptions: {{ component.advanced_config.useAdditionalOptions | default(component.derived_radio_config.additional_flags, true) }}
-  gdbstack: {{ component.advanced_config.gdbstack | default(1) }}     # 1 to see gdb traces 
+  gdbstack: {{ component.advanced_config.gdbstack | default(1, true) }}     # 1 to see gdb traces 
   radio: {{ component.derived_radio_config.radio }}  # Options: rfsim, vrtsim, b2xx, n3xx, x3xx
 
 
 start:
-  nrue: {{ component.start | lower }}      # If false → NF container sleeps (for manual debugging)
+  ue: {{ component.start | lower }}      # If false → NF container sleeps (for manual debugging)
   tcpdump: {{ component.include_tcp_dump_container | lower }}  # Enable tcpdump container inside pod
 
 includeTcpDumpContainer: {{ component.include_tcp_dump_container | lower}}  # If true, add tcpdump sidecar for debugging

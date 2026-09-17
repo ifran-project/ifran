@@ -99,7 +99,7 @@
                 {
                   "sst": {{ subscription.snssai.sst }},
                 {% if subscription.snssai.sd %}
-                  "sd": "{{ subscription.snssai.sd | lower }}",
+                  "sd": "{{ subscription.snssai.sd }}",
                 {% endif %}
                 },
               {% endfor %}
@@ -130,7 +130,7 @@
           "singleNssai": {
             "sst": {{ subscription.snssai.sst }},
           {% if subscription.snssai.sd %}
-            "sd": "{{ subscription.snssai.sd | lower }}",
+            "sd": "{{ subscription.snssai.sd }}",
           {% endif %}
           },
         },
@@ -141,7 +141,7 @@
             "singleNssai": {
               "sst": {{ subscription.snssai.sst }},
             {% if subscription.snssai.sd %}
-              "sd": "{{ subscription.snssai.sd | lower }}",
+              "sd": "{{ subscription.snssai.sd }}",
             {% endif %}
             },
             "dnnConfigurations": {
@@ -210,7 +210,7 @@
             "servingPlmnId": "{{ item.plmnId.plmnId }}",
             "subscribedSnssaiInfos": {
             {% for subscription in ue_config.subscriptions %}
-              {% set snssai = '%02d' | format(subscription.snssai.sst) ~ subscription.snssai.sd | lower if subscription.snssai.sd else '%02d' | format(subscription.snssai.sst) %}
+              {% set snssai = '%02d' | format(subscription.snssai.sst) ~ subscription.snssai.sd if subscription.snssai.sd else '%02d' | format(subscription.snssai.sst) %}
               "{{ snssai }}": {
                 "dnnInfos": [{ "dnn": "{{ subscription.dnn.name }}" } ],
               },
@@ -258,12 +258,12 @@
             "ueId": "imsi-{{ ue_config.supi }}",
             "smPolicySnssaiData": {
             {% for subscription in ue_config.subscriptions %}
-              {% set snssai = '%02d' | format(subscription.snssai.sst) ~ subscription.snssai.sd | lower if subscription.snssai.sd else '%02d' | format(subscription.snssai.sst) %}
+              {% set snssai = '%02d' | format(subscription.snssai.sst) ~ subscription.snssai.sd if subscription.snssai.sd else '%02d' | format(subscription.snssai.sst) %}
               "{{ snssai }}": {
                 "snssai": {
                   "sst": {{ subscription.snssai.sst }},
                 {% if subscription.snssai.sd %}
-                  "sd": "{{ subscription.snssai.sd | lower }}",
+                  "sd": "{{ subscription.snssai.sd }}",
                 {% endif %}
                 },
                 "smPolicyDnnData": { "{{ subscription.dnn.name }}": { "dnn": "{{ subscription.dnn.name }}" } }

@@ -39,7 +39,7 @@
 
 - name: Set '{{ chart_name }}' Multus network information if Multus was used
   ansible.builtin.set_fact:
-    network_info: "{{ pod_info.resources[0].metadata.annotations['k8s.v1.cni.cncf.io/network-status'] | default('[]') | from_json }}"
+    network_info: "{{ pod_info.resources[0].metadata.annotations['k8s.v1.cni.cncf.io/network-status'] | default('[]', true) | from_json }}"
   when: output_with_multus
 
 - name: Return '{{ chart_name }}' network information

@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-configmap
+  labels:
+    app: {{ .Release.Name }}
+    {{- include "srsue-ue.labels" . | nindent 4 }}
+data:
+  # even tough the file is a .conf, we put it in config.yaml for compatibility with all the other charts
+  ue.conf: |-
+{{ .Files.Get "config.yaml" | nindent 4 }}

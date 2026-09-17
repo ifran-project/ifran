@@ -229,6 +229,61 @@ FDD_BAND_ARFCN_OFFSETS: dict[int, int] = {
 }
 
 
+# 3GPP TS 38.104, Table 5.2-1
+# Default DL NR-ARFCN = NR-ARFCN corresponding to the lower edge of the NR operating band's downlink frequency range.
+DEFAULT_DOWNLINK_ARFCN: dict[int, int] = {
+    1: 422000,    # 2110 MHz
+    2: 386000,    # 1930 MHz
+    3: 361000,    # 1805 MHz
+    5: 173800,    # 869 MHz
+    7: 524000,    # 2620 MHz
+    8: 185000,    # 925 MHz
+    12: 145800,   # 729 MHz
+    13: 149200,   # 746 MHz
+    14: 151600,   # 758 MHz
+    18: 172000,   # 860 MHz
+    20: 158200,   # 791 MHz
+    24: 305000,   # 1525 MHz
+    25: 386000,   # 1930 MHz
+    26: 171800,   # 859 MHz
+    28: 151600,   # 758 MHz
+    30: 470000,   # 2350 MHz
+    31: 92500,    # 462.5 MHz
+    38: 514000,   # 2570 MHz
+    40: 460000,   # 2300 MHz
+    41: 499200,   # 2496 MHz
+    46: 743334,   # 5150 MHz
+    47: 743334,   # 5150 MHz
+    48: 636667,   # 3550 MHz
+    50: 286400,   # 1432 MHz
+    51: 285400,   # 1427 MHz
+    53: 99100,    # 248.5 MHz
+    65: 422000,   # 2110 MHz
+    66: 422000,   # 2110 MHz
+    70: 399000,   # 1995 MHz
+    71: 123400,   # 617 MHz
+    74: 295400,   # 1475 MHz
+    77: 620000,   # 3300 MHz
+    78: 620000,   # 3300 MHz
+    79: 693334,   # 4400 MHz
+    85: 145600,   # 728 MHz
+    90: 499200,   # 2496 MHz
+    91: 285400,   # 1427 MHz
+    92: 286400,   # 1432 MHz
+    93: 285400,   # 1427 MHz
+    94: 286400,   # 1432 MHz
+    95: 402000,   # 2010 MHz
+    96: 1020000,  # 5925 MHz
+    97: 192000,   # band-specific/SUL
+    98: 192000,   # band-specific/SUL
+    99: 192000,   # band-specific/SUL
+    100: 185000,  # 925 MHz
+    101: 743334,   # 5150 MHz
+    102: 795000,   # 6650 MHz
+    104: 995000,   # 1995 MHz
+}
+
+
 class SCTPConfiguration(BlueprintBaseModel):
     """
     Stream Control Transmission Protocol (SCTP) configuration.
@@ -292,8 +347,11 @@ class RadioConfiguration(BlueprintBaseModel):
     duplexMode: DuplexMode | None = Field(default=None)
     """NR Duplex Mode. If None, it will be chosen from the NR band (TDD takes precedence)."""
 
-    downlinkArfcn: int = Field(default=640000, ge=0, le=3279165)
-    """NR Downlink Absolute Radio Frequency Channel Number (NR-ARFCN). Max bound per TS 38.104."""
+    downlinkArfcn: int | None = Field(default=None, ge=0, le=3279165)
+    """
+    NR Downlink Absolute Radio Frequency Channel Number (NR-ARFCN). Max bound per TS 38.104.
+    If None, it defaults to the lower edge of the configured NR band's downlink frequency range per TS 38.104.
+    """
 
     uplinkArfcn: int | None = Field(default=None, ge=0, le=3279165)
     """NR Uplink NR-ARFCN. Required for FDD per TS 38.104. If None, it will calculated automatically."""
@@ -353,12 +411,29 @@ class RadioConfiguration(BlueprintBaseModel):
                 raise ValueError("'tddConfiguration' must be 'None' when duplex mode is FDD.")
 
 
-    def _validate_arfcn_for_duplex_mode(self) -> None:
-        """Enforce 3GPP duplex paired/unpaired ARFCN constraints."""
+    def _validate_scs_for_frequency_range(self) -> None:
+        """Validate if SCS is valid for the selected FR."""
+
+        valid_scs = FR1_SCS if self.frType is FrequencyRange.FR1 else FR2_SCS
+
+        if self.subcarrierSpacingKhz not in valid_scs:
+            raise ValueError(f"{self.subcarrierSpacingKhz.value}kHz SCS is not valid for {self.frType.value.upper()!r}.")
+
+
+    def _validate_arfcn(self) -> None:
+        """Ensure the donwlink and uplink ARFCNs are set according to the given NR Band."""
+
+        if self.downlinkArfcn is None:
+            # derive downlinkArfcn automatically from nr band
+            downlinkArfcn = DEFAULT_DOWNLINK_ARFCN.get(self.nrBand)
+            if downlinkArfcn is None:
+                raise ValueError(f"Cannot derive 'downlinkArfcn' from NR band 'n{self.nrBand}'.")
+            else:
+                self.downlinkArfcn = downlinkArfcn
 
         if self.duplexMode is DuplexMode.FDD:
             if self.uplinkArfcn is None:
-                # calculate automatically from available 3GPP fdd band offsets
+                # calculate uplinkArfcn automatically from available 3GPP fdd band offsets
                 offset = FDD_BAND_ARFCN_OFFSETS.get(self.nrBand)
                 if offset is None:
                     raise ValueError(f"Cannot calculate 'uplinkArfcn' for FDD NR band 'n{self.nrBand}'.")
@@ -373,15 +448,6 @@ class RadioConfiguration(BlueprintBaseModel):
                 self.uplinkArfcn = self.downlinkArfcn
 
 
-    def _validate_scs_for_frequency_range(self) -> None:
-        """Validate if SCS is valid for the selected FR."""
-
-        valid_scs = FR1_SCS if self.frType is FrequencyRange.FR1 else FR2_SCS
-
-        if self.subcarrierSpacingKhz not in valid_scs:
-            raise ValueError(f"{self.subcarrierSpacingKhz.value}kHz SCS is not valid for {self.frType.value.upper()!r}.")
-
-
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:
         """Validate provided radio configuration."""
@@ -389,6 +455,7 @@ class RadioConfiguration(BlueprintBaseModel):
         self._derive_duplex_mode()
         self._validate_tdd()
         self._validate_scs_for_frequency_range()
+        self._validate_arfcn()
         return self
 
 
@@ -687,6 +754,9 @@ class OCUDUAdvancedCommonGNBConfig(GenericOCUDUAdvancedRANConfig):
    custom_freq_bands: dict[str, Any] | None = Field(default=None)
    ru_ofh: dict[str, Any] | None = Field(default=None)
    ru_sdr: dict[str, Any] | None = Field(default=None)
+   ue_ip: IPvAnyAddress | None = Field(default=None)
+   srate: float | None = Field(default=None)
+   base_srate: str | float | None = Field(default=None)
    ru_dummy: dict[str, Any] | None = Field(default=None)
    hal: dict[str, Any] | None = Field(default=None)
    buffer_pool: dict[str, Any] | None = Field(default=None)
@@ -744,9 +814,6 @@ class GenericRANComponent(Component5G):
 
     config: RANComponentConfig = Field(default_factory=RANComponentConfig)
     """Core component configuration."""
-
-    advanced_config: dict[str, Any] | None = Field(default=None)
-    """RAN component configuration specific to the implementation."""
 
 
     @model_validator(mode="after")

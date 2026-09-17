@@ -29,7 +29,7 @@ upf:
         scheme: https
         private_key: {{ component.config.sbi.tls.privateKey }}
         cert: {{ component.config.sbi.tls.certificate }}
-        sslkeylogfile: {{ component.advanced_config.sslkeylogfile | default("/var/log/open5gs/tls/amf-server-sslkeylog.log") }}
+        sslkeylogfile: {{ component.advanced_config.sslkeylogfile | default("/var/log/open5gs/tls/amf-server-sslkeylog.log", true) }}
 {% if component.advanced_config and component.advanced_config.tls_client %}
       client:
 {{ component.advanced_config.tls_client | to_nice_yaml(indent=8) | indent(8, True) }}

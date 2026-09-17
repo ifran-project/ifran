@@ -4,7 +4,7 @@
 Active_gNBs:
   - {{ component_name }}
 # Asn1_verbosity, choice in: none, info, annoying
-Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none") }}
+Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none", true) }}
 gNBs:
   ##### Identification parameters:
   - gNB_ID: 0x{{ "%x" | format(component.config.gnbId) }}
@@ -22,7 +22,7 @@ gNBs:
         snssaiList:
           - sst: {{ slice.sst }}
 {% if slice.sd %}
-            sd: 0x{{ slice.sd | lower }}
+            sd: 0x{{ slice.sd }}
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -30,7 +30,7 @@ gNBs:
     nr_cellid: {{ component.config.nrCellId }}
 
     ##### Physical parameters:
-    min_rxtxtime: {{ component.advanced_config.min_rxtxtime | default(6) }}
+    min_rxtxtime: {{ component.advanced_config.min_rxtxtime | default(6, true) }}
 
     servingCellConfigCommon:
       #spCellConfigCommon
@@ -42,7 +42,7 @@ gNBs:
         # this is 3300.60 MHz
         dl_absoluteFrequencyPointA: {{ component.config.radioConfiguration.pointAFrequencyArfcn }}
         #scs-SpecificCarrierList
-        dl_offstToCarrier: {{ component.advanced_config.dl_offstToCarrier | default(0) }}
+        dl_offstToCarrier: {{ component.advanced_config.dl_offstToCarrier | default(0, true) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         dl_subcarrierSpacing: {{ component.derived_radio_config.numerology }}
@@ -50,13 +50,13 @@ gNBs:
         #initialDownlinkBWP
         #genericParameters
         # this is RBstart=0,L=106 (275*(L-1))+RBstart
-        initialDLBWPlocationAndBandwidth: {{ component.advanced_config.initialDLBWPlocationAndBandwidth | default(28875) }}
+        initialDLBWPlocationAndBandwidth: {{ component.advanced_config.initialDLBWPlocationAndBandwidth | default(28875, true) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
-        initialDLBWPsubcarrierSpacing: {{ component.advanced_config.initialDLBWPsubcarrierSpacing | default(1) }}
+        initialDLBWPsubcarrierSpacing: {{ component.advanced_config.initialDLBWPsubcarrierSpacing | default(1, true) }}
         #pdcch-ConfigCommon
-        initialDLBWPcontrolResourceSetZero: {{ component.advanced_config.initialDLBWPcontrolResourceSetZero | default(11) }}
-        initialDLBWPsearchSpaceZero: {{ component.advanced_config.initialDLBWPsearchSpaceZero | default(0) }}
+        initialDLBWPcontrolResourceSetZero: {{ component.advanced_config.initialDLBWPcontrolResourceSetZero | default(11, true) }}
+        initialDLBWPsearchSpaceZero: {{ component.advanced_config.initialDLBWPsearchSpaceZero | default(0, true) }}
         #uplinkConfigCommon
         #frequencyInfoUL
         ul_frequencyBand: {{ component.config.radioConfiguration.nrBand }}
@@ -64,15 +64,15 @@ gNBs:
         ul_absoluteFrequencyPointA: {{ component.cderived_radio_config.ul_point_a_arfcn }}
 {% endif %}
         #scs-SpecificCarrierList
-        ul_offstToCarrier: {{ component.advanced_config.ul_offstToCarrier | default(0) }}
+        ul_offstToCarrier: {{ component.advanced_config.ul_offstToCarrier | default(0, true) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         ul_subcarrierSpacing: {{ component.derived_radio_config.numerology }}
         ul_carrierBandwidth: {{ component.derived_radio_config.bandwidth_rb }}
-        pMax: {{ component.advanced_config.pMax | default(20) }}
+        pMax: {{ component.advanced_config.pMax | default(20, true) }}
         #initialUplinkBWP
         #genericParameters
-        initialULBWPlocationAndBandwidth: {{ component.advanced_config.initialULBWPlocationAndBandwidth | default(28875) }}
+        initialULBWPlocationAndBandwidth: {{ component.advanced_config.initialULBWPlocationAndBandwidth | default(28875, true) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         initialULBWPsubcarrierSpacing: {{ component.derived_radio_config.numerology }}
@@ -81,48 +81,48 @@ gNBs:
         prach_ConfigurationIndex: {{ component.config.radioConfiguration.prachConfigurationIndex }}
         #prach_msg1_FDM
         #0 = one, 1=two, 2=four, 3=eight
-        prach_msg1_FDM: {{ component.advanced_config.prach_msg1_FDM | default(0) }}
+        prach_msg1_FDM: {{ component.advanced_config.prach_msg1_FDM | default(0, true) }}
         prach_msg1_FrequencyStart: {{ component.config.radioConfiguration.msg1FrequencyStartPrb }}
-        zeroCorrelationZoneConfig: {{ component.advanced_config.zeroCorrelationZoneConfig | default(12) }}
-        preambleReceivedTargetPower: {{ component.advanced_config.preambleReceivedTargetPower | default(-104) }}
+        zeroCorrelationZoneConfig: {{ component.advanced_config.zeroCorrelationZoneConfig | default(12, true) }}
+        preambleReceivedTargetPower: {{ component.advanced_config.preambleReceivedTargetPower | default(-104, true) }}
         #preamblTransMax (0...10) = (3,4,5,6,7,8,10,20,50,100,200)
-        preambleTransMax: {{ component.advanced_config.preambleTransMax | default(6) }}
+        preambleTransMax: {{ component.advanced_config.preambleTransMax | default(6, true) }}
         #powerRampingStep
         # 0=dB0,1=dB2,2=dB4,3=dB6
-        powerRampingStep:  {{ component.advanced_config.powerRampingStep | default(1) }}
+        powerRampingStep:  {{ component.advanced_config.powerRampingStep | default(1, true) }}
         #ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR
         #1=oneeighth,2=onefourth,3=half,4=one,5=two,6=four,7=eight,8=sixteen
-        ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR: {{ component.advanced_config.ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR | default(4) }}
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR: {{ component.advanced_config.ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR | default(4, true) }}
         #one (0..15) 4,8,12,16,...60,64
-        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: {{ component.advanced_config.ssb_perRACH_OccasionAndCB_PreamblesPerSSB | default(15) }}
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: {{ component.advanced_config.ssb_perRACH_OccasionAndCB_PreamblesPerSSB | default(15, true) }}
         #ra_ContentionResolutionTimer
         #(0..7) 8,16,24,32,40,48,56,64
-        ra_ContentionResolutionTimer: {{ component.advanced_config.ra_ContentionResolutionTimer | default(7) }}
-        rsrp_ThresholdSSB: {{ component.advanced_config.rsrp_ThresholdSSB | default(19) }}
+        ra_ContentionResolutionTimer: {{ component.advanced_config.ra_ContentionResolutionTimer | default(7, true) }}
+        rsrp_ThresholdSSB: {{ component.advanced_config.rsrp_ThresholdSSB | default(19, true) }}
         #prach-RootSequenceIndex_PR
         #1 = 839, 2 = 139
-        prach_RootSequenceIndex_PR: {{ component.advanced_config.prach_RootSequenceIndex_PR | default(2) }}
-        prach_RootSequenceIndex: {{ component.advanced_config.prach_RootSequenceIndex | default(1) }}
+        prach_RootSequenceIndex_PR: {{ component.advanced_config.prach_RootSequenceIndex_PR | default(2, true) }}
+        prach_RootSequenceIndex: {{ component.advanced_config.prach_RootSequenceIndex | default(1, true) }}
         # SCS for msg1, can only be 15 for 30 kHz < 6 GHz, takes precedence over the one derived from prach-ConfigIndex
         msg1_SubcarrierSpacing: {{ component.derived_radio_config.ssb_numerology }}
         # restrictedSetConfig
         # 0=unrestricted, 1=restricted type A, 2=restricted type B
-        restrictedSetConfig: {{ component.advanced_config.restrictedSetConfig | default(0) }}
-        msg3_DeltaPreamble: {{ component.advanced_config.msg3_DeltaPreamble | default(1) }}
-        p0_NominalWithGrant: {{ component.advanced_config.p0_NominalWithGrant | default(-90) }}
+        restrictedSetConfig: {{ component.advanced_config.restrictedSetConfig | default(0, true) }}
+        msg3_DeltaPreamble: {{ component.advanced_config.msg3_DeltaPreamble | default(1, true) }}
+        p0_NominalWithGrant: {{ component.advanced_config.p0_NominalWithGrant | default(-90, true) }}
         # pucch-ConfigCommon setup :
         # pucchGroupHopping
         # 0 = neither, 1= group hopping, 2=sequence hopping
-        pucchGroupHopping: {{ component.advanced_config.pucchGroupHopping | default(0) }}
-        hoppingId: {{ component.advanced_config.hoppingId | default(40) }}
-        p0_nominal: {{ component.advanced_config.p0_nominal | default(-90) }}
-        ssb_PositionsInBurst_Bitmap: {{ component.advanced_config.ssb_PositionsInBurst_Bitmap | default(1) }}
+        pucchGroupHopping: {{ component.advanced_config.pucchGroupHopping | default(0, true) }}
+        hoppingId: {{ component.advanced_config.hoppingId | default(40, true) }}
+        p0_nominal: {{ component.advanced_config.p0_nominal | default(-90, true) }}
+        ssb_PositionsInBurst_Bitmap: {{ component.advanced_config.ssb_PositionsInBurst_Bitmap | default(1, true) }}
         # ssb_periodicityServingCell
         # 0 = ms5, 1=ms10, 2=ms20, 3=ms40, 4=ms80, 5=ms160, 6=spare2, 7=spare1
         ssb_periodicityServingCell: {{ component.derived_radio_config.oai_ssb_periodicity }}
         # dmrs_TypeA_position
         # 0 = pos2, 1 = pos3
-        dmrs_TypeA_Position: {{ component.advanced_config.dmrs_TypeA_Position | default(0) }}
+        dmrs_TypeA_Position: {{ component.advanced_config.dmrs_TypeA_Position | default(0, true) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         subcarrierSpacing: {{ component.derived_radio_config.numerology }}
@@ -159,27 +159,27 @@ MACRLCs:
   - num_cc: 1
     tr_s_preference: local_L1
     tr_n_preference: local_RRC
-    pusch_TargetSNRx10: {{ component.advanced_config.pusch_TargetSNRx10 | default(200) }}
-    pucch_TargetSNRx10:  {{ component.advanced_config.pucch_TargetSNRx10 | default(200) }}
+    pusch_TargetSNRx10: {{ component.advanced_config.pusch_TargetSNRx10 | default(200, true) }}
+    pucch_TargetSNRx10:  {{ component.advanced_config.pucch_TargetSNRx10 | default(200, true) }}
 
 L1s:
   - num_cc: 1
     tr_n_preference: local_mac
-    prach_dtx_threshold: {{ component.advanced_config.prach_dtx_threshold | default(200) }}
-    pucch0_dtx_threshold: {{ component.advanced_config.pucch0_dtx_threshold | default(150) }}
-    ofdm_offset_divisor: {{ component.advanced_config.ofdm_offset_divisor | default(8) }} # set this to UINT_MAX for offset 0
+    prach_dtx_threshold: {{ component.advanced_config.prach_dtx_threshold | default(200, true) }}
+    pucch0_dtx_threshold: {{ component.advanced_config.pucch0_dtx_threshold | default(150, true) }}
+    ofdm_offset_divisor: {{ component.advanced_config.ofdm_offset_divisor | default(8, true) }} # set this to UINT_MAX for offset 0
 
 RUs:
-  - local_rf: {{ component.advanced_config.local_rf | default("yes") }}
+  - local_rf: {{ component.advanced_config.local_rf | default("yes", true) }}
     nb_tx: {{ component.config.ru.numberOfTxPorts }}
     nb_rx: {{ component.config.ru.numberOfRxPorts }}
     att_tx: {{ component.config.ru.txAttenuationDB }}
     att_rx: {{ component.config.ru.rxAttenuationDB }}
     bands: [{{ component.config.radioConfiguration.nrBand }}]
-    max_pdschReferenceSignalPower: {{ component.advanced_config.max_pdschReferenceSignalPower | default(-27) }}
+    max_pdschReferenceSignalPower: {{ component.advanced_config.max_pdschReferenceSignalPower | default(-27, true) }}
     max_rxgain: {{ component.config.ru.rxGainDB }}
-    eNB_instances: {{ component.config.ru.eNB_instances | default([0]) }}
-    sf_extension: {{ component.config.ru.sf_extension | default(0) }}
+    eNB_instances: {{ component.config.ru.eNB_instances | default([0], true) }}
+    sf_extension: {{ component.config.ru.sf_extension | default(0, true) }}
 {% if component.config.ru.ip %}
     sdr_addrs: "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
 {% endif %}
@@ -197,7 +197,7 @@ rfsimulator:
 {% if component.config.ric %}
 e2_agent:
   near_ric_ip_addr: {{ component.config.ric }}
-  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/") }}
+  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/", true) }}
 {% endif %}
 
 security:
@@ -217,8 +217,8 @@ security:
 {% endfor %}
   # setting 'drb_ciphering' to "no" disables ciphering for DRBs, no matter
   # what 'ciphering_algorithms' configures; same thing for 'drb_integrity'
-  drb_ciphering: {{ component.advanced_config.drb_ciphering | default("yes") }}
-  drb_integrity: {{ component.advanced_config.drb_integrity | default("no") }}
+  drb_ciphering: {{ component.advanced_config.drb_ciphering | default("yes", true) }}
+  drb_integrity: {{ component.advanced_config.drb_integrity | default("no", true) }}
 
 log_config:
 {% if component.advanced_config and component.advanced_config.log_config %}

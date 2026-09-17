@@ -17,6 +17,39 @@ spec:
       labels:
         app: {{ .Release.Name }}
         {{- include "oai-lmf.selectorLabels" . | nindent 8 }}
+    {{- if or .Values.staticPodIp (and .Values.multus.enabled .Values.multus.interfaces) }}
+      annotations:
+
+        {{- if .Values.staticPodIp }}
+        cni.projectcalico.org/ipAddrs: '["{{ .Values.staticPodIp }}"]'
+        {{- end }}
+
+        {{- if and .Values.multus.enabled .Values.multus.interfaces }}
+        k8s.v1.cni.cncf.io/networks: |-
+          [
+          {{- $first := true }}
+          {{- range .Values.multus.interfaces }}
+          {{- if .enabled }}
+            {{- if not $first }},{{- end }}
+            {
+              "name": "{{ $.Release.Name }}-{{ .name }}",
+              "interface": "{{ .name }}"
+              {{- if .mac }},
+              "mac": "{{ .mac }}"
+              {{- end }}
+              {{- if .defaultRoute }},
+              "default-route": ["{{ .defaultRoute }}"]
+              {{- end }}
+              {{- if .gateway }},
+              "gateway": "{{ .gateway }}"
+              {{- end }}
+            }
+            {{- $first = false }}
+          {{- end }}
+          {{- end }}
+          ]
+        {{- end }}
+    {{- end }}
     spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}

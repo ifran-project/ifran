@@ -1,6 +1,7 @@
 """Common 5G utilities and helpers."""
 
 from collections import defaultdict
+from ipaddress import IPv4Address
 from typing import Any
 
 from orchestrator.models.deployment.k8s import (
@@ -340,6 +341,10 @@ def reconcile_5g_component(
         if hasattr(component_meta.config, iface) and getattr(component_meta.config, iface) is not None: # some might be None
             iface_meta: TransportEndpoint = getattr(component_meta.config, iface)
             component_k8s.exposed_ports.setdefault(iface, ExposedPort(port=iface_meta.port, protocol=iface_meta.protocol))
+
+            # populate interface ip with static_pod_ip if defined
+            if component_k8s.static_pod_ip and (iface_meta.ipv4EndPointAddress == IPv4Address("0.0.0.0")):
+                iface_meta.ipv4EndPointAddress = component_k8s.static_pod_ip
 
     # add necessary privileges if defined
     if component_k8s.security_context is None:

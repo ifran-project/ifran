@@ -32,6 +32,7 @@ class K8SStatus(StrEnum):
     """Kubernetes is configured on node and node is part of a cluster."""
 
 
+# TODO add used_ips here
 class K8SParams(BlueprintBaseModel):
     """Kubernetes global parameters."""
 

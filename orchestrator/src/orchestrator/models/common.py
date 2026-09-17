@@ -1,5 +1,7 @@
 """Common models."""
 
+import configparser
+import io
 import json
 from typing import Annotated, Any, Self
 
@@ -134,3 +136,48 @@ type SerializableLibconfigDict = Annotated[
     WithJsonSchema({'type': 'string'}, mode='serialization'),
 ]
 """Python dictionary type for Pydantic that can be serialized into a libconfig block."""
+
+
+def serialize_ini_section(value: Any) -> str:
+    """Serialize a dictionary to INI syntax without the section header."""
+
+    if not isinstance(value, dict):
+        return str(value)
+
+    config = configparser.ConfigParser()
+    
+    # By default, ConfigParser converts all keys to lowercase.
+    # Setting optionxform to str prevents this and preserves original casing.
+    config.optionxform = str
+
+    # configparser requires string values. We handle special types here.
+    processed_dict = {}
+    for key, val in value.items():
+        if isinstance(val, bool):
+            processed_dict[str(key)] = "true" if val else "false"
+        elif val is None:
+            # Usually, if a value is None, we want to omit it entirely from the config
+            continue
+        else:
+            processed_dict[str(key)] = str(val)
+            
+    config["_DUMMY_"] = processed_dict
+
+    with io.StringIO() as buffer:
+        config.write(buffer)
+        
+        # Read lines, removing the [_DUMMY_] section header and empty trailing lines
+        lines = buffer.getvalue().splitlines()
+        
+        if lines and lines[0] == "[_DUMMY_]":
+            lines = lines[1:]
+            
+        return "\n".join(lines).strip()
+
+
+SerializableINIConfigDict = Annotated[
+    dict[str, Any],
+    PlainSerializer(serialize_ini_section, return_type=str),
+    WithJsonSchema({'type': 'string'}, mode='serialization'),
+]
+"""Python dictionary type for Pydantic that can be serialized into INI block fields."""

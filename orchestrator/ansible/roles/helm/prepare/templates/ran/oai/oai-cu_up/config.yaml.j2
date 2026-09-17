@@ -4,7 +4,7 @@
 Active_gNBs:
   - {{ component_name }}
 # Asn1_verbosity, choice in: none, info, annoying
-Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none") }}
+Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none", true) }}
 gNBs:
   - gNB_ID: 0x{{ "%x" | format(component.config.gnbId) }}
     gNB_CU_UP_ID: 0x{{ "%x" | format(component.config.gnbCuUpId) }}
@@ -19,7 +19,7 @@ gNBs:
         snssaiList:
           - sst: {{ slice.sst }}
 {% if slice.sd %}
-            sd: 0x{{ slice.sd | lower }}
+            sd: 0x{{ slice.sd }}
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -49,7 +49,7 @@ gNBs:
 {% if component.config.ric %}
 e2_agent:
   near_ric_ip_addr: {{ component.config.ric }}
-  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/") }}
+  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/", true) }}
 {% endif %}
 
 log_config:

@@ -70,7 +70,7 @@ configuration:
 {% for slice in plmn.snssaiList %}
         - sst: {{ slice.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if slice.sd %}
-          sd: '{{ slice.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+          sd: '{{ slice.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -123,9 +123,9 @@ configuration:
 {{ component.advanced_config.nasIE | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-  t3502Value: {{ component.advanced_config.t3502Value | default(720) }}  # timer value (seconds) at UE side
-  t3512Value: {{ component.advanced_config.t3512Value | default(3600) }} # timer value (seconds) at UE side
-  non3gppDeregTimerValue: {{ component.advanced_config.non3gppDeregTimerValue | default(3240) }} # timer value (seconds) at UE side
+  t3502Value: {{ component.advanced_config.t3502Value | default(720, true) }}  # timer value (seconds) at UE side
+  t3512Value: {{ component.advanced_config.t3512Value | default(3600, true) }} # timer value (seconds) at UE side
+  non3gppDeregTimerValue: {{ component.advanced_config.non3gppDeregTimerValue | default(3240, true) }} # timer value (seconds) at UE side
 
   # retransmission timer for paging message
   t3513:
@@ -197,7 +197,7 @@ configuration:
     maxRetryTimes: 4 # the max number of retransmission
 {% endif %}
 
-  locality: {{ component.advanced_config.locality | default("area1") }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
+  locality: {{ component.advanced_config.locality | default("area1", true) }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
 
   # set the sctp server setting <optional>, once this field is set, please also add maxInputStream, maxOsStream, maxAttempts, maxInitTimeOut
   sctp:
@@ -210,10 +210,10 @@ configuration:
     maxInitTimeout: 2 # the maximum init timeout of each sctp connection
 {% endif %}
 
-  defaultUECtxReq: {{ component.advanced_config.defaultUECtxReq | lower | default("false") }} # the default value of UE Context Request to decide when triggering Initial Context Setup procedure
+  defaultUECtxReq: {{ component.advanced_config.defaultUECtxReq | default("false", true) | lower }} # the default value of UE Context Request to decide when triggering Initial Context Setup procedure
 
-  ngapWorkerPoolSize: {{ component.advanced_config.ngapWorkerPoolSize | default(0) }} # (int), default equal to runtime.NumCPU()
-  ngapTaskBufferSize: {{ component.advanced_config.ngapTaskBufferSize | default(4096) }} # (int)
+  ngapWorkerPoolSize: {{ component.advanced_config.ngapWorkerPoolSize | default(0, true) }} # (int), default equal to runtime.NumCPU()
+  ngapTaskBufferSize: {{ component.advanced_config.ngapTaskBufferSize | default(4096, true) }} # (int)
 
 logger: # log output setting
 {% if component.advanced_config and component.advanced_config.logger %}

@@ -1,0 +1,204 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
+
+[rf]
+{% if component.advanced_config and component.advanced_config.rf %}
+{{ component.advanced_config.rf }}
+{% else %}
+freq_offset = {{ component.advanced_config.freq_offset | default(0, true) }}
+tx_gain = {{ component.config.ru.txGainDB }}
+rx_gain = {{ component.config.ru.rxGainDB }}
+srate = {{ component.advanced_config.srate | default("61.44e6", true) }}
+nof_antennas = {{ component.config.ru.numberOfTxPorts }}
+device_name = {{ component.derived_radio_config.device_driver }}
+{% if component.advanced_config and component.advanced_config.device_args %}
+device_args = {{ component.advanced_config.device_args }}
+{% else %}
+{% if component.config.ru.type == "usrp" %}
+device_args = "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+{% elif component.config.ru.type == "simulated" %}
+device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnb[0] }}:2000,base_srate={{ component.advanced_config.srate | default("61.44e6", true) }}
+{% endif %}
+{% endif %}
+{% endif %}
+
+[rat.eutra]
+{% if component.advanced_config and component.advanced_config.rat_eutra %}
+{{ component.advanced_config.rat_eutra }}
+{% else %}
+dl_earfcn = 2850
+nof_carriers = 0
+{% endif %}
+
+[rat.nr]
+bands = {{ component.config.gnb[1].config.radioConfiguration.nrBand }}
+nof_carriers = {{ component.advanced_config.nof_carriers | default(1, true) }}
+max_nof_prb = {{ component.derived_radio_config.nof_prb }}
+nof_prb = {{ component.derived_radio_config.nof_prb }}
+
+[pcap]
+{% if component.advanced_config and component.advanced_config.pcap %}
+{{ component.advanced_config.pcap }}
+{% else %}
+enable = none
+mac_filename = /tmp/ue_mac.pcap
+mac_nr_filename = /tmp/ue_mac_nr.pcap
+nas_filename = /tmp/ue_nas.pcap
+{% endif %}
+
+[log]
+{% if component.advanced_config and component.advanced_config.log %}
+{{ component.advanced_config.log }}
+{% else %}
+all_level = info
+phy_lib_level = none
+all_hex_limit = 32
+filename = /tmp/ue.log
+file_max_size = -1
+{% endif %}
+
+[usim]
+{% if component.advanced_config and component.advanced_config.usim %}
+{{ component.advanced_config.usim }}
+{% else %}
+mode = soft
+algo = milenage
+opc  = "{{ component.config.authenticationData.opc }}"
+{% if component.config.authenticationData.op %}
+op   = "{{ component.config.authenticationData.op }}"
+{% endif %}
+k    = "{{ component.config.authenticationData.k }}"
+imsi = "{{ component.config.supi }}"
+imei = "{{ component.config.pei }}"
+{% endif %}
+
+[rrc]
+{% if component.advanced_config and component.advanced_config.rrc %}
+{{ component.advanced_config.rrc }}
+{% else %}
+release = 15
+ue_category = 4
+{% endif %}
+
+[nas]
+{% if component.advanced_config and component.advanced_config.nas %}
+{{ component.advanced_config.nas }}
+{% else %}
+apn = "{{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].dnn.name }}"
+apn_protocol = "{{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].dnn.pduSessionType }}"
+{% endif %}
+
+[slicing]
+{% if component.advanced_config and component.advanced_config.slicing %}
+{{ component.advanced_config.slicing }}
+{% else %}
+enable = true
+nssai-sst = {{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].snssai.sst }}
+{% if component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].snssai.sd %}
+nssai-sd = {{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].snssai.sd | int(base=16) }}
+{% endif %}
+{% endif %}
+
+[gw]
+{% if component.advanced_config and component.advanced_config.gw %}
+{{ component.advanced_config.gw }}
+{% else %}
+netns = ue
+ip_devname = tun_srsue
+ip_netmask = 255.255.255.0
+{% endif %}
+
+[gui]
+{% if component.advanced_config and component.advanced_config.gui %}
+{{ component.advanced_config.gui }}
+{% else %}
+enable = false
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_dl %}
+[channel.dl]
+{{ component.advanced_config.channel_dl }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_dl_awgn %}
+[channel.dl.awgn]
+{{ component.advanced_config.channel_dl_awgn }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_dl_fading %}
+[channel.dl.fading]
+{{ component.advanced_config.channel_dl_fading }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_dl_delay %}
+[channel.dl.delay]
+{{ component.advanced_config.channel_dl_delay }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_dl_rlf %}
+[channel.dl.rlf]
+{{ component.advanced_config.channel_dl_rlf }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_dl_hst %}
+[channel.dl.hst]
+{{ component.advanced_config.channel_dl_hst }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_ul %}
+[channel.ul]
+{{ component.advanced_config.channel_ul }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_ul_awgn %}
+[channel.ul.awgn]
+{{ component.advanced_config.channel_ul_awgn }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_ul_fading %}
+[channel.ul.fading]
+{{ component.advanced_config.channel_ul_fading }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_ul_delay %}
+[channel.ul.delay]
+{{ component.advanced_config.channel_ul_delay }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_ul_rlf %}
+[channel.ul.rlf]
+{{ component.advanced_config.channel_ul_rlf }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.channel_ul_hst %}
+[channel.ul.hst]
+{{ component.advanced_config.channel_ul_hst }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.phy %}
+[phy]
+{{ component.advanced_config.phy }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.phy_nr %}
+[phy.nr]
+{{ component.advanced_config.phy_nr }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.cfr %}
+[cfr]
+{{ component.advanced_config.cfr }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.sim %}
+[sim]
+{{ component.advanced_config.sim }}
+{% endif %}
+
+{% if component.advanced_config and component.advanced_config.general %}
+[general]
+{{ component.advanced_config.general }}
+{% endif %}
+
+{% endif %}

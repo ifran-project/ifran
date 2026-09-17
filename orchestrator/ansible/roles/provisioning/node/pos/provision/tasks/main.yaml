@@ -69,9 +69,9 @@
           {{
             {
               "hostname": pos_testbed.bastion.host,
-              "port": pos_testbed.bastion.port | default(22),
+              "port": pos_testbed.bastion.port | default(22, true),
               "user": pos_testbed.bastion.user
             }
-            if (pos_testbed.bastion | default(none)) is not none
+            if (pos_testbed.bastion | default(none, true)) is not none
             else none
           }}

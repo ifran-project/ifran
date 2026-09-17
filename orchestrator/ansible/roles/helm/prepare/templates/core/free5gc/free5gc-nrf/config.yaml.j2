@@ -11,8 +11,8 @@ info:
 {% endif %}
 
 configuration:
-  MongoDBName: {{ component.advanced_config.MongoDBName | default("free5gc") }} # database name in MongoDB
-  MongoDBUrl: {{ component.advanced_config.MongoDBUrl | default("mongodb://test:test@free5gc-database/?authSource=admin") }} # a valid URL of the mongodb
+  MongoDBName: {{ component.advanced_config.MongoDBName | default("free5gc", true) }} # database name in MongoDB
+  MongoDBUrl: {{ component.advanced_config.MongoDBUrl | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }} # a valid URL of the mongodb
 
   sbi: # Service-based interface information
     scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
@@ -30,7 +30,7 @@ configuration:
 {{ component.advanced_config.rootcert | to_nice_yaml(indent=6) | indent(6, True) }}
 {% endif %}
 
-    oauth: {{ component.advanced_config.oauth | lower | default("false") }}
+    oauth: {{ component.advanced_config.oauth | default("false", true) | lower }}
 
   DefaultPlmnId:
 {% for plmn in component.config.plmnList %}

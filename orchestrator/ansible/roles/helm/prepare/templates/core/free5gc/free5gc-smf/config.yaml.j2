@@ -42,7 +42,7 @@ configuration:
     - sNssai: # S-NSSAI (Single Network Slice Selection Assistance Information)
         sst: {{ slice.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if slice.sd %}
-        sd: '{{ slice.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+        sd: '{{ slice.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
 {% endif %}
       dnnInfos: # DNN information list
 {% for dnn in slice.dnns.values() %}
@@ -64,7 +64,7 @@ configuration:
       mnc: '{{ plmn.mnc }}'  # Mobile Network Code (2 or 3 digits string, digit: 0~9)
 {% endfor %}
 
-  locality: {{ component.advanced_config.locality | default("area1") }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
+  locality: {{ component.advanced_config.locality | default("area1", true) }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
 
   # PFCP (Packet Forwarding Control Protocol) configuration for N4 interface.
   pfcp:
@@ -72,9 +72,9 @@ configuration:
     nodeID: {{ chart_name }} # the Node ID of this SMF
     listenAddr: {{ component.config.n4.ipv4EndPointAddress }} # the IP/FQDN of N4 interface on this SMF (PFCP)
     externalAddr: {{ chart_name }} # the IP/FQDN of N4 interface on this SMF (PFCP)
-    assocFailAlertInterval: {{ component.advanced_config.assocFailAlertInterval | default("10s") }}
-    assocFailRetryInterval: {{ component.advanced_config.assocFailRetryInterval | default("30s") }}
-    heartbeatInterval: {{ component.advanced_config.heartbeatInterval | default("10s") }}
+    assocFailAlertInterval: {{ component.advanced_config.assocFailAlertInterval | default("10s", true) }}
+    assocFailRetryInterval: {{ component.advanced_config.assocFailRetryInterval | default("30s", true) }}
+    heartbeatInterval: {{ component.advanced_config.heartbeatInterval | default("10s", true) }}
 
   # Userplane nodes information, specifying details for AN and UPF.
   userplaneInformation:
@@ -94,7 +94,7 @@ configuration:
           - sNssai: # S-NSSAI (Single Network Slice Selection Assistance Information)
               sst: {{ slice.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if slice.sd %}
-              sd: '{{ slice.sd | lower }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+              sd: '{{ slice.sd }}' # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
 {% endif %}
             dnnUpfInfoList: # DNN information list for this S-NSSAI
 {% for dnn in slice.dnns.values() %}
@@ -160,9 +160,9 @@ configuration:
   nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
 {% endif %}
 
-  urrPeriod: {{ component.advanced_config.urrPeriod | default(30) }} # default usage report period in seconds
-  urrThreshold: {{ component.advanced_config.urrThreshold | default(500000) }} # default usage report threshold in bytes
-  requestedUnit: {{ component.advanced_config.requestedUnit | default(1000) }}
+  urrPeriod: {{ component.advanced_config.urrPeriod | default(30, true) }} # default usage report period in seconds
+  urrThreshold: {{ component.advanced_config.urrThreshold | default(500000, true) }} # default usage report threshold in bytes
+  requestedUnit: {{ component.advanced_config.requestedUnit | default(1000, true) }}
 
 logger: # log output setting
 {% if component.advanced_config and component.advanced_config.logger %}

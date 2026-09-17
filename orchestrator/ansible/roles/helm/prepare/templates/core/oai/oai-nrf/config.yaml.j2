@@ -11,7 +11,7 @@ log_level:
   general: debug
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ############## SBI Interfaces
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms

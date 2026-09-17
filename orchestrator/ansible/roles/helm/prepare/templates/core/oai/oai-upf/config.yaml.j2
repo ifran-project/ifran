@@ -29,7 +29,7 @@ register_nf:
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2) }}
+http_version: {{ component.advanced_config.http_version | default(2, true) }}
 
 ## general single_nssai configuration
 ## Defines YAML anchors, which are reused in the config file
@@ -75,7 +75,7 @@ upf:
     enable_bpf_datapath: no    # If "on": BPF is used as datapath else simpleswitch is used, DEFAULT= off
     enable_snat: yes           # If "on": Source natting is done for UE, DEFAULT= off
 {% endif %}
-  remote_n6_gw:  {{ component.advanced_config.remote_n6_gw | default("127.0.0.1") }}     # Dummy host since simple-switch does not use N6 GW
+  remote_n6_gw:  {{ component.advanced_config.remote_n6_gw | default("127.0.0.1", true) }}     # Dummy host since simple-switch does not use N6 GW
   upf_info:
     sNssaiUpfInfoList:
 {% for slice in component.config.snssaiList %}

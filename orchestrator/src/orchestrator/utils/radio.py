@@ -95,9 +95,9 @@ OAI_SSB_PERIODICITY: dict[SSBPeriodicity, int] = {
 }
 
 
-OAI_RADIO_BY_RU: dict[RUType, dict[RUModel | None, str]] = {
+RADIO_TYPE_BY_RU: dict[RUType, dict[RUModel | None, str]] = {
     RUType.SIMULATED: {
-        None: "rfsim", # model is None for simulatd rus
+        None: "simulated", # model is None for simulatd rus
     },
     RUType.USRP: {
         USRPModel.B210: "b2xx",
@@ -123,18 +123,24 @@ def nr_arfcn_to_frequency_hz(arfcn: int) -> int:
     return 24_250_080_000 + (arfcn - 2_016_667) * 60_000
 
 
+def get_rbs(subcarrierSpacingKhz: SubcarrierSpacing, channelBandwidthMhz: int):
+    """Derive number of resource blocks from given SCS and channel bandwidth."""
+
+    bandwidth_rb = NRB.get(subcarrierSpacingKhz, {}).get(channelBandwidthMhz)
+    if bandwidth_rb is None:
+        raise ValueError(
+            "Cannot derive number of resource blocks from given SCS "
+            f"'{subcarrierSpacingKhz.value}Khz' and bandwidth '{channelBandwidthMhz}Mhz'."
+        )
+
+    return bandwidth_rb
+
+
 # RAN radio parameter derivation
 def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
     """Derive radio parameters specific to OAI RAN to put in derived configuration."""
 
     radio_config: RadioConfiguration = component.config.radioConfiguration
-
-    bandwidth_rb = NRB.get(radio_config.subcarrierSpacingKhz, {}).get(radio_config.channelBandwidthMhz)
-    if bandwidth_rb is None and radio_config.implementation is RANImplementation.OAI:
-        raise ValueError(
-            "Cannot derive number of resource blocks from given SCS "
-            f"'{radio_config.subcarrierSpacingKhz.value}Khz' and bandwidth '{radio_config.channelBandwidthMhz}Mhz'."
-        )
 
     if radio_config.duplexMode == DuplexMode.FDD:
         # compute uplink point a based on the shift between dl and ul arfcn
@@ -149,7 +155,6 @@ def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
 
 
     ru = component.config.ru
-    radio = OAI_RADIO_BY_RU.get(ru.type, {}).get(ru.model, "")
 
     # additional flags for rfsim
     if ru.type is RUType.SIMULATED and (
@@ -159,13 +164,13 @@ def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
         additional_flags = "-E"
 
     derived = {
-        "bandwidth_rb": bandwidth_rb,
+        "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
         "ul_point_a_arfcn": ul_point_a_arfcn,
         "numerology": NUMEROLOGY[radio_config.subcarrierSpacingKhz],
         "ssb_numerology": NUMEROLOGY[radio_config.ssbSubcarrierSpacing],
         "oai_tdd_periodicity": oai_tdd_periodicity,
         "oai_ssb_periodicity": OAI_SSB_PERIODICITY.get(radio_config.ssbPeriodicityMs, 2),
-        "radio": radio,
+        "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
         "additional_flags": additional_flags,
     }
 
@@ -187,6 +192,7 @@ def derive_ocudu_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
 
     derived = {
         "device_driver": device_driver,
+        "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
     }
     if radio_config.duplexMode is DuplexMode.TDD:
         tdd = radio_config.tddConfiguration
@@ -244,12 +250,7 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
         numerology = NUMEROLOGY[radio_config.subcarrierSpacingKhz]
 
         # -r : bandwidth in terms of RBs
-        bandwidth_rb = NRB.get(radio_config.subcarrierSpacingKhz, {}).get(radio_config.channelBandwidthMhz)
-        if bandwidth_rb is None:
-            raise ValueError(
-                "Cannot derive number of resource blocks from given SCS "
-                f"'{radio_config.subcarrierSpacingKhz.value}Khz' and bandwidth '{radio_config.channelBandwidthMhz}Mhz'."
-            )
+        bandwidth_rb = get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz)
 
         # --ssb : SSB start subcarrier
         # delta_f_SSB in hz
@@ -271,7 +272,6 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
 
         # additional flags
         ru = ue.config.ru # must be resolved by now
-        radio = OAI_RADIO_BY_RU.get(ru.type, {}).get(ru.model, "") if ru else ""
 
         # additional flags for ru
         if ru.type is RUType.SIMULATED and ue.config.gnb[1].implementation is RANImplementation.OAI and (
@@ -286,7 +286,7 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
             "numerology": numerology, # numerology
             "bandwidth_rb": bandwidth_rb, # N_RB_DL
             "ssb_start": ssb_start, # ssb_start
-            "radio": radio,
+            "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
             "additional_flags": additional_flags,
         }
 
@@ -296,11 +296,38 @@ def derive_ueransim_ue_config(ue: UE) -> dict[str, Any]:
     """Derive radio parameters specific to USERANSIM UE to put in derived configuration."""
     return {}
 
+def derive_srsue_ue_config(ue: UE) -> dict[str, Any]:
+    """Derive radio parameters specific to SRSRUE UE to put in derived configuration."""
+
+    derived = {}
+
+    if ue.type is UEType.CONTAINERIZED:
+        # gnb reference must be resolved by now and its derived config must be present
+        radio_config: RadioConfiguration = ue.config.gnb[1].config.radioConfiguration
+
+        ru = ue.config.ru # must be resolved by now
+
+        if ru.type is RUType.SIMULATED:
+            device_driver = "zmq"
+        elif ru.type is RUType.USRP:
+            device_driver = "uhd"
+        else:
+            device_driver = None
+
+        derived = {
+            "device_driver": device_driver,
+            "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
+            "nof_prb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
+        }
+
+    return derived
+
 
 # mapping of UE implementation and callable radio config derive function
 UE_CONFIG_DERIVATOR: dict[UEImplementation, Callable] = {
     UEImplementation.OAI: derive_oai_ue_config,
     UEImplementation.UERANSIM: derive_ueransim_ue_config,
+    UEImplementation.SRSUE: derive_srsue_ue_config,
 }
 
 

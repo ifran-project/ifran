@@ -23,16 +23,16 @@ slices:
 {% for slice in component.config.plmnList[0].snssaiList %}
   - sst: {{ slice.sst }}
 {% if slice.sd %}
-    sd: 0x{{ slice.sd | lower }}
+    sd: 0x{{ slice.sd }}
 {% endif %}
 {% endfor %}
 
 # Indicates whether or not SCTP stream number errors should be ignored.
-ignoreStreamIds: {{ component.advanced_config.ignoreStreamIds | lower | default(true) }}
+ignoreStreamIds: {{ component.advanced_config.ignoreStreamIds | default("true", true) | lower }}
 
 # Cell access type. When set to one of the satellite types (nr-leo, nr-meo,
 # nr-geo, nr-othersat), the gNB attaches the NR-NTN TAI Information extension
 # to every UserLocationInformationNR it sends to the AMF. Defaults to "nr".
-cellAccessType: {{ component.advanced_config.cellAccessType | default("nr") }}
+cellAccessType: {{ component.advanced_config.cellAccessType | default("nr", true) }}
 
 {% endif %}

@@ -132,6 +132,8 @@ multus:
   interfaces: []
 {% endif %}
 
+config:
+  radio: {{ component.derived_radio_config.radio }}
 
 start:
   {{ component.type }}: {{ component.start | lower }}      # If false → NF container sleeps (for manual debugging)

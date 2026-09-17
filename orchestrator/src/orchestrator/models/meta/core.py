@@ -996,9 +996,6 @@ class CoreComponent(Component5G):
     config: CoreComponentConfig = Field(default_factory=CoreComponentConfig)
     """Core component configuration."""
 
-    advanced_config: dict[str, Any] | None = Field(default=None)
-    """Core component configuration specific to the implementation."""
-
 
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:

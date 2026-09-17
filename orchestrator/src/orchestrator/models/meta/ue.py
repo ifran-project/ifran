@@ -14,6 +14,7 @@ from pydantic import (
 
 from orchestrator.models.common import (
     BlueprintBaseModel,
+    SerializableINIConfigDict,
     SerializableLibconfigDict,
     parse_hex_int,
     serialize_hex_int,
@@ -45,7 +46,7 @@ class UEImplementation(StrEnum):
     UERANSIM = auto()
     """UERANSIM UE."""
 
-    SRS = auto()
+    SRSUE = auto()
     """Software Radio Systems (SRS) UE."""
 
 
@@ -232,7 +233,7 @@ class UEConfiguration(BlueprintBaseModel):
     supi: str = Field(default="001010000000100", pattern=r"^[0-9]{15}$")
     """UE Subscription Permanent Identifier (SUPI). For IMSI-based SUPI, this contains the IMSI digits."""
 
-    pei: str | None = Field(default=None, pattern=r"^[0-9]{14,16}$")
+    pei: str = Field(default="356938035643803", pattern=r"^[0-9]{14,16}$")
     """Permanent Equipment Identifier (PEI). For an IMEI/IMEISV-based PEI, this contains the corresponding decimal identifier."""
 
     authenticationData: UEAuthenticationData = Field(default_factory=UEAuthenticationData)
@@ -291,6 +292,7 @@ class UERANSIMAdvancedUEConfig(GenericAdvancedUEConfig):
     homeNetworkPublicKey: str | None = Field(default=None)
     homeNetworkPublicKeyId: str | None = Field(default=None)
     routingIndicator: str | None = Field(default=None)
+    imeiSv: str | None = Field(default=None)
     tunNetmask: str | None = Field(default=None)
     useNamespace: bool | None = Field(default=None)
     nsNamePrefix: str | None = Field(default=None)
@@ -301,6 +303,41 @@ class UERANSIMAdvancedUEConfig(GenericAdvancedUEConfig):
     ciphering: dict[str, Any] | None = Field(default=None)
     integrityMaxRate: dict[str, Any] | None = Field(default=None)
 
+class SRSUEAdvancedUEConfig(GenericAdvancedUEConfig):
+    """Advanced configuration for SRSUE."""
+
+    freq_offset: float | None = Field(default=None)
+    srate: str | float | None = Field(default=None)
+    device_args: str | None = Field(default=None)
+    nof_carriers: int | None = Field(default=None)
+    rf: SerializableINIConfigDict | None = Field(default=None)
+    rat_eutra: SerializableINIConfigDict | None = Field(default=None)
+    pcap: SerializableINIConfigDict | None = Field(default=None)
+    log: SerializableINIConfigDict | None = Field(default=None)
+    usim: SerializableINIConfigDict | None = Field(default=None)
+    rrc: SerializableINIConfigDict | None = Field(default=None)
+    nas: SerializableINIConfigDict | None = Field(default=None)
+    slicing: SerializableINIConfigDict | None = Field(default=None)
+    gw: SerializableINIConfigDict | None = Field(default=None)
+    gui: SerializableINIConfigDict | None = Field(default=None)
+    channel_dl: SerializableINIConfigDict | None = Field(default=None)
+    channel_dl_awgn: SerializableINIConfigDict | None = Field(default=None)
+    channel_dl_fading: SerializableINIConfigDict | None = Field(default=None)
+    channel_dl_delay: SerializableINIConfigDict | None = Field(default=None)
+    channel_dl_rlf: SerializableINIConfigDict | None = Field(default=None)
+    channel_dl_hst: SerializableINIConfigDict | None = Field(default=None)
+    channel_ul: SerializableINIConfigDict | None = Field(default=None)
+    channel_ul_awgn: SerializableINIConfigDict | None = Field(default=None)
+    channel_ul_fading: SerializableINIConfigDict | None = Field(default=None)
+    channel_ul_delay: SerializableINIConfigDict | None = Field(default=None)
+    channel_ul_rlf: SerializableINIConfigDict | None = Field(default=None)
+    channel_ul_hst: SerializableINIConfigDict | None = Field(default=None)
+    phy: SerializableINIConfigDict | None = Field(default=None)
+    phy_nr: SerializableINIConfigDict | None = Field(default=None)
+    cfr: SerializableINIConfigDict | None = Field(default=None)
+    sim: SerializableINIConfigDict | None = Field(default=None)
+    general: SerializableINIConfigDict | None = Field(default=None)
+
 
 ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {
     UEImplementation.OAI: {
@@ -308,6 +345,9 @@ ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdva
     },
     UEImplementation.UERANSIM: {
         UEType.CONTAINERIZED: UERANSIMAdvancedUEConfig,
+    },
+    UEImplementation.SRSUE: {
+        UEType.CONTAINERIZED: SRSUEAdvancedUEConfig,
     },
 }
 
@@ -326,9 +366,6 @@ class UE(Component5G):
     config: UEConfiguration = Field(default_factory=UEConfiguration)
     """UE configuration."""
 
-    advanced_config: dict[str, Any] | None = Field(default=None)
-    """RAN component configuration specific to the implementation."""
-
     derived_radio_config: dict[str, Any] | None = Field(default=None)
     """Automatically derived implementation-specific radio parameters. Only relevant for containerized UEs."""
 
@@ -342,6 +379,16 @@ class UE(Component5G):
                 raise ValueError("'gnb' is required for containerized UE.")
             if self.config.ru is None:
                 raise ValueError("'ru' is required for containerized UE.")
+
+        return self
+
+
+    @model_validator(mode="after")
+    def validate_pdu_sessions(self) -> Self:
+        """Ensure that containerized UEs have at least one PDU session."""
+
+        if self.type is UEType.CONTAINERIZED and not self.config.pduSessions:
+                raise ValueError("Containerized UE needs at least one PDU session.")
 
         return self
 

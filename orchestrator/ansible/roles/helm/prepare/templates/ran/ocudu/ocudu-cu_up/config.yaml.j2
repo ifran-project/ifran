@@ -3,9 +3,9 @@
 {%- else %}
 
 gnb_id: {{ component.config.gnbId }}
-gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32) }}
+gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32, true) }}
 gnb_cu_up_id: {{ component.config.gnbCuUpId }}
-dryrun: {{ component.advanced_config.dryrun | lower | default("false") }}
+dryrun: {{ component.advanced_config.dryrun | default("false", true) | lower }}
 
 cu_up:
 {% if component.advanced_config and component.advanced_config.cu_up %}

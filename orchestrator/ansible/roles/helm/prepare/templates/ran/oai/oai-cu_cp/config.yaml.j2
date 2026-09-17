@@ -4,9 +4,9 @@
 Active_gNBs:
   - {{ component_name }}
 # Asn1_verbosity, choice in: none, info, annoying
-Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none") }}
-Num_Threads_PUSCH: {{ component.advanced_config.Num_Threads_PUSCH | default(8) }}
-sa: {{ component.advanced_config.sa | default(1) }}
+Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none", true) }}
+Num_Threads_PUSCH: {{ component.advanced_config.Num_Threads_PUSCH | default(8, true) }}
+sa: {{ component.advanced_config.sa | default(1, true) }}
 
 gNBs:
   - gNB_ID: 0x{{ "%x" | format(component.config.gnbId) }}
@@ -21,7 +21,7 @@ gNBs:
         snssaiList:
           - sst: {{ slice.sst }}
 {% if slice.sd %}
-            sd: 0x{{ slice.sd | lower }}
+            sd: 0x{{ slice.sd }}
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -71,13 +71,13 @@ security:
 {% endfor %}
   # setting 'drb_ciphering' to "no" disables ciphering for DRBs, no matter
   # what 'ciphering_algorithms' configures; same thing for 'drb_integrity'
-  drb_ciphering: {{ component.advanced_config.drb_ciphering | default("yes") }}
-  drb_integrity: {{ component.advanced_config.drb_integrity | default("no") }}
+  drb_ciphering: {{ component.advanced_config.drb_ciphering | default("yes", true) }}
+  drb_integrity: {{ component.advanced_config.drb_integrity | default("no", true) }}
 
 {% if component.config.ric %}
 e2_agent:
   near_ric_ip_addr: {{ component.config.ric }}
-  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/") }}
+  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/", true) }}
 {% endif %}
 
 log_config:

@@ -124,6 +124,9 @@ DEFAULT_UE_IMAGES: dict[UEImplementation, dict[UEType, ContainerImage]] = {
     UEImplementation.UERANSIM: {
         UEType.CONTAINERIZED: ContainerImage(repository="docker.io/gradiant/ueransim", image_tag="3.3.0"),
     },
+    UEImplementation.SRSUE: {
+        UEType.CONTAINERIZED: ContainerImage(repository="ghcr.io/ziyad-mabrouk/srsue", image_tag="release_25_10"), # TODO upload image with this tag
+    },
 }
 
 
@@ -213,6 +216,9 @@ UE_POD_PRIVILEGES: dict[UEImplementation, dict[UEType, SecurityContext]] = {
     UEImplementation.UERANSIM: {
         UEType.CONTAINERIZED: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
     },
+    UEImplementation.SRSUE: {
+        UEType.CONTAINERIZED: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),
+    }
 }
 
 

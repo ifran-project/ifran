@@ -60,10 +60,9 @@ spec:
       initContainers:
       - name: install-gtp5g
         image: debian:13-slim
-
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
-
         command:
           - /bin/bash
           - -c
@@ -101,7 +100,7 @@ spec:
             mountPath: /host
       - name: init-upf
         image: debian:13-slim
-        imagePullPolicy: {{ .Values.nfimage.pullPolicy }}
+        imagePullPolicy: IfNotPresent
         command:
           - /free5gc/config/entrypoint.sh
         volumeMounts:
