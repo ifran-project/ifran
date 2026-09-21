@@ -9,6 +9,7 @@ from orchestrator.utils.common_5g import (
     get_5g_components_by_type,
 )
 from orchestrator.utils.ran import reconcile_ran
+from orchestrator.utils.ric import get_ric_e2_components
 
 RAN_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
     RANComponentType.DU: frozenset({
@@ -42,13 +43,23 @@ class RANManagement(HelmManagement):
             rus_meta=self.metamodel.rus,
             rus_provisioning=self.deployment_model.rus,
             amfs=amfs_deployment,
-            rics=self.deployment_model.rics,
+            rics=get_ric_e2_components(ric_meta=self.metamodel.ric, ric_k8s=self.deployment_model.ric_deployment),
         )
 
 
     async def run_action(self, **kwargs) -> None:
         """Run Helm action on RAN components."""
         await super().run_action(category=Category5G.RAN, **kwargs)
+
+
+    # override dependency graph
+    async def install(
+            self,
+            order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
+            **kwargs,
+        ) -> None:
+        """Install RAN components."""
+        await super().install(order=order, **kwargs)
 
 
     # override dependency graph

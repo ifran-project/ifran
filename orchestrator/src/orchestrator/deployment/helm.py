@@ -60,8 +60,8 @@ class HelmManagement(BaseBlueprintManagement):
                 all_k8s = self.deployment_model.containerized_ues
 
             case Category5G.RIC:
-                all_meta = self.mutable_metamodel.rics
-                all_k8s = self.deployment_model.rics
+                all_meta = self.mutable_metamodel.ric.components
+                all_k8s = self.deployment_model.ric_deployment.components
 
         # filter for specific components if requested
         if components is None:

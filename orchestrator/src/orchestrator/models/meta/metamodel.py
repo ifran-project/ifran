@@ -31,8 +31,8 @@ class MetaModel(BlueprintBaseModel):
     slices: dict[str, Slice] = Field(default_factory=lambda: {"internet": Slice()})
     """Slices."""
 
-    rics: dict[str, RIC] = Field(default_factory=dict)
-    """RICs."""
+    ric: RIC = Field(default_factory=RIC)
+    """RIC."""
 
 
     @field_validator("slices", mode="after")

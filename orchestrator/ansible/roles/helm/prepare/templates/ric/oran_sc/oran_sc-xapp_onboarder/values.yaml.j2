@@ -1,0 +1,59 @@
+componentName: xapp-onboarder
+image:
+  repository: {{ component.image.repository }}
+  tag: {{ component.image.image_tag }}
+  pullPolicy: {{ component.image.image_pull_policy }}
+
+env:
+  FLASK_PORT: "8888"
+  FLASK_DEBUG: "False"
+  CHART_WORKSPACE_PATH: "/tmp/xapp-onboarder"
+  CHART_REPO_URL: "http://{{ component.advanced_config.ric_type_services.chartmuseum }}:8080"
+  HELM_VERSION: "2.12.3"
+  HTTP_RETRY: "3"
+  ALLOW_REDEPLOY: "True"
+  CHART_WORKSPACE_SIZE: "500MB"
+  MOCK_TEST_MODE: "False"
+  MOCK_TEST_HELM_REPO_TEMP_DIR: "/tmp/mock_helm_repo"
+
+imagePullSecrets:
+{% if component.image.image_pull_secrets %}
+{% for secret in component.image.image_pull_secrets %}
+  - name: {{ secret.name }}
+{% endfor %}
+{% else %}
+  []
+{% endif %}
+
+serviceAccount:
+  create: true
+
+podSecurityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  runAsNonRoot: false
+
+securityContext: {}
+
+{% if component.resources.define %}
+resources:
+  requests:
+    cpu: {{ component.resources.requests.nf.cpu }}
+    memory: {{ component.resources.requests.nf.memory }}
+  limits:
+    cpu: {{ component.resources.limits.nf.cpu }}
+    memory: {{ component.resources.limits.nf.memory }}
+{% else %}
+resources: {}
+{% endif %}
+
+{% if component.node_selector %}
+nodeSelector:
+{% for key, value in component.node_selector.items() %}
+  {{ key }}: "{{ value }}"
+{% endfor %}
+{% else %}
+nodeSelector: {}
+{% endif %}
+
+nodeName: {{ component.node_name if component.node_name else 'null' }}

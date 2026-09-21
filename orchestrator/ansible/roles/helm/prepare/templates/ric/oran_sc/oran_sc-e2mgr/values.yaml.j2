@@ -1,0 +1,24 @@
+{% set overrides_yaml %}
+common:
+  namespace:
+    platform: {{ component.namespace }}
+    xapp: ricxapp
+    infra: ricinfra
+
+e2mgr:
+  image:
+    registry: {{ component.image.repository.rsplit('/', 1)[0] }}
+    name: {{ component.image.repository.rsplit('/', 1)[1] }}
+    tag: {{ component.image.image_tag }}
+  baseUrl: "http://service-{{ component.namespace }}-rtmgr-http:3800/ric/v1/handles/"
+  privilegedmode: {{ (component.security_context.privileged if component.security_context else false) | lower }}
+  globalRicId:
+    ricId: "AACCE"
+    mcc: "310"
+    mnc: "411"
+  rnibWriter:
+    stateChangeMessageChannel: RAN_CONNECTION_STATUS_CHANGE
+    ranManipulationMessageChannel: RAN_MANIPULATION
+{% endset %}
+{% set defaults = lookup('ansible.builtin.file', role_path ~ '/files/ric/oran_sc/oran_sc-e2mgr/values.yaml') | from_yaml %}
+{{ defaults | combine(overrides_yaml | from_yaml, recursive=true) | to_nice_yaml }}

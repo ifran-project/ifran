@@ -108,9 +108,6 @@ class HelmParams(BlueprintBaseModel):
     clean_helm_build_dir: bool = Field(default=False)
     """If True, 'helm_build_dir' will be cleaned after chart is installed."""
 
-    rendered_files: list[str] = Field(default_factory=lambda: ["values.yaml", "config.yaml"])
-    """List of Helm chart files to be rendered."""
-
     output_with_multus: bool = Field(default=False)
     """If True, install role will output list of MultusNetworkStatus, else output pod IP string."""
 
@@ -397,6 +394,9 @@ class K8SComponent(BlueprintBaseModel):
 
     tcp_dump_share_volume: bool = Field(default=False)
     """If True, TCP dump will use a shared volume."""
+
+    rendered_files: list[str] = Field(default_factory=lambda: ["values.yaml", "config.yaml"])
+    """List of Helm chart template files to be rendered."""
 
 
     @model_validator(mode="after")

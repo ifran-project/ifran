@@ -171,6 +171,16 @@ class CoreManagement(HelmManagement):
         await self.run_database_subscriber_action("remove", ues, node, **kwargs)
 
 
+    # override dependency graph
+    async def install(
+            self,
+            order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
+            **kwargs,
+        ) -> None:
+        """Install 5G core components."""
+        await super().install(order=order, **kwargs)
+
+
     async def deploy(
             self,
             node: str | None = None,

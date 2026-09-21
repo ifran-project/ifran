@@ -8,7 +8,7 @@
 # Output: None
 ---
 - name: Add UE '{{ ue_name }}' to OAI 'AuthenticationSubscription' table
-  community.mysql.mysql_query:
+  ansible.mysql.mysql_query:
     login_host: "{{ database_ip }}"
     login_user: test
     login_password: test
@@ -46,7 +46,7 @@
       );
 
 - name: Add UE '{{ ue_name }}' to OAI 'SessionManagementSubscriptionData' table
-  community.mysql.mysql_query:
+  ansible.mysql.mysql_query:
     login_host: "{{ database_ip }}"
     login_user: test
     login_password: test

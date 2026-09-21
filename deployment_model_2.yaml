@@ -1,11 +1,8 @@
-params:
-  provisioning:
-    experiment: tst
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.101.202
+      hostname: 10.123.225.80
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -17,7 +14,7 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.32.111
+      hostname: 10.123.125.67
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -29,7 +26,19 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.250.88
+      hostname: 10.123.75.95
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+  node4:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.27.44
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -40,15 +49,26 @@ nodes:
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
 core_deployment:
   components:
-    amf: {}
+    smf: {}
     udm: {}
+    amf: {}
+    ausf: {}
     nrf: {}
     upf: {}
-    smf: {}
     udr: {}
-    ausf: {}
 ran_deployment:
   components:
     gnb: {}
-simulated_ues:
+containerized_ues:
   sim_ue: {}
+ric_deployment:
+  components:
+    subscription_manager: {}
+    application_manager: {}
+    chart_repository: {}
+    e2_manager: {}
+    xapp_onboarder: {}
+    routing_manager: {}
+    e2_termination: {}
+    a1_mediator: {}
+    database: {}

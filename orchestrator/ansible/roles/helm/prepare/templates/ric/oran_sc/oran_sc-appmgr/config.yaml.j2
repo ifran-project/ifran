@@ -1,0 +1,17 @@
+"local":
+  "host": ":8080"
+{% if 'chartmuseum' in component.advanced_config.ric_type_services %}
+"helm":
+  "repo": "http://{{ component.advanced_config.ric_type_services.chartmuseum }}:8080"
+  "repo-name": "helm-repo"
+  "helm-username-file": "/opt/ric/secret/helm_repo_username"
+  "helm-password-file": "/opt/ric/secret/helm_repo_password"
+  "retry": 3
+{% endif %}
+"xapp":
+  "namespace": "ricxapp"
+  "tarDir": "/tmp"
+  "schema": "descriptors/schema.json"
+  "config": "config/config-file.json"
+  "tmpConfig": "/tmp/config-file.json"
+loglevel: 4

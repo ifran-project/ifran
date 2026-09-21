@@ -71,8 +71,8 @@ class DeploymentModel(BlueprintBaseModel):
     containerized_ues: dict[str, UEDeployment] = Field(default_factory=dict)
     """Containerized UEs deployment."""
 
-    rics: dict[str, RICDeployment] = Field(default_factory=dict)
-    """RICs deployment."""
+    ric_deployment: RICDeployment = Field(default_factory=RICDeployment)
+    """RIC deployment."""
 
     miscellaneous: dict[str, Any] | None = Field(default=None)
     """Miscellaneous data for pipelining purposes."""

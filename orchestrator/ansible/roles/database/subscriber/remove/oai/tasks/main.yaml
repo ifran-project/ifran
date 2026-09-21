@@ -8,7 +8,7 @@
 # Output: None
 ---
 - name: Remove all mentions of UE '{{ ue_name }}' from OAI database
-  community.mysql.mysql_query:
+  ansible.mysql.mysql_query:
     login_host: "{{ database_ip }}"
     login_user: test
     login_password: test

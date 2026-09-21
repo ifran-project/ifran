@@ -133,7 +133,6 @@ async def run_core_database_helm_action(
     helm_params = HelmParams(
         chart_name=f"{core_meta.implementation.value}-database",
         helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_meta.implementation.value}-database",
-        rendered_files=["values.yaml"]
     ).model_dump(mode="json")
 
     component = {
@@ -141,6 +140,7 @@ async def run_core_database_helm_action(
             "implementation": core_meta.implementation.value,
             "namespace": f"{core_meta.implementation.value}-{Category5G.CORE.value}",
             "type": "database",
+            "rendered_files": ["values.yaml"],
             }
 
     args = {

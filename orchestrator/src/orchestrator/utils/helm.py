@@ -40,7 +40,7 @@ async def run_single_helm_action(
     ) -> None:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
 
-    safe_component_name = build_k8s_safe(component_name)
+    chart_name = build_k8s_safe(f"{component_meta.implementation}-{component_name}")
 
     # preparing a prepared component is not considered in the check given the idempotence
     if not force and (
@@ -50,17 +50,17 @@ async def run_single_helm_action(
         raise InvalidResourceStateError(f"{component_meta.category.value.upper()} component {component_name!r} is already {action}ed.")
 
     helm_params = HelmParams(
-        chart_name=f"{component_meta.implementation}-{safe_component_name}",
-        helm_build_dir=f"/root/helm-charts/{component_meta.category}/{component_meta.implementation}-{safe_component_name}",
+        chart_name=chart_name,
+        helm_build_dir=f"/root/helm-charts/{component_meta.category}/{chart_name}",
         output_with_multus=component_k8s.multus.enabled,
     )
 
     args = {
         "role": f"helm/{action}",
         "inputs": {
-            "component_name": safe_component_name,
+            "component_name": component_name,
             "component": {**(component_meta.model_dump(mode="json") | component_k8s.model_dump(mode="json"))}, # merge component
-            **helm_params.model_dump(mode="json")
+            **helm_params.model_dump(mode="json"),
         },
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",
         "roles_path": ansible_params.roles_path,

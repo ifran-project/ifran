@@ -8,7 +8,6 @@
 # - component: K8S5GComponent
 # - chart_name: str
 # - helm_build_dir: str
-# - rendered_files: list[str]
 
 # Output: None
 ---
@@ -35,4 +34,4 @@
     src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/{{ item }}.j2"
     dest: "{{ helm_build_dir }}/{{ item }}"
     mode: "0600"
-  loop: "{{ rendered_files }}"
+  loop: "{{ component.rendered_files }}"

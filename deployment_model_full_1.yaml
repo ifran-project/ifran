@@ -1,7 +1,7 @@
 params:
   ansible:
     runner_path: /Users/zimabrou/.ansible-runner
-    roles_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/ansible/roles
+    roles_path: /Users/zimabrou/Projects/5g_blueprint/orchestrator/ansible/roles
   k8s:
     timezone: Europe/Paris
     k8s_version:
@@ -24,8 +24,7 @@ params:
     enable_cni_dhcp: true
     copy_kubeconfig_to_workers: true
     local_kubeconfig_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/.k8s-admin.conf
-  provisioning:
-    experiment: tst
+  provisioning: {}
 provisioners:
   bi:
     category: node
@@ -34,7 +33,7 @@ provisioners:
       extra_path: null
       infra: fr-sophia2-bi-vm1
       image: Ubuntu 24.04.3
-      flavor: medium
+      flavor: large
       project: post5g-beta
       experiment: 5gbp_exp
       create_experiment: false
@@ -122,14 +121,40 @@ nodes:
     - ric
     k8s_status: not_configured
     k8s_params: {}
+  node4:
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
 core_deployment:
   components: {}
-  is_database_present: false
-  database_ip: null
+  database:
+    is_installed: false
+    ip: null
+    force_database_scheduling: false
 ran_deployment:
   components: {}
 rus: {}
 ues: {}
-simulated_ues: {}
-rics: {}
+containerized_ues: {}
+ric_deployment:
+  components: {}
 miscellaneous: null
