@@ -7,7 +7,8 @@ core:
       category: core
       config:
         guamiList:
-        - amfPointer: '00'
+        - amfId: '020040'
+          amfPointer: '00'
           amfRegionId: '02'
           amfSetId: '001'
           plmnId:
@@ -24,6 +25,7 @@ core:
         networkName:
           fullNetworkName: 5G_network
           shortNetworkName: null
+        nrfUri: null
         plmnList:
         - plmnId:
             mcc: '001'
@@ -82,6 +84,9 @@ core:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -103,6 +108,12 @@ core:
       annotations: {}
       category: core
       config:
+        nrfUri: null
+        plmnList:
+        - mcc: '001'
+          mnc: '01'
+          mncLength: 2
+          plmnId: '00101'
         sbi:
           apiVersion: v1
           interfaceName: eth0
@@ -137,6 +148,9 @@ core:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -158,6 +172,7 @@ core:
       annotations: {}
       category: core
       config:
+        nrfUri: null
         plmnList:
         - plmnId:
             mcc: '001'
@@ -200,6 +215,9 @@ core:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -227,6 +245,12 @@ core:
           ipv6EndPointAddress: null
           port: 8805
           protocol: UDP
+        nrfUri: null
+        plmnList:
+        - mcc: '001'
+          mnc: '01'
+          mncLength: 2
+          plmnId: '00101'
         sbi:
           apiVersion: v1
           interfaceName: eth0
@@ -241,6 +265,8 @@ core:
             privateKey: null
         snssaiList:
         - internet
+        upfs:
+        - upf
       exposed_ports: {}
       force_type_scheduling: false
       image: null
@@ -263,6 +289,9 @@ core:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -284,6 +313,7 @@ core:
       annotations: {}
       category: core
       config:
+        nrfUri: null
         sbi:
           apiVersion: v1
           interfaceName: eth0
@@ -318,6 +348,9 @@ core:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -339,6 +372,7 @@ core:
       annotations: {}
       category: core
       config:
+        nrfUri: null
         sbi:
           apiVersion: v1
           interfaceName: eth0
@@ -373,6 +407,9 @@ core:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -418,6 +455,7 @@ core:
           ipv6EndPointAddress: null
           port: 2153
           protocol: UDP
+        nrfUri: null
         sbi:
           apiVersion: v1
           interfaceName: eth0
@@ -454,6 +492,9 @@ core:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -469,9 +510,11 @@ core:
       tcp_dump_share_volume: false
       tolerations: []
       type: upf
-  database_ip: null
+  database:
+    force_database_scheduling: false
+    ip: null
+    is_installed: false
   implementation: oai
-  is_database_present: false
 miscellaneous: null
 nodes:
   node1:
@@ -491,7 +534,7 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
       extra_args: null
-      hostname: 10.123.101.202
+      hostname: 10.123.225.80
       jumphost:
         common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         extra_args: null
@@ -526,7 +569,7 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
       extra_args: null
-      hostname: 10.123.32.111
+      hostname: 10.123.125.67
       jumphost:
         common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         extra_args: null
@@ -561,7 +604,42 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
       extra_args: null
-      hostname: 10.123.250.88
+      hostname: 10.123.75.95
+      jumphost:
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        extra_args: null
+        hostname: bastion1.theblueprintfactory.org
+        jumphost: null
+        no_host_key_checking: true
+        password: null
+        port: 22
+        private_key_file: null
+        sudo_password: null
+        user: proxy
+      no_host_key_checking: true
+      password: null
+      port: 22
+      private_key_file: null
+      sudo_password: null
+      user: ziyad
+  node4:
+    category: node
+    is_provisioned: true
+    k8s_params: {}
+    k8s_status: not_configured
+    provisioner: bi
+    provisioning_params: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    ssh_info:
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+      extra_args: null
+      hostname: 10.123.27.44
       jumphost:
         common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         extra_args: null
@@ -581,7 +659,7 @@ nodes:
       user: ziyad
 params:
   ansible:
-    roles_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/ansible/roles
+    roles_path: /Users/zimabrou/Projects/5g_blueprint/orchestrator/ansible/roles
     runner_path: /Users/zimabrou/.ansible-runner
   k8s:
     calico_version: 3.32.1
@@ -605,8 +683,7 @@ params:
     pod_network_cidr: 10.244.0.0/16
     service_cidr: 10.96.0.0/12
     timezone: Europe/Paris
-  provisioning:
-    experiment: tst
+  provisioning: {}
 ran:
   components:
     gnb:
@@ -617,7 +694,7 @@ ran:
       config:
         amf: amf
         e2: null
-        gnbId: 0
+        gnbId: 1
         n2:
           interfaceName: eth0
           ipv4EndPointAddress: 0.0.0.0
@@ -642,7 +719,7 @@ ran:
           - internet
         radioConfiguration:
           channelBandwidthMhz: 40
-          downlinkArfcn: 640000
+          downlinkArfcn: 620000
           duplexMode: tdd
           frType: fr1
           msg1FrequencyStartPrb: 0
@@ -660,8 +737,8 @@ ran:
             nrofUplinkSlots: 2
             nrofUplinkSymbols: 4
             periodicityMilliseconds: 5.0
-          uplinkArfcn: null
-        ric: null
+          uplinkArfcn: 620000
+        ric: e2_termination
         ru: sim_ru
         sctpConfiguration:
           inStreams: 2
@@ -700,6 +777,9 @@ ran:
         run_as_non_root: false
         run_as_user: 0
       readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
       resources:
         define: false
         limits: null
@@ -716,7 +796,429 @@ ran:
       tolerations: []
       type: gnb
   implementation: oai
-rics: {}
+ric:
+  components:
+    a1_mediator:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: a1mediator
+    application_manager:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: appmgr
+    chart_repository:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: chartmuseum
+    database:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: dbaas
+    e2_manager:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: e2mgr
+    e2_termination:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config:
+        e2:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 36421
+          protocol: SCTP
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: e2term
+    routing_manager:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: rtmgr
+    subscription_manager:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: submgr
+    xapp_onboarder:
+      advanced_config: null
+      affinity: null
+      annotations: {}
+      category: ric
+      config: {}
+      exposed_ports: {}
+      force_type_scheduling: false
+      image: null
+      implementation: oran_sc
+      include_tcp_dump_container: false
+      is_installed: false
+      labels: {}
+      liveness_probe: true
+      multus:
+        enabled: false
+        interfaces: []
+      namespace: null
+      network_info: null
+      node_name: null
+      node_selector: null
+      plain_text_config: null
+      pod_security_context:
+        fs_group: null
+        run_as_group: 0
+        run_as_non_root: false
+        run_as_user: 0
+      readiness_probe: true
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      resources:
+        define: false
+        limits: null
+        requests: null
+      security_context: null
+      start: true
+      static_pod_ip: null
+      tcp_dump_image:
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+        image_tag: alpine-3.20
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+      tcp_dump_share_volume: false
+      tolerations: []
+      type: xapp_onboarder
+  implementation: oran_sc
 rus:
   sim_ru:
     capabilities: null
@@ -750,16 +1252,20 @@ ues:
       pduSessions:
       - ipAllocationMethod: DYNAMIC
         sessionAmbr: null
+        sscMode: ssc_mode_1
         subscriptionIndex: 0
         ueIPv4Address: null
-        ueIPv6Prefix: null
-      pei: null
+        ueIPv6Address: null
+      pei: '356938035643803'
       ru: sim_ru
       subscriptions:
       - dnn: internet
         snssai: internet
       supi: '001010000000100'
       timeZone: Europe/Paris
+      ueAmbr:
+        downlink: 1000000000
+        uplink: 1000000000
     derived_radio_config: null
     exposed_ports: {}
     force_type_scheduling: false
@@ -783,6 +1289,9 @@ ues:
       run_as_non_root: false
       run_as_user: 0
     readiness_probe: true
+    rendered_files:
+    - values.yaml
+    - config.yaml
     resources:
       define: false
       limits: null

@@ -1,15 +1,13 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.101.202:6443 --token 9kgh1r.1cievywkgjl13osi
-      --discovery-token-ca-cert-hash sha256:b65051634d6fbc986a81f262fc2b2714a667ec93d51e095351cd761714fb02ba '
-  provisioning:
-    experiment: tst
+    join_command: 'kubeadm join 10.123.225.80:6443 --token ngy6lv.lltbxmslqd7dn76o
+      --discovery-token-ca-cert-hash sha256:1ec83ea49a10645d9270738f9a39e1e4135b81932c926ef6ba6d5184e75e656c '
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.101.202
+      hostname: 10.123.225.80
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -22,7 +20,7 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.32.111
+      hostname: 10.123.125.67
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -35,7 +33,20 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.250.88
+      hostname: 10.123.75.95
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node4:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.27.44
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -47,15 +58,26 @@ nodes:
     k8s_status: in_cluster
 core_deployment:
   components:
-    amf: {}
+    smf: {}
     udm: {}
+    amf: {}
+    ausf: {}
     nrf: {}
     upf: {}
-    smf: {}
     udr: {}
-    ausf: {}
 ran_deployment:
   components:
     gnb: {}
-simulated_ues:
+containerized_ues:
   sim_ue: {}
+ric_deployment:
+  components:
+    subscription_manager: {}
+    application_manager: {}
+    chart_repository: {}
+    e2_manager: {}
+    xapp_onboarder: {}
+    routing_manager: {}
+    e2_termination: {}
+    a1_mediator: {}
+    database: {}

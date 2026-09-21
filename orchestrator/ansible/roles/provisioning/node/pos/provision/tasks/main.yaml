@@ -22,7 +22,7 @@
 - name: Free any existing allocation for '{{ resource_name }}'
   ansible.builtin.command: slices pos allocations free {{ resource_name }} --keep-calendar-event
 
-- name: Allocate' {{ resource_name }}'
+- name: Allocate '{{ resource_name }}'
   ansible.builtin.command: slices pos allocations allocate {{ resource_name }} {{ "--duration " ~ reservation_period if attempt_reservation else ""}}
 
 - name: Set image for '{{ resource_name }}'

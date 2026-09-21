@@ -1,0 +1,17 @@
+{% set overrides_yaml %}
+common:
+  namespace:
+    platform: {{ component.namespace }}
+    xapp: ricxapp
+    infra: ricinfra
+
+dbaas:
+  image:
+    registry: {{ component.image.repository.rsplit('/', 1)[0] }}
+    name: {{ component.image.repository.rsplit('/', 1)[1] }}
+    tag: {{ component.image.image_tag }}
+  enableHighAvailability: false
+  enablePodAntiAffinity: false
+{% endset %}
+{% set defaults = lookup('ansible.builtin.file', role_path ~ '/files/ric/oran_sc/oran_sc-dbaas/values.yaml') | from_yaml %}
+{{ defaults | combine(overrides_yaml | from_yaml, recursive=true) | to_nice_yaml }}

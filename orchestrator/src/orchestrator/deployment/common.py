@@ -16,7 +16,7 @@ from orchestrator.models.deployment.provisioning import (
     ProvisioningCategory,
 )
 from orchestrator.models.deployment.ran import K8SRANComponent
-from orchestrator.models.deployment.ric import RICDeployment
+from orchestrator.models.deployment.ric import K8SRICComponent
 from orchestrator.models.deployment.ue import UEDeployment
 from orchestrator.models.meta.metamodel import MetaModel
 from orchestrator.models.meta.ru import RU, RUType
@@ -74,11 +74,11 @@ class BaseBlueprintManagement:
             source_dict={k: ue for k, ue in self.metamodel.ues.items() if ue.type is UEType.CONTAINERIZED},
             default_factory=UEDeployment,
         )
-        # rics
+        # ric
         sync_dict_keys(
-            target_dict=self.deployment_model.rics,
-            source_dict=self.metamodel.rics,
-            default_factory=RICDeployment,
+            target_dict=self.deployment_model.ric_deployment.components,
+            source_dict=self.metamodel.ric.components,
+            default_factory=K8SRICComponent,
         )
 
         # original metamodel should not be mutated to maintain integrity
@@ -155,9 +155,9 @@ class BaseBlueprintManagement:
                             self.deployment_model.containerized_ues,
                         ),
             ),
-            "rics": deep_merge(
-                        self.metamodel.rics,
-                        self.deployment_model.rics,
+            "ric": deep_merge(
+                        self.metamodel.ric,
+                        self.deployment_model.ric_deployment,
             ),
         }
 

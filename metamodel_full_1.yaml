@@ -28,6 +28,25 @@ core:
           - internet
       advanced_config: null
       plain_text_config: null
+    udr:
+      category: core
+      type: udr
+      implementation: oai
+      config:
+        sbi:
+          interfaceName: eth0
+          ipv4EndPointAddress: 0.0.0.0
+          ipv6EndPointAddress: null
+          port: 80
+          protocol: TCP
+          scheme: http
+          apiVersion: v1
+          tls:
+            enabled: false
+            certificate: null
+            privateKey: null
+      advanced_config: null
+      plain_text_config: null
     udm:
       category: core
       type: udm
@@ -47,9 +66,9 @@ core:
             privateKey: null
       advanced_config: null
       plain_text_config: null
-    udr:
+    ausf:
       category: core
-      type: udr
+      type: ausf
       implementation: oai
       config:
         sbi:
@@ -125,25 +144,6 @@ core:
         networkName:
           fullNetworkName: 5G_network
           shortNetworkName: null
-      advanced_config: null
-      plain_text_config: null
-    ausf:
-      category: core
-      type: ausf
-      implementation: oai
-      config:
-        sbi:
-          interfaceName: eth0
-          ipv4EndPointAddress: 0.0.0.0
-          ipv6EndPointAddress: null
-          port: 80
-          protocol: TCP
-          scheme: http
-          apiVersion: v1
-          tls:
-            enabled: false
-            certificate: null
-            privateKey: null
       advanced_config: null
       plain_text_config: null
     smf:
@@ -227,7 +227,7 @@ ran:
       implementation: oai
       config:
         timeZone: Europe/Paris
-        gnbId: 0
+        gnbId: 1
         tac: 1
         plmnList:
         - plmnId:
@@ -241,7 +241,7 @@ ran:
           inStreams: 2
           outStreams: 2
         e2: null
-        ric: null
+        ric: osc
         nrCellId: 1
         physicalCellId: 0
         radioConfiguration:
@@ -359,4 +359,76 @@ slices:
             preemptionVulnerability: PREEMPTABLE
           guaranteedBitRate: null
           maximumBitRate: null
-rics: {}
+rics:
+  osc:
+    implementation: oran_sc
+    components:
+      database:
+        category: ric
+        type: dbaas
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null
+      chart_repository:
+        category: ric
+        type: chartmuseum
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null
+      xapp_onboarder:
+        category: ric
+        type: xapp_onboarder
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null
+      application_manager:
+        category: ric
+        type: appmgr
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null
+      routing_manager:
+        category: ric
+        type: rtmgr
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null
+      e2_manager:
+        category: ric
+        type: e2mgr
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null
+      e2_termination:
+        category: ric
+        type: e2term
+        implementation: oran_sc
+        config:
+          e2:
+            interfaceName: eth0
+            ipv4EndPointAddress: 0.0.0.0
+            ipv6EndPointAddress: null
+            port: 36421
+            protocol: SCTP
+        advanced_config: null
+        plain_text_config: null
+      subscription_manager:
+        category: ric
+        type: submgr
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null
+      a1_mediator:
+        category: ric
+        type: a1mediator
+        implementation: oran_sc
+        config: {}
+        advanced_config: null
+        plain_text_config: null

@@ -8,7 +8,7 @@ from orchestrator.models.deployment.k8s import (
 from orchestrator.models.meta.common import Category5G
 from orchestrator.models.meta.core import CoreComponentType, CoreImplementation
 from orchestrator.models.meta.ran import RANComponentType, RANImplementation
-from orchestrator.models.meta.ric import RICImplementation
+from orchestrator.models.meta.ric import RICComponentType, RICImplementation
 from orchestrator.models.meta.ru import RUType
 from orchestrator.models.meta.ue import UEImplementation, UEType
 
@@ -130,10 +130,21 @@ DEFAULT_UE_IMAGES: dict[UEImplementation, dict[UEType, ContainerImage]] = {
 }
 
 
-DEFAULT_RIC_IMAGES: dict[RICImplementation, dict[str, ContainerImage]] = {
+DEFAULT_RIC_IMAGES: dict[RICImplementation, dict[RICComponentType, ContainerImage]] = {
     RICImplementation.OAI: {
-        "ric": ContainerImage(repository="docker.io/oaisoftwarealliance/oai-flexric", image_tag="develop"),
-    }
+        RICComponentType.RIC: ContainerImage(repository="docker.io/oaisoftwarealliance/oai-flexric", image_tag="develop"),
+    },
+    RICImplementation.ORAN_SC: {
+        RICComponentType.DBAAS: ContainerImage(repository="docker.io/r2labuser/ric-plt-dbaas", image_tag="0.6.5"),
+        RICComponentType.E2MGR: ContainerImage(repository="docker.io/r2labuser/ric-plt-e2mgr", image_tag="6.0.8"),
+        RICComponentType.E2TERM: ContainerImage(repository="docker.io/r2labuser/ric-plt-e2", image_tag="6.0.8"),
+        RICComponentType.RTMGR: ContainerImage(repository="docker.io/r2labuser/ric-plt-rtmgr", image_tag="0.9.7"),
+        RICComponentType.SUBMGR: ContainerImage(repository="docker.io/r2labuser/ric-plt-submgr", image_tag="0.10.4"),
+        RICComponentType.APPMGR: ContainerImage(repository="docker.io/r2labuser/ric-plt-appmgr", image_tag="0.5.9-helm3"),
+        RICComponentType.CHARTMUSEUM: ContainerImage(repository="docker.io/chartmuseum/chartmuseum", image_tag="v0.8.2"),
+        RICComponentType.XAPP_ONBOARDER: ContainerImage(repository="docker.io/r2labuser/xapp-onboarder", image_tag="1.0.8-helm3"),
+        RICComponentType.A1MEDIATOR: ContainerImage(repository="docker.io/r2labuser/ric-plt-a1", image_tag="3.2.3"),
+    },
 }
 
 

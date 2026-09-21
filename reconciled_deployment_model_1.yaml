@@ -1,17 +1,25 @@
-params:
-  provisioning:
-    experiment: tst
 core_deployment:
   components:
-    amf: {}
+    smf: {}
     udm: {}
+    amf: {}
+    ausf: {}
     nrf: {}
     upf: {}
-    smf: {}
     udr: {}
-    ausf: {}
 ran_deployment:
   components:
     gnb: {}
-simulated_ues:
+containerized_ues:
   sim_ue: {}
+ric_deployment:
+  components:
+    subscription_manager: {}
+    application_manager: {}
+    chart_repository: {}
+    e2_manager: {}
+    xapp_onboarder: {}
+    routing_manager: {}
+    e2_termination: {}
+    a1_mediator: {}
+    database: {}
