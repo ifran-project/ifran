@@ -106,7 +106,7 @@ async def run_parallel_k8s_setup_action(
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 
-    for name, result in zip(tasks.keys(), results):
+    for _, result in zip(tasks.keys(), results):
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,
