@@ -18,9 +18,10 @@ from orchestrator.models.deployment.provisioning import (
 from orchestrator.models.deployment.ran import K8SRANComponent
 from orchestrator.models.deployment.ric import K8SRICComponent
 from orchestrator.models.deployment.ue import UEDeployment
+from orchestrator.models.meta.common import Category5G, Component5G
 from orchestrator.models.meta.metamodel import MetaModel
 from orchestrator.models.meta.ru import RU, RUType
-from orchestrator.models.meta.ue import Category5G, Component5G, UEType
+from orchestrator.models.meta.ue import UE, UEType
 from orchestrator.utils.ansible import get_ansible_inventory_line
 from orchestrator.utils.common import deep_merge, sync_dict_keys
 
@@ -205,20 +206,36 @@ class BaseBlueprintManagement:
         self.reconcile()
 
 
-    def add_ru(self, name: str, ru: RU) -> None:
+    def add_ue(self, name: str, ue: UE, ue_prov: ProvisionableUE | None = None) -> None:
+        """Add UE."""
+
+        self.metamodel.ues[name] = ue.model_copy(deep=True)
+        if ue_prov:
+            self.deployment_model.ues[name] = ue_prov.model_copy(deep=True)
+        self.reconcile()
+
+
+    def remove_ue(self, name: str) -> None:
+        """Remove UE."""
+
+        self.metamodel.ues.pop(name, None)
+        self.reconcile()
+
+
+    def add_ru(self, name: str, ru: RU, ru_prov: ProvisionableRU | None = None) -> None:
         """Add RU."""
 
         self.metamodel.rus[name] = ru.model_copy(deep=True)
-        if ru.type is not RUType.SIMULATED:
-            self.reconcile()
+        if ru_prov:
+            self.deployment_model.rus[name] = ru_prov.model_copy(deep=True)
+        self.reconcile()
 
 
     def remove_ru(self, name: str) -> None:
         """Remove RU."""
 
-        ru = self.metamodel.rus.pop(name, None)
-        if ru and ru.type is not RUType.SIMULATED:
-            self.reconcile()
+        self.metamodel.rus.pop(name, None)
+        self.reconcile()
 
 
     def add_node(self, name: str, node: ProvisionableNode) -> None:
