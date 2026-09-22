@@ -156,6 +156,13 @@ DEFAULT_POD_IMAGES = {
 }
 
 
+DEFAULT_CORE_DATABASE_IMAGES: dict[CoreImplementation, ContainerImage] = {
+    CoreImplementation.OAI: ContainerImage(repository="docker.io/mysql", image_tag="9.0.1"),
+    CoreImplementation.OPEN5GS: ContainerImage(repository="docker.io/mongo", image_tag="8.3"),
+    CoreImplementation.FREE5GC: ContainerImage(repository="docker.io/mongo", image_tag="8.3"),
+}
+
+
 CORE_POD_PRIVILEGES: dict[CoreImplementation, dict[CoreComponentType, SecurityContext]] = {
     CoreImplementation.OAI: {
         CoreComponentType.AMF: SecurityContext(capabilities=Capabilities(add=["NET_ADMIN"], drop=["ALL"])),

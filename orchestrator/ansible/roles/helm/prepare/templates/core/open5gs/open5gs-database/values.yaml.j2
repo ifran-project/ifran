@@ -1,7 +1,7 @@
 image:
-  repository: mongo
-  tag: "8.3"
-  pullPolicy: IfNotPresent
+  repository: {{ component.image.repository }}
+  tag: {{ component.image.image_tag }}
+  pullPolicy: {{ component.image.image_pull_policy }}
 
 # Name of the database open5gs will connect to (used by the init script)
 open5gsDatabase: open5gs
@@ -36,7 +36,7 @@ resources: {}
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
 nodeSelector:
   node-type.5g.blueprint/core: "true"
-{% if force_database_scheduling%}
+{% if component.force_database_scheduling%}
   node-type.5g.blueprint/database: "true"
 {% endif %}
 

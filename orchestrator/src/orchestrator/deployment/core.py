@@ -152,7 +152,7 @@ class CoreManagement(HelmManagement):
         await run_parallel_database_subscriber_action(
             ues=target_ues,
             core_implementation=self.metamodel.core.implementation,
-            database_ip=self.deployment_model.core_deployment.database.ip,
+            database_ip=self.deployment_model.core_deployment.database_params.ip,
             action=action,
             node_name=node_name,
             node_data=node_data,

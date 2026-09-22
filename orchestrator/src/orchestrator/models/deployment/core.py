@@ -3,7 +3,7 @@
 from pydantic import Field, IPvAnyAddress
 
 from orchestrator.models.common import BlueprintBaseModel
-from orchestrator.models.deployment.k8s import K8SComponent
+from orchestrator.models.deployment.k8s import ContainerImage, K8SComponent
 
 
 class K8SCoreComponent(K8SComponent):
@@ -12,6 +12,9 @@ class K8SCoreComponent(K8SComponent):
 
 class CoreDatabaseParams(BlueprintBaseModel):
     """5G core database deployment parameters."""
+
+    image: ContainerImage | None = Field(default=None)
+    """Database container image."""
 
     is_installed: bool = Field(default=False)
     """If 5G core database is deployed or not."""
@@ -29,5 +32,5 @@ class CoreDeployment(BlueprintBaseModel):
     components: dict[str, K8SCoreComponent] = Field(default_factory=dict)
     """5G core Kubernetes components."""
 
-    database: CoreDatabaseParams = Field(default_factory=CoreDatabaseParams)
+    database_params: CoreDatabaseParams = Field(default_factory=CoreDatabaseParams)
     """5G core database parameters."""

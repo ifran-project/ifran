@@ -3,8 +3,9 @@
 # mysql image version
 ## ref: https://hub.docker.com/r/library/mysql/tags/
 ##
-image: "docker.io/mysql"
-imageTag: "9.0.1"
+image:  {{ component.image.repository }}
+imageTag: {{ component.image.image_tag }}
+imagePullPolicy: {{ component.image.image_pull_policy }}
 
 replicas: 1
 
@@ -84,7 +85,7 @@ imagePullSecrets:
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
 nodeSelector:
   node-type.5g.blueprint/core: "true"
-{% if force_database_scheduling%}
+{% if component.force_database_scheduling%}
   node-type.5g.blueprint/database: "true"
 {% endif %}
 

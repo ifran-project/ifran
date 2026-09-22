@@ -30,6 +30,7 @@ from orchestrator.utils.common_5g import (
     get_5g_components_by_type,
     reconcile_5g_component,
 )
+from orchestrator.utils.defaults import DEFAULT_CORE_DATABASE_IMAGES
 
 
 def resolve_upf_references(
@@ -71,6 +72,17 @@ def reconcile_core(
         slices: dict[str, Slice],
     ) -> None:
     """Ensure 5G core is ready for deployment."""
+
+    # populate database image if not already set
+    if core_deployment.database_params.image is None:
+        database_image = DEFAULT_CORE_DATABASE_IMAGES.get(core_meta.implementation)
+
+         # if no default database image is available raise an error
+        if database_image is None:
+             raise ValueError(f"{core_meta.implementation.upper} database has no container image.")
+
+        core_deployment.database_params.image = DEFAULT_CORE_DATABASE_IMAGES.get(core_meta.implementation)
+
 
     used_ips: set[IPvAnyAddress] = set()
     ip_mapping: dict[str, IPvAnyAddress] = {}
@@ -125,8 +137,8 @@ async def run_core_database_helm_action(
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
     if not force and (
-        (core_deployment.database.is_installed and action == "install") or 
-        (not core_deployment.database.is_installed and action == "uninstall")
+        (core_deployment.database_params.is_installed and action == "install") or 
+        (not core_deployment.database_params.is_installed and action == "uninstall")
         ):
         raise InvalidResourceStateError(f"5G core database is already {action}ed.")
 
@@ -141,11 +153,12 @@ async def run_core_database_helm_action(
             "namespace": f"{core_meta.implementation.value}-{Category5G.CORE.value}",
             "type": "database",
             "rendered_files": ["values.yaml"],
+            **core_deployment.database_params.model_dump(mode="json"),
             }
 
     args = {
         "role": f"helm/{action}",
-        "inputs": {"component": component, "force_database_scheduling": core_deployment.database.force_database_scheduling, **helm_params},
+        "inputs": {"component": component, **helm_params},
         "runner_path": f"{ansible_params.runner_path}/{component["category"]}/database/helm/{action}",
         "roles_path": ansible_params.roles_path,
         "hosts": node_name,
@@ -164,11 +177,11 @@ async def run_core_database_helm_action(
 
     # update database status in core deployment
     if action == "install":
-        core_deployment.database.is_installed = True
+        core_deployment.database_params.is_installed = True
         # retrieve database pod ip
-        core_deployment.database.ip = IPvAnyAddress(result["network_info"])
+        core_deployment.database_params.ip = IPvAnyAddress(result["network_info"])
     elif action == "uninstall":
-        core_deployment.database.is_installed = False
+        core_deployment.database_params.is_installed = False
 
 
 async def run_single_database_subscriber_action(
@@ -233,7 +246,7 @@ async def run_parallel_database_subscriber_action(
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 
-    for name, result in zip(tasks.keys(), results):
+    for _, result in zip(tasks.keys(), results):
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,
