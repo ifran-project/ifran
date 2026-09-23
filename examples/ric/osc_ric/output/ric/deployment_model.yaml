@@ -1,0 +1,330 @@
+params:
+  k8s:
+    master_node: node1
+    join_command: 'kubeadm join 10.123.147.61:6443 --token 1r81q9.4dy6tvmsc8n1ty5x
+      --discovery-token-ca-cert-hash sha256:d4456555234853fa3a7fd92147071bbbcdd263c24b65608e375cbd2d8ee13eee '
+  provisioning:
+    experiment: 5gbp_exp2
+provisioners:
+  bi:
+    type: bi
+  pos:
+    type: pos
+    params:
+      start_time: '2026-09-23T03:29:19.992596+02:00'
+      end_time: '2026-09-23T03:29:19.992596+02:00'
+nodes:
+  node1:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.147.61
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node2:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.178.232
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node3:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.63.95
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+  node4:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.125.221
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+    k8s_status: in_cluster
+core_deployment:
+  components:
+    udm:
+      is_installed: true
+      network_info: 10.244.3.66
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-udm
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    udr:
+      is_installed: true
+      network_info: 10.244.3.67
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-udr
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    ausf:
+      is_installed: true
+      network_info: 10.244.135.4
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-ausf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    smf:
+      is_installed: true
+      network_info: 10.244.104.3
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-smf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n4:
+          port: 8805
+          protocol: UDP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    nrf:
+      is_installed: true
+      network_info: 10.244.104.2
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-nrf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    amf:
+      is_installed: true
+      network_info: 10.244.135.3
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-amf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n2:
+          port: 38412
+          protocol: SCTP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+    upf:
+      is_installed: true
+      static_pod_ip: 10.244.16.206
+      network_info: 10.244.16.206
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-upf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n3:
+          port: 2152
+          protocol: UDP
+        n4:
+          port: 8805
+          protocol: UDP
+        n9:
+          port: 2153
+          protocol: UDP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          - SYS_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+  database_params:
+    image:
+      repository: docker.io/mysql
+      image_tag: 9.0.1
+    is_installed: true
+    ip: 10.244.135.2
+ran_deployment:
+  components:
+    gnb: {}
+containerized_ues:
+  sim_ue: {}
+ric_deployment:
+  components:
+    xapp_onboarder:
+      is_installed: true
+      network_info: 10.244.104.5
+      image:
+        repository: docker.io/r2labuser/xapp-onboarder
+        image_tag: 1.0.8-helm3
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+    a1_mediator:
+      is_installed: true
+      network_info: 10.244.16.192
+      image:
+        repository: docker.io/r2labuser/ric-plt-a1
+        image_tag: 3.2.3
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+    chart_repository:
+      is_installed: true
+      network_info: 10.244.135.5
+      image:
+        repository: docker.io/chartmuseum/chartmuseum
+        image_tag: v0.8.2
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+    application_manager:
+      is_installed: true
+      network_info: 10.244.135.6
+      image:
+        repository: docker.io/r2labuser/ric-plt-appmgr
+        image_tag: 0.5.9-helm3
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+    e2_manager:
+      is_installed: true
+      network_info: 10.244.16.193
+      image:
+        repository: docker.io/r2labuser/ric-plt-e2mgr
+        image_tag: 6.0.8
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+    routing_manager:
+      is_installed: true
+      network_info: 10.244.104.6
+      image:
+        repository: docker.io/r2labuser/ric-plt-rtmgr
+        image_tag: 0.9.7
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+    subscription_manager:
+      is_installed: true
+      network_info: 10.244.135.7
+      image:
+        repository: docker.io/r2labuser/ric-plt-submgr
+        image_tag: 0.10.4
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+    e2_termination:
+      is_installed: true
+      network_info: 10.244.16.194
+      image:
+        repository: docker.io/r2labuser/ric-plt-e2
+        image_tag: 6.0.8
+      exposed_ports:
+        e2:
+          port: 36421
+          protocol: SCTP
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+    database:
+      is_installed: true
+      network_info: 10.244.104.4
+      image:
+        repository: docker.io/r2labuser/ric-plt-dbaas
+        image_tag: 0.6.5
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml

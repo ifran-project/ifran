@@ -1,0 +1,85 @@
+params:
+  provisioning:
+    experiment: 5gbp_exp2
+provisioners:
+  bi:
+    type: bi
+  pos:
+    type: pos
+    params:
+      start_time: '2026-09-23T03:29:19.992596+02:00'
+      end_time: '2026-09-23T03:29:19.992596+02:00'
+nodes:
+  node1:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.147.61
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+  node2:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.178.232
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+  node3:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.63.95
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+  node4:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.125.221
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
+        %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
+core_deployment:
+  components:
+    udm: {}
+    udr: {}
+    ausf: {}
+    smf: {}
+    nrf: {}
+    amf: {}
+    upf: {}
+ran_deployment:
+  components:
+    gnb: {}
+containerized_ues:
+  sim_ue: {}
+ric_deployment:
+  components:
+    xapp_onboarder: {}
+    a1_mediator: {}
+    chart_repository: {}
+    application_manager: {}
+    e2_manager: {}
+    routing_manager: {}
+    subscription_manager: {}
+    e2_termination: {}
+    database: {}

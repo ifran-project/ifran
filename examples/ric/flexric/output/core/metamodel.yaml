@@ -1,0 +1,36 @@
+core:
+  implementation: oai
+  components:
+    nrf:
+      type: nrf
+      implementation: oai
+    udr:
+      type: udr
+      implementation: oai
+    udm:
+      type: udm
+      implementation: oai
+    ausf:
+      type: ausf
+      implementation: oai
+    amf:
+      type: amf
+      implementation: oai
+    smf:
+      type: smf
+      implementation: oai
+    upf:
+      type: upf
+      implementation: oai
+ran:
+  components:
+    gnb:
+      type: gnb
+      implementation: oai
+      config:
+        ric: flexric
+ric:
+  components:
+    flexric:
+      type: ric
+      implementation: oai
