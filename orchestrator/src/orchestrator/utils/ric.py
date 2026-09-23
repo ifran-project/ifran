@@ -129,7 +129,7 @@ def reconcile_ric(
     ric_type_services = {
         component_meta.type.value: ric_services[component_name]
         for component_name, component_meta in ric_meta.components.items()
-        if type_counts[component_meta.type] == 1
+        if type_counts[component_meta.type] == 1 and component_meta.implementation is RICImplementation.ORAN_SC
     }
 
     for component_name, component_meta in ric_meta.components.items():
