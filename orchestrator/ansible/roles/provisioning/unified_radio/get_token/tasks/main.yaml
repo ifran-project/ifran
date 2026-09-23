@@ -1,0 +1,25 @@
+# Unified radio managememt API provisioner get token role.
+
+# This role builds the 'generated_token' variable.
+
+# Input:
+# - base_url: URL
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output: None
+---
+- name: Get '{{ token_params.infra | default("", true) }}' access token from unified radio managememt API
+  ansible.builtin.uri:
+    url: "{{ base_url }}/token/{{ token_params.infra }}"
+    method: POST
+    body_format: json
+    body: "{{ token_params.input_body }}"
+    return_content: true
+    status_code: 200
+  register: token_response
+  when: not token
+
+- name: Get access token if it was fetched
+  ansible.builtin.set_fact:
+    generated_token: "{{ token if token else token_response.json.access_token }}"

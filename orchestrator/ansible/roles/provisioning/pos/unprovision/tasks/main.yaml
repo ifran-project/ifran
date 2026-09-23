@@ -1,0 +1,18 @@
+# POS provisioner unprovision role.
+
+# If use_slices is True, the role assumes the deployment machine (host on which this Ansible code will run) has
+# the 'slices' and 'slices-pos' CLIs installed and authenticated with the user's SLICES account.
+
+# Else, the role assumes that the 'pos' CLI is installed and authenticated with local POS account.
+
+# Input:
+# - resource_name: str
+# - testbed: str
+
+# Output: None
+---
+- name: Select testbed '{{ testbed }}'
+  ansible.builtin.shell: "{{ 'slices pos' if use_slices else 'pos' }} testbed use {{ testbed }}"
+
+- name: Free {{ resource_name }}
+  ansible.builtin.shell: "{{ 'slices pos' if use_slices else 'pos' }} allocations free {{ resource_name }} --keep-calendar-event"

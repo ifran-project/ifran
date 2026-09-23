@@ -1,12 +1,22 @@
 """Provisioning models."""
 
+import re
+from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
+from zoneinfo import ZoneInfo
 
-from pydantic import Field, model_validator
+from pydantic import (
+    Field,
+    TypeAdapter,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from orchestrator.models.common import (
+    URL,
     BlueprintBaseModel,
     BlueprintTolerantBaseModel,
 )
@@ -104,11 +114,11 @@ class ProvisioningCategory(StrEnum):
     """Radio Unit provisioning."""
 
     UE = auto()
-    """UE provisioning."""
+    """User Equipment provisioning."""
 
 
-class NodeProvisioningType(StrEnum):
-    """Supported node provisioning types."""
+class ProvisioningType(StrEnum):
+    """Supported provisioning types."""
 
     POS = auto()
     """Plain Orchestration Service provisioner."""
@@ -119,23 +129,11 @@ class NodeProvisioningType(StrEnum):
     BI = auto()
     """Basic Infrastructure provisioner."""
 
-
-class RUProvisioningType(StrEnum):
-    """Supported Radio Unit provisioning types."""
-
-    R2LAB = auto()
-    """R2Lab RU provisioner."""
-
-
-class UEProvisioningType(StrEnum):
-    """Supported UE provisioning types."""
+    UNIFIED_RADIO = auto()
+    """Unified radio management API provisioner."""
 
     R2LAB = auto()
-    """R2Lab UE provisioner."""
-
-
-# union type
-type ProvisioningType = NodeProvisioningType | RUProvisioningType | UEProvisioningType
+    """R2Lab provisioner."""
 
 
 # NOTE model needs to tolerate extra fields from deployment model's params.provisioning
@@ -146,7 +144,103 @@ class GenericProvisionerParams(BlueprintTolerantBaseModel):
     """Extra Ansible environment path added to PATH used in the provisioner role."""
 
 
-class CommonPOSParams(GenericProvisionerParams):
+class GenericReservationParams(BlueprintTolerantBaseModel):
+    """Base class for provisioner's reservation params."""
+
+
+class ReservableProvisionerParams(GenericProvisionerParams):
+    """Params base class for provisioners where resource reservation is supported."""
+
+    attempt_reservation: bool = Field(default=False)
+    """If True, provisioner will try to reserve resources before provisioning."""
+
+    reservation_period: int | None = Field(default=None)
+    """Attempted reservation period in minutes if 'attempt_reservation' is True."""
+
+    reservation_params: GenericReservationParams | None = Field(default=None)
+    """Attempted reservation parameters if 'attempt_reservation' is True."""
+
+    timezone: str = Field(default="Europe/Paris")
+    """Reservation timezone."""
+
+    start_time: datetime | None = Field(default=None)
+    """The start datetime of the reservation. If None, defaults to current time in given timezone."""
+
+    @computed_field
+    @property
+    def end_time(self) -> datetime:
+        """The end datetime computed from the start time and reservation period."""
+
+        if self.reservation_period is None:
+            return self.start_time
+        return self.start_time + timedelta(minutes=self.reservation_period)
+
+
+    @field_validator("reservation_period", mode="before")
+    @classmethod
+    def parse_duration_to_minutes(cls, value) -> int | float | Any:
+        """Parses duration strings (e.g., '120s', '1m', '3h', '2d', '1y') into total minutes."""
+
+        if value is None or isinstance(value, (int, float)):
+            return value
+
+        if not isinstance(value, str):
+            raise TypeError("'reservation_period' must be an integer (minutes) or a duration string.")
+        
+        v_str = value.strip().lower()
+        match = re.match(r"^(\d+)([smhdyw])$", v_str)
+
+        if not match:
+            raise ValueError(f"Invalid duration format: {value!r}. Use formats like: '120s', '30m', '3h', '2d', '1w', '1y'.")
+        
+        amount = int(match.group(1))
+        unit = match.group(2)
+        multipliers = {
+            's': 1 / 60,          # seconds to minutes
+            'm': 1,               # minutes
+            'h': 60,              # hours to minutes
+            'd': 24 * 60,         # days to minutes
+            'w': 7 * 24 * 60,     # weeks to minutes
+            'y': 365 * 24 * 60,   # years to minutes
+        }
+        return amount * multipliers[unit]
+
+
+    def _populate_reservation(self, default_params_model = GenericReservationParams) -> None:
+        """Ensures reservation fields are present when 'attempt_reservation' is True."""
+
+        if self.attempt_reservation:
+            if self.reservation_period is None:
+                self.reservation_period = 120 # default to 2 hours
+
+            if self.reservation_params is None:
+                if default_params_model is None:
+                    raise ValueError("Required reservation parameters are missing.")
+                self.reservation_params = default_params_model()
+
+
+    def _populate_start_time(self) -> None:
+        """Set 'start_time' if not provided using given timezone."""
+
+        tzinfo = ZoneInfo(self.timezone)
+        
+        if self.start_time is None:
+            self.start_time = datetime.now(tzinfo)
+        elif self.start_time.tzinfo is None:
+            # if the user passed a naive datetime, make it timezone aware
+            self.start_time = self.start_time.replace(tzinfo=tzinfo)
+
+        return self
+
+
+    @model_validator(mode="after")
+    def validate_reservation(self) -> Self:
+        self._populate_reservation()
+        self._populate_start_time()
+        return self
+
+
+class CommonPOSParams(ReservableProvisionerParams):
     """Common parameters between legacy and new POS provisioner."""
 
     image: str = Field(default="ubuntu-noble")
@@ -158,12 +252,6 @@ class CommonPOSParams(GenericProvisionerParams):
     boot_params: str | None = Field(default=None)
     """POS boot parameters (https://man7.org/linux/man-pages/man7/bootparam.7.html)."""
 
-    attempt_reservation: bool = Field(default=False)
-    """If True, POS will try to reserve before allocating."""
-
-    reservation_period: int = Field(default=120)
-    """Attempted POS reservation period in minutes if 'attempt_reservation' is True."""
-
     only_bootstrap: bool = Field(default=False)
     """If True, POS will not reset node and only bootstrap it."""
 
@@ -173,6 +261,9 @@ class POSParams(CommonPOSParams):
 
     testbed: str = Field(default="sophia")
     """POS testbed."""
+
+    use_slices: bool = Field(default=True)
+    """If True, 'slices-pos' CLI will be used, else, 'pos' CLI will be used."""
 
 
 class LegacyPOSParams(CommonPOSParams):
@@ -216,33 +307,102 @@ class BIParams(GenericProvisionerParams):
     """BI node lifetime duration."""
 
 
-class R2LabParams(GenericProvisionerParams):
-    """R2Lab provisioner parameters."""
+class UnifiedRadioTokenParams(BlueprintBaseModel):
+    """Parameters/fields to generate a valid token for the unified radio management API."""
 
-    r2lab_gateway: str = Field(default="faraday.inria.fr")
-    """R2Lab SSH-able gateway."""
+    infra: str = Field(default="r2lab")
+    """Radio infrastructure to generate the token for."""
+
+    input_body: dict[str, str] = Field(default_factory=dict)
+    """Dictionary given as POST request input to the '/token/{infra}' endpoint."""
+
+
+class UnifiedRadioParams(GenericProvisionerParams):
+    """Provisioning parameters for the unified radio management API."""
+
+    base_url: URL = Field(default=TypeAdapter(URL).validate_python("https://bi.theblueprintfactory.org/devices/api/v1"))
+    """Base URL of the unified radio management API."""
+
+    token: str | None = Field(default=None)
+    """Valid API token. If None, a token will be generated from the given 'token_params'."""
+
+    token_params: UnifiedRadioTokenParams | None = Field(default_factory=UnifiedRadioTokenParams)
+    """Parameters used to generate a token when None is given."""
+
+
+    @model_validator(mode="after")
+    def validate_token(self) -> Self:
+        """Ensure that 'token' and 'token_params' are not both None."""
+
+        if self.token is None and self.token_params is None:
+            raise ValueError("At least one of 'token' or 'token_params' must be provided.")
+        return self
+
+
+class R2LabReservationParams(GenericReservationParams):
+    """R2Lab reservation parameters."""
+
+    r2lab_api_url: URL = Field(default=TypeAdapter(URL).validate_python("https://r2labapi.inria.fr"))
+    """R2Lab API base URL."""
 
     r2lab_slice: str = Field()
-    """R2Lab user's slice name used to reserve and access testbed."""
+    """R2Lab user's slice name."""
 
-    attempt_reservation: bool = Field(default=False)
-    """If True, R2Lab provisioner will try to reserve before provisioning."""
+    email: str = Field()
+    """R2Lab user's email address."""
 
-    reservation_period: int = Field(default=120)
-    """Attempted R2Lab reservation period in minutes if 'attempt_reservation' is True."""
+    password: str = Field()
+    """R2Lab user's password address."""
 
-    email: str | None = Field()
-    """R2Lab user's email address used if 'attempt_reservation' is True."""
 
-    password: str | None = Field()
-    """R2Lab user's password address used if 'attempt_reservation' is True."""
+class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
+    """R2Lab provisioner parameters."""
+
+    reservation_params: R2LabReservationParams | None = Field(default=None)
+    """R2Lab reservation parameters if 'attempt_reservation' is True."""
+
+    # override
+    def _populate_reservation(self) -> None:
+        """Populate 'reservation_params' if missing from 'token_params.input_body' if given."""
+
+        if self.reservation_params is None and self.token_params:
+            try:
+                self.reservation_params = R2LabReservationParams(
+                    r2lab_slice=self.token_params.input_body.get("slice"),
+                    email=self.token_params.input_body.get("email"),
+                    password=self.token_params.input_body.get("password"),
+                )
+            except Exception as e:
+                raise ValueError("Failed to populate required 'reservation_params' from given 'token_params.input_body'.") from e
+
+        super()._populate_reservation(default_params_model=None)
+
+
+    @model_validator(mode="after")
+    def populate_token_params(self) -> Self:
+        """Populate 'token_params' from 'reservation_params' if given."""
+
+        if self.token_params:
+            self.token_params.infra = "r2lab"
+
+            if not self.token_params.input_body:
+                if self.reservation_params:
+                    self.token_params.input_body = {
+                        "email": self.reservation_params.email,
+                        "password": self.reservation_params.password,
+                        "slice": self.reservation_params.r2lab_slice,
+                    }
+                else:
+                    raise ValueError("Cannot populate required 'token_params.input_body'.")
+
+        return self
 
 
 class GenericProvisioner(BlueprintBaseModel):
     """Base class for provisioner."""
 
-    category: ProvisioningCategory = Field()
-    """Provisioner category."""
+    supported_categories: set[ProvisioningCategory] = Field(default_factory=set)
+    """Provisioning categories supported by this provisioner."""
 
     type: ProvisioningType = Field()
     """Provisioner type."""
@@ -254,10 +414,10 @@ class GenericProvisioner(BlueprintBaseModel):
 class POSProvisioner(GenericProvisioner):
     """POS provisioner."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
-    """Provisioning category for POS provisioner."""
+    supported_categories: set[Literal[ProvisioningCategory.NODE]] = Field(
+        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True)
 
-    type: Literal[NodeProvisioningType.POS] = Field(frozen=True)
+    type: Literal[ProvisioningType.POS] = Field(frozen=True)
     """Provisioning type for POS provisioner."""
 
     params: POSParams = Field(default_factory=POSParams)
@@ -267,10 +427,10 @@ class POSProvisioner(GenericProvisioner):
 class LegacyPOSProvisioner(GenericProvisioner):
     """Legacy POS provisioner."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
-    """Provisioning category for Legacy POS provisioner."""
+    supported_categories: set[Literal[ProvisioningCategory.NODE]] = Field(
+        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True)
 
-    type: Literal[NodeProvisioningType.LEGACY_POS] = Field(frozen=True)
+    type: Literal[ProvisioningType.LEGACY_POS] = Field(frozen=True)
     """Provisioning type for Legacy POS provisioner."""
 
     params: LegacyPOSParams = Field(default_factory=LegacyPOSParams)
@@ -280,52 +440,53 @@ class LegacyPOSProvisioner(GenericProvisioner):
 class BIProvisioner(GenericProvisioner):
     """BI provisioner."""
 
-    category: Literal[ProvisioningCategory.NODE] = Field(frozen=True)
-    """Provisioning category for BI provisioner."""
+    supported_categories: set[Literal[ProvisioningCategory.NODE]] = Field(
+        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True)
 
-    type: Literal[NodeProvisioningType.BI] = Field(frozen=True)
+    type: Literal[ProvisioningType.BI] = Field(frozen=True)
     """Provisioning type for BI provisioner."""
 
     params: BIParams = Field(default_factory=BIParams)
     """BI provisioner parameters."""
 
 
-class R2LabRUProvisioner(GenericProvisioner):
-    """R2lab RU provisioner."""
+class UnifiedRadioProvisioner(GenericProvisioner):
+    """Unified radio management API provisioner."""
 
-    category: Literal[ProvisioningCategory.RU] = Field(frozen=True)
-    """Provisioning category for R2lab RU provisioner."""
+    supported_categories: set[Literal[ProvisioningCategory.RU, ProvisioningCategory.UE]] = Field(
+        default_factory=lambda: {ProvisioningCategory.RU, ProvisioningCategory.UE}, frozen=True)
 
-    type: Literal[RUProvisioningType.R2LAB] = Field(frozen=True)
-    """Provisioning type for R2lab RU provisioner."""
+    type: Literal[ProvisioningType.UNIFIED_RADIO] = Field(frozen=True)
+    """Provisioning type for Unified Radio API RU provisioner."""
 
-    params: R2LabParams = Field(default_factory=R2LabParams)
-    """R2lab RU provisioner parameters."""
-
-
-class R2LabUEProvisioner(GenericProvisioner):
-    """R2lab UE provisioner."""
-
-    category: Literal[ProvisioningCategory.UE] = Field(frozen=True)
-    """Provisioning category for R2lab UE provisioner."""
-
-    type: Literal[UEProvisioningType.R2LAB] = Field(frozen=True)
-    """Provisioning type for R2lab UE provisioner."""
-
-    params: R2LabParams = Field(default_factory=R2LabParams)
-    """R2lab UE provisioner parameters."""
+    params: UnifiedRadioParams = Field()
+    """Unified Radio API RU provisioner parameters."""
 
 
-# types used to tell pydantic to validate the correct provisioner model based on its type
-type NodeProvisioner = Annotated[POSProvisioner | LegacyPOSProvisioner | BIProvisioner, Field(discriminator="type")]
-type RUProvisioner = Annotated[R2LabRUProvisioner, Field(discriminator="type")]
-type UEProvisioner = Annotated[R2LabUEProvisioner, Field(discriminator="type")]
+class R2LabProvisioner(GenericProvisioner):
+    """R2lab provisioner."""
 
-# type used to tell pydantic to validate the correct provisioner model based on the category
-type Provisioner = Annotated[NodeProvisioner | RUProvisioner | UEProvisioner, Field(discriminator="category")]
+    supported_categories: set[Literal[ProvisioningCategory.RU, ProvisioningCategory.UE]] = Field(
+        default_factory=lambda: {ProvisioningCategory.RU, ProvisioningCategory.UE}, frozen=True)
+
+    type: Literal[ProvisioningType.R2LAB] = Field(frozen=True)
+    """Provisioning type for R2lab provisioner."""
+
+    params: R2LabParams = Field()
+    """R2lab provisioner parameters."""
 
 
-class ProvisionableResource(BlueprintBaseModel):
+# type used to tell pydantic to validate the correct provisioner model based on the type
+type Provisioner = Annotated[
+    POSProvisioner |
+    LegacyPOSProvisioner |
+    BIProvisioner |
+    UnifiedRadioProvisioner |
+    R2LabProvisioner,
+    Field(discriminator="type")]
+
+
+class GenericProvisionableResource(BlueprintBaseModel):
     """Base class for provisionable resource (Node, RU, UE)."""
 
     category: ProvisioningCategory = Field()
@@ -354,12 +515,12 @@ class ProvisionableResource(BlueprintBaseModel):
         return self
 
 
-class ProvisionableNode(ProvisionableResource):
+class ProvisionableNode(GenericProvisionableResource):
     """Node provisioning."""
 
     category: Literal[ProvisioningCategory.NODE] = Field(default=ProvisioningCategory.NODE, frozen=True)
 
-    provisioner: str = Field(default="bi")
+    provisioner: str | None = Field(default="bi")
     """Node provisioner's name."""
 
     roles: list[Category5G | CoreComponentType | RANComponentType | Literal["database"]] = Field(default_factory=lambda: list(Category5G))
@@ -375,22 +536,26 @@ class ProvisionableNode(ProvisionableResource):
     """Kubernetes parameter overrides."""
 
 
-class ProvisionableRU(ProvisionableResource):
+class ProvisionableRU(GenericProvisionableResource):
     """Radio Unit (RU) provisioning."""
 
     category: Literal[ProvisioningCategory.RU] = Field(default=ProvisioningCategory.RU, frozen=True)
 
-    provisioner: str = Field(default="r2lab")
+    provisioner: str | None = Field(default="r2lab")
     """RU provisioner's name."""
 
 
-class ProvisionableUE(ProvisionableResource):
+class ProvisionableUE(GenericProvisionableResource):
     """User Equipment (UE) provisioning."""
 
     category: Literal[ProvisioningCategory.UE] = Field(default=ProvisioningCategory.UE, frozen=True)
 
-    provisioner: str = Field(default="r2lab")
+    provisioner: str | None = Field(default="r2lab")
     """UE provisioner's name."""
 
     is_connected: bool = Field(default=False)
     """If this UE is connected or not."""
+
+
+# type used to tell pydantic to validate the correct provisionable resource model based on the category
+type ProvisionableResource = Annotated[ProvisionableNode | ProvisionableRU | ProvisionableUE, Field(discriminator="category")]

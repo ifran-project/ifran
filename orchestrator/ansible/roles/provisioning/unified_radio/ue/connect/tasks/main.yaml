@@ -1,0 +1,46 @@
+# Unified radio managememt API provisioner UE connect role.
+
+# Input:
+# - ue_name: str
+# - ue: UE
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output: None
+---
+- name: Get access token if missing
+  ansible.builtin.include_role:
+    name: provisioning/unified_radio/get_token
+    public: true # share role vars for next tasks (token)
+
+- name: Turn radio on for '{{ ue_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/ue/{{ ue_name }}/radio/on"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    status_code: 200
+
+- name: Initialize '{{ ue_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/ue/{{ ue_name }}/initialize"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    body_format: json
+    body:
+      nr5g_info:
+        nr5g_bands:
+          - "n{{ ue.config.gnb[1].config.radioConfiguration.nrBand }}"
+      ue_configuration_data: "{{ ue.config }}"
+    status_code: 200
+
+- name: Connect '{{ ue_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/ue/{{ ue_name }}/connect"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    body_format: json
+    body: "{{ ue.config }}"
+    status_code: 200

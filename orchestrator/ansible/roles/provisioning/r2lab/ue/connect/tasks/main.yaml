@@ -1,0 +1,14 @@
+# R2Lab provisioner UE connect role.
+
+# Input:
+# - ue_name: str
+# - ue: UE
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output: None
+---
+- name: Connect '{{ ue_name }}'
+  ansible.builtin.include_role:
+    name: ../provisioning/unified_radio/ue/connect
+    public: true # share role vars for next tasks (token)

@@ -1,0 +1,14 @@
+# R2Lab provisioner UE disconnect role.
+
+# Input:
+# - ue_name: str
+# - ue: UE
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output: None
+---
+- name: Disconnect '{{ ue_name }}'
+  ansible.builtin.include_role:
+    name: ../provisioning/unified_radio/ue/disconnect
+    public: true # share role vars for next tasks (token)

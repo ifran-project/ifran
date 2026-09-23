@@ -1,0 +1,23 @@
+# Legacy POS provisioner reserve role.
+
+# Input:
+# - testbed: str
+# - reservation_period: int
+# - resources: list[str]
+
+# Output: None
+---
+- name: Register central POS host before reserving '{{ resources | join(', ') }}'
+  ansible.builtin.add_host:
+    name: central_pos
+    ansible_connection: ssh
+    ansible_host: "{{ central_pos_ssh_info.hostname }}"
+    ansible_user: "{{ central_pos_ssh_info.user }}"
+    ansible_port: "{{ central_pos_ssh_info.port }}"
+    ansible_ssh_common_args: "{{ central_pos_ssh_info.common_args | default(omit, true) }}"
+
+- block:
+  - name: Reserve '{{ resources | join(', ') }}' for '{{ reservation_period }}' minutes
+    ansible.builtin.command: pos calendar create --duration {{ reservation_period }} --start {{ (start_time | to_datetime('%Y-%m-%dT%H:%M:%S.%f%z')).strftime('%Y-%m-%d_%H:%M') }} {{ resources | join(' ') }}
+
+  delegate_to: central_pos

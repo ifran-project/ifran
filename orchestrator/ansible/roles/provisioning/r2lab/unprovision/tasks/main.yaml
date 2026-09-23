@@ -1,0 +1,14 @@
+# R2Lab provisioner unprovision role.
+
+# Input:
+# - resource_name: str
+# - base_url: URL
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output: None
+---
+- name: Unprovision '{{ resource_name }}'
+  ansible.builtin.include_role:
+    name: provisioning/unified_radio/unprovision
+    public: true # share role vars for next tasks (token)

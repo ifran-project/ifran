@@ -1,0 +1,88 @@
+# Legacy POS provisioner provision role.
+
+# Input:
+# - resource_name: str
+# - reservation_period: int (if attempt_reservation is True)
+# - image: str (if only_bootstrap is False)
+# - is_staged_image: bool
+# - only_bootstrap: bool
+# - boot_params: str | None
+# - central_pos_ssh_info: SSHInfo
+# - public_key_file: str
+
+# Output:
+# - ssh_info: SSHInfo
+---
+- name: Register central POS host for '{{ resource_name }}'
+  ansible.builtin.add_host:
+    name: central_pos
+    ansible_connection: ssh
+    ansible_host: "{{ central_pos_ssh_info.hostname }}"
+    ansible_user: "{{ central_pos_ssh_info.user }}"
+    ansible_port: "{{ central_pos_ssh_info.port }}"
+    ansible_ssh_common_args: "{{ central_pos_ssh_info.common_args | default(omit, true) }}"
+
+- name: Read public key from localhost for '{{ resource_name }}'
+  ansible.builtin.slurp:
+    src: "{{ public_key_file }}"
+  register: public_key_content
+
+- name: Render SSH key installation script for '{{ resource_name }}'
+  ansible.builtin.template:
+    src: add_pubkey.sh.j2
+    dest: "/tmp/add_pubkey_{{ resource_name }}.sh"
+    mode: "0700"
+  vars:
+    public_key: "{{ public_key_content.content | b64decode }}"
+
+- block:
+  - name: Free any existing allocation for '{{ resource_name }}'
+    ansible.builtin.command: pos allocations free {{ resource_name }} --keep-calendar-event
+
+  - name: Allocate '{{ resource_name }}'
+    ansible.builtin.command: pos allocations allocate {{ resource_name }}
+
+  - name: Set image for '{{ resource_name }}'
+    ansible.builtin.command: pos nodes image {{ resource_name }} {{ image }} {{ "--staging" if is_staged_image else "" }}
+    when: not only_bootstrap
+
+  - name: Set boot parameters for '{{ resource_name }}'
+    ansible.builtin.command: pos nodes bootparameter {{ resource_name }} --raw {{ boot_params }}
+    when:
+      - not only_bootstrap
+      - boot_params is not none
+
+  - name: Reset '{{ resource_name }}'
+    ansible.builtin.command: pos nodes reset {{ resource_name }}
+    when: not only_bootstrap
+
+  - name: Bootstrap '{{ resource_name }}'
+    ansible.builtin.command: pos nodes bootstrap {{ resource_name }}
+    when: only_bootstrap
+
+  - name: Copy SSH key installation script to central POS for '{{ resource_name }}'
+    ansible.builtin.copy:
+      src: "/tmp/add_pubkey_{{ resource_name }}.sh"
+      dest: "/tmp/add_pubkey_{{ resource_name }}.sh"
+      mode: "0700"
+
+  - name: Install SSH public key on '{{ resource_name }}'
+    ansible.builtin.command: pos commands launch {{ resource_name }} --infile /tmp/add_pubkey_{{ resource_name }}.sh
+
+  - name: Return updated SSH info object for '{{ resource_name }}'
+    ansible.builtin.set_stats:
+      data:
+        ssh_info:
+          hostname: "{{ resource_name }}"
+          port: 22
+          user: "root"
+          jumphost: >-
+            {{
+              {
+                "hostname": central_pos_ssh_info.hostname,
+                "port": central_pos_ssh_info.port,
+                "user": central_pos_ssh_info.user
+              }
+            }}
+
+  delegate_to: central_pos

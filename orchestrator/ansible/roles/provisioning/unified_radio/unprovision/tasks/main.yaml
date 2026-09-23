@@ -1,0 +1,22 @@
+# Unified radio managememt API provisioner unprovision role.
+
+# Input:
+# - resource_name: str
+# - base_url: URL
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output: None
+---
+- name: Get access token if missing
+  ansible.builtin.include_role:
+    name: provisioning/unified_radio/get_token
+    public: true # share role vars for next tasks (token)
+
+- name: Power off '{{ resource_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/power/{{ resource_name }}/power_off"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    status_code: 200

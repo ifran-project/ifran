@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+from collections import defaultdict
 from typing import Any, Literal
 
 from orchestrator.models.deployment.ansible import AnsibleParams
@@ -35,10 +36,22 @@ def get_provisionable_resources(
         target_resources = (
             target_resources | type_resources
             if resources is None
-            else target_resources | {k: v for k, v in type_resources.items() if k in resources}
+            else target_resources | {k: v for k, v in type_resources.items() if k in resources.get(rtype, {})}
         )
 
     return target_resources
+
+
+def get_resources_by_provisioner(
+        resources: dict[str, ProvisionableResource],
+    ) -> dict[str, list[str]]:
+    "Get provisionable resource names by their provisioner."
+
+    grouped: dict[str, list[str]] = defaultdict(list)
+    for resource_name, resource_data in resources.items():
+        grouped[resource_data.provisioner].append(resource_name)
+
+    return grouped
 
 
 def resolve_provisioner(
@@ -56,12 +69,58 @@ def resolve_provisioner(
     if provisioner is None:
         raise ReferenceNotFoundError(f"{resource_data.category.value.capitalize()} {resource_name!r} references undefined provisioner {resource_data.provisioner!r}.")
 
-    if provisioner.category != resource_data.category:
-        raise ValueError(f"{resource_data.category.value.capitalize()} {resource_name!r} references "
-                         f"provisioner {resource_data.provisioner!r} of category {provisioner.category!r}.")
+    if resource_data.category not in provisioner.supported_categories:
+        raise ValueError(f"Provisioner {resource_data.provisioner!r} referenced by {resource_name!r} "
+                         f"does not support {resource_data.category.value} provisioning.")
 
     if not resource_data.provisioning_params:
         return provisioner
+
+
+async def run_reservation_action(
+        resources: list[str],
+        provisioner_name: str,
+        provisioners: dict[str, Provisioner],
+        ansible_params: AnsibleParams,
+        ignore_failures: bool = False,
+        force: bool = False,
+        skip_unreservable: bool = True,
+    ) -> None:
+    """Run the 'reserve' Ansible role of the given provisioner once for the given resources list."""
+
+    provisioner_data = provisioners.get(provisioner_name)
+
+    # make sure provisioner exists and is reservable
+    # => has attempt_reservation attribute
+    # => has reserve and free roles
+
+    if provisioner_data is None:
+        raise ValueError(f"Provisioner {provisioner_name!r} could not be found.")
+
+    if not hasattr(provisioner_data.params, "attempt_reservation"):
+        if skip_unreservable:
+            return
+        raise TypeError(f"Provisioner {provisioner_name!r} does not support reservation.")
+
+    if not provisioner_data.params.attempt_reservation and not force:
+        return
+
+    args = {
+        "role": f"provisioning/{provisioner_data.type.value}/reserve",
+        "inputs": {
+            "resources": resources,
+            **provisioner_data.params.model_dump(mode="json"),
+        },
+        "extra_params": {"environment": {"PATH": f"{provisioner_data.params.extra_path}:{os.environ.get('PATH', '')}"}} if provisioner_data.params.extra_path else None,
+        "runner_path": f"{ansible_params.runner_path}/reserve/{provisioner_name}",
+        "roles_paths": ansible_params.roles_paths,
+    }
+    try:
+        await run_ansible_role(**args)
+    except Exception as e:
+        if ignore_failures:
+            return
+        raise RuntimeError(f"Provisioner {provisioner_name!r} failed to reserve resources: {', '.join(resources)}.") from e
 
 
 async def run_single_provisioning_action(
@@ -79,7 +138,7 @@ async def run_single_provisioning_action(
         (action == "provision" and resource_data.is_provisioned) or
         (action == "unprovision" and not resource_data.is_provisioned)):
 
-            raise InvalidResourceStateError(f"{resource_data.category.value.capitalize()} is already {action}ed.")
+            raise InvalidResourceStateError(f"{resource_data.category.value.capitalize()} {resource_name!r} is already {action}ed.")
 
     provisioner = resolve_provisioner(
         resource_name=resource_name,
@@ -94,7 +153,7 @@ async def run_single_provisioning_action(
     merged_prov_params = type(provisioner.params).model_validate(provisioning_params | provisioner.params.model_dump(mode="json", exclude_defaults=True) | resource_data.provisioning_params)
 
     args = {
-        "role": f"provisioning/{provisioner.category.value}/{provisioner.type.value}/{action}",
+        "role": f"provisioning/{provisioner.type.value}/{action}",
         "inputs": {
             "resource_name": resource_name,
             **merged_prov_params.model_dump(mode="json"),
@@ -102,7 +161,7 @@ async def run_single_provisioning_action(
         "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}} if merged_prov_params.extra_path else None,
         "output_keys": ["ssh_info"] if action == "provision" else None,
         "runner_path": f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/{action}",
-        "roles_path": ansible_params.roles_path,
+        "roles_paths": ansible_params.roles_paths,
     }
 
     try:
@@ -149,7 +208,7 @@ async def run_parallel_provisioning_action(
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 
-    for name, result in zip(tasks.keys(), results):
+    for _, result in zip(tasks.keys(), results):
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,

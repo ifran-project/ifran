@@ -1,0 +1,19 @@
+# POS provisioner reserve role.
+
+# If use_slices is True, the role assumes the deployment machine (host on which this Ansible code will run) has
+# the 'slices' and 'slices-pos' CLIs installed and authenticated with the user's SLICES account.
+
+# Else, the role assumes that the 'pos' CLI is installed and authenticated with local POS account.
+
+# Input:
+# - testbed: str
+# - reservation_period: int
+# - resources: list[str]
+
+# Output: None
+---
+- name: Select testbed '{{ testbed }}'
+  ansible.builtin.command: "{{ 'slices pos' if use_slices else 'pos' }} testbed use {{ testbed }}"
+
+- name: Reserve '{{ resources | join(', ') }}' for '{{ reservation_period }}' minutes
+  ansible.builtin.command: "{{ 'slices pos' if use_slices else 'pos' }} calendar create --duration {{ reservation_period }} --start {{ (start_time | to_datetime('%Y-%m-%dT%H:%M:%S.%f%z')).strftime('%Y-%m-%d_%H:%M') }} {{ resources | join(' ') }}"

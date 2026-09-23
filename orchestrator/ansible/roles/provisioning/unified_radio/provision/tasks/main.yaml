@@ -1,0 +1,28 @@
+# Unified radio managememt API provisioner provision role.
+
+# Input:
+# - resource_name: str
+# - base_url: URL
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output:
+# - ssh_info: SSHInfo
+---
+- name: Get access token if missing
+  ansible.builtin.include_role:
+    name: provisioning/unified_radio/get_token
+    public: true # share role vars for next tasks (token)
+
+- name: Power on '{{ resource_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/power/{{ resource_name }}/power_on"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    status_code: 200
+
+- name: Return empty SSH info object for '{{ resource_name }}'
+  ansible.builtin.set_stats:
+    data:
+      ssh_info: {} # can't construct ssh_info

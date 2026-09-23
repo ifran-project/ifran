@@ -10,13 +10,13 @@ from orchestrator.models.deployment.core import CoreDeployment
 from orchestrator.models.deployment.k8s import K8SParams
 from orchestrator.models.deployment.provisioning import (
     BIProvisioner,
-    NodeProvisioningType,
     POSProvisioner,
     ProvisionableNode,
     ProvisionableRU,
     ProvisionableUE,
     Provisioner,
     ProvisioningCategory,
+    ProvisioningType,
 )
 from orchestrator.models.deployment.ran import RANDeployment
 from orchestrator.models.deployment.ric import RICDeployment
@@ -43,8 +43,8 @@ class DeploymentModel(BlueprintBaseModel):
     """Global deployment parameters."""
 
     provisioners: dict[str, Provisioner] = Field(default_factory=lambda: {
-        "bi": BIProvisioner(category=ProvisioningCategory.NODE, type=NodeProvisioningType.BI),
-        "pos": POSProvisioner(category=ProvisioningCategory.NODE, type=NodeProvisioningType.POS),
+        "bi": BIProvisioner(type=ProvisioningType.BI),
+        "pos": POSProvisioner(type=ProvisioningType.POS),
     })
     """Provisioners."""
 

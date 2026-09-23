@@ -1,19 +1,30 @@
 """UE utilities and helpers."""
 
+import asyncio
+import os
+from typing import Any, Literal
+
 from pydantic import IPvAnyAddress
 
-from orchestrator.models.deployment.provisioning import ProvisionableRU
+from orchestrator.models.deployment.ansible import AnsibleParams
+from orchestrator.models.deployment.provisioning import (
+    ProvisionableRU,
+    ProvisionableUE,
+    Provisioner,
+)
 from orchestrator.models.deployment.ue import K8SComponent, UEDeployment
 from orchestrator.models.meta.ran import DUComponent, GNBComponent, RANImplementation
 from orchestrator.models.meta.ru import RU, RUType
 from orchestrator.models.meta.slice import Slice
 from orchestrator.models.meta.ue import UE, UEType
-from orchestrator.utils.common import ReferenceNotFoundError
+from orchestrator.utils.ansible import handle_ansible_result_exception, run_ansible_role
+from orchestrator.utils.common import InvalidResourceStateError, ReferenceNotFoundError
 from orchestrator.utils.common_5g import (
     reconcile_5g_component,
     resolve_component_reference,
     resolve_ru_reference,
 )
+from orchestrator.utils.provisioning import resolve_provisioner
 from orchestrator.utils.radio import derive_ue_radio_config
 
 
@@ -141,3 +152,87 @@ def reconcile_ues(
                 ues_k8s[name].static_pod_ip = ue_ip
 
                 used_ips.add(ues_k8s[name].static_pod_ip)
+
+
+async def run_single_ue_action(
+        ue_name: str,
+        ue_meta: UE,
+        ue_prov: ProvisionableUE,
+        action: Literal["connect", "disconnect"],
+        provisioners: dict[str, Provisioner],
+        provisioning_params: dict[str, Any],
+        ansible_params: AnsibleParams,
+        force: bool = False,
+    ) -> None:
+    """Run the 'ue/connect' or 'ue/disconnect' Ansible role of the provisioner on a single provisionable UE."""
+
+    if not force and (
+        (action == "connect" and ue_prov.is_connected) or
+        (action == "disconnect" and not ue_prov.is_connected)):
+
+            raise InvalidResourceStateError(f"UE {ue_name!r} is already {action}ed.")
+
+    provisioner = resolve_provisioner(
+        resource_name=ue_name,
+        resource_data=ue_prov,
+        provisioners=provisioners,
+    )
+
+    # merge provisioning params without mutating the provisioner
+    merged_prov_params = type(provisioner.params).model_validate(provisioning_params | provisioner.params.model_dump(mode="json", exclude_defaults=True) | ue_prov.provisioning_params)
+
+    args = {
+        "role": f"provisioning/{provisioner.type.value}/ue/{action}",
+        "inputs": {
+            "ue_name": ue_name,
+            "ue": ue_meta,
+            **merged_prov_params.model_dump(mode="json"),
+        },
+        "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}} if merged_prov_params.extra_path else None,
+        "runner_path": f"{ansible_params.runner_path}/ue/{ue_name}/{action}",
+        "roles_paths": ansible_params.roles_paths,
+    }
+
+    try:
+        return await run_ansible_role(**args)
+    except Exception as e:
+        raise RuntimeError(f"UE {ue_name!r} {action} action failed.") from e
+
+
+async def run_parallel_ue_action(
+        ues_meta: dict[str, UE],
+        ues_prov: dict[str, ProvisionableUE],
+        action: Literal["connect", "disconnect"],
+        provisioners: dict[str, Provisioner],
+        provisioning_params: dict[str, Any],
+        ansible_params: AnsibleParams,
+        force: bool = False,
+        ignore_invalid_states: bool = True,
+        ignore_failures: bool = False,
+    ) -> None:
+    """Connect or disconnect UEs in parallel."""
+
+    tasks: dict[str, asyncio.Task] = {}
+    for ue_name, ue_meta in ues_meta.items():
+        ue_prov = ues_prov[ue_name] # dicts should be synced by now
+        tasks[ue_name] = asyncio.create_task(
+            run_single_ue_action(
+                ue_name=ue_name,
+                ue_meta=ue_meta,
+                ue_prov=ue_prov,
+                action=action,
+                provisioners=provisioners,
+                provisioning_params=provisioning_params,
+                ansible_params=ansible_params,
+                force=force,
+        ))
+
+    results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+
+    for _, result in zip(tasks.keys(), results):
+        if isinstance(result, Exception):
+            handle_ansible_result_exception(
+                result=result,
+                ignore_invalid_states=ignore_invalid_states,
+                ignore_failures=ignore_failures,
+            )

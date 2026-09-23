@@ -1,0 +1,24 @@
+# Unified radio managememt API provisioner UE disconnect role.
+
+# Input:
+# - ue_name: str
+# - ue: UE
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output: None
+---
+- name: Get access token if missing
+  ansible.builtin.include_role:
+    name: provisioning/unified_radio/get_token
+    public: true # share role vars for next tasks (token)
+
+- name: Disconnect '{{ ue_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/ue/{{ ue_name }}/disconnect"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    body_format: json
+    body: "{{ ue.config }}"
+  loop: "{{ ue_config.pduSessions }}"

@@ -1,0 +1,56 @@
+# R2Lab provisioner reserve role.
+
+# Input:
+# - base_url: URL
+# - token: str | None
+# - reservation_params: R2LabReservationParams
+# - reservation_period: int
+# - start_time: datetime
+# - end_time: datetime
+
+# Output: None
+---
+- name: Fetch R2Lab access token if missing
+  ansible.builtin.uri:
+    url: "{{ reservation_params.r2lab_api_url }}/auth/login"
+    method: POST
+    body_format: json
+    body:
+      email: "{{ reservation_params.email }}"
+      password: "{{ reservation_params.password }}"
+    status_code: 200
+  register: token_response
+  when: not token
+
+- name: Get R2Lab access token if it was fetched
+  ansible.builtin.set_fact:
+    generated_token: "{{ token if token else token_response.json.access_token }}"
+
+- name: Create R2Lab lease for '{{ reservation_period }}' minutes
+  ansible.builtin.uri:
+    url: "{{ reservation_params.r2lab_api_url }}/leases"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    body_format: json
+    body:
+      resource_id: 1 # r2lab
+      slice_name: "{{ reservation_params.r2lab_slice }}"
+      # floor timestamps to R2Lab's 10 minute granularity (error: Lease times must be aligned to 600s granularity)
+      t_from: >-
+        {{
+          (start_time | to_datetime('%Y-%m-%dT%H:%M:%S.%f%z')).replace(
+            minute=((start_time | to_datetime('%Y-%m-%dT%H:%M:%S.%f%z')).minute // 10) * 10,
+            second=0,
+            microsecond=0
+          ).strftime('%Y-%m-%dT%H:%M:%S%z')
+        }}
+      t_until: >-
+        {{
+          (end_time | to_datetime('%Y-%m-%dT%H:%M:%S.%f%z')).replace(
+            minute=((end_time | to_datetime('%Y-%m-%dT%H:%M:%S.%f%z')).minute // 10) * 10,
+            second=0,
+            microsecond=0
+          ).strftime('%Y-%m-%dT%H:%M:%S%z')
+        }}
+    status_code: 201

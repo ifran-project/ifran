@@ -1,0 +1,15 @@
+# R2Lab provisioner provision role.
+
+# Input:
+# - resource_name: str
+# - base_url: URL
+# - token: str | None
+# - token_params: UnifiedRadioTokenParams | None
+
+# Output:
+# - ssh_info: SSHInfo
+---
+- name: Provision '{{ resource_name }}'
+  ansible.builtin.include_role:
+    name: provisioning/unified_radio/provision
+    public: true # share role vars for next tasks (token)
