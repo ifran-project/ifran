@@ -16,7 +16,7 @@ device_name = {{ component.derived_radio_config.device_driver }}
 device_args = {{ component.advanced_config.device_args }}
 {% else %}
 {% if component.config.ru.type == "usrp" %}
-device_args = "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+device_args = "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
 {% elif component.config.ru.type == "simulated" %}
 device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnb[0] }}:2000,base_srate={{ component.advanced_config.srate | default("61.44e6", true) }}
 {% endif %}

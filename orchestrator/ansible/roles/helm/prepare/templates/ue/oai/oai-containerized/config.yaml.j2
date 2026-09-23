@@ -32,8 +32,8 @@ RUs = (
         tune_offset = {{ component.advanced_config.tune_offset | default(0.0, true) }};
         if_freq = {{ component.advanced_config.if_freq | default(0, true) }};
         if_offset = {{ component.advanced_config.if_offset | default(0, true) }};
-{% if component.config.ru.ip %}
-        sdr_addrs = "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}";
+{% if component.config.ru.ips %}
+        sdr_addrs = "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}";
 {% endif %}
     }
 );

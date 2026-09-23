@@ -3,6 +3,7 @@
 import asyncio
 import os
 from collections import defaultdict
+from ipaddress import IPv4Address
 from typing import Any, Literal
 
 from orchestrator.models.deployment.ansible import AnsibleParams
@@ -11,6 +12,7 @@ from orchestrator.models.deployment.k8s import K8SStatus
 from orchestrator.models.deployment.provisioning import (
     ProvisionableResource,
     Provisioner,
+    ProvisioningCategory,
     SSHInfo,
 )
 from orchestrator.utils.ansible import (
@@ -140,6 +142,12 @@ async def run_single_provisioning_action(
 
             raise InvalidResourceStateError(f"{resource_data.category.value.capitalize()} {resource_name!r} is already {action}ed.")
 
+    if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
+        # ssh-able resources have ssh_info
+        output_keys = ["ssh_info"]
+    else:
+        output_keys = ["ru_ips"]
+
     provisioner = resolve_provisioner(
         resource_name=resource_name,
         resource_data=resource_data,
@@ -157,9 +165,12 @@ async def run_single_provisioning_action(
         "inputs": {
             "resource_name": resource_name,
             **merged_prov_params.model_dump(mode="json"),
+            # bool used by provisioners that manage ssh-able (nodes and ues) and non-ssh-ables resources (rus)
+            # for now, it used to decide whether to return 'ssh_info' or 'ru_ips' instead
+            "is_ru": resource_data.category is ProvisioningCategory.RU,
         },
         "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}} if merged_prov_params.extra_path else None,
-        "output_keys": ["ssh_info"] if action == "provision" else None,
+        "output_keys": output_keys if action == "provision" else None,
         "runner_path": f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
     }
@@ -171,13 +182,18 @@ async def run_single_provisioning_action(
 
     if action == "provision":
         resource_data.is_provisioned = True
-        # validate and update resource ssh info
-        resource_data.ssh_info = SSHInfo.model_validate(result["ssh_info"])
+
+        if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
+            # validate and update resource ssh info
+            resource_data.ssh_info = SSHInfo.model_validate(result["ssh_info"])
+        else:
+            resource_data.ips = [IPv4Address(ip) for ip in result["ru_ips"]]
 
     if action == "unprovision":
         resource_data.is_provisioned = False
-        # set k8s status to not_configured if resource supports it
-        if hasattr(resource_data, "k8s_status"):
+
+        if resource_data.category is ProvisioningCategory.NODE:
+            # set k8s status to not_configured for nodes
             resource_data.k8s_status = K8SStatus.NOT_CONFIGURED
 
 

@@ -5,9 +5,11 @@
 # - base_url: URL
 # - token: str | None
 # - token_params: UnifiedRadioTokenParams | None
+# - is_ru: bool
 
-# Output:
-# - ssh_info: SSHInfo
+# Output: 
+# - if is_ru: ru_ips: list[str]
+# - else: ssh_info: SSHInfo
 ---
 - name: Get access token if missing
   ansible.builtin.include_role:
@@ -22,7 +24,22 @@
       Authorization: "Bearer {{ generated_token }}"
     status_code: 200
 
+- name: Get resource info for '{{ resource_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/resource/{{ resource_name }}"
+    method: GET
+    status_code: 200
+  register: resource_info_resp
+  when: is_ru
+
+- name: Return IP list for '{{ resource_name }}' if it's an RU
+  ansible.builtin.set_stats:
+    data:
+      ru_ips: "{{ resource_info_resp.json.misc.ips }}"
+  when: is_ru
+
 - name: Return empty SSH info object for '{{ resource_name }}'
   ansible.builtin.set_stats:
     data:
       ssh_info: {} # can't construct ssh_info
+  when: not is_ru

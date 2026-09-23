@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import (
     Field,
+    IPvAnyAddress,
     TypeAdapter,
     computed_field,
     field_validator,
@@ -345,9 +346,6 @@ class R2LabReservationParams(GenericReservationParams):
     r2lab_api_url: URL = Field(default=TypeAdapter(URL).validate_python("https://r2labapi.inria.fr"))
     """R2Lab API base URL."""
 
-    r2lab_slice: str = Field()
-    """R2Lab user's slice name."""
-
     email: str = Field()
     """R2Lab user's email address."""
 
@@ -357,6 +355,9 @@ class R2LabReservationParams(GenericReservationParams):
 
 class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
     """R2Lab provisioner parameters."""
+
+    r2lab_slice: str | None = Field(default=None)
+    """R2Lab user's slice name."""
 
     reservation_params: R2LabReservationParams | None = Field(default=None)
     """R2Lab reservation parameters if 'attempt_reservation' is True."""
@@ -368,7 +369,6 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
         if self.reservation_params is None and self.token_params:
             try:
                 self.reservation_params = R2LabReservationParams(
-                    r2lab_slice=self.token_params.input_body.get("slice"),
                     email=self.token_params.input_body.get("email"),
                     password=self.token_params.input_body.get("password"),
                 )
@@ -382,6 +382,10 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
     def populate_token_params(self) -> Self:
         """Populate 'token_params' from 'reservation_params' if given."""
 
+        # ensure r2lab_slice is not None when attempt_reservation is True
+        if self.attempt_reservation and self.r2lab_slice is None:
+            raise ValueError("'r2lab_slice' cannot be left None when 'attempt_reservation' is True.")
+
         if self.token_params:
             self.token_params.infra = "r2lab"
 
@@ -390,7 +394,7 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
                     self.token_params.input_body = {
                         "email": self.reservation_params.email,
                         "password": self.reservation_params.password,
-                        "slice": self.reservation_params.r2lab_slice,
+                        "slice": self.r2lab_slice,
                     }
                 else:
                     raise ValueError("Cannot populate required 'token_params.input_body'.")
@@ -487,7 +491,7 @@ type Provisioner = Annotated[
 
 
 class GenericProvisionableResource(BlueprintBaseModel):
-    """Base class for provisionable resource (Node, RU, UE)."""
+    """Base class for provisionable resource."""
 
     category: ProvisioningCategory = Field()
     """Provisioning category."""
@@ -501,9 +505,6 @@ class GenericProvisionableResource(BlueprintBaseModel):
     provisioning_params: dict[str, Any] = Field(default_factory=dict)
     """Provisioner parameter overrides."""
 
-    ssh_info: SSHInfo = Field(default_factory=SSHInfo)
-    """Resource SSH configuration."""
-
 
     @model_validator(mode="after")
     def validate_provisioning(self):
@@ -515,7 +516,14 @@ class GenericProvisionableResource(BlueprintBaseModel):
         return self
 
 
-class ProvisionableNode(GenericProvisionableResource):
+class SSHableResource(GenericProvisionableResource):
+    """Base class for provisionable resource (Node, RU, UE) that can be SSHed into."""
+
+    ssh_info: SSHInfo = Field(default_factory=SSHInfo)
+    """Resource SSH configuration."""
+
+
+class ProvisionableNode(SSHableResource):
     """Node provisioning."""
 
     category: Literal[ProvisioningCategory.NODE] = Field(default=ProvisioningCategory.NODE, frozen=True)
@@ -536,6 +544,7 @@ class ProvisionableNode(GenericProvisionableResource):
     """Kubernetes parameter overrides."""
 
 
+# NOTE radio units are not ssh-able resources
 class ProvisionableRU(GenericProvisionableResource):
     """Radio Unit (RU) provisioning."""
 
@@ -544,8 +553,11 @@ class ProvisionableRU(GenericProvisionableResource):
     provisioner: str | None = Field(default="r2lab")
     """RU provisioner's name."""
 
+    ips: list[IPvAnyAddress] = Field(default_factory=list)
+    """List of RU IP addresses."""
 
-class ProvisionableUE(GenericProvisionableResource):
+
+class ProvisionableUE(SSHableResource):
     """User Equipment (UE) provisioning."""
 
     category: Literal[ProvisioningCategory.UE] = Field(default=ProvisioningCategory.UE, frozen=True)

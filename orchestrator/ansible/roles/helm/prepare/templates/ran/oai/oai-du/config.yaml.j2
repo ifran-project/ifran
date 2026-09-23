@@ -179,8 +179,8 @@ RUs:
     max_rxgain: {{ component.config.ru.rxGainDB }}
     eNB_instances: {{ component.config.ru.eNB_instances | default([0], true) }}
     sf_extension: {{ component.config.ru.sf_extension | default(0, true) }}
-{% if component.config.ru.ip %}
-    sdr_addrs: "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+{% if component.config.ru.ips %}
+    sdr_addrs: "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
 {% endif %}
 
 {% if component.config.ru.type == "simulated" %}

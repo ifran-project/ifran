@@ -5,11 +5,25 @@
 # - base_url: URL
 # - token: str | None
 # - token_params: UnifiedRadioTokenParams | None
+# - r2lab_slice: str | None
+# - is_ru: bool
 
-# Output:
-# - ssh_info: SSHInfo
+# Output: 
+# - if is_ru: ru_ips: list[str]
+# - else: ssh_info: SSHInfo
 ---
 - name: Provision '{{ resource_name }}'
   ansible.builtin.include_role:
     name: provisioning/unified_radio/provision
     public: true # share role vars for next tasks (token)
+
+- name: Build and return SSH info object for '{{ resource_name }}'
+  ansible.builtin.set_stats:
+    data:
+      ssh_info:
+        hostname: "{{ resource_name }}"
+        user: "root"
+        jumphost:
+          hostname: faraday.inria.fr
+          user: "{{ r2lab_slice | default(omit, true) }}"
+  when: not is_ru

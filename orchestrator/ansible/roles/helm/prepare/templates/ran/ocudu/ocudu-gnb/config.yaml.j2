@@ -134,7 +134,7 @@ ru_sdr:
   device_driver: {{ component.derived_radio_config.device_driver }}
 {% endif %}
 {% if component.config.ru.type == "usrp" %}
-  device_args: "addr={{ component.config.ru.ip }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+  device_args: "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
   clock: {{ component.config.ru.clockSource }}
   sync: {{ component.config.ru.timeSource }}
 {% elif component.config.ru.type == "simulated" %}

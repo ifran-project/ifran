@@ -40,8 +40,8 @@ class ProvisioningManagement(BaseBlueprintManagement):
                     provisioners=self.deployment_model.provisioners,
                     ansible_params=self.deployment_model.params.ansible,
                     ignore_failures=ignore_failures,
-                    force=force,
-                    skip_unreservable=(action == "provision"),  # skip unreservable resources when provisioning,
+                    force=force if action == "reserve" else False, # don't force reservation when the main action is provisioning
+                    skip_unreservable=(action == "provision"),  # skip unreservable resources when provisioning
                 )
 
 

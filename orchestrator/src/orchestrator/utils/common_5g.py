@@ -74,9 +74,8 @@ def resolve_component_reference(
     setattr(component_meta.config, ref_attribute, value)
 
 
-class _TempMergedRU(ProvisionableRU):
-    """RU merged model to temporarily resolve the RU reference."""
-    resolved_reference: RU
+class MergedRU(RU, ProvisionableRU):
+    """RU merged model."""
 
 
 def resolve_ru_reference(
@@ -88,13 +87,13 @@ def resolve_ru_reference(
     """Resolve RU name reference in a 5G component."""
 
     # merge rus (we need the meta for ran config parameters and provisioning for readiness state)
-    rus: dict[str, _TempMergedRU] = {}
+    rus: dict[str, MergedRU] = {}
     for ru_name, ru_meta in rus_meta.items():
         if ru_meta.type is RUType.SIMULATED:
             ru_prov = {"is_provisioned": True} # simulated rus are not part of deployment model, so we just consider them as "provisioned"
         else:
             ru_prov = rus_provisioning[ru_name].model_dump(mode="json") # ru_meta and rus_provisioning are supposed to be synchronized by this point
-        rus[ru_name] = _TempMergedRU.model_validate({**ru_prov, "resolved_reference": ru_meta})
+        rus[ru_name] = MergedRU.model_validate({**ru_prov, **ru_meta})
 
     resolve_component_reference(
         component_name=component_name,
@@ -102,7 +101,6 @@ def resolve_ru_reference(
         ref_attribute="ru",
         registry=rus,
         ready_attribute="is_provisioned",
-        value_attribute="resolved_reference",
     )
 
 

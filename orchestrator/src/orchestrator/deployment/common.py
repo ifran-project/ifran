@@ -94,7 +94,7 @@ class BaseBlueprintManagement:
 
 
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
-        """Generate an Ansible .ini inventory from nodes, rus and ues."""
+        """Generate an Ansible .ini inventory from nodes and ues."""
 
         model = self.deployment_model
 
@@ -104,9 +104,8 @@ class BaseBlueprintManagement:
             for role in node.roles:
                 groups[f"{role.value}_nodes"][name] = node
 
-        # add rus and ues as their own groups
-        groups["ru"].update(model.rus)
-        groups["ue"].update(model.ues)
+        # add ues as their own groups
+        groups["ues"].update(model.ues)
 
         lines: list[str] = []
         for role, role_resources in groups.items():

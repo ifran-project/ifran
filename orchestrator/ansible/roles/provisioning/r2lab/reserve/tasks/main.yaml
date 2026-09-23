@@ -3,6 +3,7 @@
 # Input:
 # - base_url: URL
 # - token: str | None
+# - r2lab_slice: str
 # - reservation_params: R2LabReservationParams
 # - reservation_period: int
 # - start_time: datetime
@@ -35,7 +36,7 @@
     body_format: json
     body:
       resource_id: 1 # r2lab
-      slice_name: "{{ reservation_params.r2lab_slice }}"
+      slice_name: "{{ r2lab_slice }}"
       # floor timestamps to R2Lab's 10 minute granularity (error: Lease times must be aligned to 600s granularity)
       t_from: >-
         {{

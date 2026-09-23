@@ -4,7 +4,6 @@ from enum import StrEnum, auto
 from typing import Literal
 
 from pydantic import Field, model_validator
-from pydantic.networks import IPvAnyAddress
 
 from orchestrator.models.common import BlueprintBaseModel
 from orchestrator.models.meta.common import DuplexMode
@@ -202,12 +201,6 @@ class RU(BlueprintBaseModel):
 
     capabilities: RUCapabilities | None = Field(default=None)
     """RU capabilities."""
-
-    ip: IPvAnyAddress | None = Field(default=None)
-    """RU IP address."""
-
-    id: str | None = Field(default=None)
-    """RU globally unique identifier."""
 
     clockSource: Literal["internal", "external"] = Field(default="internal")
     """Clock synchronization source."""
