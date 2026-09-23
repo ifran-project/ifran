@@ -1,0 +1,38 @@
+params:
+  k8s:
+    master_node: ptb-04015558.inria.fr
+    join_command: 'kubeadm join 138.96.193.106:6443 --token tuiwfl.7gxkta1r1mhqxq4t
+      --discovery-token-ca-cert-hash sha256:21e48a14fcd30e3d98eee69a1a3e419adde445343eaa5987ff4ec3f61299bf03 '
+    install_multus: false
+nodes:
+  ptb-04015558.inria.fr:
+    is_provisioned: true
+    provisioner: null
+    ssh_info:
+      hostname: 138.96.193.106
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    k8s_status: in_cluster
+core_deployment:
+  components:
+    pcf: {}
+    upf: {}
+    bsf: {}
+    udm: {}
+    amf: {}
+    nssf: {}
+    ausf: {}
+    smf: {}
+    udr: {}
+    nrf: {}
+  database_params:
+    image:
+      repository: docker.io/mongo
+      image_tag: '7.0'
+ran_deployment:
+  components:
+    gnb: {}
+containerized_ues:
+  sim_ue: {}
+ric_deployment:
+  components:
+    ric: {}
