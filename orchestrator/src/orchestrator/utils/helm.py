@@ -63,7 +63,7 @@ async def run_single_helm_action(
             **helm_params.model_dump(mode="json"),
         },
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",
-        "roles_path": ansible_params.roles_path,
+        "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,

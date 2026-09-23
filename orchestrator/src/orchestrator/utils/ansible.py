@@ -57,7 +57,7 @@ async def run_ansible_playbook(
         runner_path: str,
         inputs: dict[str, Any] | None = None,
         output_keys: list[str] | None = None,
-        roles_path: str | None = None,
+        roles_paths: list[str] | None = None,
         inventory: str | dict[str, Any] | list | None = None,
     ) -> dict[str, Any] | None:
     """Run an Ansible playbook."""
@@ -70,7 +70,7 @@ async def run_ansible_playbook(
 
     run_args = {
         "private_data_dir": run_path,
-        "roles_path": roles_path,
+        "roles_path": roles_paths,
         "inventory": inventory,
         "playbook": playbook,
         "extravars": inputs,
@@ -101,7 +101,7 @@ async def run_ansible_role(
         inputs: dict[str, Any] | None = None,
         extra_params: dict[str, Any] | None = None,
         output_keys: list[str] | None = None,
-        roles_path: str | None = None,
+        roles_paths: str | None = None,
         hosts: str = "localhost",
         inventory: str | dict[str, Any] | list | None = None,
         become: bool = False,
@@ -124,7 +124,7 @@ async def run_ansible_role(
         runner_path=runner_path,
         inputs=inputs,
         output_keys=output_keys,
-        roles_path=roles_path,
+        roles_paths=roles_paths,
         inventory=inventory,
         )
 

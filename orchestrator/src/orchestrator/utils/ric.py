@@ -53,7 +53,7 @@ async def create_xapp_namespace(
         }],
         runner_path=f"{ansible_params.runner_path}/ric/namespaces",
         inventory=get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
-        roles_path=ansible_params.roles_path,
+        roles_paths=ansible_params.roles_paths,
     )
 
 

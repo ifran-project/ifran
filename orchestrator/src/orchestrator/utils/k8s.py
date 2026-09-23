@@ -56,7 +56,7 @@ async def run_single_k8s_setup_action(
         },
         "output_keys": ["join_command"] if action == "create" else None, # retrieve the join command
         "runner_path": f"{ansible_params.runner_path}/{node_data.category.value}/{node_name}/k8s/{action}",
-        "roles_path": ansible_params.roles_path,
+        "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
