@@ -1,23 +1,26 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.147.61:6443 --token 1r81q9.4dy6tvmsc8n1ty5x
-      --discovery-token-ca-cert-hash sha256:d4456555234853fa3a7fd92147071bbbcdd263c24b65608e375cbd2d8ee13eee '
+    join_command: 'kubeadm join 10.123.178.213:6443 --token bi1fyv.gw5k914tuwmhyw2g
+      --discovery-token-ca-cert-hash sha256:70071807ca1496d942431f22734cfb8be947fee3c9c0f7e6ba9e93bb2fec7747 '
+    used_ips:
+    - 10.244.208.201
   provisioning:
     experiment: 5gbp_exp2
+    extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:
     type: bi
   pos:
     type: pos
     params:
-      start_time: '2026-09-23T03:29:19.992596+02:00'
-      end_time: '2026-09-23T03:29:19.992596+02:00'
+      start_time: '2026-09-27T19:28:00.199544+02:00'
+      end_time: '2026-09-27T19:28:00.199544+02:00'
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.147.61
+      hostname: 10.123.178.213
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -30,7 +33,7 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.178.232
+      hostname: 10.123.116.29
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -43,7 +46,7 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.63.95
+      hostname: 10.123.40.40
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -56,7 +59,7 @@ nodes:
   node4:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.125.221
+      hostname: 10.123.221.154
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -66,49 +69,12 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
-core_deployment:
+core:
+  implementation: oai
   components:
-    udm:
-      is_installed: true
-      network_info: 10.244.3.66
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-udm
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-    udr:
-      is_installed: true
-      network_info: 10.244.3.67
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-udr
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
     ausf:
       is_installed: true
-      network_info: 10.244.135.4
+      network_info: 10.244.104.3
       image:
         repository: docker.io/oaisoftwarealliance/oai-ausf
         image_tag: v2.2.0
@@ -125,47 +91,8 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-    smf:
-      is_installed: true
-      network_info: 10.244.104.3
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-smf
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-        n4:
-          port: 8805
-          protocol: UDP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-    nrf:
-      is_installed: true
-      network_info: 10.244.104.2
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-nrf
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
+      type: ausf
+      implementation: oai
     amf:
       is_installed: true
       network_info: 10.244.135.3
@@ -188,10 +115,33 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
+      type: amf
+      implementation: oai
+    nrf:
+      is_installed: true
+      network_info: 10.244.135.2
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-nrf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: nrf
+      implementation: oai
     upf:
       is_installed: true
-      static_pod_ip: 10.244.16.206
-      network_info: 10.244.16.206
+      static_pod_ip: 10.244.208.201
+      network_info: 10.244.208.201
       image:
         repository: docker.io/oaisoftwarealliance/oai-upf
         image_tag: v2.2.0
@@ -218,82 +168,117 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
+      type: upf
+      implementation: oai
+    smf:
+      is_installed: true
+      network_info: 10.244.135.4
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-smf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n4:
+          port: 8805
+          protocol: UDP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: smf
+      implementation: oai
+    udm:
+      is_installed: true
+      network_info: 10.244.104.2
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-udm
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udm
+      implementation: oai
+    udr:
+      is_installed: true
+      network_info: 10.244.3.67
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-udr
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udr
+      implementation: oai
   database_params:
     image:
       repository: docker.io/mysql
       image_tag: 9.0.1
     is_installed: true
-    ip: 10.244.135.2
-ran_deployment:
+    ip: 10.244.3.66
+ran:
   components:
-    gnb: {}
-containerized_ues:
-  sim_ue: {}
-ric_deployment:
+    gnb:
+      type: gnb
+      implementation: oai
+ues:
+  sim_ue:
+    type: containerized
+ric:
+  implementation: oran_sc
   components:
-    xapp_onboarder:
-      is_installed: true
-      network_info: 10.244.104.5
-      image:
-        repository: docker.io/r2labuser/xapp-onboarder
-        image_tag: 1.0.8-helm3
-      namespace: ricplt
-      node_selector:
-        node-type.5g.blueprint/ric: 'true'
-    a1_mediator:
-      is_installed: true
-      network_info: 10.244.16.192
-      image:
-        repository: docker.io/r2labuser/ric-plt-a1
-        image_tag: 3.2.3
-      namespace: ricplt
-      node_selector:
-        node-type.5g.blueprint/ric: 'true'
-      rendered_files:
-      - values.yaml
     chart_repository:
       is_installed: true
-      network_info: 10.244.135.5
+      network_info: 10.244.208.194
       image:
         repository: docker.io/chartmuseum/chartmuseum
         image_tag: v0.8.2
       namespace: ricplt
       node_selector:
         node-type.5g.blueprint/ric: 'true'
-    application_manager:
-      is_installed: true
-      network_info: 10.244.135.6
-      image:
-        repository: docker.io/r2labuser/ric-plt-appmgr
-        image_tag: 0.5.9-helm3
-      namespace: ricplt
-      node_selector:
-        node-type.5g.blueprint/ric: 'true'
-    e2_manager:
-      is_installed: true
-      network_info: 10.244.16.193
-      image:
-        repository: docker.io/r2labuser/ric-plt-e2mgr
-        image_tag: 6.0.8
-      namespace: ricplt
-      node_selector:
-        node-type.5g.blueprint/ric: 'true'
-      rendered_files:
-      - values.yaml
-    routing_manager:
-      is_installed: true
-      network_info: 10.244.104.6
-      image:
-        repository: docker.io/r2labuser/ric-plt-rtmgr
-        image_tag: 0.9.7
-      namespace: ricplt
-      node_selector:
-        node-type.5g.blueprint/ric: 'true'
-      rendered_files:
-      - values.yaml
+      type: chartmuseum
+      implementation: oran_sc
+      advanced_config:
+        service_name: oran-sc-chart-repository
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
     subscription_manager:
       is_installed: true
-      network_info: 10.244.135.7
+      network_info: 10.244.208.196
       image:
         repository: docker.io/r2labuser/ric-plt-submgr
         image_tag: 0.10.4
@@ -302,9 +287,23 @@ ric_deployment:
         node-type.5g.blueprint/ric: 'true'
       rendered_files:
       - values.yaml
+      type: submgr
+      implementation: oran_sc
+      advanced_config:
+        service_name: service-ricplt-submgr-http
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
     e2_termination:
       is_installed: true
-      network_info: 10.244.16.194
+      network_info: 10.244.135.8
       image:
         repository: docker.io/r2labuser/ric-plt-e2
         image_tag: 6.0.8
@@ -317,9 +316,48 @@ ric_deployment:
         node-type.5g.blueprint/ric: 'true'
       rendered_files:
       - values.yaml
+      type: e2term
+      implementation: oran_sc
+      advanced_config:
+        service_name: service-ricplt-e2term-sctp-alpha
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
+    a1_mediator:
+      is_installed: true
+      network_info: 10.244.135.6
+      image:
+        repository: docker.io/r2labuser/ric-plt-a1
+        image_tag: 3.2.3
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+      type: a1mediator
+      implementation: oran_sc
+      advanced_config:
+        service_name: service-ricplt-a1mediator-http
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
     database:
       is_installed: true
-      network_info: 10.244.104.4
+      network_info: 10.244.104.6
       image:
         repository: docker.io/r2labuser/ric-plt-dbaas
         image_tag: 0.6.5
@@ -328,3 +366,115 @@ ric_deployment:
         node-type.5g.blueprint/ric: 'true'
       rendered_files:
       - values.yaml
+      log_fetch_params:
+        kind: StatefulSet
+      type: dbaas
+      implementation: oran_sc
+      advanced_config:
+        service_name: service-ricplt-dbaas-tcp
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
+    routing_manager:
+      is_installed: true
+      network_info: 10.244.104.8
+      image:
+        repository: docker.io/r2labuser/ric-plt-rtmgr
+        image_tag: 0.9.7
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+      type: rtmgr
+      implementation: oran_sc
+      advanced_config:
+        service_name: service-ricplt-rtmgr-http
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
+    application_manager:
+      is_installed: true
+      network_info: 10.244.104.7
+      image:
+        repository: docker.io/r2labuser/ric-plt-appmgr
+        image_tag: 0.5.9-helm3
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      type: appmgr
+      implementation: oran_sc
+      advanced_config:
+        service_name: oran-sc-application-manager
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
+    xapp_onboarder:
+      is_installed: true
+      network_info: 10.244.135.7
+      image:
+        repository: docker.io/r2labuser/xapp-onboarder
+        image_tag: 1.0.8-helm3
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      type: xapp_onboarder
+      implementation: oran_sc
+      advanced_config:
+        service_name: oran-sc-xapp-onboarder
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http
+    e2_manager:
+      is_installed: true
+      network_info: 10.244.208.195
+      image:
+        repository: docker.io/r2labuser/ric-plt-e2mgr
+        image_tag: 6.0.8
+      namespace: ricplt
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      rendered_files:
+      - values.yaml
+      type: e2mgr
+      implementation: oran_sc
+      advanced_config:
+        service_name: service-ricplt-e2mgr-http
+        ric_type_services:
+          dbaas: service-ricplt-dbaas-tcp
+          chartmuseum: oran-sc-chart-repository
+          xapp_onboarder: oran-sc-xapp-onboarder
+          appmgr: oran-sc-application-manager
+          rtmgr: service-ricplt-rtmgr-http
+          e2mgr: service-ricplt-e2mgr-http
+          e2term: service-ricplt-e2term-sctp-alpha
+          submgr: service-ricplt-submgr-http
+          a1mediator: service-ricplt-a1mediator-http

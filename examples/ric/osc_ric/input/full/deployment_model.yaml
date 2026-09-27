@@ -1,6 +1,6 @@
 params:
   ansible:
-    runner_path: /Users/zimabrou/.ansible-runner
+    runner_path: /Users/zimabrou/post-5g/ansible-runner
     roles_paths:
     - /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/ansible/roles
   k8s:
@@ -24,9 +24,12 @@ params:
     containerd_snapshotter: null
     enable_cni_dhcp: true
     copy_kubeconfig_to_workers: true
-    local_kubeconfig_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/.k8s-admin.conf
+    local_kubeconfig_path: /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/.k8s-admin.conf
+    label_selection_base: node-type.5g.blueprint
+    used_ips: []
   provisioning:
     experiment: 5gbp_exp2
+    extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:
     supported_categories:
@@ -52,14 +55,14 @@ provisioners:
       reservation_period: null
       reservation_params: null
       timezone: Europe/Paris
-      start_time: '2026-09-23T03:29:19.992596+02:00'
+      start_time: '2026-09-27T19:28:00.199544+02:00'
       image: ubuntu-noble
       is_staged_image: false
       boot_params: null
       only_bootstrap: false
       testbed: sophia
       use_slices: true
-      end_time: '2026-09-23T03:29:19.992596+02:00'
+      end_time: '2026-09-27T19:28:00.199544+02:00'
 nodes:
   node1:
     category: node
@@ -153,18 +156,20 @@ nodes:
     - ric
     k8s_status: not_configured
     k8s_params: {}
-core_deployment:
+core:
+  implementation: oai
   components: {}
   database_params:
     image: null
     is_installed: false
     ip: null
     force_database_scheduling: false
-ran_deployment:
+ran:
+  implementation: oai
   components: {}
 rus: {}
 ues: {}
-containerized_ues: {}
-ric_deployment:
+ric:
+  implementation: oran_sc
   components: {}
-miscellaneous: null
+misc: null

@@ -1,16 +1,21 @@
 core:
-  implementation: oai
   components:
-    nrf: {type: nrf}
-    udr: {type: udr}
-    udm: {type: udm}
-    ausf: {type: ausf}
-    amf: {type: amf}
-    smf: {type: smf}
-    upf: {type: upf}
+    nrf:
+      type: nrf
+    udr:
+      type: udr
+    udm:
+      type: udm
+    ausf:
+      type: ausf
+    amf:
+      type: amf
+    smf:
+      type: smf
+    upf:
+      type: upf
 
 ran:
-  implementation: oai
   components:
     gnb:
       type: gnb
@@ -18,14 +23,22 @@ ran:
         ric: e2_termination
 
 ric:
-  implementation: oran_sc
   components:
-    database: {type: dbaas}
-    chart_repository: {type: chartmuseum}
-    xapp_onboarder: {type: xapp_onboarder}
-    application_manager: {type: appmgr}
-    routing_manager: {type: rtmgr}
-    e2_manager: {type: e2mgr}
-    e2_termination: {type: e2term}
-    subscription_manager: {type: submgr}
-    a1_mediator: {type: a1mediator}
+    database:
+      type: dbaas
+    chart_repository:
+      type: chartmuseum
+    xapp_onboarder:
+      type: xapp_onboarder
+    application_manager:
+      type: appmgr
+    routing_manager:
+      type: rtmgr
+    e2_manager:
+      type: e2mgr
+    e2_termination:
+      type: e2term
+    subscription_manager:
+      type: submgr
+    a1_mediator:
+      type: a1mediator

@@ -1,61 +1,42 @@
 core:
-  implementation: oai
   components:
     nrf:
       type: nrf
-      implementation: oai
     udr:
       type: udr
-      implementation: oai
     udm:
       type: udm
-      implementation: oai
     ausf:
       type: ausf
-      implementation: oai
     amf:
       type: amf
-      implementation: oai
     smf:
       type: smf
-      implementation: oai
     upf:
       type: upf
-      implementation: oai
 ran:
   components:
     gnb:
       type: gnb
-      implementation: oai
       config:
         ric: e2_termination
 ric:
-  implementation: oran_sc
   components:
     database:
       type: dbaas
-      implementation: oran_sc
     chart_repository:
       type: chartmuseum
-      implementation: oran_sc
     xapp_onboarder:
       type: xapp_onboarder
-      implementation: oran_sc
     application_manager:
       type: appmgr
-      implementation: oran_sc
     routing_manager:
       type: rtmgr
-      implementation: oran_sc
     e2_manager:
       type: e2mgr
-      implementation: oran_sc
     e2_termination:
       type: e2term
-      implementation: oran_sc
     subscription_manager:
       type: submgr
-      implementation: oran_sc
     a1_mediator:
       type: a1mediator
-      implementation: oran_sc

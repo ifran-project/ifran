@@ -1,10 +1,8 @@
 core:
-  implementation: oai
   components:
     nrf:
       category: core
       type: nrf
-      implementation: oai
       config:
         sbi:
           interfaceName: eth0
@@ -27,12 +25,9 @@ core:
             plmnId: '00101'
           snssaiList:
           - internet
-      advanced_config: null
-      plain_text_config: null
     udr:
       category: core
       type: udr
-      implementation: oai
       config:
         sbi:
           interfaceName: eth0
@@ -47,12 +42,9 @@ core:
             certificate: null
             privateKey: null
         nrfUri: null
-      advanced_config: null
-      plain_text_config: null
     udm:
       category: core
       type: udm
-      implementation: oai
       config:
         sbi:
           interfaceName: eth0
@@ -67,12 +59,9 @@ core:
             certificate: null
             privateKey: null
         nrfUri: null
-      advanced_config: null
-      plain_text_config: null
     ausf:
       category: core
       type: ausf
-      implementation: oai
       config:
         sbi:
           interfaceName: eth0
@@ -92,12 +81,9 @@ core:
           mnc: '01'
           mncLength: 2
           plmnId: '00101'
-      advanced_config: null
-      plain_text_config: null
     amf:
       category: core
       type: amf
-      implementation: oai
       config:
         sbi:
           interfaceName: eth0
@@ -155,12 +141,9 @@ core:
         networkName:
           fullNetworkName: 5G_network
           shortNetworkName: null
-      advanced_config: null
-      plain_text_config: null
     smf:
       category: core
       type: smf
-      implementation: oai
       config:
         sbi:
           interfaceName: eth0
@@ -190,12 +173,9 @@ core:
           plmnId: '00101'
         upfs:
         - upf
-      advanced_config: null
-      plain_text_config: null
     upf:
       category: core
       type: upf
-      implementation: oai
       config:
         sbi:
           interfaceName: eth0
@@ -236,15 +216,11 @@ core:
           ipv6EndPointAddress: null
           port: 2153
           protocol: UDP
-      advanced_config: null
-      plain_text_config: null
 ran:
-  implementation: oai
   components:
     gnb:
       category: ran
       type: gnb
-      implementation: oai
       config:
         timeZone: Europe/Paris
         gnbId: 1
@@ -308,16 +284,11 @@ ran:
           port: 2152
           protocol: UDP
         amf: amf
-      advanced_config: null
-      plain_text_config: null
-      derived_radio_config: null
 rus:
   sim_ru:
     type: simulated
     model: null
     capabilities: null
-    ip: null
-    id: null
     clockSource: internal
     timeSource: internal
     numberOfTxPorts: 1
@@ -330,13 +301,12 @@ ues:
   sim_ue:
     category: ue
     type: containerized
-    implementation: oai
     config:
       timeZone: Europe/Paris
       supi: '001010000000100'
       pei: '356938035643803'
       authenticationData:
-        k: FEC86BA6EB707ED08905757B1BB44B8F
+        k: fec86ba6eb707ed08905757b1bb44b8f
         opc: C42449363BBAD02B66D16BC975D77CC1
         op: null
         amf: '8000'
@@ -355,11 +325,11 @@ ues:
       ueAmbr:
         uplink: 1000000000
         downlink: 1000000000
-      gnb: gnb
+      gnbs:
+      - gnb
       ru: sim_ru
-    advanced_config: null
-    plain_text_config: null
-    derived_radio_config: null
+      nrBands:
+      - 78
 slices:
   internet:
     sst: 1
@@ -386,54 +356,34 @@ slices:
           guaranteedBitRate: null
           maximumBitRate: null
 ric:
-  implementation: oran_sc
   components:
     database:
       category: ric
       type: dbaas
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null
     chart_repository:
       category: ric
       type: chartmuseum
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null
     xapp_onboarder:
       category: ric
       type: xapp_onboarder
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null
     application_manager:
       category: ric
       type: appmgr
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null
     routing_manager:
       category: ric
       type: rtmgr
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null
     e2_manager:
       category: ric
       type: e2mgr
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null
     e2_termination:
       category: ric
       type: e2term
-      implementation: oran_sc
       config:
         e2:
           interfaceName: eth0
@@ -441,19 +391,11 @@ ric:
           ipv6EndPointAddress: null
           port: 36421
           protocol: SCTP
-      advanced_config: null
-      plain_text_config: null
     subscription_manager:
       category: ric
       type: submgr
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null
     a1_mediator:
       category: ric
       type: a1mediator
-      implementation: oran_sc
       config: {}
-      advanced_config: null
-      plain_text_config: null

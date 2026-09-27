@@ -1,21 +1,24 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.204.56:6443 --token b6ijkx.ba5vpme616t09259
-      --discovery-token-ca-cert-hash sha256:00a6b336715ddf9fa6a11ffad428bb1a06fe5b6311b161233e43c90273ff3d2c '
+    join_command: 'kubeadm join 10.123.140.53:6443 --token nfxlfu.afg7jjo6e7glclic
+      --discovery-token-ca-cert-hash sha256:c88338f50e8345333fc99874b3fd4a319ae1179d3b2dafafbd6e48c027f0c4ed '
+  provisioning:
+    experiment: 5gbp_exp3
+    extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:
     type: bi
   pos:
     type: pos
     params:
-      start_time: '2026-09-23T03:25:52.397408+02:00'
-      end_time: '2026-09-23T03:25:52.397408+02:00'
+      start_time: '2026-09-27T22:14:36.143712+02:00'
+      end_time: '2026-09-27T22:14:36.143712+02:00'
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.204.56
+      hostname: 10.123.140.53
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -28,7 +31,7 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.76.163
+      hostname: 10.123.27.218
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -41,7 +44,7 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.124.159
+      hostname: 10.123.98.63
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -54,7 +57,7 @@ nodes:
   node4:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.184.92
+      hostname: 10.123.117.207
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -64,20 +67,40 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
-core_deployment:
+core:
+  implementation: oai
   components:
-    amf: {}
-    udr: {}
-    nrf: {}
-    udm: {}
-    ausf: {}
-    smf: {}
-    upf: {}
-ran_deployment:
+    udm:
+      type: udm
+      implementation: oai
+    ausf:
+      type: ausf
+      implementation: oai
+    amf:
+      type: amf
+      implementation: oai
+    smf:
+      type: smf
+      implementation: oai
+    udr:
+      type: udr
+      implementation: oai
+    nrf:
+      type: nrf
+      implementation: oai
+    upf:
+      type: upf
+      implementation: oai
+ran:
   components:
-    gnb: {}
-containerized_ues:
-  sim_ue: {}
-ric_deployment:
+    gnb:
+      type: gnb
+      implementation: oai
+ues:
+  sim_ue:
+    type: containerized
+ric:
   components:
-    flexric: {}
+    flexric:
+      type: ric
+      implementation: oai

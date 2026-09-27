@@ -1,23 +1,24 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.147.61:6443 --token 1r81q9.4dy6tvmsc8n1ty5x
-      --discovery-token-ca-cert-hash sha256:d4456555234853fa3a7fd92147071bbbcdd263c24b65608e375cbd2d8ee13eee '
+    join_command: 'kubeadm join 10.123.178.213:6443 --token bi1fyv.gw5k914tuwmhyw2g
+      --discovery-token-ca-cert-hash sha256:70071807ca1496d942431f22734cfb8be947fee3c9c0f7e6ba9e93bb2fec7747 '
   provisioning:
     experiment: 5gbp_exp2
+    extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:
     type: bi
   pos:
     type: pos
     params:
-      start_time: '2026-09-23T03:29:19.992596+02:00'
-      end_time: '2026-09-23T03:29:19.992596+02:00'
+      start_time: '2026-09-27T19:28:00.199544+02:00'
+      end_time: '2026-09-27T19:28:00.199544+02:00'
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.147.61
+      hostname: 10.123.178.213
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -30,7 +31,7 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.178.232
+      hostname: 10.123.116.29
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -43,7 +44,7 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.63.95
+      hostname: 10.123.40.40
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -56,7 +57,7 @@ nodes:
   node4:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.125.221
+      hostname: 10.123.221.154
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -66,28 +67,65 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
-core_deployment:
+core:
+  implementation: oai
   components:
-    udm: {}
-    udr: {}
-    ausf: {}
-    smf: {}
-    nrf: {}
-    amf: {}
-    upf: {}
-ran_deployment:
+    ausf:
+      type: ausf
+      implementation: oai
+    amf:
+      type: amf
+      implementation: oai
+    nrf:
+      type: nrf
+      implementation: oai
+    upf:
+      type: upf
+      implementation: oai
+    smf:
+      type: smf
+      implementation: oai
+    udm:
+      type: udm
+      implementation: oai
+    udr:
+      type: udr
+      implementation: oai
+ran:
   components:
-    gnb: {}
-containerized_ues:
-  sim_ue: {}
-ric_deployment:
+    gnb:
+      type: gnb
+      implementation: oai
+ues:
+  sim_ue:
+    type: containerized
+ric:
+  implementation: oran_sc
   components:
-    xapp_onboarder: {}
-    a1_mediator: {}
-    chart_repository: {}
-    application_manager: {}
-    e2_manager: {}
-    routing_manager: {}
-    subscription_manager: {}
-    e2_termination: {}
-    database: {}
+    chart_repository:
+      type: chartmuseum
+      implementation: oran_sc
+    subscription_manager:
+      type: submgr
+      implementation: oran_sc
+    e2_termination:
+      type: e2term
+      implementation: oran_sc
+    a1_mediator:
+      type: a1mediator
+      implementation: oran_sc
+    database:
+      type: dbaas
+      implementation: oran_sc
+    routing_manager:
+      type: rtmgr
+      implementation: oran_sc
+    application_manager:
+      type: appmgr
+      implementation: oran_sc
+    xapp_onboarder:
+      type: xapp_onboarder
+      implementation: oran_sc
+    e2_manager:
+      type: e2mgr
+      implementation: oran_sc

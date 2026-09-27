@@ -1,21 +1,27 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.204.56:6443 --token b6ijkx.ba5vpme616t09259
-      --discovery-token-ca-cert-hash sha256:00a6b336715ddf9fa6a11ffad428bb1a06fe5b6311b161233e43c90273ff3d2c '
+    join_command: 'kubeadm join 10.123.140.53:6443 --token nfxlfu.afg7jjo6e7glclic
+      --discovery-token-ca-cert-hash sha256:c88338f50e8345333fc99874b3fd4a319ae1179d3b2dafafbd6e48c027f0c4ed '
+    used_ips:
+    - 10.244.121.16
+    - 10.244.108.59
+  provisioning:
+    experiment: 5gbp_exp3
+    extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:
     type: bi
   pos:
     type: pos
     params:
-      start_time: '2026-09-23T03:25:52.397408+02:00'
-      end_time: '2026-09-23T03:25:52.397408+02:00'
+      start_time: '2026-09-27T22:14:36.143712+02:00'
+      end_time: '2026-09-27T22:14:36.143712+02:00'
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.204.56
+      hostname: 10.123.140.53
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -28,7 +34,7 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.76.163
+      hostname: 10.123.27.218
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -41,7 +47,7 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.124.159
+      hostname: 10.123.98.63
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -54,7 +60,7 @@ nodes:
   node4:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.184.92
+      hostname: 10.123.117.207
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -64,11 +70,54 @@ nodes:
         ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  -W
         %h:%p proxy@bastion1.theblueprintfactory.org -p 22"
     k8s_status: in_cluster
-core_deployment:
+core:
+  implementation: oai
   components:
+    udm:
+      is_installed: true
+      network_info: 10.244.104.2
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-udm
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udm
+      implementation: oai
+    ausf:
+      is_installed: true
+      network_info: 10.244.135.3
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-ausf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: ausf
+      implementation: oai
     amf:
       is_installed: true
-      network_info: 10.244.104.3
+      network_info: 10.244.3.67
       image:
         repository: docker.io/oaisoftwarealliance/oai-amf
         image_tag: v2.2.0
@@ -88,85 +137,11 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-    udr:
-      is_installed: true
-      network_info: 10.244.135.6
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-udr
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-    nrf:
-      is_installed: true
-      network_info: 10.244.3.68
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-nrf
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-    udm:
-      is_installed: true
-      network_info: 10.244.3.69
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-udm
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-    ausf:
-      is_installed: true
-      network_info: 10.244.135.7
-      image:
-        repository: docker.io/oaisoftwarealliance/oai-ausf
-        image_tag: v2.2.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: oai-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
+      type: amf
+      implementation: oai
     smf:
       is_installed: true
-      network_info: 10.244.3.70
+      network_info: 10.244.3.68
       image:
         repository: docker.io/oaisoftwarealliance/oai-smf
         image_tag: v2.2.0
@@ -186,10 +161,54 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
+      type: smf
+      implementation: oai
+    udr:
+      is_installed: true
+      network_info: 10.244.104.3
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-udr
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udr
+      implementation: oai
+    nrf:
+      is_installed: true
+      network_info: 10.244.135.2
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-nrf
+        image_tag: v2.2.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: oai-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: nrf
+      implementation: oai
     upf:
       is_installed: true
-      static_pod_ip: 10.244.86.126
-      network_info: 10.244.86.126
+      static_pod_ip: 10.244.121.16
+      network_info: 10.244.121.16
       image:
         repository: docker.io/oaisoftwarealliance/oai-upf
         image_tag: v2.2.0
@@ -216,18 +235,20 @@ core_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
+      type: upf
+      implementation: oai
   database_params:
     image:
       repository: docker.io/mysql
       image_tag: 9.0.1
     is_installed: true
-    ip: 10.244.135.5
-ran_deployment:
+    ip: 10.244.3.66
+ran:
   components:
     gnb:
       is_installed: true
-      static_pod_ip: 10.244.134.251
-      network_info: 10.244.134.251
+      static_pod_ip: 10.244.108.59
+      network_info: 10.244.108.59
       image:
         repository: docker.io/oaisoftwarealliance/oai-gnb
         image_tag: 2026.w31
@@ -248,13 +269,25 @@ ran_deployment:
           - ALL
       node_selector:
         node-type.5g.blueprint/ran: 'true'
-containerized_ues:
-  sim_ue: {}
-ric_deployment:
+      type: gnb
+      implementation: oai
+      derived_radio_config:
+        bandwidth_rb: 106
+        ul_point_a_arfcn: null
+        numerology: 1
+        ssb_numerology: 1
+        oai_tdd_periodicity: 6
+        oai_ssb_periodicity: 2
+        radio: simulated
+        additional_flags: -E --rfsim
+ues:
+  sim_ue:
+    type: containerized
+ric:
   components:
     flexric:
       is_installed: true
-      network_info: 10.244.135.8
+      network_info: 10.244.135.4
       image:
         repository: docker.io/oaisoftwarealliance/oai-flexric
         image_tag: develop
@@ -265,3 +298,5 @@ ric_deployment:
       namespace: oai-ric
       node_selector:
         node-type.5g.blueprint/ric: 'true'
+      type: ric
+      implementation: oai

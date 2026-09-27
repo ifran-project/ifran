@@ -1,1 +1,13 @@
-{}
+params:
+  provisioning:
+    experiment: 5gbp_exp3
+    extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
+
+core:
+  implementation: oai
+
+ran:
+  implementation: oai
+
+ric:
+  implementation: oai
