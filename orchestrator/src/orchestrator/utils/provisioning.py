@@ -176,7 +176,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     # NOTE provisioner params model needs to tolerate extra fields and ignore them for this to work with no problems
     merged_prov_params = type(provisioner.params).model_validate(
         provisioning_params |
-        provisioner.params.model_dump(mode="json") |
+        provisioner.params.model_dump(mode="json", exclude_defaults=True) |
         resource_data.provisioning_params
     )
 
