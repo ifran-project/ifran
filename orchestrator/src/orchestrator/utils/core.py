@@ -142,12 +142,16 @@ def reconcile_core(
     core_deployment = deployment_model.core
 
     ran_meta = metamodel.ran
+    ran_deployment = deployment_model.ran
 
     slices = metamodel.slices
     k8s_params = deployment_model.params.k8s
 
     upfs = get_5g_components_by_type(core_meta.components, [CoreComponentType.UPF])
+
     gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU])
+    gnbs_deployment = get_5g_components_by_type(ran_deployment.components, [RANComponentType.GNB, RANComponentType.DU])
+
     nrf_uri = None
 
     # populate database image if not already set
@@ -207,6 +211,7 @@ def reconcile_core(
             component_name=ue_name,
             component_meta=ue_meta,
             gnbs_meta=gnbs_meta,
+            gnbs_deployment=gnbs_deployment,
             populate_address=False, # don't populate ue's gnb ip (not needed)
         )
 

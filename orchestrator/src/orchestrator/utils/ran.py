@@ -2,13 +2,7 @@
 
 from metamodel.models.core import AMFComponent, CoreComponentType
 from metamodel.models.metamodel import MetaModel
-from metamodel.models.ran import (
-    CUComponent,
-    CUCPComponent,
-    CUUPComponent,
-    RANComponent,
-    RANComponentType,
-)
+from metamodel.models.ran import RANComponent, RANComponentType
 from metamodel.models.ric import RICComponentType, ValidatedRICComponent
 from metamodel.models.ru import RUType
 
@@ -154,10 +148,15 @@ def reconcile_ran(
     slices = metamodel.slices
     k8s_params = deployment_model.params.k8s
 
-    grouped_ran = get_5g_components_by_type(ran_meta.components)
-    cu_cps: dict[str, CUCPComponent] = grouped_ran.get(RANComponentType.CU_CP, {})
-    cu_ups: dict[str, CUUPComponent] = grouped_ran.get(RANComponentType.CU_UP, {})
-    cus: dict[str, CUComponent] = grouped_ran.get(RANComponentType.CU, {})
+    grouped_meta = get_5g_components_by_type(ran_meta.components)
+    cu_cps_meta = grouped_meta.get(RANComponentType.CU_CP, {})
+    cu_ups_meta = grouped_meta.get(RANComponentType.CU_UP, {})
+    cus_meta = grouped_meta.get(RANComponentType.CU, {})
+
+    grouped_deployment = get_5g_components_by_type(ran_deployment.components)
+    cu_cps_deployment = grouped_deployment.get(RANComponentType.CU_CP, {})
+    cu_ups_deployment = grouped_deployment.get(RANComponentType.CU_UP, {})
+    cus_deployment = grouped_deployment.get(RANComponentType.CU, {})
 
     amfs_meta = get_5g_components_by_type(core_meta.components, [CoreComponentType.AMF])
     amfs_deployment = get_5g_components_by_type(core_deployment.components, [CoreComponentType.AMF])
@@ -168,16 +167,24 @@ def reconcile_ran(
         ric_deployment.components, [RICComponentType.RIC, RICComponentType.E2TERM])
 
     # amf and ric components need to be reconciled before resolving ran refs to them
-    # (mainly because amf's n2 and ric's e2 interfaces need to be populated from their network info)
+    # (because amf's n2 and ric's e2 interfaces need to be populated from their network info)
     reconcile_5g_components(
         components_meta=amfs_meta,
         components_deployment=amfs_deployment,
         k8s_params=k8s_params,
     )
-
     reconcile_5g_components(
         components_meta=rics_meta,
         components_deployment=rics_deployment,
+        k8s_params=k8s_params,
+    )
+
+    # run standard component reconciliation on cu/cu_cp/cu_cp components first
+    # because cu_up and cu_cp's e1, cu/cu_cp's f1c, and cu/cu_up's f1u interfaces
+    # need to assigned a static ip before resolving cross-references
+    reconcile_5g_components(
+        components_meta=cus_meta | cu_cps_meta | cu_ups_meta,
+        components_deployment=cus_deployment | cu_cps_deployment | cu_ups_deployment,
         k8s_params=k8s_params,
     )
 
@@ -194,7 +201,7 @@ def reconcile_ran(
             slices=slices,
         )
 
-        # resolve amf reference
+        # resolve amf reference in cu_cp/cu/gnb components
         if component_meta.type in [RANComponentType.GNB, RANComponentType.CU, RANComponentType.CU_CP]:
             resolve_amf_ref(
                 **args,
@@ -210,11 +217,18 @@ def reconcile_ran(
         )
 
         if component_meta.type in [RANComponentType.GNB, RANComponentType.DU]:
-            # resolve ru reference
+            # resolve ru reference for gnbs and dus
             resolve_ru_reference(
                  **args,
                 rus_meta=rus_meta,
                 rus_provisioning=rus_provisioning,
+            )
+
+            # NOTE gnbs and dus need ru reference to resolved first to select a default image based on ru type
+            reconcile_5g_component(
+                **args,
+                component_deployment=component_deployment,
+                k8s_params=k8s_params,
             )
 
             # derive implementation-specific radio parameters for gnb and du after ru name reference resolution
@@ -230,33 +244,29 @@ def reconcile_ran(
                 k8s_params=k8s_params,
             )
 
-        # NOTE ru reference needs to be resolved before populating image => needed for selecting image
-        reconcile_5g_component(
-            **args,
-            component_deployment=component_deployment,
-            k8s_params=k8s_params,
-        )
-
         # resolve references between split ran components
         # NOTE static ip assignment needs to be done before this
         if component_meta.type is RANComponentType.CU_UP:
-            # resolve cu_cp reference in cu_cp
+            # resolve cu_cp reference in cu_cp with cu_cp's e1 ip address
             resolve_component_reference(
                 **args,
                 ref_attribute="cu_cp",
-                registry=cu_cps,
+                registry=cu_cps_meta,
+                value_attribute="config.e1.ipv4EndPointAddress",
             )
         elif component_meta.type is RANComponentType.DU:
-            # resolve cu/cu_cp reference in du
+            # resolve cu/cu_cp reference in du with cu/cu_cp's f1c ip address
             resolve_component_reference(
                 **args,
                 ref_attribute="cu_cp",
-                registry=cu_cps | cus,
+                registry=cu_cps_meta | cus_meta,
+                value_attribute="config.f1c.ipv4EndPointAddress",
             )
 
-            # resolve cu/cu_up reference in du
+            # resolve cu/cu_up reference in du with cu/cu_up's f1u ip address
             resolve_component_reference(
                 **args,
                 ref_attribute="cu_up",
-                registry=cu_ups | cus,
+                registry=cu_ups_meta | cus_meta,
+                value_attribute="config.f1u.ipv4EndPointAddress",
             )

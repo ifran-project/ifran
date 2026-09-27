@@ -51,11 +51,15 @@ EXPOSED_COMPONENT_INTERFACES = {
     Category5G.RIC: EXPOSED_RIC_INTERFACES,
 }
 
-# component types that require a static pod ip for configuration purposes (e.g. ip needs to be known ahead of time)
+# component types that require a static pod ip for configuration purposes
 STATIC_POD_IP_TYPES = [
-    CoreComponentType.UPF, # upf ip needs to be know by the smf before deployment (open5gs + free5gc)
-    RANComponentType.CU_CP, RANComponentType.CU_UP, RANComponentType.DU, # they reference each other
-    RANComponentType.GNB, # ip needs to be know before deployment => advertised to core from config (mainly oai)
+    # upf ip (assigned to n4) needs to be known by the smf before deployment (open5gs + free5gc)
+    CoreComponentType.UPF,
+    # cu_cp, cu_up and cu components reference each other and are reference by du
+    RANComponentType.CU_CP, RANComponentType.CU_UP, RANComponentType.CU,
+    # cu_up, cu and gnb ip (assigned to n3) needs to be known before deployment => advertised to core from config (oai)
+    # gnb and du need a static ip given to simulated ues to reach it
+    RANComponentType.DU, RANComponentType.GNB,
 ]
 
 # uniion type
@@ -436,7 +440,7 @@ def reconcile_5g_components(
         components_deployment: dict[str, Deployed5GComponent],
         k8s_params: K8SParams,
     ) -> None:
-    """Run 'reconcile_5g_component' all provided components."""
+    """Run 'reconcile_5g_component' on all provided components."""
 
     for component_name, component_meta in components_meta.items():
         reconcile_5g_component(
