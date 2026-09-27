@@ -5,10 +5,13 @@ common:
     infra: ricinfra
 
 submgr:
+  imagePullPolicy: {{ component.image.image_pull_policy }}
   image:
     registry: {{ component.image.repository.rsplit('/', 1)[0] }}
     name: {{ component.image.repository.rsplit('/', 1)[1] }}
     tag: {{ component.image.image_tag }}
+
+  replicaCount: 1
 
 # Scheduling options
 affinity:

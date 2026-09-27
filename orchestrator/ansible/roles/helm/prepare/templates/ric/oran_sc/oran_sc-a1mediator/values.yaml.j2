@@ -5,14 +5,24 @@ common:
     infra: ricinfra
 
 a1mediator:
+  replicaCount: 1
   image:
     registry: {{ component.image.repository.rsplit('/', 1)[0] }}
     name: {{ component.image.repository.rsplit('/', 1)[1] }}
     tag: {{ component.image.image_tag }}
+  imagePullPolicy: {{ component.image.image_pull_policy }}
+
+  # Service ports are now defined in
+  # ric-common/Common-Template/helm/ric-common/templates/_ports.tpl file.
+  # If need to change a service port, make the code change necessary, then
+  # update the _ports.tpl file with the new port number.
+
+# these are ENV variables that A1 takes; see docs
   rmr_timeout_config:
     a1_rcv_retry_times: 20
     ins_del_no_resp_ttl: 5
     ins_del_resp_ttl: 10
+  loglevel: "INFO"
 
 # Scheduling options
 affinity:

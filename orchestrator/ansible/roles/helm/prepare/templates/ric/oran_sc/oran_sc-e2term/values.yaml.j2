@@ -11,16 +11,55 @@ e2term:
       registry: {{ component.image.repository.rsplit('/', 1)[0] }}
       name: {{ component.image.repository.rsplit('/', 1)[1] }}
       tag: {{ component.image.image_tag }}
+
     privilegedmode: {{ (component.security_context.privileged if component.security_context else false) | lower }}
     hostnetworkmode: false
+
     replicaCount: 1
     env:
       print: "1"
       messagecollectorfile: "/data/outgoing/"
+    # Service ports are now defined in
+    # ric-common/Common-Template/helm/ric-common/templates/_ports.tpl file.
+    # If need to change a service port, make the code change necessary, then
+    # update the _ports.tpl file with the new port number.
+
     dataVolSize: 100Mi
     storageClassName: local-storage
+    #storageClassName: ric-storage-class
+
     pizpub:
       enabled: false
+    #  publishURL: ""
+    #  user: ""
+    #  password: ""
+    #  feedId: ""
+    #  dataRootDir: ""
+    #  scanDirectory: ""
+    #  processedDirectory: ""
+    #  image:
+    #    name: ""
+    #    tag: ""
+    #    registry: ""
+
+health:
+    liveness:
+      command: "ip=`hostname -i`;export RMR_SRC_ID=$ip;/opt/e2/rmr_probe -h $ip"
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      enabled: {{ component.liveness_probe | lower}}
+
+    readiness:
+      command: "ip=`hostname -i`;export RMR_SRC_ID=$ip;/opt/e2/rmr_probe -h $ip"
+      initialDelaySeconds: 120
+      periodSeconds: 60
+      enabled: {{ component.readiness_probe | lower}}
+
+loglevel: 3
+
+common_env_variables:
+  ConfigMapName: "/etc/config/log-level"
+  ServiceName: "RIC_E2_TERM"
 
 # Scheduling options
 affinity:

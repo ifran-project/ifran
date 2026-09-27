@@ -5,19 +5,42 @@ common:
     infra: ricinfra
 
 e2mgr:
+  imagePullPolicy: {{ component.image.image_pull_policy }}
   image:
     registry: {{ component.image.repository.rsplit('/', 1)[0] }}
     name: {{ component.image.repository.rsplit('/', 1)[1] }}
     tag: {{ component.image.image_tag }}
+
   baseUrl: "http://service-{{ component.namespace }}-rtmgr-http:3800/ric/v1/handles/"
+  
   privilegedmode: {{ (component.security_context.privileged if component.security_context else false) | lower }}
+
+  replicaCount: 1
+  
   globalRicId:
-    ricId: "AACCE"
-    mcc: "310"
-    mnc: "411"
-  rnibWriter:
-    stateChangeMessageChannel: RAN_CONNECTION_STATUS_CHANGE
-    ranManipulationMessageChannel: RAN_MANIPULATION
+    plmnId: 131014
+    ricNearRtId: 556670
+
+  liveness:
+    api: v1/health
+    initialDelaySeconds: 3
+    periodSeconds: 10
+    enabled: {{ component.liveness_probe | lower}}
+
+  readiness:
+    api: v1/health
+    initialDelaySeconds: 3
+    periodSeconds: 10
+    enabled: {{ component.readiness_probe | lower}}
+
+  common_env_variables:
+    ServiceName: "RIC_E2_MGR"
+    ConfigMapName: "/etc/config/log-level.yaml"
+
+  # Service ports are now defined in 
+  # ric-common/Common-Template/helm/ric-common/templates/_ports.tpl file.
+  # If need to change a service port, make the code change necessary, then
+  # update the _ports.tpl file with the new port number.
 
 # Scheduling options
 affinity:

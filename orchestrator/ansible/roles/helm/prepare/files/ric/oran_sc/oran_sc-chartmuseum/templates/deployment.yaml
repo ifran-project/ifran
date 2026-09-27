@@ -62,7 +62,6 @@ spec:
       volumes:
         - name: charts
           emptyDir: {}
-      {{- with .Values.nodeSelector }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
