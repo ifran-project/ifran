@@ -175,10 +175,10 @@ def resolve_snssai_list(
     config = config or component_meta.config
 
     if hasattr(config, "snssaiList"):
-        snssai_list: list[str] = config.snssaiList
+        snssai_list: list[str] = config.snssaiList # type: ignore
 
         for i, snssai in enumerate(snssai_list):
-            config.snssaiList[i] = resolve_snssai_reference(
+            config.snssaiList[i] = resolve_snssai_reference( # type: ignore
                 component_name=component_name,
                 component_meta=component_meta,
                 reference=snssai,
@@ -196,7 +196,7 @@ def resolve_plmn_list(
 
     config = component_meta.config
 
-    for plmn_item in config.plmnList:
+    for plmn_item in config.plmnList: # type: ignore
         resolve_snssai_list(
             component_name=component_name,
             component_meta=component_meta,
@@ -207,7 +207,7 @@ def resolve_plmn_list(
 
 def resolve_ru_reference(
         component_name: str,
-        component_meta: Deployed5GComponent,
+        component_meta: Component5G,
         rus_meta: dict[str, RU],
         rus_provisioning: dict[str, ProvisionableRU],
     ) -> None:
@@ -256,14 +256,14 @@ def populate_default_images(
             config = component_meta.config
 
             # NOTE CUs, CU-CPs and CU-UPs dont have and ru field, so give them simulated one for simplicity
-            ru_type = config.ru.type if hasattr(config, "ru") and isinstance(config.ru, RU) else RUType.SIMULATED
+            ru_type = config.ru.type if hasattr(config, "ru") and isinstance(config.ru, RU) else RUType.SIMULATED # type: ignore
 
-            component_deployment.image = DEFAULT_POD_IMAGES.get(component_meta.category
+            component_deployment.image = DEFAULT_POD_IMAGES.get(component_meta.category, {}
                                                             ).get(component_deployment.implementation, {}
                                                                 ).get(ru_type, {}
                                                                         ).get(component_meta.type)
         else:
-            component_deployment.image = DEFAULT_POD_IMAGES.get(component_meta.category
+            component_deployment.image = DEFAULT_POD_IMAGES.get(component_meta.category, {}
                                                         ).get(component_deployment.implementation, {}
                                                             ).get(component_meta.type)
 
@@ -307,7 +307,7 @@ def populate_iface_for_deployed(
     # multus case => list if multus interfaces
     if component_deployment.multus.enabled:
         # look for interface ip with same name
-        for multus_iface in component_deployment.network_info:
+        for multus_iface in component_deployment.network_info: # type: ignore
             if multus_iface.interface == iface_name:
                 iface_meta.ipv4EndPointAddress =(
                     multus_iface.ips[0] if multus_iface.ips
@@ -317,7 +317,7 @@ def populate_iface_for_deployed(
 
     # non-multus case => pod ip
     else:
-        iface_meta.ipv4EndPointAddress = component_deployment.network_info
+        iface_meta.ipv4EndPointAddress = component_deployment.network_info # type: ignore
 
 
 def populate_iface_for_undeployed(
@@ -484,7 +484,7 @@ def resolve_component_dependency_levels(
         # were already handled in the previous levels and are considered as completed
         ready = {
             name: component for name, component in remaining.items()
-            if (dependencies.get(component.type, frozenset()) & available_types) <= completed_types
+            if (dependencies.get(component.type, frozenset()) & available_types) <= completed_types # type: ignore
         }
         # a dependency is enforced only when at least one instance of that dependency type
         # is present in the given components
@@ -502,6 +502,6 @@ def resolve_component_dependency_levels(
         }
 
         # resolved component types
-        completed_types.update(component.type for component in ready.values())
+        completed_types.update(component.type for component in ready.values()) # type: ignore
 
     return levels

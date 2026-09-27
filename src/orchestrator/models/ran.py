@@ -254,7 +254,7 @@ class DeployedRANComponent(Deployed5GComponent):
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
             mapping=ADVANCED_RAN_CONFIG_MAPPING,
-            default_model=GenericAdvancedRANConfig,
+            default_model=GenericAdvancedRANConfig, # type: ignore
         )
 
 

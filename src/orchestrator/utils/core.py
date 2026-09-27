@@ -1,13 +1,15 @@
 """5G core utilities and helpers."""
 
 import asyncio
+from ipaddress import IPv4Address
 from typing import Literal
 
 from metamodel.models.common import Category5G
 from metamodel.models.core import (
     Core,
-    CoreComponent,
     CoreComponentType,
+    NSSFComponent,
+    SMFComponent,
     UPFComponent,
 )
 from metamodel.models.metamodel import MetaModel
@@ -41,7 +43,7 @@ from orchestrator.utils.utils import InvalidResourceStateError, ReferenceNotFoun
 
 def resolve_smf_refs(
         component_name: str,
-        component_meta: CoreComponent,
+        component_meta: SMFComponent,
         upfs: dict[str, UPFComponent],
     ) -> None:
     """Resolve list of UPF references in an SMF component configuration."""
@@ -54,12 +56,12 @@ def resolve_smf_refs(
         if upf_meta is None:
             raise ReferenceNotFoundError(f"SMF component {component_name!r} reference undefined UPF {upf_reference!r}.")
 
-        component_meta.config.upfs[i] = upf_meta
+        component_meta.config.upfs[i] = upf_meta # type: ignore
 
 
 def resolve_nssf_refs(
         component_name: str,
-        component_meta: CoreComponent,
+        component_meta: NSSFComponent,
         slices: dict[str, Slice],
     ) -> None:
     """Resolve slice references in an NSSF component configuration."""
@@ -74,7 +76,7 @@ def resolve_nssf_refs(
             reference=nsi_info.snssai,
             slices=slices,
             field_name="nsiInfoList.snssai",
-        )
+        ) # type: ignore
 
     # taInfoList[*]
     for ta_info in config.taInfoList:
@@ -147,10 +149,10 @@ def reconcile_core(
     slices = metamodel.slices
     k8s_params = deployment_model.params.k8s
 
-    upfs = get_5g_components_by_type(core_meta.components, [CoreComponentType.UPF])
+    upfs = get_5g_components_by_type(core_meta.components, [CoreComponentType.UPF]) # type: ignore
 
-    gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU])
-    gnbs_deployment = get_5g_components_by_type(ran_deployment.components, [RANComponentType.GNB, RANComponentType.DU])
+    gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU]) # type: ignore
+    gnbs_deployment = get_5g_components_by_type(ran_deployment.components, [RANComponentType.GNB, RANComponentType.DU]) # type: ignore
 
     nrf_uri = None
 
@@ -160,8 +162,8 @@ def reconcile_core(
     # run standard component reconciliation on ALL components first
     # because upf's n4 interface need to be assigned a static ip smf ref resolution
     reconcile_5g_components(
-        components_meta=core_meta.components,
-        components_deployment=core_deployment.components,
+        components_meta=core_meta.components, # type: ignore
+        components_deployment=core_deployment.components, # type: ignore
         k8s_params=k8s_params,
     )
 
@@ -173,7 +175,7 @@ def reconcile_core(
         # resolve references in core components
         if component_meta.type is CoreComponentType.SMF:
             resolve_snssai_list(**args, slices=slices)
-            resolve_smf_refs(**args, upfs=upfs)
+            resolve_smf_refs(**args, upfs=upfs) # type: ignore
 
         elif component_meta.type is CoreComponentType.NSSF:
             resolve_nssf_refs(**args, slices=slices)
@@ -210,8 +212,8 @@ def reconcile_core(
         resolve_gnb_ref(
             component_name=ue_name,
             component_meta=ue_meta,
-            gnbs_meta=gnbs_meta,
-            gnbs_deployment=gnbs_deployment,
+            gnbs_meta=gnbs_meta, # type: ignore
+            gnbs_deployment=gnbs_deployment, # type: ignore
             populate_address=False, # don't populate ue's gnb ip (not needed)
         )
 
@@ -269,7 +271,7 @@ async def run_core_database_helm_action(  # noqa: PLR0917
     if action == "install":
         core_deployment.database_params.is_installed = True
         # retrieve database pod ip
-        core_deployment.database_params.ip = IPvAnyAddress(result["network_info"])
+        core_deployment.database_params.ip = IPv4Address(result["network_info"]) # type: ignore
     elif action == "uninstall":
         core_deployment.database_params.is_installed = False
 
@@ -279,7 +281,7 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
         ue_config: UEConfiguration,
         core_implementation: CoreImplementation,
         action: Literal["add", "remove"],
-        database_ip: IPvAnyAddress,
+        database_ip: IPvAnyAddress | None,
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
@@ -319,7 +321,7 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
         ues: dict[str, UE],
         core_implementation: CoreImplementation,
         action: Literal["add", "remove"],
-        database_ip: IPvAnyAddress,
+        database_ip: IPvAnyAddress | None,
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,

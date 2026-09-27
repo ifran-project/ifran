@@ -73,7 +73,7 @@ def deep_merge(left: dict[str, Any] | BaseModel, right: dict[str, Any] | BaseMod
 
     result = dict(left)
 
-    for key, right_value in right.items():
+    for key, right_value in right.items(): # type: ignore
         left_value = result.get(key)
         if (isinstance(left_value, dict) and isinstance(right_value, dict)):
             result[key] = deep_merge(left=left_value, right=right_value)
@@ -143,7 +143,7 @@ def serialize_ini_section(value: Any) -> str:
 
     # By default, ConfigParser converts all keys to lowercase.
     # Setting optionxform to str prevents this and preserves original casing.
-    config.optionxform = str
+    config.optionxform = str # type: ignore
 
     # configparser requires string values. We handle special types here.
     processed_dict = {}

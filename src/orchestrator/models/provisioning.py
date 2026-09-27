@@ -14,6 +14,7 @@ from metamodel.models.base import (
 from metamodel.models.common import Category5G
 from metamodel.models.core import CoreComponentType
 from metamodel.models.ran import RANComponentType
+from metamodel.models.ric import RICComponentType
 from metamodel.models.ru import RU
 from metamodel.models.ue import UEType
 from metamodel.utils import URL
@@ -171,12 +172,12 @@ class ReservableProvisionerParams(GenericProvisionerParams):
 
     @computed_field
     @property
-    def end_time(self) -> datetime:
+    def end_time(self) -> datetime | None:
         """The end datetime computed from the start time and reservation period."""
 
         if self.reservation_period is None:
             return self.start_time
-        return self.start_time + timedelta(minutes=self.reservation_period)
+        return self.start_time + timedelta(minutes=self.reservation_period) # type: ignore
 
 
     @field_validator("reservation_period", mode="before")
@@ -223,7 +224,7 @@ class ReservableProvisionerParams(GenericProvisionerParams):
                 self.reservation_params = default_params_model()
 
 
-    def _populate_start_time(self) -> None:
+    def _populate_start_time(self) -> Self:
         """Set 'start_time' if not provided using given timezone."""
 
         tzinfo = ZoneInfo(self.timezone)
@@ -322,7 +323,7 @@ class UnifiedRadioTokenParams(StrictBaseModel):
     infra: str = Field(default="r2lab")
     """Radio infrastructure to generate the token for."""
 
-    input_body: dict[str, str] = Field(default_factory=dict)
+    input_body: dict[str, Any] = Field(default_factory=dict)
     """Dictionary given as POST request input to the '/token/{infra}' endpoint."""
 
 
@@ -377,15 +378,15 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
         if self.reservation_params is None and self.token_params:
             try:
                 self.reservation_params = R2LabReservationParams(
-                    email=self.token_params.input_body.get("email"),
-                    password=self.token_params.input_body.get("password"),
+                    email=self.token_params.input_body.get("email"), # type: ignore
+                    password=self.token_params.input_body.get("password"), # type: ignore
                 )
             except Exception as e:
                 raise ValueError(
                     "Failed to populate required 'reservation_params' from given 'token_params.input_body'."
                     ) from e
 
-        super()._populate_reservation(default_params_model=None)
+        super()._populate_reservation(default_params_model=None) # type: ignore
 
 
     @model_validator(mode="after")
@@ -533,6 +534,14 @@ class SSHableResource(GenericProvisionableResource):
     """Resource SSH configuration."""
 
 
+class DatabaseRole(StrEnum):
+    """Node database role."""
+
+    DATABASE = auto()
+
+# union type
+type NodeRole = Category5G | CoreComponentType | RANComponentType | RICComponentType | DatabaseRole
+
 class ProvisionableNode(SSHableResource):
     """Node provisioning."""
 
@@ -541,8 +550,7 @@ class ProvisionableNode(SSHableResource):
     provisioner: str | None = Field(default="bi")
     """Node provisioner's name."""
 
-    roles: list[Category5G | CoreComponentType | RANComponentType | Literal["database"]] = Field(
-        default_factory=lambda: list(Category5G))
+    roles: list[NodeRole] = Field(default_factory=lambda: list(Category5G))
     """
     Node roles. Can be either a 5G category (e.g. core) or 5G component type (e.g. upf).
     Roles are added as "node-type.5g.blueprint/{role} = true" Kubernetes label for the node.

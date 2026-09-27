@@ -1,6 +1,6 @@
 params:
   ansible:
-    runner_path: /Users/zimabrou/.ansible-runner
+    runner_path: /Users/zimabrou/ansible-runner
     roles_paths: /Users/zimabrou/Projects/5g_blueprint/orchestrator/ansible/roles
   k8s:
     timezone: Europe/Paris

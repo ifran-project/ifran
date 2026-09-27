@@ -1,63 +1,17 @@
 """Provisioning lifecycle management."""
 
-from collections import defaultdict
-from pathlib import Path
-from typing import TYPE_CHECKING, Literal
-
-from metamodel.models.ue import UEType
+from typing import Literal
 
 from orchestrator.deployment.base import BaseManagement
-from orchestrator.utils.ansible import get_ansible_inventory_line
 from orchestrator.utils.provisioning import (
     get_provisionable_resources,
     run_parallel_provisioning_action,
     run_parallel_reservation_action,
 )
 
-if TYPE_CHECKING:
-    from orchestrator.models.provisioning import ProvisionableResource
-
 
 class ProvisioningManagement(BaseManagement):
     """Provisioning management class."""
-
-    def get_ansible_inventory(self, path: str | None = None) -> str | None:
-        """Generate an Ansible .ini inventory from nodes and ues."""
-
-        # get groups based on node roles => {role: nodes with that role}
-        groups: dict[str, dict[str, ProvisionableResource]] = defaultdict(dict)
-
-        for node_name, node_data in self.deployment_model.nodes.items():
-            for role in node_data.roles:
-                groups[f"{role.value}_nodes"][node_name] = node_data
-
-        # add ues as their own group (only cots ues are provisionable)
-        ues = {
-            ue_name: ue_data
-            for ue_name, ue_data in self.deployment_model.ues.items()
-            if ue_data.type is UEType.COTS
-        }
-        if ues:
-            groups["ues"] = ues
-
-        lines: list[str] = []
-        for role, role_resources in groups.items():
-            lines.append(f"[{role}]")
-            for name, resource in role_resources.items():
-                lines.append(get_ansible_inventory_line(
-                    resource_name=name,
-                    resource_data=resource
-                ))
-            lines.append("") # new line between sections
-
-        inventory = "\n".join(lines)
-        if path:
-            with Path(path).open("w", encoding="utf-8") as f:
-                f.write(inventory)
-        else:
-            return inventory
-        return None
-
 
     async def run_action(
             self,
@@ -88,7 +42,7 @@ class ProvisioningManagement(BaseManagement):
         if action in ["provision", "unprovision"]:
             await run_parallel_provisioning_action(
                 resources=target_resources,
-                action=action,
+                action=action, # type: ignore
                 provisioners=self.deployment_model.provisioners,
                 provisioning_params=self.deployment_model.params.provisioning,
                 ansible_params=self.deployment_model.params.ansible,

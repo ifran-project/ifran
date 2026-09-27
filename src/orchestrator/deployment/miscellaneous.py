@@ -16,7 +16,7 @@ class Miscellaneous(BaseManagement):
             inputs: dict[str, Any] | None = None,
             output_keys: list[str] | None = None,
             runner_path: str | None = None,
-            roles_paths: str | None = None,
+            roles_paths: list[str] | None = None,
             inventory: str | dict[str, Any] | list | None = None,
             store: bool = True,
             ) -> dict[str, Any] | None:
@@ -41,7 +41,7 @@ class Miscellaneous(BaseManagement):
 
         results =  await run_ansible_playbook(
             playbook=playbook,
-            inputs=self.get_merged() | inputs if inputs else self.get_merged(),
+            inputs=self.output_merged() | inputs if inputs else self.output_merged(), # type: ignore
             output_keys=output_keys,
             runner_path=(
                 runner_path if runner_path
@@ -51,6 +51,6 @@ class Miscellaneous(BaseManagement):
             )
 
         if results and store:
-            self.deployment_model.miscellaneous = deep_merge(self.deployment_model.miscellaneous, results)
+            self.deployment_model.miscellaneous = deep_merge(self.deployment_model.miscellaneous, results) # type: ignore
 
         return results

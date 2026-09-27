@@ -401,7 +401,7 @@ class DeployedCoreComponent(Deployed5GComponent):
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
             mapping=ADVANCED_CORE_CONFIG_MAPPING,
-            default_model=GenericAdvancedCoreConfig,
+            default_model=GenericAdvancedCoreConfig, # type: ignore
         )
 
 

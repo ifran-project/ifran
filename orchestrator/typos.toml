@@ -1,7 +1,0 @@
-[default]
-
-[default.extend-words]
-UE = "UE"
-ues = "ues"
-PREEMPTABLE = "PREEMPTABLE"
-offst = "offst"

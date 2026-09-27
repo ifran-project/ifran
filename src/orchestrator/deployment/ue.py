@@ -46,7 +46,7 @@ class UEManagement(HelmManagement):
         if action in containarized_actions:
             all_meta = {k: v for k, v in all_ues.items() if v.type is UEType.CONTAINERIZED}
         else:
-            all_meta = {k: v for k, v in all_meta.items() if v.type is UEType.COTS}
+            all_meta = {k: v for k, v in all_ues.items() if v.type is UEType.COTS}
 
         # filter for specific components if requested
         target_meta = all_meta if components is None else {k: v for k, v in all_meta.items() if k in components}
@@ -64,7 +64,7 @@ class UEManagement(HelmManagement):
         if action in containarized_actions:
             await super().run_action(
                 category=Category5G.UE,
-                action=action,
+                action=action, # type: ignore
                 components=components,
                 node=node,
                 force=force,
@@ -74,12 +74,11 @@ class UEManagement(HelmManagement):
         elif action in cots_actions:
             await run_parallel_ue_action(
                 ues_meta=target_meta,
-                ues_prov={ue_name: self.deployment_model.ues[ue_name] for ue_name in target_meta},
-                action=action,
+                ues_prov={ue_name: self.deployment_model.ues[ue_name] for ue_name in target_meta}, # type: ignore
+                action=action, # type: ignore
                 provisioners=self.deployment_model.provisioners,
                 provisioning_params=self.deployment_model.params.provisioning,
                 ansible_params=self.deployment_model.params.ansible,
-                order=order,
                 force=force,
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
@@ -89,10 +88,10 @@ class UEManagement(HelmManagement):
     # connect action wrapper
     async def connect(self, ues: list[str] | None = None, **kwargs) -> None:
         """Connect COTS UEs via provisioner."""
-        await self.run_action(action="connect", ues=ues, **kwargs)
+        await self.run_action(action="connect", components=ues, **kwargs)
 
 
      # disconnect action wrapper
     async def disconnect(self, ues: list[str] | None = None, **kwargs) -> None:
         """Disconnect COTS UEs via provisioner."""
-        await self.run_action(action="dicconnect", ues=ues, **kwargs)
+        await self.run_action(action="disconnect", components=ues, **kwargs)

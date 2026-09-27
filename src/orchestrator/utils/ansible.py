@@ -8,14 +8,14 @@ from typing import Any
 import ansible_runner
 
 from orchestrator.models.provisioning import (
-    ProvisionableResource,
+    SSHableResource,
 )
 from orchestrator.utils.utils import InvalidResourceStateError
 
 
 def get_ansible_inventory_line(
         resource_name: str,
-        resource_data: ProvisionableResource,
+        resource_data: SSHableResource,
     ) -> str:
     """Return Ansible .ini inventory line to SSH access a provisionable resource."""
 
@@ -40,7 +40,7 @@ def get_ansible_inventory_line(
     return f"{resource_name} " + " ".join(vars)
 
 
-def get_ansible_output(runner: ansible_runner.runner.Runner, output_keys: list[str]) -> dict[str, Any]:
+def get_ansible_output(runner, output_keys: list[str]) -> dict[str, Any]:
     """Get the returned output of Ansible role returned with set_stats."""
 
     output = {}
@@ -105,7 +105,7 @@ async def run_ansible_role(  # noqa: PLR0917
         inputs: dict[str, Any] | None = None,
         extra_params: dict[str, Any] | None = None,
         output_keys: list[str] | None = None,
-        roles_paths: str | None = None,
+        roles_paths: list[str] | None = None,
         hosts: str = "localhost",
         inventory: str | dict[str, Any] | list | None = None,
         become: bool = False,

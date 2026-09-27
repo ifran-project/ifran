@@ -5,7 +5,6 @@ from ipaddress import IPv4Address
 from typing import Literal
 
 from metamodel.models.common import Component5G, TransportEndpoint
-from pydantic import IPvAnyAddress
 
 from orchestrator.models.ansible import AnsibleParams
 from orchestrator.models.common import (
@@ -48,7 +47,7 @@ def update_exposed_endpoints(
                 # multus case
                 if component_deployment.multus.enabled:
                     # look for interface ip with same name
-                    for multus_iface in component_deployment.network_info:
+                    for multus_iface in component_deployment.network_info: # type: ignore
                         if multus_iface.interface == iface_name:
                             iface_meta.ipv4EndPointAddress =(
                                 multus_iface.ips[0] if multus_iface.ips
@@ -58,10 +57,10 @@ def update_exposed_endpoints(
 
                 # non-multus case => pod ip
                 else:
-                    iface_meta.ipv4EndPointAddress = component_deployment.network_info
+                    iface_meta.ipv4EndPointAddress = component_deployment.network_info # type: ignore
 
 
-async def run_single_helm_action(  # noqa: PLR0917
+async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
         component_name: str,
         component_meta: Component5G,
         component_deployment: Deployed5GComponent,
@@ -75,13 +74,25 @@ async def run_single_helm_action(  # noqa: PLR0917
 
     chart_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
 
-    # preparing a prepared component is not considered in the check given the idempotence
-    if not force and (
-        (component_deployment.is_installed and action == "install") or
-        (not component_deployment.is_installed and action == "uninstall")
-        ):
-        raise InvalidResourceStateError(
-            f"{component_meta.category.value.upper()} component {component_name!r} is already {action}ed.")
+    # NOTE preparing a prepared component is not considered in the check given its idempotence
+    if not force:
+        is_installed = component_deployment.is_installed
+        category = component_meta.category.value.upper()
+
+        # cannot install if already installed
+        if is_installed and action == "install":
+            raise InvalidResourceStateError(
+                f"{category} component {component_name!r} is already installed."
+            )
+
+        # cannot uninstall or get logs if not installed
+        if not is_installed and action in ["uninstall", "get_logs"]:
+            if action == "uninstall":
+                msg = f"{category} component {component_name!r} is already uninstalled."
+            else:
+                msg = f"Cannot fetch logs for uninstalled {category} component {component_name!r}."
+
+            raise InvalidResourceStateError(msg)
 
     helm_params = HelmParams(
         chart_name=chart_name,
@@ -133,15 +144,15 @@ async def run_single_helm_action(  # noqa: PLR0917
             # if multus is used, output list of multus network status
             component_deployment.network_info = [
                 MultusNetworkStatus.model_validate(item)
-                for item in result["network_info"]
+                for item in result["network_info"] # type: ignore
             ]
 
         else:
             # if multus is not used, output pod ip address directly
-            component_deployment.network_info = IPvAnyAddress(result["network_info"])
+            component_deployment.network_info = IPv4Address(result["network_info"]) # type: ignore
 
     elif action == "get_logs":
-        component_deployment.logs = result["logs"]
+        component_deployment.logs = result["logs"] # type: ignore
 
     elif action == "uninstall":
         component_deployment.is_installed = False
@@ -158,7 +169,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
-    ) -> dict[str, Deployed5GComponent]:
+    ) -> None:
     """Run Helm action in parallel on provided 5G components."""
 
     levels = resolve_component_dependency_levels(

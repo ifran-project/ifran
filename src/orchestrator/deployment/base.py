@@ -1,6 +1,7 @@
 """Base deployment management class."""
 
 import json
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Literal, Self
 
@@ -12,6 +13,7 @@ from metamodel.models.ue import UEType
 from orchestrator.models.core import DeployedCoreComponent
 from orchestrator.models.deployment import DeploymentModel
 from orchestrator.models.provisioning import (
+    ProvisionableResource,
     ProvisionableRU,
     ProvisionableUE,
     ProvisioningCategory,
@@ -19,6 +21,7 @@ from orchestrator.models.provisioning import (
 from orchestrator.models.ran import DeployedRANComponent
 from orchestrator.models.ric import DeployedRICComponent
 from orchestrator.models.ue import DeployedUE
+from orchestrator.utils.ansible import get_ansible_inventory_line
 from orchestrator.utils.utils import deep_merge, sync_dict_keys
 
 
@@ -89,6 +92,8 @@ class BaseManagement:
             merged = json.dumps(merged)
         elif output == "yaml":
             merged = yaml.safe_dump(merged)
+        else:
+            merged = str(merged)
 
         if path:
             with Path(path).open("w", encoding="utf-8") as f:
@@ -143,3 +148,40 @@ class BaseManagement:
             default_factory=DeployedRICComponent,
             populate_type=True,
         )
+
+    def get_ansible_inventory(self, path: str | None = None) -> str | None:
+        """Generate an Ansible .ini inventory from nodes and ues."""
+
+        # get groups based on node roles => {role: nodes with that role}
+        groups: dict[str, dict[str, ProvisionableResource]] = defaultdict(dict)
+
+        for node_name, node_data in self.deployment_model.nodes.items():
+            for role in node_data.roles:
+                groups[f"{role.value}_nodes"][node_name] = node_data
+
+        # add ues as their own group (only cots ues are provisionable)
+        ues = {
+            ue_name: ue_data
+            for ue_name, ue_data in self.deployment_model.ues.items()
+            if ue_data.type is UEType.COTS
+        }
+        if ues:
+            groups["ues"] = ues # type: ignore
+
+        lines: list[str] = []
+        for role, role_resources in groups.items():
+            lines.append(f"[{role}]")
+            for name, resource in role_resources.items():
+                lines.append(get_ansible_inventory_line(
+                    resource_name=name,
+                    resource_data=resource, # type: ignore
+                ))
+            lines.append("") # new line between sections
+
+        inventory = "\n".join(lines)
+        if path:
+            with Path(path).open("w", encoding="utf-8") as f:
+                f.write(inventory)
+        else:
+            return inventory
+        return None

@@ -54,7 +54,8 @@ def get_resources_by_provisioner(
 
     grouped: dict[str, list[str]] = defaultdict(list)
     for resource_name, resource_data in resources.items():
-        grouped[resource_data.provisioner].append(resource_name)
+        if resource_data.provisioner:
+            grouped[resource_data.provisioner].append(resource_name)
 
     return grouped
 
@@ -63,7 +64,7 @@ def resolve_provisioner(
         resource_name: str,
         resource_data: ProvisionableResource,
         provisioners: dict[str, Provisioner],
-    ) -> Provisioner:
+    ) -> Provisioner | None:
     """Resolve resource provisioner and merge provisioning parameters."""
 
     if resource_data.provisioner is None:
@@ -113,7 +114,7 @@ async def run_reservation_action(  # noqa: PLR0917
             return
         raise TypeError(f"Provisioner {provisioner_name!r} does not support reservation.")
 
-    if not provisioner_data.params.attempt_reservation and not force:
+    if not provisioner_data.params.attempt_reservation and not force: # type: ignore
         return
 
     args = {
@@ -174,14 +175,14 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     # lvl 1 : merge provisioner params with global provisioning_params with priority to non-default provisioner's params
     # lvl 2: merge provisioner params with resource provisioning params with priority to resource's provisioning params
     # NOTE provisioner params model needs to tolerate extra fields and ignore them for this to work with no problems
-    merged_prov_params = type(provisioner.params).model_validate(
+    merged_prov_params = type(provisioner.params).model_validate( # type: ignore
         provisioning_params |
-        provisioner.params.model_dump(mode="json", exclude_defaults=True) |
+        provisioner.params.model_dump(mode="json", exclude_defaults=True) | # type: ignore
         resource_data.provisioning_params
     )
 
     args = {
-        "role": f"provisioning/{provisioner.type.value}/{action}",
+        "role": f"provisioning/{provisioner.type.value}/{action}", # type: ignore
         "inputs": {
             "resource_name": resource_name,
             **merged_prov_params.model_dump(mode="json"),
@@ -206,10 +207,12 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         resource_data.is_provisioned = True
 
         if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
-            # validate and update resource ssh info
-            resource_data.ssh_info = SSHInfo.model_validate(result["ssh_info"])
-        else:
-            resource_data.ips = [IPv4Address(ip) for ip in result["ru_ips"]]
+            # validate and update resource ssh info for nodes and ues
+            resource_data.ssh_info = SSHInfo.model_validate(result["ssh_info"]) # type: ignore
+
+        elif resource_data.category is ProvisioningCategory.RU:
+            # update ips for rus
+            resource_data.ips = [IPv4Address(ip) for ip in result["ru_ips"]] # type: ignore
 
     if action == "unprovision":
         resource_data.is_provisioned = False

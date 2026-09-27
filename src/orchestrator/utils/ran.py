@@ -106,7 +106,7 @@ def resolve_ocudu_zmq_ran(
     """Resolve dependency between OCUDU simulated RAN and the UE."""
 
     if (
-        component_meta.config.ru.type is RUType.SIMULATED and
+        component_meta.config.ru.type is RUType.SIMULATED and # type: ignore
         component_deployment.implementation is RANImplementation.OCUDU
         ):
         # simulated ocudu gnb/du (zmq) needs to know ue ip in advance
@@ -148,30 +148,30 @@ def reconcile_ran(
     slices = metamodel.slices
     k8s_params = deployment_model.params.k8s
 
-    grouped_meta = get_5g_components_by_type(ran_meta.components)
+    grouped_meta = get_5g_components_by_type(ran_meta.components) # type: ignore
     cu_cps_meta = grouped_meta.get(RANComponentType.CU_CP, {})
     cu_ups_meta = grouped_meta.get(RANComponentType.CU_UP, {})
     cus_meta = grouped_meta.get(RANComponentType.CU, {})
 
-    grouped_deployment = get_5g_components_by_type(ran_deployment.components)
+    grouped_deployment = get_5g_components_by_type(ran_deployment.components) # type: ignore
     cu_cps_deployment = grouped_deployment.get(RANComponentType.CU_CP, {})
     cu_ups_deployment = grouped_deployment.get(RANComponentType.CU_UP, {})
     cus_deployment = grouped_deployment.get(RANComponentType.CU, {})
 
-    amfs_meta = get_5g_components_by_type(core_meta.components, [CoreComponentType.AMF])
-    amfs_deployment = get_5g_components_by_type(core_deployment.components, [CoreComponentType.AMF])
+    amfs_meta = get_5g_components_by_type(core_meta.components, [CoreComponentType.AMF]) # type: ignore
+    amfs_deployment = get_5g_components_by_type(core_deployment.components, [CoreComponentType.AMF]) # type: ignore
 
     rics_meta = get_5g_components_by_type(
-        ric_meta.components, [RICComponentType.RIC, RICComponentType.E2TERM])
+        ric_meta.components, [RICComponentType.RIC, RICComponentType.E2TERM]) # type: ignore
     rics_deployment = get_5g_components_by_type(
-        ric_deployment.components, [RICComponentType.RIC, RICComponentType.E2TERM])
+        ric_deployment.components, [RICComponentType.RIC, RICComponentType.E2TERM]) # type: ignore
 
     # run standard component reconciliation on cu/cu_cp/cu_cp components first
     # because cu_up and cu_cp's e1, cu/cu_cp's f1c, and cu/cu_up's f1u interfaces
     # need to assigned a static ip before resolving cross-references
     reconcile_5g_components(
         components_meta=cus_meta | cu_cps_meta | cu_ups_meta,
-        components_deployment=cus_deployment | cu_cps_deployment | cu_ups_deployment,
+        components_deployment=cus_deployment | cu_cps_deployment | cu_ups_deployment, # type: ignore
         k8s_params=k8s_params,
     )
 
@@ -192,15 +192,15 @@ def reconcile_ran(
         if component_meta.type in [RANComponentType.GNB, RANComponentType.CU, RANComponentType.CU_CP]:
             resolve_amf_ref(
                 **args,
-                amfs_meta=amfs_meta,
-                amfs_deployment=amfs_deployment,
+                amfs_meta=amfs_meta, # type: ignore
+                amfs_deployment=amfs_deployment, # type: ignore
             )
 
         # resolve ric reference
         resolve_ric_ref(
             **args,
-            rics_meta=rics_meta,
-            rics_deployment=rics_deployment,
+            rics_meta=rics_meta, # type: ignore
+            rics_deployment=rics_deployment, # type: ignore
         )
 
         if component_meta.type in [RANComponentType.GNB, RANComponentType.DU]:
@@ -220,7 +220,7 @@ def reconcile_ran(
 
             # derive implementation-specific radio parameters for gnb and du after ru name reference resolution
             derive_ran_radio_config(
-                component_meta=component_meta,
+                component_meta=component_meta, # type: ignore
                 component_deployment=component_deployment,
                 )
 

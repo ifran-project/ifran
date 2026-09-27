@@ -71,5 +71,5 @@ class DeploymentModel(StrictBaseModel):
     ric: RICDeployment = Field(default_factory=RICDeployment)
     """RIC deployment."""
 
-    misc: dict[str, Any] | None = Field(default=None)
+    miscellaneous: dict[str, Any] | None = Field(default=None)
     """Miscellaneous data for pipelining purposes."""

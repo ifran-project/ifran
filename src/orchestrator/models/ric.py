@@ -89,7 +89,10 @@ class DeployedRICComponent(Deployed5GComponent):
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
-        return super().validate_advanced_config(ADVANCED_RIC_CONFIG_MAPPING, default_model=GenericAdvancedRICConfig)
+        return super().validate_advanced_config(
+            mapping=ADVANCED_RIC_CONFIG_MAPPING,
+            default_model=GenericAdvancedRICConfig, # type: ignore
+        )
 
 
 class RICDeployment(Deployed5GNetwork):

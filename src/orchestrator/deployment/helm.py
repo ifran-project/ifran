@@ -6,6 +6,7 @@ from metamodel.models.common import Category5G, Component5G
 from metamodel.models.ue import UEType
 
 from orchestrator.deployment.base import BaseManagement
+from orchestrator.models.provisioning import ProvisionableNode
 from orchestrator.utils.helm import ComponentDependencyGraph, run_parallel_helm_action
 from orchestrator.utils.utils import ReferenceNotFoundError
 
@@ -13,7 +14,7 @@ from orchestrator.utils.utils import ReferenceNotFoundError
 class HelmManagement(BaseManagement):
     """Kubernetes 5G components Helm lifecycle management class."""
 
-    def _get_deployment_node(self, node: str | None) -> tuple[str, str]:
+    def _get_deployment_node(self, node: str | None) -> tuple[str, ProvisionableNode]:
         """Helper to get the deployment node information."""
 
         # chose provided node name if given or the k8s master node in the deployment_model
@@ -40,13 +41,13 @@ class HelmManagement(BaseManagement):
         category = component.category
         match category:
             case Category5G.CORE:
-                self.metamodel.core.components[name] = component.model_copy(deep=True)
+                self.metamodel.core.components[name] = component.model_copy(deep=True) # type: ignore
             case Category5G.RIC:
-                self.metamodel.rics[name] = component.model_copy(deep=True)
+                self.metamodel.ric.components[name] = component.model_copy(deep=True) # type: ignore
             case Category5G.RAN:
-                self.metamodel.ran.components[name] = component.model_copy(deep=True)
+                self.metamodel.ran.components[name] = component.model_copy(deep=True) # type: ignore
             case Category5G.UE:
-                self.metamodel.ues[name] = component.model_copy(deep=True)
+                self.metamodel.ues[name] = component.model_copy(deep=True) # type: ignore
 
         self.reconcile()
 
@@ -58,7 +59,7 @@ class HelmManagement(BaseManagement):
             case Category5G.CORE:
                 self.metamodel.core.components.pop(name, None)
             case Category5G.RIC:
-                self.metamodel.rics.pop(name, None)
+                self.metamodel.ric.components.pop(name, None)
             case Category5G.RAN:
                 self.metamodel.ran.components.pop(name, None)
             case Category5G.UE:
@@ -121,8 +122,8 @@ class HelmManagement(BaseManagement):
             target_deployment = {k: v for k, v in all_deployment.items() if k in components}
 
         await run_parallel_helm_action(
-            components_meta=target_meta,
-            components_deployment=target_deployment,
+            components_meta=target_meta, # type: ignore
+            components_deployment=target_deployment, # type: ignore
             action=action,
             node_name=node_name,
             node_data=node_data,
