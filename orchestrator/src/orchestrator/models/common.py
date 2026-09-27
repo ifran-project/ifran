@@ -21,8 +21,8 @@ class Deployed5GComponent(K8SComponent):
     implementation: str | None = Field(default=None)
     """Component 5G category's implementation (e.g. oai, open5gs, srsran, ... etc)."""
 
-    # incoming advanced_config dictionary is validated into concrete model afterwards
-    advanced_config: dict[str, Any] | None = Field(default=None)
+    # incoming 'advanced_config' is validated into concrete model afterwards
+    advanced_config: Any = Field(default=None)
     """Component configuration specific to the implementation."""
 
     plain_text_config: str | None = Field(default=None)
