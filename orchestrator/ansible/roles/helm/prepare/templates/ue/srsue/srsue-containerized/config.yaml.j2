@@ -18,7 +18,7 @@ device_args = {{ component.advanced_config.device_args }}
 {% if component.config.ru.type == "usrp" %}
 device_args = "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
 {% elif component.config.ru.type == "simulated" %}
-device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnb[0] }}:2000,base_srate={{ component.advanced_config.srate | default("61.44e6", true) }}
+device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnbs[0].gnb_ip }}:2000,base_srate={{ component.advanced_config.srate | default("61.44e6", true) }}
 {% endif %}
 {% endif %}
 {% endif %}
@@ -32,7 +32,7 @@ nof_carriers = 0
 {% endif %}
 
 [rat.nr]
-bands = {{ component.config.gnb[1].config.radioConfiguration.nrBand }}
+bands = {{ component.config.gnbs[0].config.radioConfiguration.nrBand }}
 nof_carriers = {{ component.advanced_config.nof_carriers | default(1, true) }}
 max_nof_prb = {{ component.derived_radio_config.nof_prb }}
 nof_prb = {{ component.derived_radio_config.nof_prb }}

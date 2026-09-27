@@ -1,9 +1,9 @@
-"""5G blueprint deployment lifecycle management."""
+"""Post-5G deployment lifecycle management."""
 
-from orchestrator.deployment.common import BaseBlueprintManagement
+from orchestrator.deployment.base import BaseManagement
 from orchestrator.deployment.core import CoreManagement
 from orchestrator.deployment.helm import HelmManagement
-from orchestrator.deployment.k8s import K8SSetupManagement
+from orchestrator.deployment.k8s import K8SManagement
 from orchestrator.deployment.miscellaneous import Miscellaneous
 from orchestrator.deployment.provisioning import ProvisioningManagement
 from orchestrator.deployment.ran import RANManagement
@@ -11,10 +11,10 @@ from orchestrator.deployment.ric import RICManagement
 from orchestrator.deployment.ue import UEManagement
 
 __all__ = [
-    "BaseBlueprintManagement",
+    "BaseManagement",
     "CoreManagement",
     "HelmManagement",
-    "K8SSetupManagement",
+    "K8SManagement",
     "Miscellaneous",
     "ProvisioningManagement",
     "RANManagement",

@@ -3,17 +3,20 @@
 from collections.abc import Callable
 from typing import Any
 
-from orchestrator.models.meta.common import DuplexMode
-from orchestrator.models.meta.ran import (
-    CommonGNBComponent,
+from metamodel.models.common import DuplexMode
+from metamodel.models.ran import (
+    DUComponent,
+    GNBComponent,
     RadioConfiguration,
-    RANImplementation,
     SSBPeriodicity,
     SubcarrierSpacing,
     TDDPeriodicity,
 )
-from orchestrator.models.meta.ru import RUModel, RUType, USRPModel
-from orchestrator.models.meta.ue import UE, UEImplementation, UEType
+from metamodel.models.ru import RUModel, RUType, USRPModel
+from metamodel.models.ue import UE, UEType
+
+from orchestrator.models.ran import DeployedRANComponent, RANImplementation
+from orchestrator.models.ue import DeployedUE, UEImplementation
 
 NUMEROLOGY: dict[SubcarrierSpacing, int] = {
     SubcarrierSpacing.SCS_15KHZ: 0,
@@ -112,11 +115,11 @@ def nr_arfcn_to_frequency_hz(arfcn: int) -> int:
     """Convert an NR-ARFCN to its reference frequency in Hz as per 3GPP TS 38.104 chapter 5.4.2.1."""
 
     # 0 to 599_999 => 0 to 3000 MHz
-    if arfcn < 600_000:
+    if arfcn < 600_000:  # noqa: PLR2004
         return arfcn * 5_000
 
     # 600000 to 2_016_666 => 3000 to 24250.08 MHz
-    if arfcn < 2_016_667:
+    if arfcn < 2_016_667:  # noqa: PLR2004
         return 3_000_000_000 + (arfcn - 600_000) * 15_000
 
     # 2_016_667 to 3_279_165 => 24_250.08 to 100_000 MHz
@@ -136,11 +139,16 @@ def get_rbs(subcarrierSpacingKhz: SubcarrierSpacing, channelBandwidthMhz: int):
     return bandwidth_rb
 
 
-# RAN radio parameter derivation
-def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
+## RAN radio parameter derivation
+
+def derive_oai_ran_config(
+        component_meta: GNBComponent | DUComponent,
+        component_deployment: DeployedRANComponent,
+    ) -> dict[str, Any]:
     """Derive radio parameters specific to OAI RAN to put in derived configuration."""
 
-    radio_config: RadioConfiguration = component.config.radioConfiguration
+    ru = component_meta.config.ru
+    radio_config: RadioConfiguration = component_meta.config.radioConfiguration
 
     if radio_config.duplexMode == DuplexMode.FDD:
         # compute uplink point a based on the shift between dl and ul arfcn
@@ -153,17 +161,14 @@ def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
         ul_point_a_arfcn = None
         oai_tdd_periodicity = OAI_TDD_PERIODICITY.get(radio_config.tddConfiguration.periodicityMilliseconds)
 
-
-    ru = component.config.ru
-
     # additional flags for rfsim
-    if ru.type is RUType.SIMULATED and (
-        component.advanced_config is None or component.advanced_config.useAdditionalOptions is None):
-        additional_flags = "-E --rfsim" # -E enables continuous synchronization/transmission optimizations
+    if component_deployment.advanced_config and component_deployment.advanced_config.useAdditionalOptions:
+        additional_flags = component_deployment.advanced_config.useAdditionalOptions
     else:
-        additional_flags = "-E"
+        # -E enables continuous synchronization/transmission optimizations
+        additional_flags = "-E --rfsim" if ru.type is RUType.SIMULATED else "-E"
 
-    derived = {
+    return {
         "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
         "ul_point_a_arfcn": ul_point_a_arfcn,
         "numerology": NUMEROLOGY[radio_config.subcarrierSpacingKhz],
@@ -174,14 +179,16 @@ def derive_oai_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
         "additional_flags": additional_flags,
     }
 
-    return derived
 
 
-def derive_ocudu_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
+def derive_ocudu_ran_config(
+        component_meta: GNBComponent | DUComponent,
+        component_deployment: DeployedRANComponent,  # noqa: ARG001
+    ) -> dict[str, Any]:
     """Derive radio parameters specific to OCUDU RAN to put in derived configuration."""
 
-    ru = component.config.ru
-    radio_config: RadioConfiguration = component.config.radioConfiguration
+    ru = component_meta.config.ru
+    radio_config: RadioConfiguration = component_meta.config.radioConfiguration
 
     if ru.type is RUType.SIMULATED:
         device_driver = "zmq"
@@ -203,7 +210,10 @@ def derive_ocudu_ran_config(component: CommonGNBComponent) -> dict[str, Any]:
     return derived
 
 
-def derive_ueransim_config(component: CommonGNBComponent) -> dict[str, Any]:
+def derive_ueransim_config(
+        component_meta: GNBComponent | DUComponent,  # noqa: ARG001
+        component_deployment: DeployedRANComponent,  # noqa: ARG001
+    ) -> dict[str, Any]:
     """Derive radio parameters specific to UERANSIM to put in derived configuration."""
     return {}
 
@@ -216,21 +226,32 @@ RAN_CONFIG_DERIVATOR: dict[RANImplementation, Callable] = {
 }
 
 
-def derive_ran_radio_config(component: CommonGNBComponent) -> dict[str, Any]:
+def derive_ran_radio_config(
+        component_meta: GNBComponent | DUComponent,
+        component_deployment: DeployedRANComponent,
+    ) -> dict[str, Any]:
     """Derive gNB or DU's component's implementation-specific radio parameters."""
 
-    component.derived_radio_config = RAN_CONFIG_DERIVATOR[component.implementation](component)
+    component_deployment.derived_radio_config = RAN_CONFIG_DERIVATOR[component_deployment.implementation](
+        component_meta=component_meta,
+        component_deployment=component_deployment,
+        )
 
 
-# UE radio parameter derivation
-def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
+## UE radio parameter derivation
+
+def derive_oai_ue_config(
+        ue_meta: UE,
+        ue_deployment: DeployedUE,
+    ) -> dict[str, Any]:
     """Derive radio parameters specific to OAI NR UE to put in derived configuration."""
 
     derived = {}
 
-    if ue.type is UEType.CONTAINERIZED:
-        # gnb reference must be resolved by now and its derived config must be present
-        radio_config: RadioConfiguration = ue.config.gnb[1].config.radioConfiguration
+    if ue_meta.type is UEType.CONTAINERIZED:
+        ru = ue_meta.config.ru
+        gnb = ue_meta.config.gnbs[0]
+        radio_config: RadioConfiguration = gnb.config.radioConfiguration
 
         # calculate the ue parameters
         # https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/runmodem-nrue.md
@@ -246,7 +267,7 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
             # set to 0 for tdd
             offset_hz = 0
 
-        # --numerology : numerology index   
+        # --numerology : numerology index
         numerology = NUMEROLOGY[radio_config.subcarrierSpacingKhz]
 
         # -r : bandwidth in terms of RBs
@@ -270,15 +291,15 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
 
         ssb_start = int(ssb_offset_hz // scs_ssb_hz)
 
-        # additional flags
-        ru = ue.config.ru # must be resolved by now
-
-        # additional flags for ru
-        if ru.type is RUType.SIMULATED and ue.config.gnb[1].implementation is RANImplementation.OAI and (
-            ue.advanced_config is None or ue.advanced_config.useAdditionalOptions is None):
-            additional_flags = "-E --rfsim" # -E enables continuous synchronization/transmission optimizations
+        # additional flags for rfsim
+        if ue_deployment.advanced_config and ue_deployment.advanced_config.useAdditionalOptions:
+            additional_flags = ue_deployment.advanced_config.useAdditionalOptions
         else:
-            additional_flags = "-E"
+            # -E enables continuous synchronization/transmission optimizations
+            additional_flags = (
+                "-E --rfsim" if ru.type is RUType.SIMULATED and gnb.implementation is RANImplementation.OAI
+                else "-E"
+            )
 
         derived = {
             "dl_carrier_freq_hz": dl_carrier_freq_hz, # rf_freq
@@ -292,20 +313,26 @@ def derive_oai_ue_config(ue: UE) -> dict[str, Any]:
 
     return derived
 
-def derive_ueransim_ue_config(ue: UE) -> dict[str, Any]:
+def derive_ueransim_ue_config(
+        ue_meta: UE,  # noqa: ARG001
+        ue_deployment: DeployedUE,  # noqa: ARG001
+    ) -> dict[str, Any]:
     """Derive radio parameters specific to USERANSIM UE to put in derived configuration."""
     return {}
 
-def derive_srsue_ue_config(ue: UE) -> dict[str, Any]:
+def derive_srsue_ue_config(
+        ue_meta: UE,
+        ue_deployment: DeployedUE,  # noqa: ARG001
+    ) -> dict[str, Any]:
     """Derive radio parameters specific to SRSRUE UE to put in derived configuration."""
 
     derived = {}
 
-    if ue.type is UEType.CONTAINERIZED:
-        # gnb reference must be resolved by now and its derived config must be present
-        radio_config: RadioConfiguration = ue.config.gnb[1].config.radioConfiguration
+    if ue_meta.type is UEType.CONTAINERIZED:
+        # gnb references must be resolved by now
+        radio_config: RadioConfiguration = ue_meta.config.gnbs[0].config.radioConfiguration
 
-        ru = ue.config.ru # must be resolved by now
+        ru = ue_meta.config.ru # must be resolved by now
 
         if ru.type is RUType.SIMULATED:
             device_driver = "zmq"
@@ -331,7 +358,13 @@ UE_CONFIG_DERIVATOR: dict[UEImplementation, Callable] = {
 }
 
 
-def derive_ue_radio_config(ue: UE) -> dict[str, Any]:
+def derive_ue_radio_config(
+        ue_meta: UE,
+        ue_deployment: DeployedUE,
+    ) -> dict[str, Any]:
     """Derive UE's implementation-specific radio parameters."""
 
-    ue.derived_radio_config = UE_CONFIG_DERIVATOR[ue.implementation](ue)
+    ue_deployment.derived_radio_config = UE_CONFIG_DERIVATOR[ue_deployment.implementation](
+        ue_meta=ue_meta,
+        ue_deployment=ue_deployment,
+        )

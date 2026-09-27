@@ -1,38 +1,71 @@
 """Kubernetes components Helm utilities and helpers."""
 
 import asyncio
+from ipaddress import IPv4Address
 from typing import Literal
 
+from metamodel.models.common import Component5G, TransportEndpoint
 from pydantic import IPvAnyAddress
 
-from orchestrator.models.deployment.ansible import AnsibleParams
-from orchestrator.models.deployment.k8s import (
+from orchestrator.models.ansible import AnsibleParams
+from orchestrator.models.common import (
+    ComponentDependencyGraph,
+    Deployed5GComponent,
+)
+from orchestrator.models.k8s import (
     HelmParams,
-    K8SComponent,
     MultusNetworkStatus,
 )
-from orchestrator.models.deployment.provisioning import ProvisionableNode
-from orchestrator.models.meta.common import Component5G
+from orchestrator.models.provisioning import ProvisionableNode
 from orchestrator.utils.ansible import (
     get_ansible_inventory_line,
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from orchestrator.utils.common import (
-    InvalidResourceStateError,
-    build_k8s_safe,
-)
 from orchestrator.utils.common_5g import (
-    ComponentDependencyGraph,
+    EXPOSED_COMPONENT_INTERFACES,
     resolve_component_dependency_levels,
 )
+from orchestrator.utils.k8s import build_k8s_safe
+from orchestrator.utils.utils import InvalidResourceStateError
 
 
-async def run_single_helm_action(
+def update_exposed_endpoints(
+        component_meta: Component5G,
+        component_deployment: Deployed5GComponent,
+    ) -> None:
+    """Update the 5G components's exposed interface endpoints with relevant IPs from network info after deployment."""
+
+    for iface_name in EXPOSED_COMPONENT_INTERFACES.get(component_meta.category, []):
+
+        # some interfaces can be None
+        if hasattr(component_meta.config, iface_name) and getattr(component_meta.config, iface_name) is not None:
+            iface_meta: TransportEndpoint = getattr(component_meta.config, iface_name)
+
+            # populate interface ip if not explicitly set
+            if iface_meta.ipv4EndPointAddress == IPv4Address("0.0.0.0"):
+
+                # multus case
+                if component_deployment.multus.enabled:
+                    # look for interface ip with same name
+                    for multus_iface in component_deployment.network_info:
+                        if multus_iface.interface == iface_name:
+                            iface_meta.ipv4EndPointAddress =(
+                                multus_iface.ips[0] if multus_iface.ips
+                                else iface_meta.ipv4EndPointAddress
+                            )
+                            break
+
+                # non-multus case => pod ip
+                else:
+                    iface_meta.ipv4EndPointAddress = component_deployment.network_info
+
+
+async def run_single_helm_action(  # noqa: PLR0917
         component_name: str,
         component_meta: Component5G,
-        component_k8s: K8SComponent,
-        action: Literal["prepare", "install", "uninstall"],
+        component_deployment: Deployed5GComponent,
+        action: Literal["prepare", "install", "uninstall", "get_logs"],
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
@@ -40,26 +73,33 @@ async def run_single_helm_action(
     ) -> None:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
 
-    chart_name = build_k8s_safe(f"{component_meta.implementation}-{component_name}")
+    chart_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
 
     # preparing a prepared component is not considered in the check given the idempotence
     if not force and (
-        (component_k8s.is_installed and action == "install") or 
-        (not component_k8s.is_installed and action == "uninstall")
+        (component_deployment.is_installed and action == "install") or
+        (not component_deployment.is_installed and action == "uninstall")
         ):
-        raise InvalidResourceStateError(f"{component_meta.category.value.upper()} component {component_name!r} is already {action}ed.")
+        raise InvalidResourceStateError(
+            f"{component_meta.category.value.upper()} component {component_name!r} is already {action}ed.")
 
     helm_params = HelmParams(
         chart_name=chart_name,
         helm_build_dir=f"/root/helm-charts/{component_meta.category}/{chart_name}",
-        output_with_multus=component_k8s.multus.enabled,
+        output_with_multus=component_deployment.multus.enabled,
     )
 
     args = {
         "role": f"helm/{action}",
         "inputs": {
             "component_name": component_name,
-            "component": {**(component_meta.model_dump(mode="json") | component_k8s.model_dump(mode="json"))}, # merge component
+            # merged component (meta + deployment)
+            # NOTE use serialize_as_any=True to prevent pydantic from replacing models
+            # because of type mismatch after reference resolution
+            "component": {
+                **component_meta.model_dump(mode="json", serialize_as_any=True) |
+                component_deployment.model_dump(mode="json")
+            },
             **helm_params.model_dump(mode="json"),
         },
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",
@@ -76,25 +116,34 @@ async def run_single_helm_action(
     try:
         result = await run_ansible_role(**args)
     except Exception as e:
-        raise RuntimeError(f"{component_meta.category.value.upper()} component {component_name!r} Helm {action} not successful.") from e
+        raise RuntimeError(
+            f"{component_meta.category.value.upper()} component {component_name!r} Helm {action} not successful."
+        ) from e
 
     # update component state
     if action == "install":
-        component_k8s.is_installed = True
+        component_deployment.is_installed = True
+
+        # update network information
         if helm_params.output_with_multus:
             # if multus is used, output list of multus network status
-            component_k8s.network_info = [MultusNetworkStatus.model_validate(item) for item in result["network_info"]]
+            component_deployment.network_info = [
+                MultusNetworkStatus.model_validate(item)
+                for item in result["network_info"]
+            ]
+
         else:
-            # if multus is not used, output ip address directly
-            component_k8s.network_info = IPvAnyAddress(result["network_info"])
+            # if multus is not used, output pod ip address directly
+            component_deployment.network_info = IPvAnyAddress(result["network_info"])
+
     elif action == "uninstall":
-        component_k8s.is_installed = False
+        component_deployment.is_installed = False
 
 
-async def run_parallel_helm_action(
+async def run_parallel_helm_action(  # noqa: PLR0917
         components_meta: dict[str, Component5G],
-        components_k8s: dict[str, K8SComponent],
-        action: Literal["prepare", "install", "uninstall"],
+        components_deployment: dict[str, Deployed5GComponent],
+        action: Literal["prepare", "install", "uninstall", "get_logs"],
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
@@ -102,7 +151,7 @@ async def run_parallel_helm_action(
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
-    ) -> dict[str, K8SComponent]:
+    ) -> dict[str, Deployed5GComponent]:
     """Run Helm action in parallel on provided 5G components."""
 
     levels = resolve_component_dependency_levels(
@@ -111,11 +160,11 @@ async def run_parallel_helm_action(
     )
 
     for level in levels:
-        # components_meta and components_k8s are supposed to already be synced
+
         level_components = (
-            (name, components_meta[name], components_k8s[name])
+            (name, components_meta[name], components_deployment[name])
             for name in level
-            if name in components_meta and name in components_k8s
+            if name in components_meta and name in components_deployment
         )
 
         results = await asyncio.gather(
@@ -123,14 +172,14 @@ async def run_parallel_helm_action(
                 run_single_helm_action(
                     component_name=name,
                     component_meta=component_meta,
-                    component_k8s=component_k8s,
+                    component_deployment=component_deployment,
                     action=action,
                     node_name=node_name,
                     node_data=node_data,
                     ansible_params=ansible_params,
                     force=force,
                 )
-                for name, component_meta, component_k8s in level_components
+                for name, component_meta, component_deployment in level_components
             ),
             return_exceptions=True,
         )

@@ -87,10 +87,10 @@ configuration:
 {% for upf in component.config.upfs %}
       UPF{{ loop.index }}: # the name of the node
         type: UPF # the type of the node (AN or UPF)
-        nodeID: {{ upf[0] }} # the Node ID of this UPF
-        addr: {{ upf[0] }} # the IP/FQDN of N4 interface on this UPF (PFCP)
+        nodeID: {{ upf.config.n4.ipv4EndPointAddress }} # the Node ID of this UPF
+        addr: {{ upf.config.n4.ipv4EndPointAddress }} # the IP/FQDN of N4 interface on this UPF (PFCP)
         sNssaiUpfInfos: # S-NSSAI information list for this UPF
-{% for slice in upf[1].config.snssaiList %}
+{% for slice in upf.config.snssaiList %}
           - sNssai: # S-NSSAI (Single Network Slice Selection Assistance Information)
               sst: {{ slice.sst }} # Slice/Service Type (uinteger, range: 0~255)
 {% if slice.sd %}
@@ -113,7 +113,7 @@ configuration:
         interfaces: # Interface list for this UPF
           - interfaceType: N3 # the type of the interface (N3 or N9)
             endpoints: # the IP address of this N3/N9 interface on this UPF
-              - {{ upf[0] }}
+              - {{ upf.config.n4.ipv4EndPointAddress }}
             networkInstances: # Data Network Name (DNN)
 {% for slice in component.config.snssaiList %}
 {% for dnn in slice.dnns.values() %}

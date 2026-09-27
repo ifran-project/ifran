@@ -1,26 +1,21 @@
 """5G core deployment lifecycle management."""
 
 import asyncio
-from typing import Literal
+from typing import Literal, override
+
+from metamodel.models.common import Category5G
+from metamodel.models.core import CoreComponentType
 
 from orchestrator.deployment.helm import HelmManagement
-from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.core import CoreComponentType
-from orchestrator.models.meta.ran import RANComponentType
 from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
 )
-from orchestrator.utils.common_5g import (
-    ComponentDependencyGraph,
-    resolve_component_slices,
-)
+from orchestrator.utils.common_5g import ComponentDependencyGraph
 from orchestrator.utils.core import (
-    get_5g_components_by_type,
     reconcile_core,
     run_core_database_helm_action,
     run_parallel_database_subscriber_action,
 )
-from orchestrator.utils.ue import resolve_gnb_reference
 
 CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
     CoreComponentType.BSF: frozenset({
@@ -62,39 +57,20 @@ CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
 class CoreManagement(HelmManagement):
     """5G core deployment lifecycle management class."""
 
+    @override
     def reconcile(self) -> None:
         """Ensure the 5G core is ready for deployment by resolving its components' configs."""
 
         super().reconcile()
 
         reconcile_core(
-            core_meta=self.mutable_metamodel.core,
-            core_deployment=self.deployment_model.core_deployment,
-            pod_network_cidr=self.deployment_model.params.k8s.pod_network_cidr,
-            slices=self.mutable_metamodel.slices,
+            metamodel=self.mutable_metamodel,
+            deployment_model=self.deployment_model,
         )
 
-        # get gnbs and dus from metamodel
-        grouped = get_5g_components_by_type(self.mutable_metamodel.ran.components)
-        gnbs = grouped.get(RANComponentType.GNB, {})
-        dus = grouped.get(RANComponentType.DU, {})
-        gnb_components_meta = gnbs | dus # gnbs + dus
 
-        # resolve slices references and gnb reference in ues to prepare them for database registration
-        for ue_name, ue_meta in self.mutable_metamodel.ues.items():
-            resolve_component_slices(
-                component_name=ue_name,
-                component_meta=ue_meta,
-                slices=self.mutable_metamodel.slices,
-            )
-
-            resolve_gnb_reference(
-                ue_name=ue_name,
-                ue_meta=ue_meta,
-                gnb_components_meta=gnb_components_meta,
-            )
-
-
+    # override category
+    @override
     async def run_action(self, **kwargs) -> None:
         """Run Helm action on 5G core components."""
         await super().run_action(category=Category5G.CORE, **kwargs)
@@ -110,18 +86,17 @@ class CoreManagement(HelmManagement):
         ) -> None:
         """Run 5G core database Helm action."""
 
-        node_name, node_data = self._get_master_node(node)
+        node_name, node_data = self._get_deployment_node(node)
 
         result = await run_core_database_helm_action(
-            core_meta=self.metamodel.core,
-            core_deployment=self.deployment_model.core_deployment,
+            core_deployment=self.deployment_model.core,
             action=action,
             node_name=node_name,
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
             force=force,
             )
-    
+
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,
@@ -139,20 +114,17 @@ class CoreManagement(HelmManagement):
         ) -> None:
         """Add/remove UEs/subscribers on the 5G core database."""
 
-        node_name, node_data = self._get_master_node(node)
+        node_name, node_data = self._get_deployment_node(node)
 
         all_ues = self.mutable_metamodel.ues
 
         # filter for specific components if requested
-        if ues is None:
-            target_ues = all_ues
-        else:
-            target_ues = {k: v for k, v in all_ues.items() if k in ues}
+        target_ues = all_ues if ues is None else {k: v for k, v in all_ues.items() if k in ues}
 
         await run_parallel_database_subscriber_action(
             ues=target_ues,
-            core_implementation=self.metamodel.core.implementation,
-            database_ip=self.deployment_model.core_deployment.database_params.ip,
+            core_implementation=self.deployment_model.core.implementation,
+            database_ip=self.deployment_model.core.database_params.ip,
             action=action,
             node_name=node_name,
             node_data=node_data,
@@ -172,6 +144,7 @@ class CoreManagement(HelmManagement):
 
 
     # override dependency graph
+    @override
     async def install(
             self,
             order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
@@ -181,6 +154,7 @@ class CoreManagement(HelmManagement):
         await super().install(order=order, **kwargs)
 
 
+    @override
     async def deploy(
             self,
             node: str | None = None,
@@ -189,7 +163,10 @@ class CoreManagement(HelmManagement):
         ) -> None:
         """
         Orchestrate full 5G core deployment.
-        Prepares all charts (database + components), installs the database first, then installs 5G core components.
+
+        - Prepare all charts (database + components)
+        - Install the database first
+        - Install all 5G core components.
         """
 
         # prepare everything (database + components)
@@ -208,6 +185,7 @@ class CoreManagement(HelmManagement):
         await self.register_ues(node=node)
 
 
+    @override
     async def remove(
             self,
             components: list[str] | None = None,

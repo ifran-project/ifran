@@ -31,7 +31,7 @@ gNBs:
     tr_s_preference: "f1"
 
     local_s_address: "{{ component.config.f1c.ipv4EndPointAddress }}"
-    remote_s_address: "{{ component.config.du }}"
+    remote_s_address: "{{ component.advanced_config.du_ip | default("0.0.0.0", true) }}"
     local_s_portc: "{{ component.config.f1c.port }}"
     remote_s_portc: "{{ component.config.f1c.port }}"
 
@@ -42,13 +42,13 @@ gNBs:
 
     # -------- AMF parameters
     amf_ip_address:
-      - ipv4: {{ component.config.amf }}
+      - ipv4: {{ component.config.amf.config.n2.ipv4EndPointAddress }}
 
     E1_INTERFACE:
       - type: "cp"
         ipv4_cucp: "{{ component.config.e1.ipv4EndPointAddress }}"
         port_cucp: "{{ component.config.e1.port }}"
-        ipv4_cuup: "{{ component.config.cu_up }}"
+        ipv4_cuup: "{{ component.advanced_config.cu_up_ip | default("0.0.0.0", true) }}"
         port_cuup: "{{ component.config.e1.port }}"
 
     NETWORK_INTERFACES:

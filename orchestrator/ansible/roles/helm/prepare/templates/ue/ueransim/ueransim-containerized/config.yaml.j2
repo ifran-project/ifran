@@ -5,9 +5,9 @@
 # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
 supi: "imsi-{{ component.config.supi }}"
 # Mobile Country Code value of HPLMN
-mcc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mcc }}"
+mcc: "{{ component.config.gnbs[0].config.plmnList[0].plmnId.mcc }}"
 # Mobile Network Code value of HPLMN (2 or 3 digits)
-mnc: "{{ component.config.gnb[1].config.plmnList[0].plmnId.mnc }}"
+mnc: "{{ component.config.gnbs[0].config.plmnList[0].plmnId.mnc }}"
 # SUCI Protection Scheme : 0 for Null-scheme, 1 for Profile A and 2 for Profile B
 protectionScheme: {{ component.advanced_config.protectionScheme | default(0, true) }}
 # Home Network Public Key for protecting with SUCI Profile A
@@ -47,11 +47,9 @@ nsNamePrefix: {{ component.advanced_config.nsNamePrefix | default("ueransim", tr
 
 # List of gNB IP addresses for Radio Link Simulation
 gnbSearchList:
-{% if component.advanced_config and component.advanced_config.gnbSearchList %}
-{{ component.advanced_config.gnbSearchList | to_nice_yaml(indent=2) | indent(2, True) }}
-{% else %}
-  - "{{ component.config.gnb[0] }}"
-{% endif %}
+{% for gnb in component.config.gnbs %}
+  - "{{ gnb.gnb_ip }}"
+{% endfor %}
 
 # UAC Access Identities Configuration
 uacAic:

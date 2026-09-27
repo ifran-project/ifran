@@ -25,7 +25,7 @@ gNBs:
 {% endfor %}
 
     local_s_address: "{{ component.config.f1u.ipv4EndPointAddress }}"
-    remote_s_address: "{{ component.config.du }}"
+    remote_s_address: "{{ component.advanced_config.du_ip | default("0.0.0.0", true) }}"
     local_s_portd: "{{ component.config.f1u.port }}"
     remote_s_portd: "{{ component.config.f1u.port }}"
 

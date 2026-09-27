@@ -39,15 +39,15 @@ RUs = (
 );
 
 {% if component.config.ru.type == "simulated" %}
-{% if component.config.gnb[1].implementation == "oai" %}
+{% if component.config.gnbs[0].implementation == "oai" %}
 rfsimulator = (
     {
-        serveraddr = "{{ component.config.gnb[0] }}";
+        serveraddr = "{{ component.config.gnbs[0].gnb_ip }}";
         serverport = 4043;
     }
 );
 {% endif %}
-{% if component.config.gnb[1].implementation == "ocudu" %}
+{% if component.config.gnbs[0].implementation == "ocudu" %}
 # for ocudu, zmq is used as rf simulator
 device = {
   name = "oai_zmqdevif";
@@ -56,7 +56,7 @@ device = {
 zmq = (
   {
     tx_channels = ( "tcp://{{ component.static_pod_ip }}:2001" );
-    rx_channels = ( "tcp://{{ component.config.gnb[0] }}:2000" );
+    rx_channels = ( "tcp://{{ component.config.gnbs[0].gnb_ip }}:2000" );
   }
 );
 {% endif %}
@@ -65,7 +65,7 @@ zmq = (
 cells = (
     {
         ru_id = 0;
-        band = {{ component.config.gnb[1].config.radioConfiguration.nrBand }};
+        band = {{ component.config.gnbs[0].config.radioConfiguration.nrBand }};
         rf_freq = {{ component.derived_radio_config.dl_carrier_freq_hz }}L;
         rf_offset = {{ component.derived_radio_config.offset_hz }};
         numerology = {{ component.derived_radio_config.numerology }};

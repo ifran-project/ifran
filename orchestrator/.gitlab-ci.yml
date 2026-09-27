@@ -1,0 +1,46 @@
+stages:
+  - build
+  - lint
+  - publish
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+default:
+  image: python:3.12
+  cache:
+    paths:
+      - .pip-cache/
+  tags:
+    - ci.inria.fr
+  
+.python-base:
+  before_script:
+    - python --version
+    - pip install --upgrade pip
+
+build:
+  stage: build
+  extends: .python-base
+  script:
+    - pip install build
+    - python -m build
+  artifacts:
+    paths:
+      - dist/
+
+lint:
+  stage: lint
+  extends: .python-base
+  script:
+    - pip install ruff
+    - python -m ruff check
+
+publish:
+  stage: publish
+  extends: .python-base
+  script:
+    - pip install twine
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+  rules:
+    - if: $CI_COMMIT_TAG

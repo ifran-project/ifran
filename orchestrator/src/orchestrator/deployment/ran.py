@@ -1,15 +1,15 @@
 """RAN deployment lifecycle management."""
 
+from typing import override
+
+from metamodel.models.common import Category5G
+from metamodel.models.ran import RANComponentType
+
 from orchestrator.deployment.helm import HelmManagement
-from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.core import CoreComponentType
-from orchestrator.models.meta.ran import RANComponentType
 from orchestrator.utils.common_5g import (
     ComponentDependencyGraph,
-    get_5g_components_by_type,
 )
 from orchestrator.utils.ran import reconcile_ran
-from orchestrator.utils.ric import get_ric_e2_components
 
 RAN_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
     RANComponentType.DU: frozenset({
@@ -24,35 +24,27 @@ RAN_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
 class RANManagement(HelmManagement):
     """RAN deployment lifecycle management class."""
 
+    @override
     def reconcile(self) -> None:
         """Ensure the 5G RAN is ready for deployment by resolving its components' configs."""
 
         super().reconcile()
 
-        # get amfs from metamodel
-        amfs = get_5g_components_by_type(self.metamodel.core.components).get(CoreComponentType.AMF, {})
-
-        # get amfs from deployment model (keys of meta and deployment models should be in sync by this point)
-        amfs_deployment = {k: self.deployment_model.core_deployment.components[k] for k, v in amfs.items()}
-
         reconcile_ran(
-            ran_meta=self.mutable_metamodel.ran,
-            ran_deployment=self.deployment_model.ran_deployment,
-            pod_network_cidr=self.deployment_model.params.k8s.pod_network_cidr,
-            slices=self.metamodel.slices,
-            rus_meta=self.metamodel.rus,
-            rus_provisioning=self.deployment_model.rus,
-            amfs=amfs_deployment,
-            rics=get_ric_e2_components(ric_meta=self.metamodel.ric, ric_k8s=self.deployment_model.ric_deployment),
+            metamodel=self.mutable_metamodel,
+            deployment_model=self.deployment_model,
         )
 
 
+    # override category
+    @override
     async def run_action(self, **kwargs) -> None:
         """Run Helm action on RAN components."""
         await super().run_action(category=Category5G.RAN, **kwargs)
 
 
     # override dependency graph
+    @override
     async def install(
             self,
             order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
@@ -63,6 +55,7 @@ class RANManagement(HelmManagement):
 
 
     # override dependency graph
+    @override
     async def deploy(
             self,
             order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,

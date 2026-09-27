@@ -1,3 +1,6 @@
+{% if component.plain_text_config %}
+{{ component.plain_text_config }}
+{%- else %}
 "local":
   "host": ":8080"
 {% if 'chartmuseum' in component.advanced_config.ric_type_services %}
@@ -15,3 +18,4 @@
   "config": "config/config-file.json"
   "tmpConfig": "/tmp/config-file.json"
 loglevel: 4
+{% endif %}

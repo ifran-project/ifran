@@ -1,16 +1,16 @@
 """Ansible utilities and helpers."""
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import ansible_runner
 
-from orchestrator.models.deployment.provisioning import (
+from orchestrator.models.provisioning import (
     ProvisionableResource,
 )
-from orchestrator.utils.common import InvalidResourceStateError
+from orchestrator.utils.utils import InvalidResourceStateError
 
 
 def get_ansible_inventory_line(
@@ -52,7 +52,7 @@ def get_ansible_output(runner: ansible_runner.runner.Runner, output_keys: list[s
     return output
 
 
-async def run_ansible_playbook(
+async def run_ansible_playbook(  # noqa: PLR0917
         playbook: list | dict[str, Any] | str,
         runner_path: str,
         inputs: dict[str, Any] | None = None,
@@ -62,9 +62,13 @@ async def run_ansible_playbook(
     ) -> dict[str, Any] | None:
     """Run an Ansible playbook."""
 
-    # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overridden by other ansible runs if using the same private_data_dir
+    # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overridden by other ansible runs
+    # if using the same private_data_dir
+
     # ensure runner path exists
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S.%fZ") # add timestamp for more meaningful log collection
+
+    # add timestamp for more meaningful log collection
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S.%fZ")
     run_path = Path(runner_path) / timestamp
     run_path.mkdir(parents=True, exist_ok=True)
 
@@ -84,7 +88,7 @@ async def run_ansible_playbook(
         raise RuntimeError(f"Playbook run not successful (status: {runner.status!r}, return code: {runner.rc!r})")
 
     if output_keys is None:
-        return
+        return None
 
     output = {}
     for key in output_keys:
@@ -95,7 +99,7 @@ async def run_ansible_playbook(
     return output
 
 
-async def run_ansible_role(
+async def run_ansible_role(  # noqa: PLR0917
         role: str,
         runner_path: str,
         inputs: dict[str, Any] | None = None,

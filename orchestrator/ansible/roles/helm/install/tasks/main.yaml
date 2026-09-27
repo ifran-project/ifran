@@ -1,13 +1,13 @@
 # Role to install Helm chart on Kubernetes cluster
 
 # Input:
-# - component: K8S5GComponent
+# - component: Deployed5GComponent
 # - chart_name: str
 # - helm_build_dir: str
 # - output_with_multus: bool
 
 # Output:
-# - network_info: str if output_with_multus is False, else list[MultusNetworkStatus]
+# - network_info: str if 'output_with_multus' is False, else list[MultusNetworkStatus]
 ---
 - name: Deploy rendered '{{ chart_name }}' Helm chart in namespace '{{ component.namespace }}'
   kubernetes.core.helm:

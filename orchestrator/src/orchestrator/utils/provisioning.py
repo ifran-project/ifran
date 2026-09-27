@@ -6,10 +6,12 @@ from collections import defaultdict
 from ipaddress import IPv4Address
 from typing import Any, Literal
 
-from orchestrator.models.deployment.ansible import AnsibleParams
-from orchestrator.models.deployment.deployment import DeploymentModel
-from orchestrator.models.deployment.k8s import K8SStatus
-from orchestrator.models.deployment.provisioning import (
+from metamodel.models.ue import UEType
+
+from orchestrator.models.ansible import AnsibleParams
+from orchestrator.models.deployment import DeploymentModel
+from orchestrator.models.k8s import K8SStatus
+from orchestrator.models.provisioning import (
     ProvisionableResource,
     Provisioner,
     ProvisioningCategory,
@@ -19,7 +21,7 @@ from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from orchestrator.utils.common import (
+from orchestrator.utils.utils import (
     InvalidResourceStateError,
     ReferenceNotFoundError,
 )
@@ -27,19 +29,20 @@ from orchestrator.utils.common import (
 
 def get_provisionable_resources(
         deployment_model: DeploymentModel,
-        resources: dict[Literal["nodes", "rus", "ues"], list[str]] | None = None,
+        filter: list[str] | None = None,
     ) -> dict[str, ProvisionableResource]:
     "Extract filtered provisionable resources from deployment model."
 
-    target_resources: dict[str, ProvisionableResource] = {}
-    rtypes = ["nodes", "rus", "ues"]
-    for rtype in rtypes:
-        type_resources: dict[str, ProvisionableResource] = getattr(deployment_model, rtype)
-        target_resources = (
-            target_resources | type_resources
-            if resources is None
-            else target_resources | {k: v for k, v in type_resources.items() if k in resources.get(rtype, {})}
-        )
+    # get all provisionable resources
+    target_resources = deployment_model.nodes | deployment_model.rus | {
+        k: v for k, v in deployment_model.ues.items() if v.type is UEType.COTS
+    }
+
+    # filter
+    if filter:
+        target_resources = {
+            k: v for k, v in target_resources.items() if k in filter
+        }
 
     return target_resources
 
@@ -64,12 +67,17 @@ def resolve_provisioner(
     """Resolve resource provisioner and merge provisioning parameters."""
 
     if resource_data.provisioner is None:
-        raise ReferenceNotFoundError(f"No provisioner reference found to resolve for {resource_data.category.value} {resource_name!r}.")
+        raise ReferenceNotFoundError(
+            f"No provisioner reference found to resolve for {resource_data.category.value} {resource_name!r}."
+        )
 
     provisioner = provisioners.get(resource_data.provisioner)
 
     if provisioner is None:
-        raise ReferenceNotFoundError(f"{resource_data.category.value.capitalize()} {resource_name!r} references undefined provisioner {resource_data.provisioner!r}.")
+        raise ReferenceNotFoundError(
+            f"{resource_data.category.value.capitalize()} {resource_name!r} "
+            f"references undefined provisioner {resource_data.provisioner!r}."
+        )
 
     if resource_data.category not in provisioner.supported_categories:
         raise ValueError(f"Provisioner {resource_data.provisioner!r} referenced by {resource_name!r} "
@@ -77,9 +85,10 @@ def resolve_provisioner(
 
     if not resource_data.provisioning_params:
         return provisioner
+    return None
 
 
-async def run_reservation_action(
+async def run_reservation_action(  # noqa: PLR0917
         resources: list[str],
         provisioner_name: str,
         provisioners: dict[str, Provisioner],
@@ -113,7 +122,10 @@ async def run_reservation_action(
             "resources": resources,
             **provisioner_data.params.model_dump(mode="json"),
         },
-        "extra_params": {"environment": {"PATH": f"{provisioner_data.params.extra_path}:{os.environ.get('PATH', '')}"}} if provisioner_data.params.extra_path else None,
+        "extra_params": {
+            "environment": {"PATH": f"{provisioner_data.params.extra_path}:{os.environ.get('PATH', '')}"}}
+            if provisioner_data.params.extra_path
+            else None,
         "runner_path": f"{ansible_params.runner_path}/reserve/{provisioner_name}",
         "roles_paths": ansible_params.roles_paths,
     }
@@ -122,10 +134,12 @@ async def run_reservation_action(
     except Exception as e:
         if ignore_failures:
             return
-        raise RuntimeError(f"Provisioner {provisioner_name!r} failed to reserve resources: {', '.join(resources)}.") from e
+        raise RuntimeError(
+            f"Provisioner {provisioner_name!r} failed to reserve resources: {', '.join(resources)}."
+            ) from e
 
 
-async def run_single_provisioning_action(
+async def run_single_provisioning_action(  # noqa: PLR0917
         resource_name: str,
         resource_data: ProvisionableResource,
         action: Literal["provision", "unprovision"],
@@ -140,7 +154,9 @@ async def run_single_provisioning_action(
         (action == "provision" and resource_data.is_provisioned) or
         (action == "unprovision" and not resource_data.is_provisioned)):
 
-            raise InvalidResourceStateError(f"{resource_data.category.value.capitalize()} {resource_name!r} is already {action}ed.")
+            raise InvalidResourceStateError(
+                f"{resource_data.category.value.capitalize()} {resource_name!r} is already {action}ed."
+            )
 
     if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
         # ssh-able resources have ssh_info
@@ -158,7 +174,11 @@ async def run_single_provisioning_action(
     # lvl 1 : merge provisioner params with global provisioning_params with priority to non-default provisioner's params
     # lvl 2: merge provisioner params with resource provisioning params with priority to resource's provisioning params
     # NOTE provisioner params model needs to tolerate extra fields and ignore them for this to work with no problems
-    merged_prov_params = type(provisioner.params).model_validate(provisioning_params | provisioner.params.model_dump(mode="json", exclude_defaults=True) | resource_data.provisioning_params)
+    merged_prov_params = type(provisioner.params).model_validate(
+        provisioning_params |
+        provisioner.params.model_dump(mode="json") |
+        resource_data.provisioning_params
+    )
 
     args = {
         "role": f"provisioning/{provisioner.type.value}/{action}",
@@ -169,7 +189,9 @@ async def run_single_provisioning_action(
             # for now, it used to decide whether to return 'ssh_info' or 'ru_ips' instead
             "is_ru": resource_data.category is ProvisioningCategory.RU,
         },
-        "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}} if merged_prov_params.extra_path else None,
+        "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}}
+            if merged_prov_params.extra_path
+            else None,
         "output_keys": output_keys if action == "provision" else None,
         "runner_path": f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
@@ -197,7 +219,7 @@ async def run_single_provisioning_action(
             resource_data.k8s_status = K8SStatus.NOT_CONFIGURED
 
 
-async def run_parallel_provisioning_action(
+async def run_parallel_provisioning_action(  # noqa: PLR0917
         resources: dict[str, ProvisionableResource],
         action: Literal["provision", "unprovision"],
         provisioners: dict[str, Provisioner],
@@ -224,10 +246,46 @@ async def run_parallel_provisioning_action(
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 
-    for _, result in zip(tasks.keys(), results):
+    for result in results:
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,
                 ignore_invalid_states=ignore_invalid_states,
+                ignore_failures=ignore_failures,
+            )
+
+
+async def run_parallel_reservation_action(  # noqa: PLR0917
+        resources: dict[str, ProvisionableResource],
+        provisioners: dict[str, Provisioner],
+        ansible_params: AnsibleParams,
+        force: bool = False,
+        ignore_failures: bool = False,
+        skip_unreservable: bool = True,
+    ) -> None:
+    """Reserve provided reservable resources in parallel."""
+
+    grouped: dict[str, list[str]] = get_resources_by_provisioner(resources)
+    tasks: dict[str, asyncio.Task] = {}
+
+    for provisioner_name, resources_list in grouped.items():
+        tasks[provisioner_name] = asyncio.create_task(
+            run_reservation_action(
+                resources=resources_list,
+                provisioner_name=provisioner_name,
+                provisioners=provisioners,
+                ansible_params=ansible_params,
+                ignore_failures=ignore_failures,
+                force=force,
+                skip_unreservable=skip_unreservable,
+            ))
+
+    results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+
+    for result in results:
+        if isinstance(result, Exception):
+            handle_ansible_result_exception(
+                result=result,
+                ignore_invalid_states=True,
                 ignore_failures=ignore_failures,
             )

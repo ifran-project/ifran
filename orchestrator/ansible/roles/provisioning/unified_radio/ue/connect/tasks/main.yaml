@@ -31,7 +31,7 @@
     body:
       nr5g_info:
         nr5g_bands:
-          - "n{{ ue.config.gnb[1].config.radioConfiguration.nrBand }}"
+          - "n{{ ue.config.nrBands }}"
       ue_configuration_data: "{{ ue.config }}"
     status_code: 200
 

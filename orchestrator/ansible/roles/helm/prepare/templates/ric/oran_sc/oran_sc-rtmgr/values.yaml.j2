@@ -1,4 +1,3 @@
-{% set overrides_yaml %}
 common:
   namespace:
     platform: {{ component.namespace }}
@@ -10,6 +9,29 @@ rtmgr:
     registry: {{ component.image.repository.rsplit('/', 1)[0] }}
     name: {{ component.image.repository.rsplit('/', 1)[1] }}
     tag: {{ component.image.image_tag }}
-{% endset %}
-{% set defaults = lookup('ansible.builtin.file', role_path ~ '/files/ric/oran_sc/oran_sc-rtmgr/values.yaml') | from_yaml %}
-{{ defaults | combine(overrides_yaml | from_yaml, recursive=true) | to_nice_yaml }}
+
+# Scheduling options
+affinity:
+{% if component.affinity %}
+{{ component.affinity | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  {}
+{% endif %}
+
+terminationGracePeriodSeconds: 5
+
+nodeSelector:
+{% if component.node_selector %}
+{{ component.node_selector | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  {}
+{% endif %}
+
+{% if component.node_name %}
+nodeName: {{ component.node_name }}
+{% endif %}
+
+{% if component.tolerations %}
+tolerations:
+{{ component.tolerations | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}

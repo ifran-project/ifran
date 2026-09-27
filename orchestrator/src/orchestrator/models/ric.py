@@ -1,18 +1,13 @@
-"""RIC meta models."""
+"""RIC deployment models."""
 
 from enum import StrEnum, auto
-from typing import Annotated, Literal
+from typing import Self
 
+from metamodel.models.base import StrictBaseModel
+from metamodel.models.ric import RICComponentType, SingleRICComponent
 from pydantic import Field, model_validator
 
-from orchestrator.models.meta.common import (
-    E2,
-    BlueprintBaseModel,
-    Category5G,
-    Component5G,
-    Network5G,
-    Self,
-)
+from orchestrator.models.common import Deployed5GComponent, Deployed5GNetwork
 
 
 class RICImplementation(StrEnum):
@@ -23,21 +18,6 @@ class RICImplementation(StrEnum):
 
     ORAN_SC = auto()
     """O-RAN Software Community (SC) Near-Real-time RIC."""
-
-
-class RICComponentType(StrEnum):
-    """Supported RIC component types."""
-
-    RIC = auto()
-    DBAAS = auto()
-    E2MGR = auto()
-    E2TERM = auto()
-    RTMGR = auto()
-    SUBMGR = auto()
-    APPMGR = auto()
-    CHARTMUSEUM = auto()
-    XAPP_ONBOARDER = auto()
-    A1MEDIATOR = auto()
 
 
 SUPPORTED_RIC_COMPONENTS: dict[RICImplementation, set[RICComponentType]] = {
@@ -58,18 +38,7 @@ SUPPORTED_RIC_COMPONENTS: dict[RICImplementation, set[RICComponentType]] = {
 }
 
 
-class RICComponentConfig(BlueprintBaseModel):
-    """Generic RIC component configuration."""
-
-
-class SingleRICConfig(RICComponentConfig):
-    """Single RIC component configuration exposing E2 interface."""
-
-    e2: E2 = Field(default_factory=E2)
-    """E2 endpoint used to reach the RAN."""
-
-
-class GenericAdvancedRICConfig(BlueprintBaseModel):
+class GenericAdvancedRICConfig(StrictBaseModel):
     """Generic RIC advanced configuration (implementation-specific)."""
 
 
@@ -108,10 +77,8 @@ ADVANCED_RIC_CONFIG_MAPPING: dict[RICImplementation, dict[RICComponentType, type
 }
 
 
-class RICComponent(Component5G):
-    """Generic RIC component."""
-
-    category: Literal[Category5G.RIC] = Field(default=Category5G.RIC, frozen=True)
+class DeployedRICComponent(Deployed5GComponent):
+    """5G RIC component deployment."""
 
     type: RICComponentType = Field()
     """RIC component type."""
@@ -119,42 +86,20 @@ class RICComponent(Component5G):
     implementation: RICImplementation | None = Field(default=None)
     """RIC component implementation."""
 
-    config: RICComponentConfig = Field(default_factory=RICComponentConfig)
-    """RIC configuration."""
-
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(ADVANCED_RIC_CONFIG_MAPPING, default_model=GenericAdvancedRICConfig)
 
 
-class SingleRICComponent(RICComponent):
-    """Single RIC component."""
-
-    type: Literal[RICComponentType.RIC] = Field(frozen=True)
-    config: SingleRICConfig = Field(default_factory=SingleRICConfig)
-
-
-class E2TermComponent(RICComponent):
-    """O-RAN SC E2 Termination component."""
-
-    type: Literal[RICComponentType.E2TERM] = Field(frozen=True)
-    config: SingleRICConfig = Field(default_factory=SingleRICConfig)
-
-
-type ValidatedRICComponent = Annotated[SingleRICComponent | E2TermComponent, Field(discriminator="type")]
-
-
-class RIC(Network5G):
-    """5G RAN Intelligent Controller network."""
+class RICDeployment(Deployed5GNetwork):
+    """Deployment state for one RIC network."""
 
     implementation: RICImplementation = Field(default=RICImplementation.OAI)
     """RIC implementation."""
 
-    components: dict[str, ValidatedRICComponent | RICComponent] = Field(default_factory=lambda: {
-        "ric": SingleRICComponent(type=RICComponentType.RIC)
-        })
-    """RIC components."""
+    components: dict[str, DeployedRICComponent] = Field(default_factory=dict)
+    """RIC Kubernetes components."""
 
     @model_validator(mode="after")
     def validate_supported_ric_component_types(self) -> Self:
@@ -162,3 +107,8 @@ class RIC(Network5G):
 
         self.validate_supported_component_types(supported=SUPPORTED_RIC_COMPONENTS)
         return self
+
+
+# model used to resolve ric references in ran components
+class MergedRIC(SingleRICComponent, DeployedRICComponent):
+    """Merged single RIC/ E2Term model (they both have the needed 'e2' in their config)."""

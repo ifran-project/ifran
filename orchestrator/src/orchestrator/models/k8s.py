@@ -1,21 +1,17 @@
 """Kubernetes models."""
 
+import re
 from enum import StrEnum, auto
 from ipaddress import IPv4Network
 from pathlib import Path
 from typing import Any, Literal, Self
 
+from metamodel.models.base import StrictBaseModel
 from pydantic import (
     Field,
     IPvAnyAddress,
     IPvAnyNetwork,
     model_validator,
-)
-
-from orchestrator.models.common import BlueprintBaseModel
-from orchestrator.models.deployment.common import (
-    SEM_VER_PATTERN,
-    Version,
 )
 
 
@@ -32,8 +28,46 @@ class K8SStatus(StrEnum):
     """Kubernetes is configured on node and node is part of a cluster."""
 
 
-# TODO add used_ips here
-class K8SParams(BlueprintBaseModel):
+SEM_VER_PATTERN = r"^(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?(?:-(?P<extension>.+))?$"
+
+class Version(StrictBaseModel):
+    """Conventional semantic version."""
+
+    major: int = Field()
+    """Major version."""
+
+    minor: int = Field()
+    """Minor version."""
+
+    patch: int = Field()
+    """Patch version."""
+
+    extension: str | None = Field(default=None)
+    """Version extension (anything after -)."""
+
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_string_or_dict(cls, data) -> dict[str, Any] | Any:
+        """Parse version string directly into initialisation dict before validation."""
+
+        if isinstance(data, str):
+            match = re.match(SEM_VER_PATTERN, data.strip())
+            if not match:
+                raise ValueError(f"Invalid version string {data!r}. Expected format: 'X.Y.Z' or 'X.Y.Z-extension'")
+
+            data = match.groupdict()
+            return {
+                "major": int(data["major"]),
+                "minor": int(data["minor"]),
+                "patch": int(data["patch"]) if data["patch"] is not None else 0,
+                "extension": data["extension"],
+            }
+
+        return data
+
+
+class K8SParams(StrictBaseModel):
     """Kubernetes global parameters."""
 
     timezone: str = Field(default="Europe/Paris")
@@ -85,7 +119,17 @@ class K8SParams(BlueprintBaseModel):
     """If True, cluster admin credentials will be shared over all workers."""
 
     local_kubeconfig_path: str = Field(default=str(Path(__file__).resolve().parents[3] / ".k8s-admin.conf"))
-    """Local path on Ansible controller where master's admin.conf is temporarily saved before distribution over workers if 'copy_kubeconfig_to_workers' is True."""
+    """
+    Local path on Ansible controller where master's admin.conf is temporarily saved
+    before distribution over workers if 'copy_kubeconfig_to_workers' is True.
+    """
+
+    label_selection_base: str = Field(default="node-type.5g.blueprint")
+    """Label base used to enforce scheduling on nodes based on their roles."""
+
+    used_ips: set[IPvAnyAddress] = Field(default_factory=set)
+    """Set of IPs explicitly assigned to pods."""
+
 
     @model_validator(mode="after")
     def validate_k8s_version(self) -> Self:
@@ -96,7 +140,7 @@ class K8SParams(BlueprintBaseModel):
         return self
 
 
-class HelmParams(BlueprintBaseModel):
+class HelmParams(StrictBaseModel):
     """Parameters for prepare/install/uninstall Helm ansible role."""
 
     chart_name: str = Field()
@@ -112,14 +156,14 @@ class HelmParams(BlueprintBaseModel):
     """If True, install role will output list of MultusNetworkStatus, else output pod IP string."""
 
 
-class ImagePullSecret(BlueprintBaseModel):
+class ImagePullSecret(StrictBaseModel):
     """Kubernetes image pull secret."""
 
     name: str = Field()
     """Name of the image pull secret."""
 
 
-class ContainerImage(BlueprintBaseModel):
+class ContainerImage(StrictBaseModel):
     """Container image."""
 
     repository: str = Field()
@@ -135,29 +179,7 @@ class ContainerImage(BlueprintBaseModel):
     """List of Kubernetes image pull secrets."""
 
 
-class Probe(BlueprintBaseModel):
-    """Kubernetes health probe."""
-
-    enabled: bool = Field(default=False)
-    """Enable this probe."""
-
-    path: str | None = Field(default=None)
-    """HTTP probe path."""
-
-    port: int | None = Field(default=None)
-    """Probe port."""
-
-    initial_delay_seconds: int = Field(default=10)
-    """Delay before starting probe checks."""
-
-    period_seconds: int = Field(default=10)
-    """Probe execution interval."""
-
-    timeout_seconds: int = Field(default=2)
-    """Probe timeout."""
-
-
-class ComputeResources(BlueprintBaseModel):
+class ComputeResources(StrictBaseModel):
     """CPU and memory resources for a container."""
 
     cpu: str | int | float | None = Field(default=None)
@@ -167,7 +189,7 @@ class ComputeResources(BlueprintBaseModel):
     """Memory resource value (e.g. 1Gi)."""
 
 
-class ContainerResources(BlueprintBaseModel):
+class ContainerResources(StrictBaseModel):
     """Resources assigned to a specific container."""
 
     nf: ComputeResources | None = Field(default=None)
@@ -177,7 +199,7 @@ class ContainerResources(BlueprintBaseModel):
     """Tcpdump sidecar resources."""
 
 
-class ResourceRequirements(BlueprintBaseModel):
+class ResourceRequirements(StrictBaseModel):
     """Pod/container resource requirements."""
 
     define: bool = Field(default=False)
@@ -190,7 +212,7 @@ class ResourceRequirements(BlueprintBaseModel):
     """Maximum compute resources."""
 
 
-class MultusInterface(BlueprintBaseModel):
+class MultusInterface(StrictBaseModel):
     """Multus network attachment configuration."""
 
     enabled: bool = Field(default=True)
@@ -233,7 +255,7 @@ class MultusInterface(BlueprintBaseModel):
     """Maximum Transmission Unit (MTU)."""
 
 
-class Multus(BlueprintBaseModel):
+class Multus(StrictBaseModel):
     """Multus CNI configuration."""
 
     enabled: bool = Field(default=False)
@@ -243,7 +265,7 @@ class Multus(BlueprintBaseModel):
     """Secondary network interfaces attached to the pod."""
 
 
-class MultusNetworkStatus(BlueprintBaseModel):
+class MultusNetworkStatus(StrictBaseModel):
     """One entry of the Multus network-status annotation (k8s.v1.cni.cncf.io/network-status)."""
 
     name: str = Field()
@@ -268,7 +290,7 @@ class MultusNetworkStatus(BlueprintBaseModel):
     """List of default gateways for this interface."""
 
 
-class PodSecurityContext(BlueprintBaseModel):
+class PodSecurityContext(StrictBaseModel):
     """Kubernetes pod-level security context."""
 
     run_as_user: int = Field(default=0, ge=0)
@@ -284,7 +306,7 @@ class PodSecurityContext(BlueprintBaseModel):
     """Filesystem group applied to mounted volumes."""
 
 
-class Capabilities(BlueprintBaseModel):
+class Capabilities(StrictBaseModel):
     """Linux capability configuration."""
 
     add: list[str] = Field(default_factory=list)
@@ -294,7 +316,7 @@ class Capabilities(BlueprintBaseModel):
     """Capabilities to drop."""
 
 
-class SecurityContext(BlueprintBaseModel):
+class SecurityContext(StrictBaseModel):
     """Kubernetes container security context."""
 
     privileged: bool = Field(default=True)
@@ -304,7 +326,7 @@ class SecurityContext(BlueprintBaseModel):
     """Linux capabilities to add or drop."""
 
 
-class ExposedPort(BlueprintBaseModel):
+class ExposedPort(StrictBaseModel):
     """Kubernetes container exposed port."""
 
     port: int = Field()
@@ -314,38 +336,53 @@ class ExposedPort(BlueprintBaseModel):
     """Protocol going through exposed port."""
 
 
-class K8SComponent(BlueprintBaseModel):
+class LogFetchParams(StrictBaseModel):
+    """Kubernetes log fetching parameters."""
+
+    kind: Literal["Pod", "Deployment", "StatefulSet"] = Field(default="Deployment")
+    """Kubernetes workload kind for which to retrieve logs."""
+
+    since_seconds: int = Field(default=3600) # last hour
+    """Time in seconds before the current time from which to show logs."""
+
+    all_containers: bool = Field(default=False)
+    """If set to True, retrieve all containers' logs in the pod(s)."""
+
+
+class K8SComponent(StrictBaseModel):
     """Generic Kubernetes component."""
 
     is_installed: bool = Field(default=False)
     """If this component is installed or not."""
 
     static_pod_ip: IPvAnyAddress | None = Field(default=None)
-    """Optional static primary Pod IP address set with Calico."""
+    """Optional static primary pod IP address set with Calico."""
 
     network_info: IPvAnyAddress | list[MultusNetworkStatus] | None = Field(default=None)
     """
-    Component pod network information.
-    Can be either the IP of the pod if Multus was not used,
-    or a list of Multus network status otherwise
-    (populated only after installation).
+    Component pod network information (populated only after installation).
+    - Can be either the IP of the pod if Multus was not used,
+    - or a list of Multus network status otherwise.
     """
 
     force_type_scheduling: bool = Field(default=False)
     """If True, label will be added to ensure scheduling only on nodes with matching type AND category label."""
 
     image: ContainerImage | None = Field(default=None)
-    """Container image."""
+    """Pod main container image."""
 
     exposed_ports: dict[str, ExposedPort] = Field(default_factory=dict)
-    """Container exposed ports."""
+    """Exposed ports."""
 
     resources: ResourceRequirements = Field(default_factory=ResourceRequirements)
     """CPU and memory resource requirements."""
 
-    # also populated by parent metamodel if none
+    # populated later on if none
     namespace: str | None = Field(default=None)
-    """Kubernetes namespace where the component will be deployed."""
+    """
+    Kubernetes namespace where the component will be deployed.
+    If None, '<implementation>-<type>' is used by default.
+    """
 
     pod_security_context: PodSecurityContext = Field(default_factory=PodSecurityContext)
     """Pod-level security context."""
@@ -397,6 +434,9 @@ class K8SComponent(BlueprintBaseModel):
 
     rendered_files: list[str] = Field(default_factory=lambda: ["values.yaml", "config.yaml"])
     """List of Helm chart template files to be rendered."""
+
+    log_fetch_params: LogFetchParams = Field(default_factory=LogFetchParams)
+    """Kubernetes log fetching parameters for this component."""
 
 
     @model_validator(mode="after")

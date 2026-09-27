@@ -1,1 +1,1 @@
-"""5G blueprint utilities and helpers."""
+"""Orchestrator utilities and helpers."""

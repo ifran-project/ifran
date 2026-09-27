@@ -1,17 +1,18 @@
 """RIC utilities and helpers."""
 
-from orchestrator.models.deployment.ansible import AnsibleParams
-from orchestrator.models.deployment.provisioning import ProvisionableNode
-from orchestrator.models.deployment.ric import K8SRICComponent, RICDeployment
-from orchestrator.models.meta.ric import (
-    RIC,
+from metamodel.models.metamodel import MetaModel
+
+from orchestrator.models.ansible import AnsibleParams
+from orchestrator.models.deployment import DeploymentModel
+from orchestrator.models.provisioning import ProvisionableNode
+from orchestrator.models.ric import (
     ORANSCAdvancedRICConfig,
     RICComponentType,
     RICImplementation,
 )
 from orchestrator.utils.ansible import get_ansible_inventory_line, run_ansible_playbook
-from orchestrator.utils.common import build_k8s_safe
 from orchestrator.utils.common_5g import reconcile_5g_component
+from orchestrator.utils.k8s import build_k8s_safe
 
 OFFICIAL_ORAN_SC_M_TYPES = {
     RICComponentType.A1MEDIATOR,
@@ -34,7 +35,7 @@ async def create_xapp_namespace(
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
     ) -> None:
-    """Create xApp namespace before OSC RIC installation."""
+    """Run playbook to create xApp namespace before OSC RIC installation."""
 
     await run_ansible_playbook(
         playbook=[{
@@ -65,59 +66,54 @@ def build_official_oran_sc_service_name(
 
     if component_type is RICComponentType.E2TERM:
         return f"service-{namespace}-e2term-sctp-alpha"
-    elif component_type is RICComponentType.DBAAS:
+    if component_type is RICComponentType.DBAAS:
         return f"service-{namespace}-dbaas-tcp"
-    else:
-        return f"service-{namespace}-{component_type.value}-http"
-
-
-def get_ric_e2_components(
-        ric_meta: RIC,
-        ric_k8s: RICDeployment,
-    ) -> dict[str, K8SRICComponent]:
-    """Build RIC references pointing to E2-facing components."""
-
-    # keys of meta and deployment models should be in sync by this point
-    return {
-        component_name: ric_k8s.components[component_name]
-        for component_name, component_meta in ric_meta.components.items()
-        if component_meta.type in [RICComponentType.RIC, RICComponentType.E2TERM]
-    }
+    return f"service-{namespace}-{component_type.value}-http"
 
 
 def reconcile_ric(
-        ric_meta: RIC,
-        ric_k8s: RICDeployment,
+        metamodel: MetaModel,
+        deployment_model: DeploymentModel,
     ) -> None:
     """Ensure RIC is ready to be managed."""
 
+    ric_meta = metamodel.ric
+    ric_deployment = deployment_model.ric
+
+    k8s_params = deployment_model.params.k8s
+
     ric_services: dict[str, str] = {}
 
-    # reconcile first because official chart service names include the computed namespace
     for component_name, component_meta in ric_meta.components.items():
-        component_k8s = ric_k8s.components[component_name]
+        component_deployment = ric_deployment.components[component_name]
 
+        # reconcile first because osc-ric official chart service names include the computed namespace
         reconcile_5g_component(
             component_name=component_name,
             component_meta=component_meta,
-            component_k8s=component_k8s,
+            component_deployment=component_deployment,
+            k8s_params=k8s_params,
         )
 
-        if component_meta.implementation is RICImplementation.ORAN_SC:
-            component_k8s.namespace = ORAN_SC_PLATFORM_NAMESPACE
+        if component_deployment.implementation is RICImplementation.ORAN_SC:
+            component_deployment.namespace = ORAN_SC_PLATFORM_NAMESPACE
 
             # some osc ric components don't have a config.yaml template file to be rendered
             if component_meta.type in OFFICIAL_ORAN_SC_M_TYPES:
-                component_k8s.rendered_files = ["values.yaml"]
+                component_deployment.rendered_files = ["values.yaml"]
 
                 service_name = build_official_oran_sc_service_name(
                     component_type=component_meta.type,
-                    namespace=component_k8s.namespace,
+                    namespace=component_deployment.namespace,
                 )
             else:
-                service_name = build_k8s_safe(f"{component_meta.implementation}-{component_name}")
+                service_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
 
             ric_services[component_name] = service_name
+
+            if component_meta.type is RICComponentType.DBAAS:
+                # osc ric dbaas is a statefulset
+                component_deployment.log_fetch_params.kind = "StatefulSet"
 
     type_counts = {
         component_meta.type: sum(
@@ -126,15 +122,16 @@ def reconcile_ric(
         )
         for component_meta in ric_meta.components.values()
     }
+
     ric_type_services = {
         component_meta.type.value: ric_services[component_name]
         for component_name, component_meta in ric_meta.components.items()
-        if type_counts[component_meta.type] == 1 and component_meta.implementation is RICImplementation.ORAN_SC
+        if type_counts[component_meta.type] == 1 and component_deployment.implementation is RICImplementation.ORAN_SC
     }
 
-    for component_name, component_meta in ric_meta.components.items():
-        if component_meta.implementation is RICImplementation.ORAN_SC:
-            component_meta.advanced_config = component_meta.advanced_config or ORANSCAdvancedRICConfig(
+    for component_name in ric_meta.components:
+        if component_deployment.implementation is RICImplementation.ORAN_SC:
+            component_deployment.advanced_config = component_deployment.advanced_config or ORANSCAdvancedRICConfig(
                 service_name=ric_services[component_name],
                 ric_type_services=ric_type_services.copy(),
             )

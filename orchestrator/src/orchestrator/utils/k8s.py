@@ -1,14 +1,18 @@
 """Kubernetes setup utilities and helpers."""
 
 import asyncio
+import ipaddress
+import random
 from typing import Literal
 
-from orchestrator.models.deployment.ansible import AnsibleParams
-from orchestrator.models.deployment.k8s import (
+from pydantic import IPvAnyAddress
+
+from orchestrator.models.ansible import AnsibleParams
+from orchestrator.models.k8s import (
     K8SParams,
     K8SStatus,
 )
-from orchestrator.models.deployment.provisioning import (
+from orchestrator.models.provisioning import (
     ProvisionableNode,
 )
 from orchestrator.utils.ansible import (
@@ -16,10 +20,36 @@ from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from orchestrator.utils.common import InvalidResourceStateError
+from orchestrator.utils.utils import InvalidResourceStateError
 
 
-async def run_single_k8s_setup_action(
+def build_k8s_safe(name: str) -> str:
+    """Build a valid Kubernetes name by replacing '_' with '-'."""
+    return name.lower().replace("_", "-")
+
+
+def generate_random_ip(k8s_params: K8SParams) -> IPvAnyAddress | None:
+    """Generate a random IP address inside Kubernetes pod network."""
+
+    network = k8s_params.pod_network_cidr
+
+    first = int(network.network_address) + 1
+    last = int(network.broadcast_address) - 1
+
+    if first > last:
+        raise ValueError(f"Network {network!r} has no usable host addresses to pick from.")
+
+    retries = 100
+    for _ in range(retries):
+        address = ipaddress.ip_address(random.randint(first, last))  # noqa: S311
+        if address not in k8s_params.used_ips:
+            k8s_params.used_ips.add(address)
+            return address
+
+    return None
+
+
+async def run_single_k8s_setup_action(  # noqa: PLR0917
         node_name: str,
         node_data: ProvisionableNode,
         action: Literal["prepare", "create", "join", "remove"],
@@ -37,7 +67,8 @@ async def run_single_k8s_setup_action(
             (node_data.k8s_status.value == "in_cluster" and action in ["create", "join"]) or
             (node_data.k8s_status.value == "not_configured" and action == "remove")):
 
-            raise InvalidResourceStateError(f"Node {node_name!r} Kubernetes status is already {node_data.k8s_status.value}.")
+            raise InvalidResourceStateError(
+                f"Node {node_name!r} Kubernetes status is already {node_data.k8s_status.value}.")
 
     # merge k8s params with priority to node's k8s params
     merged_params = K8SParams.model_validate(k8s_params.model_dump(mode="json") | node_data.k8s_params)
@@ -81,7 +112,7 @@ async def run_single_k8s_setup_action(
             k8s_params.join_command = result["join_command"]
 
 
-async def run_parallel_k8s_setup_action(
+async def run_parallel_k8s_setup_action(  # noqa: PLR0917
         nodes: dict[str, ProvisionableNode],
         action: Literal["prepare", "create", "join", "remove"],
         k8s_params: K8SParams,
@@ -106,7 +137,7 @@ async def run_parallel_k8s_setup_action(
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 
-    for _, result in zip(tasks.keys(), results):
+    for result in results:
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,

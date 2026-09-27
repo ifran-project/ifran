@@ -1,0 +1,65 @@
+---
+- name: Add UE '{{ ue_name }}' to OAI 'SessionManagementSubscriptionData' table
+  ansible.mysql.mysql_query:
+    login_host: "{{ database_ip }}"
+    login_user: test
+    login_password: test
+    login_db: oai_db
+    query: |
+      INSERT IGNORE INTO SessionManagementSubscriptionData (
+        ueid,
+        servingPlmnid,
+        singleNssai,
+        dnnConfigurations
+      )
+      VALUES (
+        {% set subscription = ue_config.subscriptions[item.1.subscriptionIndex] %}
+        '{{ ue_config.supi }}',
+        '{{ item.0.plmnId.plmnId }}',
+        '{{ {
+          "sst": subscription.snssai.sst,
+          "sd": subscription.snssai.sd if subscription.snssai.sd else "FFFFFF"
+        } | to_json }}',
+        '{{ {
+          subscription.dnn.name: {
+            "pduSessionTypes": {
+              "defaultSessionType": subscription.dnn.pduSessionType | upper
+            },
+            "sscModes": {
+              "defaultSscMode": "{{ item.1.sscMode | upper }}",
+            },
+            "5gQosProfile": {
+              "5qi": subscription.dnn.qosFlows[0].fiveQI,
+              "arp": {
+                "priorityLevel": subscription.dnn.qosFlows[0].arp.priorityLevel,
+                "preemptCap": subscription.dnn.qosFlows[0].arp.preemptionCapability | upper,
+                "preemptVuln": subscription.dnn.qosFlows[0].arp.preemptionVulnerability | upper
+              },
+              "priorityLevel": subscription.dnn.qosFlows[0].arp.priorityLevel
+            } if subscription.dnn.qosFlows else {},
+            "sessionAmbr": {
+              "uplink": item.1.sessionAmbr.uplink ~ "bps",
+              "downlink": item.1.sessionAmbr.downlink ~ "bps"
+            } if item.1.sessionAmbr else {
+              "uplink": subscription.dnn.aggregateMaximumBitRate.uplink ~ "bps",
+              "downlink": subscription.dnn.aggregateMaximumBitRate.downlink ~ "bps"
+            },
+            "staticIpAddress": (
+              [
+                {
+                  "ipv4Addr": item.1.ueIPv4Address
+                }
+              ] if item.1.ueIPv4Address else []
+              ) + (
+              [
+                {
+                  "ipv6Addr": item.1.ueIPv6Address
+                }
+              ] if item.1.ueIPv6Address else []
+            )
+          }
+        } | to_json }}'
+      );
+  loop: "{{ gnb_item.config.plmnList | product(ue_config.pduSessions) | list }}"
+  loop_control:
+    label: "GNB: {{ gnb_item }}, PLMN ID: {{ item.0.plmnId.plmnId }}, Session Index: {{ item.1.subscriptionIndex }}"

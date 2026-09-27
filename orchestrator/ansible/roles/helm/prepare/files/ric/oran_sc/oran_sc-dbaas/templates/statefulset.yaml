@@ -48,24 +48,17 @@ spec:
         app: {{ include "common.namespace.platform" . }}-{{ include "common.name.dbaas" . }}
         release: {{ .Release.Name }}
     spec:
-{{- if $.Values.dbaas.enablePodAntiAffinity }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
       affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app: {{ include "common.namespace.platform" . }}-{{ include "common.name.dbaas" . }}
-                  release: {{ .Release.Name }}
-              topologyKey: kubernetes.io/hostname
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchLabels:
-                    app: {{ include "common.namespace.platform" . }}-{{ include "common.name.dbaas" . }}
-                    release: {{ .Release.Name }}
-                topologyKey: topology.kubernetes.io/zone
-{{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       imagePullSecrets:
         {{- $ctx := dict "ctx" . "defaultregistry" .Values.dbaas.image.registry }}
         - name: {{ include "common.dockerregistry.credential" $ctx }}

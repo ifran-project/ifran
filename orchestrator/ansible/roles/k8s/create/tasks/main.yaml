@@ -13,6 +13,7 @@
 # - enable_cni_dhcp: bool
 # - copy_kubeconfig_to_workers: bool
 # - local_kubeconfig_path: str
+# - label_selection_base: str
 
 # Output:
 # - join_command: str
@@ -91,7 +92,7 @@
     name: "{{ node.name }}"
     definition:
       metadata:
-        labels: "{{ {'node-type.5g.blueprint/' ~ item: 'true'} }}"
+        labels: "{{ {label_selection_base ~ '/' ~ item: 'true'} }}"
   loop: "{{ node.roles }}"
 
 - name: Fetch admin.conf from '{{ node.name }}' to Ansible orchestrator at {{ local_kubeconfig_path }} to be distributed to workers later

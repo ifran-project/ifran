@@ -65,13 +65,29 @@ resources:
 resources: {}
 {% endif %}
 
-{% if component.node_selector %}
-nodeSelector:
-{% for key, value in component.node_selector.items() %}
-  {{ key }}: "{{ value }}"
-{% endfor %}
+
+# Scheduling options
+affinity:
+{% if component.affinity %}
+{{ component.affinity | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
-nodeSelector: {}
+  {}
 {% endif %}
 
-nodeName: {{ component.node_name if component.node_name else 'null' }}
+terminationGracePeriodSeconds: 5
+
+nodeSelector:
+{% if component.node_selector %}
+{{ component.node_selector | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  {}
+{% endif %}
+
+{% if component.node_name %}
+nodeName: {{ component.node_name }}
+{% endif %}
+
+{% if component.tolerations %}
+tolerations:
+{{ component.tolerations | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}

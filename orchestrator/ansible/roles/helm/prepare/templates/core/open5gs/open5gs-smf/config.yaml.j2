@@ -70,7 +70,7 @@ smf:
 {% else %}
       upf:
 {% for upf in component.config.upfs %}
-        - address: {{ upf[0] }}
+        - address: {{ upf.config.n4.ipv4EndPointAddress }}
 {% endfor %}
 {% endif %}
 

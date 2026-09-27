@@ -7,6 +7,7 @@
 # - join_command: str
 # - copy_kubeconfig_to_workers: bool
 # - local_kubeconfig_path: str
+# - label_selection_base: str
 
 # Output: None
 ---
@@ -36,5 +37,5 @@
     name: "{{ node.name }}"
     definition:
       metadata:
-        labels: "{{ {'node-type.5g.blueprint/' ~ item: 'true'} }}"
+        labels: "{{ {label_selection_base ~ '/' ~ item: 'true'} }}"
   loop: "{{ node.roles }}"

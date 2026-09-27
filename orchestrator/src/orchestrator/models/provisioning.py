@@ -7,6 +7,16 @@ from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 from zoneinfo import ZoneInfo
 
+from metamodel.models.base import (
+    StrictBaseModel,
+    TolerantBaseModel,
+)
+from metamodel.models.common import Category5G
+from metamodel.models.core import CoreComponentType
+from metamodel.models.ran import RANComponentType
+from metamodel.models.ru import RU
+from metamodel.models.ue import UEType
+from metamodel.utils import URL
 from pydantic import (
     Field,
     IPvAnyAddress,
@@ -16,18 +26,10 @@ from pydantic import (
     model_validator,
 )
 
-from orchestrator.models.common import (
-    URL,
-    BlueprintBaseModel,
-    BlueprintTolerantBaseModel,
-)
-from orchestrator.models.deployment.k8s import K8SStatus
-from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.core import CoreComponentType
-from orchestrator.models.meta.ran import RANComponentType
+from orchestrator.models.k8s import K8SStatus
 
 
-class SSHInfo(BlueprintBaseModel):
+class SSHInfo(StrictBaseModel):
     """SSH information about a host."""
 
     hostname: str | None = Field(default=None)
@@ -57,7 +59,7 @@ class SSHInfo(BlueprintBaseModel):
     no_host_key_checking: bool = Field(default=True)
     """If True, flags will be added to disable host key checkin."""
 
-    # auto generated
+    # auto-generated
     common_args: str | None = Field(default=None)
     """Auto-generated SSH flags."""
 
@@ -138,14 +140,14 @@ class ProvisioningType(StrEnum):
 
 
 # NOTE model needs to tolerate extra fields from deployment model's params.provisioning
-class GenericProvisionerParams(BlueprintTolerantBaseModel):
+class GenericProvisionerParams(TolerantBaseModel):
     """Base class for provisioner params."""
 
     extra_path: str | None = Field(default=None)
     """Extra Ansible environment path added to PATH used in the provisioner role."""
 
 
-class GenericReservationParams(BlueprintTolerantBaseModel):
+class GenericReservationParams(TolerantBaseModel):
     """Base class for provisioner's reservation params."""
 
 
@@ -187,13 +189,14 @@ class ReservableProvisionerParams(GenericProvisionerParams):
 
         if not isinstance(value, str):
             raise TypeError("'reservation_period' must be an integer (minutes) or a duration string.")
-        
+
         v_str = value.strip().lower()
         match = re.match(r"^(\d+)([smhdyw])$", v_str)
 
         if not match:
-            raise ValueError(f"Invalid duration format: {value!r}. Use formats like: '120s', '30m', '3h', '2d', '1w', '1y'.")
-        
+            raise ValueError(f"Invalid duration format: {value!r}. "
+                             "Use formats like: '120s', '30m', '3h', '2d', '1w', '1y'.")
+
         amount = int(match.group(1))
         unit = match.group(2)
         multipliers = {
@@ -224,7 +227,7 @@ class ReservableProvisionerParams(GenericProvisionerParams):
         """Set 'start_time' if not provided using given timezone."""
 
         tzinfo = ZoneInfo(self.timezone)
-        
+
         if self.start_time is None:
             self.start_time = datetime.now(tzinfo)
         elif self.start_time.tzinfo is None:
@@ -236,6 +239,8 @@ class ReservableProvisionerParams(GenericProvisionerParams):
 
     @model_validator(mode="after")
     def validate_reservation(self) -> Self:
+        """Populate reservation reservation fields."""
+
         self._populate_reservation()
         self._populate_start_time()
         return self
@@ -277,7 +282,10 @@ class LegacyPOSParams(CommonPOSParams):
     """SSH information to access the central POS server."""
 
     public_key_file: str = Field(default=str(Path.home() / ".ssh/id_rsa.pub"))
-    """Path to public key file that will be added to authorized_keys of provisioned nodes to allow subsequent SSH access."""
+    """
+    Path to public key file.
+    Will be added to 'authorized_keys' of provisioned nodes to allow subsequent SSH access.
+    """
 
 
 class BIParams(GenericProvisionerParams):
@@ -308,7 +316,7 @@ class BIParams(GenericProvisionerParams):
     """BI node lifetime duration."""
 
 
-class UnifiedRadioTokenParams(BlueprintBaseModel):
+class UnifiedRadioTokenParams(StrictBaseModel):
     """Parameters/fields to generate a valid token for the unified radio management API."""
 
     infra: str = Field(default="r2lab")
@@ -373,7 +381,9 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
                     password=self.token_params.input_body.get("password"),
                 )
             except Exception as e:
-                raise ValueError("Failed to populate required 'reservation_params' from given 'token_params.input_body'.") from e
+                raise ValueError(
+                    "Failed to populate required 'reservation_params' from given 'token_params.input_body'."
+                    ) from e
 
         super()._populate_reservation(default_params_model=None)
 
@@ -402,7 +412,7 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
         return self
 
 
-class GenericProvisioner(BlueprintBaseModel):
+class GenericProvisioner(StrictBaseModel):
     """Base class for provisioner."""
 
     supported_categories: set[ProvisioningCategory] = Field(default_factory=set)
@@ -490,7 +500,7 @@ type Provisioner = Annotated[
     Field(discriminator="type")]
 
 
-class GenericProvisionableResource(BlueprintBaseModel):
+class GenericProvisionableResource(StrictBaseModel):
     """Base class for provisionable resource."""
 
     category: ProvisioningCategory = Field()
@@ -517,7 +527,7 @@ class GenericProvisionableResource(BlueprintBaseModel):
 
 
 class SSHableResource(GenericProvisionableResource):
-    """Base class for provisionable resource (Node, RU, UE) that can be SSHed into."""
+    """Base class for provisionable resource (Node, RU, UE) that can be SSH-ed into."""
 
     ssh_info: SSHInfo = Field(default_factory=SSHInfo)
     """Resource SSH configuration."""
@@ -531,7 +541,8 @@ class ProvisionableNode(SSHableResource):
     provisioner: str | None = Field(default="bi")
     """Node provisioner's name."""
 
-    roles: list[Category5G | CoreComponentType | RANComponentType | Literal["database"]] = Field(default_factory=lambda: list(Category5G))
+    roles: list[Category5G | CoreComponentType | RANComponentType | Literal["database"]] = Field(
+        default_factory=lambda: list(Category5G))
     """
     Node roles. Can be either a 5G category (e.g. core) or 5G component type (e.g. upf).
     Roles are added as "node-type.5g.blueprint/{role} = true" Kubernetes label for the node.
@@ -542,6 +553,22 @@ class ProvisionableNode(SSHableResource):
 
     k8s_params: dict[str, Any] = Field(default_factory=dict)
     """Kubernetes parameter overrides."""
+
+
+class ProvisionableUE(SSHableResource):
+    """User Equipment (UE) provisioning."""
+
+    category: Literal[ProvisioningCategory.UE] = Field(default=ProvisioningCategory.UE, frozen=True)
+
+    # NOTE ue type is used to distinguish between deployed and provisionable ues in deployment model
+    type: Literal[UEType.COTS] = Field(frozen=True)
+    """UE type."""
+
+    provisioner: str | None = Field(default="r2lab")
+    """UE provisioner's name."""
+
+    is_connected: bool = Field(default=False)
+    """If this UE is connected or not."""
 
 
 # NOTE radio units are not ssh-able resources
@@ -557,17 +584,14 @@ class ProvisionableRU(GenericProvisionableResource):
     """List of RU IP addresses."""
 
 
-class ProvisionableUE(SSHableResource):
-    """User Equipment (UE) provisioning."""
-
-    category: Literal[ProvisioningCategory.UE] = Field(default=ProvisioningCategory.UE, frozen=True)
-
-    provisioner: str | None = Field(default="r2lab")
-    """UE provisioner's name."""
-
-    is_connected: bool = Field(default=False)
-    """If this UE is connected or not."""
-
-
 # type used to tell pydantic to validate the correct provisionable resource model based on the category
-type ProvisionableResource = Annotated[ProvisionableNode | ProvisionableRU | ProvisionableUE, Field(discriminator="category")]
+type ProvisionableResource = Annotated[
+    ProvisionableNode |
+    ProvisionableRU |
+    ProvisionableUE,
+    Field(discriminator="category")
+]
+
+# model used to resolve ru references in gnb/du/ue components
+class MergedRU(RU, ProvisionableRU):
+    """RU merged model."""

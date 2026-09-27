@@ -1,23 +1,68 @@
 """Provisioning lifecycle management."""
 
-from typing import Literal
+from collections import defaultdict
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
-from orchestrator.deployment.common import BaseBlueprintManagement
+from metamodel.models.ue import UEType
+
+from orchestrator.deployment.base import BaseManagement
+from orchestrator.utils.ansible import get_ansible_inventory_line
 from orchestrator.utils.provisioning import (
     get_provisionable_resources,
-    get_resources_by_provisioner,
     run_parallel_provisioning_action,
-    run_reservation_action,
+    run_parallel_reservation_action,
 )
 
+if TYPE_CHECKING:
+    from orchestrator.models.provisioning import ProvisionableResource
 
-class ProvisioningManagement(BaseBlueprintManagement):
+
+class ProvisioningManagement(BaseManagement):
     """Provisioning management class."""
+
+    def get_ansible_inventory(self, path: str | None = None) -> str | None:
+        """Generate an Ansible .ini inventory from nodes and ues."""
+
+        # get groups based on node roles => {role: nodes with that role}
+        groups: dict[str, dict[str, ProvisionableResource]] = defaultdict(dict)
+
+        for node_name, node_data in self.deployment_model.nodes.items():
+            for role in node_data.roles:
+                groups[f"{role.value}_nodes"][node_name] = node_data
+
+        # add ues as their own group (only cots ues are provisionable)
+        ues = {
+            ue_name: ue_data
+            for ue_name, ue_data in self.deployment_model.ues.items()
+            if ue_data.type is UEType.COTS
+        }
+        if ues:
+            groups["ues"] = ues
+
+        lines: list[str] = []
+        for role, role_resources in groups.items():
+            lines.append(f"[{role}]")
+            for name, resource in role_resources.items():
+                lines.append(get_ansible_inventory_line(
+                    resource_name=name,
+                    resource_data=resource
+                ))
+            lines.append("") # new line between sections
+
+        inventory = "\n".join(lines)
+        if path:
+            with Path(path).open("w", encoding="utf-8") as f:
+                f.write(inventory)
+        else:
+            return inventory
+        return None
+
 
     async def run_action(
             self,
             action: Literal["provision", "unprovision", "reserve"],
-            resources: dict[Literal['nodes', 'rus', 'ues'], list[str]] | None = None,
+            resources: list[str] | None = None,
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
@@ -26,24 +71,19 @@ class ProvisioningManagement(BaseBlueprintManagement):
 
         target_resources = get_provisionable_resources(
             deployment_model=self.deployment_model,
-            resources=resources
+            filter=resources,
             )
 
         # reservations are attempted before provisioning
         if action in ["provision", "reserve"]:
-            grouped = get_resources_by_provisioner(target_resources)
-
-            for provisioner_name, resources_list in grouped.items():
-                await run_reservation_action(
-                    resources=resources_list,
-                    provisioner_name=provisioner_name,
-                    provisioners=self.deployment_model.provisioners,
-                    ansible_params=self.deployment_model.params.ansible,
-                    ignore_failures=ignore_failures,
-                    force=force if action == "reserve" else False, # don't force reservation when the main action is provisioning
-                    skip_unreservable=(action == "provision"),  # skip unreservable resources when provisioning
-                )
-
+            await run_parallel_reservation_action(
+                resources=target_resources,
+                provisioners=self.deployment_model.provisioners,
+                ansible_params=self.deployment_model.params.ansible,
+                force=(force if action == "reserve" else False), # don't force reserve when main action is provision
+                ignore_failures=ignore_failures,
+                skip_unreservable=(action == "provision"), # skip unreservable resources when main action is provision
+            )
 
         if action in ["provision", "unprovision"]:
             await run_parallel_provisioning_action(
@@ -88,12 +128,12 @@ class ProvisioningManagement(BaseBlueprintManagement):
 
         await self.run_action(
             action=action,
-            resources={rtype: names},
+            resources=names,
             **kwargs,
         )
 
 
-    # wrappers for each resource type and action for convenience
+    # wrapper functions for each resource type and action for usage convenience
     async def provision_nodes(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Provision all or a targeted list of nodes."""
         await self._run_type_action("nodes", "provision", nodes, **kwargs)
@@ -137,4 +177,3 @@ class ProvisioningManagement(BaseBlueprintManagement):
     async def reserve_ues(self, ues: list[str] | None = None, **kwargs) -> None:
         """Reserve all or a targeted list of UEs."""
         await self._run_type_action("ues", "reserve", ues, **kwargs)
-

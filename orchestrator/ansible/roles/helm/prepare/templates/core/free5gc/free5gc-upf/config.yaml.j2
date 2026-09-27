@@ -8,8 +8,8 @@ description: {{ component.advanced_config.description | default("UPF initial loc
 # PFCP Configuration
 # The listen IP and nodeID of the N4 interface on this UPF (Can't set to 0.0.0.0)
 pfcp:
-  addr: {{ component.static_pod_ip }}   # IP addr for listening
-  nodeID: {{ component.static_pod_ip }} # External IP or FQDN can be reached
+  addr: {{ component.config.n4.ipv4EndPointAddress }}  # IP addr for listening
+  nodeID: {{ component.config.n4.ipv4EndPointAddress }} # External IP or FQDN can be reached
   retransTimeout: {{ component.advanced_config.retransTimeout | default("1s", true) }} # retransmission timeout
   maxRetrans: {{ component.advanced_config.maxRetrans | default(3, true) }} # the max number of retransmission
 
@@ -25,9 +25,9 @@ gtpu:
   # If you bind to a specific IP, ensure SMF uses the same IP in its N3 configuration.
   # If you bind to all (0.0.0.0), SMF can use any of the available UPF IPs, but do not use 0.0.0.0 in SMF.
   ifList:
-    - addr: {{ component.static_pod_ip }}
+    - addr: {{ component.config.n3.ipv4EndPointAddress }}
       type: N3
-    - addr: {{ component.static_pod_ip }}
+    - addr: {{ component.config.n9.ipv4EndPointAddress }}
       type: N9
 {% endif %}
 

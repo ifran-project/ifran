@@ -1,0 +1,24 @@
+# Role to get logs for a deployed Helm chart on a Kubernetes cluster
+
+# Logs are displayed in the Ansible output to be stored in the 'stdout' file of ansible-runner's run directory
+
+# Input:
+# - chart_name: str
+# - component: Deployed5GComponent
+
+# Output: None
+---
+- name: Get logs for '{{ chart_name }}' Helm chart
+  kubernetes.core.k8s_log:
+    api_version: "{{ 'apps/v1' if component.log_fetch_params.kind in ['Deployment', 'StatefulSet'] else 'v1' }}"
+    name: "{{ chart_name }}"
+    kind: "{{ component.log_fetch_params.kind }}"
+    namespace: "{{ component.namespace }}"
+    since_seconds: "{{ component.log_fetch_params.since_seconds }}"
+    all_containers: "{{ component.log_fetch_params.all_containers }}"
+  register: chart_logs
+  changed_when: false
+
+- name: Display logs for '{{ chart_name }}' Helm chart
+  ansible.builtin.debug:
+    msg: "{{ chart_logs.log }}"

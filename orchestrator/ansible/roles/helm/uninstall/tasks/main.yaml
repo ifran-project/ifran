@@ -1,7 +1,7 @@
 # Role to install Helm chart on Kubernetes cluster
 
 # Input:
-# - component: K8S5GComponent
+# - component: Deployed5GComponent
 # - chart_name: str
 # - helm_build_dir: str
 # - clean_helm_build_dir: bool

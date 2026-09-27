@@ -2,12 +2,12 @@
 
 from typing import Literal
 
-from orchestrator.deployment.common import BaseBlueprintManagement
-from orchestrator.models.deployment.k8s import K8SStatus
+from orchestrator.deployment.base import BaseManagement
+from orchestrator.models.k8s import K8SStatus
 from orchestrator.utils.k8s import run_parallel_k8s_setup_action
 
 
-class K8SSetupManagement(BaseBlueprintManagement):
+class K8SManagement(BaseManagement):
     """Kubernetes setup lifecycle management class."""
 
     async def run_action(
@@ -45,6 +45,7 @@ class K8SSetupManagement(BaseBlueprintManagement):
     async def create(self, master_node: str | None = None, **kwargs) -> None:
         """
         Create Kubernetes control plane on the master node.
+
         The master node is taken from 'k8s_params' by default or a the one given as argument.
         """
 
@@ -56,10 +57,10 @@ class K8SSetupManagement(BaseBlueprintManagement):
                 raise RuntimeError(f"Chosen master node {master_node!r} is not defined.")
         elif k8s_params.master_node is None:
             raise RuntimeError("No master node chosen.")
-    
+
         master_node = k8s_params.master_node
 
-        # NOTE run_single_k8s_setup_action() takes care of updating k8s_params.join_command on success
+        # NOTE 'run_single_k8s_setup_action' takes care of updating 'k8s_params.join_command' on success
         await self.run_action(action="create", nodes=[master_node], **kwargs)
 
 
@@ -73,7 +74,7 @@ class K8SSetupManagement(BaseBlueprintManagement):
             nodes: list[str] | None = None,
             **kwargs
         ) -> None:
-        """Orchestrate full Kubernetes cluster setup on target nodes (prepare, create, join)."""
+        """Orchestrate full Kubernetes cluster setup on target nodes (prepare + create + join)."""
 
         # run prepare in parallel on target nodes
         await self.prepare(nodes=nodes, **kwargs)

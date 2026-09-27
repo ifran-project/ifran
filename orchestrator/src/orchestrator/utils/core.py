@@ -3,61 +3,107 @@
 import asyncio
 from typing import Literal
 
-from pydantic import IPvAnyAddress, IPvAnyNetwork, TypeAdapter
-
-from orchestrator.models.common import URL
-from orchestrator.models.deployment.ansible import AnsibleParams
-from orchestrator.models.deployment.core import CoreDeployment
-from orchestrator.models.deployment.k8s import HelmParams
-from orchestrator.models.deployment.provisioning import ProvisionableNode
-from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.core import (
+from metamodel.models.common import Category5G
+from metamodel.models.core import (
     Core,
-    CoreImplementation,
-    SMFComponent,
+    CoreComponent,
+    CoreComponentType,
     UPFComponent,
 )
-from orchestrator.models.meta.slice import Slice
-from orchestrator.models.meta.ue import UE, UEConfiguration
+from metamodel.models.metamodel import MetaModel
+from metamodel.models.ran import RANComponentType
+from metamodel.models.slice import Slice
+from metamodel.models.ue import UE, UEConfiguration
+from metamodel.utils import URL
+from pydantic import IPvAnyAddress, TypeAdapter
+
+from orchestrator.models.ansible import AnsibleParams
+from orchestrator.models.core import CoreDeployment, CoreImplementation
+from orchestrator.models.deployment import DeploymentModel
+from orchestrator.models.k8s import HelmParams
+from orchestrator.models.provisioning import ProvisionableNode
 from orchestrator.utils.ansible import (
     get_ansible_inventory_line,
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from orchestrator.utils.common import InvalidResourceStateError, generate_random_ip
 from orchestrator.utils.common_5g import (
-    CoreComponentType,
     get_5g_components_by_type,
-    reconcile_5g_component,
+    reconcile_5g_components,
+    resolve_plmn_list,
+    resolve_snssai_list,
+    resolve_snssai_reference,
 )
 from orchestrator.utils.defaults import DEFAULT_CORE_DATABASE_IMAGES
+from orchestrator.utils.ue import resolve_gnb_ref, resolve_ue_slices_dnns
+from orchestrator.utils.utils import InvalidResourceStateError, ReferenceNotFoundError
 
 
-def resolve_upf_references(
-        core_meta: Core,
-        ip_mapping: dict[str, IPvAnyAddress],
+def resolve_smf_refs(
+        component_name: str,
+        component_meta: CoreComponent,
+        upfs: dict[str, UPFComponent],
     ) -> None:
-    """Resolve UPF reference in SMF components."""
+    """Resolve list of UPF references in an SMF component configuration."""
 
-    grouped = get_5g_components_by_type(core_meta.components)
-    smfs: dict[str, SMFComponent] = grouped.get(CoreComponentType.SMF, {})
-    upfs: dict[str, UPFComponent] = grouped.get(CoreComponentType.UPF, {})
+    # resolve upf references one by one
+    for i in range(len(component_meta.config.upfs)):
+        upf_reference = component_meta.config.upfs[i]
+        upf_meta = upfs.get(upf_reference)
 
-    for name, component_meta in smfs.items():
-        for i in range(len(component_meta.config.upfs)):
-            upf_reference = component_meta.config.upfs[i]
-            if isinstance(upf_reference, str):
-                target_ip = ip_mapping.get(upf_reference)
-                upf_meta = upfs.get(upf_reference)
-                if target_ip is None or upf_meta is None:
-                    raise ValueError(f"Could not resolve IP for SMF component {name!r} reference to {upf_reference!r}.")
-                component_meta.config.upfs[i] = target_ip, upf_meta
+        if upf_meta is None:
+            raise ReferenceNotFoundError(f"SMF component {component_name!r} reference undefined UPF {upf_reference!r}.")
+
+        component_meta.config.upfs[i] = upf_meta
 
 
-def populate_nrf_uri(
-        core_meta: Core,
-        nrf_uri: URL,
+def resolve_nssf_refs(
+        component_name: str,
+        component_meta: CoreComponent,
+        slices: dict[str, Slice],
     ) -> None:
+    """Resolve slice references in an NSSF component configuration."""
+
+    config = component_meta.config
+
+    # nsiInfoList[*].snssai
+    for nsi_info in config.nsiInfoList:
+        nsi_info.snssai = resolve_snssai_reference(
+            component_name=component_name,
+            component_meta=component_meta,
+            reference=nsi_info.snssai,
+            slices=slices,
+            field_name="nsiInfoList.snssai",
+        )
+
+    # taInfoList[*]
+    for ta_info in config.taInfoList:
+        resolve_snssai_list(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+            config=ta_info,
+        )
+
+        resolve_snssai_list(
+            component_name=component_name,
+            component_meta=component_meta,
+            slices=slices,
+            config=ta_info.restrictedSnssaiList,
+        )
+
+    # amfInfoList[*].amfList[*]
+    for amf_info_set in config.amfInfoList:
+        for amf_info in amf_info_set.amfList:
+            resolve_snssai_list(
+                component_name=component_name,
+                component_meta=component_meta,
+                slices=slices,
+                config=amf_info.supportedNssaiAvailabilityData,
+            )
+
+
+def populate_nrf_uri(core_meta: Core, nrf_uri: URL) -> None:
     """Populate 'nrfUri' field for all 5G core components."""
 
     for component_meta in core_meta.components.values():
@@ -65,68 +111,107 @@ def populate_nrf_uri(
             component_meta.config.nrfUri = nrf_uri
 
 
-def reconcile_core(
-        core_meta: Core,
-        core_deployment: CoreDeployment,
-        pod_network_cidr: IPvAnyNetwork,
-        slices: dict[str, Slice],
-    ) -> None:
-    """Ensure 5G core is ready for deployment."""
+def populate_core_database_image(core_deployment: CoreDeployment) -> None:
+    """Populate 5G core database image from known defaults."""
 
-    # populate database image if not already set
     if core_deployment.database_params.image is None:
-        database_image = DEFAULT_CORE_DATABASE_IMAGES.get(core_meta.implementation)
+        database_image = DEFAULT_CORE_DATABASE_IMAGES.get(core_deployment.implementation)
 
          # if no default database image is available raise an error
         if database_image is None:
-             raise ValueError(f"{core_meta.implementation.upper} database has no container image.")
+             raise ValueError(f"{core_deployment.implementation.upper} database has no container image.")
 
-        core_deployment.database_params.image = DEFAULT_CORE_DATABASE_IMAGES.get(core_meta.implementation)
+        core_deployment.database_params.image = DEFAULT_CORE_DATABASE_IMAGES.get(core_deployment.implementation)
 
 
-    used_ips: set[IPvAnyAddress] = set()
-    ip_mapping: dict[str, IPvAnyAddress] = {}
+def reconcile_core(
+        metamodel: MetaModel,
+        deployment_model: DeploymentModel,
+    ) -> None:
+    """
+    Ensure 5G core is ready for deployment.
 
+    Additional reconciliation:
+    - Populate 5G core database image
+    - Resolve slice references in 5G core components
+    - Find NRF URI in 5G core components
+    - Resolve 'gnb' reference in UE components to make them ready for database registration
+    """
+
+    core_meta = metamodel.core
+    core_deployment = deployment_model.core
+
+    ran_meta = metamodel.ran
+
+    slices = metamodel.slices
+    k8s_params = deployment_model.params.k8s
+
+    upfs = get_5g_components_by_type(core_meta.components, [CoreComponentType.UPF])
+    gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU])
     nrf_uri = None
 
-    for name, component_meta in core_meta.components.items():
-        # meta and deployment keys are supposed to be synced by this point
-        component_k8s = core_deployment.components[name]
+    # populate database image if not already set
+    populate_core_database_image(core_deployment=core_deployment)
 
-        reconcile_5g_component(
-            component_name=name,
-            component_meta=component_meta,
-            component_k8s=component_k8s,
+    # run standard component reconciliation on ALL components first
+    # (mainly to assign the upfs their ips before smf ref resolution)
+    reconcile_5g_components(
+        components_meta=core_meta.components,
+        components_deployment=core_deployment.components,
+        k8s_params=k8s_params,
+    )
+
+    for component_name, component_meta in core_meta.components.items():
+        component_deployment = core_deployment.components[component_name]
+
+        args = {"component_name": component_name, "component_meta": component_meta}
+
+        # resolve references in core components
+        if component_meta.type is CoreComponentType.SMF:
+            resolve_snssai_list(**args, slices=slices)
+            resolve_smf_refs(**args, upfs=upfs)
+
+        elif component_meta.type is CoreComponentType.NSSF:
+            resolve_nssf_refs(**args, slices=slices)
+
+        elif component_meta.type is CoreComponentType.UPF:
+            resolve_snssai_list(**args, slices=slices)
+
+        elif component_meta.type in [CoreComponentType.AMF, CoreComponentType.NRF]:
+            resolve_plmn_list(**args, slices=slices)
+
+        # look for the NRF to populate nrfUri
+        # NOTE latest NRF found takes precedence if many
+        if component_meta.type is CoreComponentType.NRF:
+            scheme = "https" if component_meta.config.sbi.tls.enabled else "http"
+            service_name = f"{component_deployment.implementation}-{component_name}"
+            nrf_uri = TypeAdapter(URL).validate_python(f"{scheme}://{service_name}:{component_meta.config.sbi.port}")
+
+    # populate nrf uri field after nrf component has been found
+    if nrf_uri is None:
+        raise RuntimeError("Couldn't find any NRF component in the 5G core components.")
+
+    populate_nrf_uri(core_meta=core_meta, nrf_uri=nrf_uri)
+
+    # resolve ues references to prepare them for database registration
+    for ue_name, ue_meta in metamodel.ues.items():
+        # resolve ue's slice and dnn references
+        resolve_ue_slices_dnns(
+            component_name=ue_name,
+            component_meta=ue_meta,
             slices=slices,
         )
 
-        if component_meta.type is CoreComponentType.UPF:
-            # upf components are assigned static pod ips
-            component_k8s.static_pod_ip = component_k8s.static_pod_ip or generate_random_ip(pod_network_cidr, used_ips)
-
-            ip_mapping[name] = component_k8s.static_pod_ip # build mapping between component names and ips
-            used_ips.add(component_k8s.static_pod_ip)
-
-        if component_meta.type is CoreComponentType.NRF:
-            # look for NRF components to populate nrfUri
-            scheme = "https" if component_meta.config.sbi.tls.enabled else "http"
-            nrf_uri = TypeAdapter(URL).validate_python(f"{scheme}://{component_meta.implementation}-{name}:{component_meta.config.sbi.port}")
-
-    # resolve upf references after static ips have been assigned
-    resolve_upf_references(
-        core_meta=core_meta,
-        ip_mapping=ip_mapping,
-    )
-
-    # populate nrf uri field after nrf component has been found (latest one found takes precedence if many are given)
-    populate_nrf_uri(
-        core_meta=core_meta,
-        nrf_uri=nrf_uri,
-    )
+        # resolve ue's gnb reference
+        resolve_gnb_ref(
+            component_name=ue_name,
+            component_meta=ue_meta,
+            gnbs_meta=gnbs_meta,
+            populate_address=False, # don't populate ue's gnb ip (not needed)
+        )
 
 
-async def run_core_database_helm_action(
-        core_meta: Core,
+async def run_core_database_helm_action(  # noqa: PLR0917
         core_deployment: CoreDeployment,
         action: Literal["prepare", "install", "uninstall"],
         node_name: str,
@@ -137,20 +222,20 @@ async def run_core_database_helm_action(
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
     if not force and (
-        (core_deployment.database_params.is_installed and action == "install") or 
+        (core_deployment.database_params.is_installed and action == "install") or
         (not core_deployment.database_params.is_installed and action == "uninstall")
         ):
         raise InvalidResourceStateError(f"5G core database is already {action}ed.")
 
     helm_params = HelmParams(
-        chart_name=f"{core_meta.implementation.value}-database",
-        helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_meta.implementation.value}-database",
+        chart_name=f"{core_deployment.implementation.value}-database",
+        helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_deployment.implementation.value}-database",
     ).model_dump(mode="json")
 
     component = {
             "category": Category5G.CORE.value,
-            "implementation": core_meta.implementation.value,
-            "namespace": f"{core_meta.implementation.value}-{Category5G.CORE.value}",
+            "implementation": core_deployment.implementation.value,
+            "namespace": f"{core_deployment.implementation.value}-{Category5G.CORE.value}",
             "type": "database",
             "rendered_files": ["values.yaml"],
             **core_deployment.database_params.model_dump(mode="json"),
@@ -184,7 +269,7 @@ async def run_core_database_helm_action(
         core_deployment.database_params.is_installed = False
 
 
-async def run_single_database_subscriber_action(
+async def run_single_database_subscriber_action(  # noqa: PLR0917
         ue_name: str,
         ue_config: UEConfiguration,
         core_implementation: CoreImplementation,
@@ -198,11 +283,19 @@ async def run_single_database_subscriber_action(
     """Add/remove a single UE/subscriber on the 5G core database."""
 
     if not force and database_ip is None:
-        raise InvalidResourceStateError(f"{core_implementation.value.upper()} 5G core database has an undefined IP address.")
+        raise InvalidResourceStateError(
+            f"{core_implementation.value.upper()} 5G core database has an undefined IP address."
+        )
 
     args = {
         "role": f"database/subscriber/{action}/{core_implementation}",
-        "inputs": {"ue_name": ue_name, "ue_config": ue_config.model_dump(mode="json"), "database_ip": str(database_ip)},
+        "inputs": {
+            "ue_name": ue_name,
+            # NOTE use serialize_as_any=True to prevent pydantic from replacing models
+            # because of type mismatch after reference resolution (e.g. slice: str -> Slice, gnb: str -> GNBComponent)
+            "ue_config": ue_config.model_dump(mode="json", serialize_as_any=True),
+            "database_ip": str(database_ip)
+        },
         "runner_path": f"{ansible_params.runner_path}/core/database/subscriber/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
@@ -212,10 +305,12 @@ async def run_single_database_subscriber_action(
     try:
         await run_ansible_role(**args)
     except Exception as e:
-        raise RuntimeError(f"Failed to {action} UE {ue_name!r} on {core_implementation.value.upper()} 5G core database.") from e
+        raise RuntimeError(
+            f"Failed to {action} UE {ue_name!r} on {core_implementation.value.upper()} 5G core database."
+        ) from e
 
 
-async def run_parallel_database_subscriber_action(
+async def run_parallel_database_subscriber_action(  # noqa: PLR0917
         ues: dict[str, UE],
         core_implementation: CoreImplementation,
         action: Literal["add", "remove"],
@@ -227,7 +322,7 @@ async def run_parallel_database_subscriber_action(
         ignore_invalid_states: bool = False,
         ignore_failures: bool = False,
     ) -> None:
-    """Add/remove multiple UEs/subscribers in parallel."""
+    """Add/remove multiple UEs in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}
     for name, ue in ues.items():
@@ -246,7 +341,7 @@ async def run_parallel_database_subscriber_action(
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 
-    for _, result in zip(tasks.keys(), results):
+    for result in results:
         if isinstance(result, Exception):
             handle_ansible_result_exception(
                 result=result,

@@ -2,33 +2,76 @@
 
 from typing import Literal
 
-from orchestrator.deployment.common import BaseBlueprintManagement
-from orchestrator.models.meta.common import Category5G
-from orchestrator.models.meta.ue import UEType
+from metamodel.models.common import Category5G, Component5G
+from metamodel.models.ue import UEType
+
+from orchestrator.deployment.base import BaseManagement
 from orchestrator.utils.helm import ComponentDependencyGraph, run_parallel_helm_action
+from orchestrator.utils.utils import ReferenceNotFoundError
 
 
-class HelmManagement(BaseBlueprintManagement):
+class HelmManagement(BaseManagement):
     """Kubernetes 5G components Helm lifecycle management class."""
 
-    def _get_master_node(self, node: str | None) -> tuple[str, str]:
-        """Helper to get the master node."""
+    def _get_deployment_node(self, node: str | None) -> tuple[str, str]:
+        """Helper to get the deployment node information."""
 
-        node_name = node or self.deployment_model.params.k8s.master_node
-        if not node_name or node_name not in self.deployment_model.nodes:
-            raise RuntimeError(
-                f"Target node {node_name!r} for database action is invalid or missing from deployment model."
-            )
+        # chose provided node name if given or the k8s master node in the deployment_model
+        if node:
+            if node not in self.deployment_model.nodes:
+                raise ReferenceNotFoundError(
+                    f"Target node {node!r} for Helm action was not found in deployment model nodes."
+                )
+        else:
+            master_node = self.deployment_model.params.k8s.master_node
+            if master_node is None:
+                raise RuntimeError(
+                    f"Target node {node!r} for Helm action was not provided "
+                    "and Kubernetes master node does not exist."
+                )
+            node = master_node
 
-        node_data = self.deployment_model.nodes[node_name]
-
-        return node_name, node_data
+        return node, self.deployment_model.nodes[node]
 
 
-    async def run_action(
+    def add_component(self, name: str, component: Component5G) -> None:
+        """Add a 5G component."""
+
+        category = component.category
+        match category:
+            case Category5G.CORE:
+                self.metamodel.core.components[name] = component.model_copy(deep=True)
+            case Category5G.RIC:
+                self.metamodel.rics[name] = component.model_copy(deep=True)
+            case Category5G.RAN:
+                self.metamodel.ran.components[name] = component.model_copy(deep=True)
+            case Category5G.UE:
+                self.metamodel.ues[name] = component.model_copy(deep=True)
+
+        self.reconcile()
+
+
+    def remove_component(self, name: str, category: Category5G) -> None:
+        """Remove a 5G component."""
+
+        match category:
+            case Category5G.CORE:
+                self.metamodel.core.components.pop(name, None)
+            case Category5G.RIC:
+                self.metamodel.rics.pop(name, None)
+            case Category5G.RAN:
+                self.metamodel.ran.components.pop(name, None)
+            case Category5G.UE:
+                self.metamodel.ues.pop(name, None)
+
+        self.reconcile()
+
+
+    # NOTE child classes need to override this method with their 5G category
+    async def run_action(  # noqa: PLR0917
         self,
         category: Category5G,
-        action: Literal["prepare", "install", "uninstall"],
+        action: Literal["prepare", "install", "uninstall", "get_logs"],
         components: list[str] | None = None,
         node: str | None = None,
         order: ComponentDependencyGraph | None = None,
@@ -37,43 +80,49 @@ class HelmManagement(BaseBlueprintManagement):
         ignore_failures: bool = False,
     ) -> None:
         """Run Helm action on 5G components of a specific category."""
-        
-        # k8s master node is the deployment entry point by default
-        node_name, node_data = self._get_master_node(node)
+
+        # get the node from which the helm action will be executed
+        # by default, it is the k8s master node
+        node_name, node_data = self._get_deployment_node(node)
 
         # resolve dictionaries based on category
         match category:
             case Category5G.CORE:
                 all_meta = self.mutable_metamodel.core.components
-                all_k8s = self.deployment_model.core_deployment.components
+                all_deployment = self.deployment_model.core.components
+
+            case Category5G.RIC:
+                all_meta = self.mutable_metamodel.ric.components
+                all_deployment = self.deployment_model.ric.components
 
             case Category5G.RAN:
                 all_meta = self.mutable_metamodel.ran.components
-                all_k8s = self.deployment_model.ran_deployment.components
+                all_deployment = self.deployment_model.ran.components
 
             case Category5G.UE:
+                # only containerized UEs are k8s-deployable
                 all_meta = {
                     ue_name: ue_meta
                     for ue_name, ue_meta in self.mutable_metamodel.ues.items()
                     if ue_meta.type is UEType.CONTAINERIZED
-                } # only containerized UEs are k8s-deployable
-                all_k8s = self.deployment_model.containerized_ues
-
-            case Category5G.RIC:
-                all_meta = self.mutable_metamodel.ric.components
-                all_k8s = self.deployment_model.ric_deployment.components
+                }
+                all_deployment = {
+                    ue_name: ue_data
+                    for ue_name, ue_data in self.deployment_model.ues.items()
+                    if ue_data.type is UEType.CONTAINERIZED
+                }
 
         # filter for specific components if requested
         if components is None:
             target_meta = all_meta
-            target_k8s = all_k8s
+            target_deployment = all_deployment
         else:
             target_meta = {k: v for k, v in all_meta.items() if k in components}
-            target_k8s = {k: v for k, v in all_k8s.items() if k in components}
+            target_deployment = {k: v for k, v in all_deployment.items() if k in components}
 
         await run_parallel_helm_action(
             components_meta=target_meta,
-            components_k8s=target_k8s,
+            components_deployment=target_deployment,
             action=action,
             node_name=node_name,
             node_data=node_data,
@@ -85,6 +134,7 @@ class HelmManagement(BaseBlueprintManagement):
         )
 
 
+    # wrapper functions for usage convenience
     async def prepare(self, components: list[str] | None = None, **kwargs) -> None:
         """Prepare components Helm charts."""
         await self.run_action(action="prepare", components=components, **kwargs)
@@ -100,13 +150,18 @@ class HelmManagement(BaseBlueprintManagement):
         await self.run_action(action="uninstall", components=components, **kwargs)
 
 
+    async def get_logs(self, components: list[str] | None = None, **kwargs) -> None:
+        """Get components logs."""
+        await self.run_action(action="get_logs", components=components, **kwargs)
+
+
     async def deploy(self, order: ComponentDependencyGraph | None = None, **kwargs) -> None:
         """Prepare and install components via Helm."""
         await self.prepare(**kwargs)
         await self.install(order=order, **kwargs)
 
 
-    # only for naming consistency
+    # only for naming consistency with deploy function
     async def remove(self, **kwargs) -> None:
         """Remove/uninstall components via Helm."""
         await self.uninstall(**kwargs)
