@@ -96,10 +96,10 @@ async def run_single_helm_action(  # noqa: PLR0917
             # merged component (meta + deployment)
             # NOTE use serialize_as_any=True to prevent pydantic from replacing models
             # because of type mismatch after reference resolution
-            "component": {
-                **component_meta.model_dump(mode="json", serialize_as_any=True) |
+            "component": {**(
+                component_meta.model_dump(mode="json", serialize_as_any=True) |
                 component_deployment.model_dump(mode="json")
-            },
+            )},
             **helm_params.model_dump(mode="json"),
         },
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",
