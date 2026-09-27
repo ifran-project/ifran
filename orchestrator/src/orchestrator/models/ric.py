@@ -111,4 +111,8 @@ class RICDeployment(Deployed5GNetwork):
 
 # model used to resolve ric references in ran components
 class MergedRIC(SingleRICComponent, DeployedRICComponent):
-    """Merged single RIC/ E2Term model (they both have the needed 'e2' in their config)."""
+    """Merged single RIC/E2Term model (they both have the needed 'e2' in their config)."""
+
+    # override type since SingleRICComponent expects 'type' to be literal 'ric'
+    type: RICComponentType = Field()
+    """RIC component type."""

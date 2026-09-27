@@ -129,7 +129,8 @@ def reconcile_ric(
         if type_counts[component_meta.type] == 1 and component_deployment.implementation is RICImplementation.ORAN_SC
     }
 
-    for component_name in ric_meta.components:
+    # populate 'service_name' and 'ric_type_services' in osc ric advanced config
+    for component_name, component_deployment in ric_deployment.components.items():
         if component_deployment.implementation is RICImplementation.ORAN_SC:
             component_deployment.advanced_config = component_deployment.advanced_config or ORANSCAdvancedRICConfig(
                 service_name=ric_services[component_name],
