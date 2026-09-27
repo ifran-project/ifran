@@ -166,19 +166,6 @@ def reconcile_ran(
     rics_deployment = get_5g_components_by_type(
         ric_deployment.components, [RICComponentType.RIC, RICComponentType.E2TERM])
 
-    # amf and ric components need to be reconciled before resolving ran refs to them
-    # (because amf's n2 and ric's e2 interfaces need to be populated from their network info)
-    reconcile_5g_components(
-        components_meta=amfs_meta,
-        components_deployment=amfs_deployment,
-        k8s_params=k8s_params,
-    )
-    reconcile_5g_components(
-        components_meta=rics_meta,
-        components_deployment=rics_deployment,
-        k8s_params=k8s_params,
-    )
-
     # run standard component reconciliation on cu/cu_cp/cu_cp components first
     # because cu_up and cu_cp's e1, cu/cu_cp's f1c, and cu/cu_up's f1u interfaces
     # need to assigned a static ip before resolving cross-references
