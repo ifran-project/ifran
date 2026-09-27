@@ -11,7 +11,7 @@
 
 # Output: None
 ---
-- name: Select project '{{ project }}'
+- name: Select project '{{ project }}' for '{{ resource_name }}' unprovisioning
   ansible.builtin.shell: slices project use {{ project }}
 
 - name: Destroy '{{ resource_name }}' on infrastructure '{{ infra }}' using experiment '{{ experiment }}'

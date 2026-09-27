@@ -16,7 +16,7 @@
 # Output:
 # - ssh_info: SSHInfo
 ---
-- name: Select project '{{ project }}'
+- name: Select project '{{ project }}' for '{{ resource_name }}' provisioning
   # use shell instead of command here to avoid cli error
   ansible.builtin.shell: slices project use {{ project }}
 
