@@ -438,6 +438,9 @@ class K8SComponent(StrictBaseModel):
     log_fetch_params: LogFetchParams = Field(default_factory=LogFetchParams)
     """Kubernetes log fetching parameters for this component."""
 
+    logs: str | None = Field(default=None)
+    """Where the latest fetched logs for this component are stored."""
+
 
     @model_validator(mode="after")
     def ensure_network_status(self) -> Self:

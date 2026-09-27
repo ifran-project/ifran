@@ -6,7 +6,8 @@
 # - chart_name: str
 # - component: Deployed5GComponent
 
-# Output: None
+# Output:
+# - logs: str
 ---
 - name: Get logs for '{{ chart_name }}' Helm chart
   kubernetes.core.k8s_log:
@@ -21,4 +22,9 @@
 
 - name: Display logs for '{{ chart_name }}' Helm chart
   ansible.builtin.debug:
-    msg: "{{ chart_logs.log }}"
+    var: chart_logs.log
+
+- name: Return fetched logs for '{{ chart_name }}' Helm chart
+  ansible.builtin.set_stats:
+    data:
+      logs: "{{ chart_logs.log }}"

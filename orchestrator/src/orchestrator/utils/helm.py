@@ -113,6 +113,10 @@ async def run_single_helm_action(  # noqa: PLR0917
     if action == "install":
         args["output_keys"] = ["network_info"]
 
+    # expect logs output after get_logs actions
+    elif action == "get_logs":
+        args["output_keys"] = ["logs"]
+
     try:
         result = await run_ansible_role(**args)
     except Exception as e:
@@ -135,6 +139,9 @@ async def run_single_helm_action(  # noqa: PLR0917
         else:
             # if multus is not used, output pod ip address directly
             component_deployment.network_info = IPvAnyAddress(result["network_info"])
+
+    elif action == "get_logs":
+        component_deployment.logs = result["logs"]
 
     elif action == "uninstall":
         component_deployment.is_installed = False
