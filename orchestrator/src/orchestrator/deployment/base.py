@@ -40,8 +40,20 @@ class BaseManagement:
 
 
     @classmethod
-    def from_merged(cls, merged_model: dict[str, Any]) -> Self:
+    def from_merged(
+            cls,
+            merged_model: dict[str, Any] | None = None,
+            input_file: Literal["json", "yaml"] = "yaml",
+            path: str | None = None,
+        ) -> Self:
         """Initialize deployment management class from single merged models input."""
+
+        if merged_model is None and path is None:
+            raise ValueError("No input was provided.")
+
+        if path:
+            with Path(path).open("r", encoding="utf-8") as f:
+                merged_model = json.load(f) if input_file == "json" else yaml.safe_load(f)
 
         metamodel = MetaModel.model_validate(merged_model, extra="allow")
         deployment_model = DeploymentModel.model_validate(merged_model, extra="allow")
@@ -58,7 +70,7 @@ class BaseManagement:
     def output_merged(
             self,
             output: Literal["dict", "json", "yaml"] = "dict",
-            path: str | None = None
+            path: str | None = None,
         ) -> dict[str, Any] | str | None:
         """Output merged dictionary from deployment and meta model."""
 
