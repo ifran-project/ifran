@@ -158,7 +158,7 @@ def reconcile_core(
     populate_core_database_image(core_deployment=core_deployment)
 
     # run standard component reconciliation on ALL components first
-    # (mainly to assign the upfs their ips before smf ref resolution)
+    # because upf's n4 interface need to be assigned a static ip smf ref resolution
     reconcile_5g_components(
         components_meta=core_meta.components,
         components_deployment=core_deployment.components,
