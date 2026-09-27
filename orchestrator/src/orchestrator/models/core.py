@@ -391,10 +391,10 @@ class DeployedCoreComponent(Deployed5GComponent):
     """5G core component deployment."""
 
     type: CoreComponentType = Field()
-    """Core component type."""
+    """5G core component type."""
 
     implementation: CoreImplementation | None = Field(default=None)
-    """Core component implementation."""
+    """5G core component implementation."""
 
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
@@ -409,7 +409,7 @@ class CoreDatabaseParams(StrictBaseModel):
     """5G core database deployment parameters."""
 
     image: ContainerImage | None = Field(default=None)
-    """Database container image."""
+    """5G core database container image."""
 
     is_installed: bool = Field(default=False)
     """If 5G core database is deployed or not."""
@@ -418,14 +418,14 @@ class CoreDatabaseParams(StrictBaseModel):
     """5G core database IP address."""
 
     force_database_scheduling: bool = Field(default=False)
-    """If True, label will be added to ensure scheduling only on nodes with database label AND core label."""
+    """If True, label will be added to ensure scheduling only on nodes with 'database' label AND 'core' label."""
 
 
 class CoreDeployment(Deployed5GNetwork):
     """5G core deployment."""
 
     implementation: CoreImplementation = Field(default=CoreImplementation.OPEN5GS)
-    """Core implementation."""
+    """5G ore implementation."""
 
     components: dict[str, DeployedCoreComponent] = Field(default_factory=dict)
     """5G core Kubernetes components."""

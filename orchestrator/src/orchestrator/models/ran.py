@@ -281,6 +281,7 @@ class UEReferencedGNB(GNBComponent, DeployedRANComponent):
     gnb_ip: IPvAnyAddress | None = Field(default=None)
     """IP of referenced gNB/DU component."""
 
+
 class UEReferencedDU(DUComponent, DeployedRANComponent):
     """Model for DU components referenced by a UE in simulated RAN."""
 
