@@ -54,7 +54,7 @@ def resolve_ue_slices_dnns(
         # resolve dnn after resolving slice
         subscription_dnn = subscription.snssai.dnns.get(subscription.dnn) # type: ignore
         if subscription_dnn is None:
-            raise ReferenceNotFoundError(f"UE {component_meta!r} references undefined DNN {subscription.dnn!r}.")
+            raise ReferenceNotFoundError(f"UE {component_name!r} references undefined DNN {subscription.dnn!r}.")
 
         subscription.dnn = subscription_dnn
 

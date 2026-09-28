@@ -92,12 +92,10 @@ class BaseManagement:
             merged = json.dumps(merged)
         elif output == "yaml":
             merged = yaml.safe_dump(merged)
-        else:
-            merged = str(merged)
 
         if path:
             with Path(path).open("w", encoding="utf-8") as f:
-                f.write(merged)
+                f.write(str(merged))
         else:
             return merged
         return None

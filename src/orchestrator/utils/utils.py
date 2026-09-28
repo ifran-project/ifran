@@ -24,6 +24,7 @@ def sync_dict_keys(
         source_dict: dict,
         default_factory: Any,
         populate_type: bool = False,
+        remove_extra: bool = True,
     ) -> None:
     """Synchronize 'target_dict' keys with 'source_dict' keys."""
 
@@ -39,8 +40,9 @@ def sync_dict_keys(
             target_dict[key] = default_factory()
 
     # remove extra keys
-    for key in extra_keys:
-        del target_dict[key]
+    if remove_extra:
+        for key in extra_keys:
+            del target_dict[key]
 
 
 def _to_jsonable(value: Any) -> Any:
