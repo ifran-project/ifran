@@ -64,7 +64,7 @@ def resolve_provisioner(
         resource_name: str,
         resource_data: ProvisionableResource,
         provisioners: dict[str, Provisioner],
-    ) -> Provisioner | None:
+    ) -> Provisioner:
     """Resolve resource provisioner and merge provisioning parameters."""
 
     if resource_data.provisioner is None:
@@ -84,9 +84,7 @@ def resolve_provisioner(
         raise ValueError(f"Provisioner {resource_data.provisioner!r} referenced by {resource_name!r} "
                          f"does not support {resource_data.category.value} provisioning.")
 
-    if not resource_data.provisioning_params:
-        return provisioner
-    return None
+    return provisioner
 
 
 async def run_reservation_action(  # noqa: PLR0917
@@ -175,14 +173,14 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     # lvl 1 : merge provisioner params with global provisioning_params with priority to non-default provisioner's params
     # lvl 2: merge provisioner params with resource provisioning params with priority to resource's provisioning params
     # NOTE provisioner params model needs to tolerate extra fields and ignore them for this to work with no problems
-    merged_prov_params = type(provisioner.params).model_validate( # type: ignore
+    merged_prov_params = type(provisioner.params).model_validate(
         provisioning_params |
-        provisioner.params.model_dump(mode="json", exclude_defaults=True) | # type: ignore
+        provisioner.params.model_dump(mode="json", exclude_defaults=True) |
         resource_data.provisioning_params
     )
 
     args = {
-        "role": f"provisioning/{provisioner.type.value}/{action}", # type: ignore
+        "role": f"provisioning/{provisioner.type.value}/{action}",
         "inputs": {
             "resource_name": resource_name,
             **merged_prov_params.model_dump(mode="json"),
