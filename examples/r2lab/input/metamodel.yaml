@@ -1,0 +1,225 @@
+core:
+  components:
+    nrf:
+      type: nrf
+      config:
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+          snssaiList:
+            - internet
+            - streaming
+
+    nssf:
+      type: nssf
+      config:
+        nsiInfoList:
+          - snssai: internet
+          - snssai: streaming
+        taInfoList:
+        - tai:
+            plmnId:
+              mcc: '001'
+              mnc: '01'
+            tac: 1
+          snssaiList:
+            - internet
+            - streaming
+        amfInfoList:
+        - amfList:
+          - supportedNssaiAvailabilityData:
+              tai:
+                plmnId:
+                  mcc: '001'
+                  mnc: '01'
+                tac: 1
+              snssaiList:
+                - internet
+                - streaming
+        plmnInfoList:
+        - homePlmnId:
+            mcc: '001'
+            mnc: '01'
+
+    ausf:
+      type: ausf
+      config:
+        plmnList:
+          - mcc: '001'
+            mnc: '01'
+
+    amf:
+      type: amf
+      config:
+        guamiList:
+          - plmnId:
+              mcc: '001'
+              mnc: '01'
+        taiList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+          tac: 1
+        plmnList:
+        - plmnId:
+            mcc: '001'
+            mnc: '01'
+          snssaiList:
+            - internet
+            - streaming
+
+    smf:
+      type: smf
+      config:
+        snssaiList:
+          - internet
+          - streaming
+        plmnList:
+        - mcc: '001'
+          mnc: '01'
+        upfs:
+          - upf1
+          - upf2
+
+    upf1:
+      type: upf
+      config:
+        snssaiList:
+          - internet
+
+    upf2:
+      type: upf
+      config:
+        snssaiList:
+          - streaming
+
+    udr:
+      type: udr
+
+    udm:
+      type: udm
+
+    bsf:
+      type: udr
+
+    pcf:
+      type: udm
+
+ran:
+  components:
+    gnb:
+      type: gnb
+      config:
+        radioConfiguration:
+          nrBand: 78
+        plmnList:
+          - plmnId:
+              mcc: '001'
+              mnc: '01'
+            snssaiList:
+              - internet
+              - streaming
+        ric: flexric
+        ru: n320
+        amf: amf
+
+ric:
+  components:
+    flexric:
+      type: ric
+
+rus:
+  n320:
+    type: usrp
+    model: n320
+    numberOfTxPorts: 1
+    numberOfRxPorts: 1
+    txAttenuationDB: 0
+    rxAttenuationDB: 0
+
+ues:
+  qhat01:
+    type: cots
+    config:
+      supi: "001010000000006"
+      authenticationData:
+        k: "fec86ba6eb707ed08905757b1bb44b8f"
+        opc: "C42449363BBAD02B66D16BC975D77CC1"
+      subscriptions:
+        - snssai: internet
+          dnn: internet
+      pduSessions:
+        - subscriptionIndex: 0
+      ru: null
+      gnbs:
+        - gnb
+      nrBands:
+        - 78
+
+  qhat02:
+    type: cots
+    config:
+      supi: "001010000000007"
+      authenticationData:
+        k: "fec86ba6eb707ed08905757b1bb44b8f"
+        opc: "C42449363BBAD02B66D16BC975D77CC1"
+      subscriptions:
+        - snssai: streaming
+          dnn: streaming
+      pduSessions:
+        - subscriptionIndex: 0
+      ru: null
+      gnbs:
+        - gnb
+      nrBands:
+        - 78
+
+  qhat03:
+    type: cots
+    config:
+      supi: "001010000000008"
+      authenticationData:
+        k: "fec86ba6eb707ed08905757b1bb44b8f"
+        opc: "C42449363BBAD02B66D16BC975D77CC1"
+      subscriptions:
+        - snssai: internet
+          dnn: internet
+      pduSessions:
+        - subscriptionIndex: 0
+      ru: null
+      gnbs:
+        - gnb
+      nrBands:
+        - 78
+
+slices:
+  internet:
+    sst: 1
+    sd: 0xFFFFFF
+    dnns:
+      internet:
+        ipv4Network: 12.1.1.0/24
+        aggregateMaximumBitRate:
+          uplink: 20Mbps
+          downlink: 40Mbps
+        qosFlows:
+        - qfi: 1
+          fiveQI: 9
+          arp:
+            priorityLevel: 8
+
+  streaming:
+    sst: 1
+    sd: 0x100000
+    dnns:
+      streaming:
+        ipv4Network: 14.1.1.0/24
+        aggregateMaximumBitRate:
+          uplink: 30Mbps
+          downlink: 50Mbps
+        qosFlows:
+        - qfi: 1
+          fiveQI: 5
+          arp:
+            priorityLevel: 1
