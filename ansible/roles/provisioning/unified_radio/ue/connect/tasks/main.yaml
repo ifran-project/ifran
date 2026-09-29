@@ -13,14 +13,6 @@
     name: provisioning/unified_radio/get_token
     public: true # share role vars for next tasks (token)
 
-- name: Turn radio on for '{{ ue_name }}'
-  ansible.builtin.uri:
-    url: "{{ base_url }}/ue/{{ ue_name }}/radio/on"
-    method: POST
-    headers:
-      Authorization: "Bearer {{ generated_token }}"
-    status_code: 200
-
 - name: Initialize '{{ ue_name }}'
   ansible.builtin.uri:
     url: "{{ base_url }}/ue/{{ ue_name }}/initialize"
@@ -31,8 +23,16 @@
     body:
       nr5g_info:
         nr5g_bands:
-          - "n{{ ue.config.nrBands }}"
+          - "n{{ ue.config.nrBands[0] }}"
       ue_configuration_data: "{{ ue.config }}"
+    status_code: 200
+
+- name: Turn radio on for '{{ ue_name }}'
+  ansible.builtin.uri:
+    url: "{{ base_url }}/ue/{{ ue_name }}/radio/on"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
     status_code: 200
 
 - name: Connect '{{ ue_name }}'
