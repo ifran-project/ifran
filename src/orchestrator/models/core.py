@@ -425,7 +425,7 @@ class CoreDeployment(Deployed5GNetwork):
     """5G core deployment."""
 
     implementation: CoreImplementation = Field(default=CoreImplementation.OPEN5GS)
-    """5G ore implementation."""
+    """5G core implementation."""
 
     components: dict[str, DeployedCoreComponent] = Field(default_factory=dict)
     """5G core Kubernetes components."""
