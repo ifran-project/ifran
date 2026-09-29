@@ -18,7 +18,7 @@ class Deployed5GComponent(K8SComponent):
     """Component type in the 5G category it's in (e.g. amf, upf, gnb, ... etc)."""
 
     # populated by parent metamodel validator before validation
-    implementation: str | None = Field(default=None)
+    implementation: str = Field()
     """Component 5G category's implementation (e.g. oai, open5gs, srsran, ... etc)."""
 
     # incoming 'advanced_config' is validated into concrete model afterwards
@@ -60,16 +60,25 @@ class Deployed5GNetwork(StrictBaseModel):
     """5G network components."""
 
 
-    @model_validator(mode="after")
-    def populate_component_implementation(self) -> Self:
-        """Populate 5G network component implementation after validation."""
+    # NOTE this needs to be a before validator so that components can have their implementation populated
+    # before they do their validations, that happen before the validation of the parent model
+    @model_validator(mode="before")
+    @classmethod
+    def populate_component_implementation(cls, data: Any) -> Any:
+        """Populate 5G network component implementation before validation."""
 
-        # if network implementation is None, each component should define its implementation
-        if self.implementation:
-            for component in self.components.values():
-                if component.implementation is None:
-                    component.implementation = self.implementation
-        return self
+        if not isinstance(data, dict):
+            return data
+
+        implementation = data.get("implementation")
+        if implementation:
+            components = data.get("components", {})
+
+            for component in components.values():
+                if isinstance(component, dict) and component.get("implementation") is None:
+                    component["implementation"] = implementation
+
+        return data
 
 
     def validate_supported_component_types(self, supported: dict) -> Self:
