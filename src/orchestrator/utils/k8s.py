@@ -109,7 +109,7 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
         case "create":
             node_data.k8s_status = K8SStatus.IN_CLUSTER
             # update join command
-            k8s_params.join_command = result["join_command"]
+            k8s_params.join_command = result["join_command"] # type: ignore
 
 
 async def run_parallel_k8s_setup_action(  # noqa: PLR0917
