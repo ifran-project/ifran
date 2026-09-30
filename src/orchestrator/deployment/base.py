@@ -1,9 +1,11 @@
 """Base deployment management class."""
 
+from __future__ import annotations
+
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 import yaml
 from metamodel.models.metamodel import MetaModel
@@ -28,44 +30,90 @@ from orchestrator.utils.utils import deep_merge, sync_dict_keys
 class BaseManagement:
     """Base class for all the Post-5G blueprint's deployment lifecycle management classes."""
 
-    def __init__(self, metamodel: MetaModel, deployment_model: DeploymentModel) -> None:
-        self.metamodel = metamodel.model_copy(deep=True)
+    def __init__(  # noqa: PLR0917
+            self,
+            preceding: BaseManagement | None = None,
+            metamodel: MetaModel | None = None,
+            deployment_model: DeploymentModel | None = None,
+            merged: dict[str, Any] | None = None,
+            metamodel_file: str | None = None,
+            metamodel_file_type: Literal["json", "yaml"] = "yaml",
+            deployment_model_file: str | None = None,
+            deployment_model_file_type: Literal["json", "yaml"] = "yaml",
+            merged_file: str | None = None,
+            merged_file_type: Literal["json", "yaml"] = "yaml",
+        ) -> None:
 
-        # original metamodel should not be mutated to maintain consistency
+        if preceding:
+            self.metamodel = preceding.metamodel.model_copy(deep=True)
+            self.deployment_model = preceding.deployment_model.model_copy(deep=True)
+
+        elif metamodel and deployment_model:
+            # original metamodel should not be mutated to maintain consistency
+            self.metamodel = metamodel.model_copy(deep=True)
+             # deployment model is allowed to mutate to store deployment state
+            self.deployment_model = deployment_model.model_copy(deep=True)
+
+        elif metamodel_file and deployment_model_file:
+            if metamodel_file_type == "json":
+                self.metamodel = MetaModel.from_json_file(metamodel_file)
+            elif merged_file_type == "yaml":
+                self.metamodel = MetaModel.from_yaml_file(metamodel_file)
+
+            if deployment_model_file_type == "json":
+                self.deployment_model = DeploymentModel.from_json_file(deployment_model_file)
+            elif merged_file_type == "yaml":
+                self.deployment_model = DeploymentModel.from_yaml_file(deployment_model_file)
+
+        elif merged:
+            self.metamodel, self.deployment_model = self._from_merged(merged)
+
+        elif merged_file:
+            with Path(merged_file).open("r", encoding="utf-8") as f:
+                merged_input = json.load(f) if merged_file_type == "json" else yaml.safe_load(f)
+
+            self.metamodel, self.deployment_model = self._from_merged(merged_input)
+
+        else:
+            raise ValueError("No input was provided.")
+
         # use a mutable metamodel copy that will be used to resolve references and prepare for deployment
-        self.mutable_metamodel = metamodel.model_copy(deep=True)
-
-        # deployment model is allowed to mutate to store changes (resolved references)
-        self.deployment_model = deployment_model.model_copy(deep=True)
+        self.mutable_metamodel = self.metamodel.model_copy(deep=True)
 
         # reconcile meta model and deployment model on init
         self.reconcile()
 
 
-    @classmethod
-    def from_merged(
-            cls,
-            merged_model: dict[str, Any] | None = None,
-            input_file: Literal["json", "yaml"] = "yaml",
-            path: str | None = None,
-        ) -> Self:
-        """Initialize deployment management class from single merged models input."""
+    def _from_merged(self, merged: dict[str, Any]) -> tuple[MetaModel, DeploymentModel]:
+        """Return deployment model and meta model from single merged input."""
 
-        if merged_model is None and path is None:
-            raise ValueError("No input was provided.")
-
-        if path:
-            with Path(path).open("r", encoding="utf-8") as f:
-                merged_model = json.load(f) if input_file == "json" else yaml.safe_load(f)
-
-        metamodel = MetaModel.model_validate(merged_model, extra="allow")
-        deployment_model = DeploymentModel.model_validate(merged_model, extra="allow")
-
-        return cls(metamodel, deployment_model)
+        metamodel = MetaModel.model_validate(merged, extra="allow")
+        deployment_model = DeploymentModel.model_validate(merged, extra="allow")
+        return metamodel, deployment_model
 
 
-    def output(self) -> tuple[MetaModel, DeploymentModel]:
+    def output(
+            self,
+            metamodel_file: str | None = None,
+            metamodel_file_type: Literal["json", "yaml"] = "yaml",
+            deployment_model_file: str | None = None,
+            deployment_model_file_type: Literal["json", "yaml"] = "yaml",
+        ) -> tuple[MetaModel, DeploymentModel]:
         """Output metamodel and potentially modified deployment model."""
+
+        if metamodel_file:
+            with Path(metamodel_file).open("w", encoding="utf-8") as f:
+                f.write(
+                    self.metamodel.to_yaml() if metamodel_file_type == "yaml"
+                    else self.metamodel.model_dump_json()
+                )
+
+        if deployment_model_file:
+            with Path(deployment_model_file).open("w", encoding="utf-8") as f:
+                f.write(
+                    self.deployment_model.to_yaml() if deployment_model_file_type == "yaml"
+                    else self.deployment_model.model_dump_json()
+                )
 
         return self.metamodel, self.deployment_model
 
@@ -103,7 +151,17 @@ class BaseManagement:
 
     def reconcile(self) -> None:
         """
-        Reconcile deployment model based on metamodel data.
+        Reconcile the metamodel and deployment model before deployment.
+
+        This function should be ovewriten by inheriting classes to add their
+        reconciliation logic on top of the default synchronization.
+        """
+        self.synchronize()
+
+
+    def synchronize(self) -> None:
+        """
+        Synchronize the deployment model based on metamodel data.
 
         This guarantees that all subsequent actions can safely assume that both models are fully synchronized.
         """
@@ -146,6 +204,7 @@ class BaseManagement:
             default_factory=DeployedRICComponent,
             populate_type=True,
         )
+
 
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
         """Generate an Ansible .ini inventory from nodes and ues."""
