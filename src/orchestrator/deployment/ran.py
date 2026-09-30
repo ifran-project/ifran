@@ -43,6 +43,12 @@ class RANManagement(HelmManagement):
         await super().run_action(category=Category5G.RAN, **kwargs)
 
 
+    @override
+    def remove_component(self, name: str) -> None:
+        """Remove a RAN component."""
+        super().remove_component(category=Category5G.RAN, name=name)
+
+
     # override dependency graph
     @override
     async def install(

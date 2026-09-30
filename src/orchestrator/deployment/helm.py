@@ -7,6 +7,7 @@ from metamodel.models.ue import UEType
 
 from orchestrator.deployment.base import BaseManagement
 from orchestrator.models.provisioning import ProvisionableNode
+from orchestrator.utils.common_5g import get_nested_attribute, reconcile_5g_component
 from orchestrator.utils.helm import ComponentDependencyGraph, run_parallel_helm_action
 from orchestrator.utils.utils import ReferenceNotFoundError
 
@@ -49,6 +50,9 @@ class HelmManagement(BaseManagement):
             case Category5G.UE:
                 self.metamodel.ues[name] = component.model_copy(deep=True) # type: ignore
 
+        # NOTE make sure the mutable metamodel is reseset (resolved references are removed)
+        # so the reconciliation can redo it again
+        self.mutable_metamodel = self.metamodel.model_copy(deep=True)
         self.reconcile()
 
 
@@ -58,14 +62,18 @@ class HelmManagement(BaseManagement):
         match category:
             case Category5G.CORE:
                 self.metamodel.core.components.pop(name, None)
+                self.mutable_metamodel.core.components.pop(name, None)
             case Category5G.RIC:
                 self.metamodel.ric.components.pop(name, None)
+                self.mutable_metamodel.ric.components.pop(name, None)
             case Category5G.RAN:
                 self.metamodel.ran.components.pop(name, None)
+                self.mutable_metamodel.ran.components.pop(name, None)
             case Category5G.UE:
                 self.metamodel.ues.pop(name, None)
+                self.mutable_metamodel.ues.pop(name, None)
 
-        self.reconcile()
+        self.synchronize()
 
 
     # NOTE child classes need to override this method with their 5G category

@@ -85,6 +85,12 @@ class UEManagement(HelmManagement):
             )
 
 
+    @override
+    def remove_component(self, name: str) -> None:
+        """Remove a containarized UE."""
+        super().remove_component(category=Category5G.UE, name=name)
+
+
     # connect action wrapper
     async def connect(self, ues: list[str] | None = None, **kwargs) -> None:
         """Connect COTS UEs via provisioner."""

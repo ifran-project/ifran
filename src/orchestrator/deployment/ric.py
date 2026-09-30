@@ -68,6 +68,12 @@ class RICManagement(HelmManagement):
 
 
     @override
+    def remove_component(self, name: str) -> None:
+        """Remove a RIC component."""
+        super().remove_component(category=Category5G.RIC, name=name)
+
+
+    @override
     async def install(
             self,
             components: list[str] | None = None,

@@ -76,6 +76,12 @@ class CoreManagement(HelmManagement):
         await super().run_action(category=Category5G.CORE, **kwargs)
 
 
+    @override
+    def remove_component(self, name: str) -> None:
+        """Remove a 5G core component."""
+        super().remove_component(category=Category5G.CORE, name=name)
+
+
     async def run_database_action(
             self,
             action: Literal["prepare", "install", "uninstall"],
