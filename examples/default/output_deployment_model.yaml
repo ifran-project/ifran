@@ -1,11 +1,11 @@
 params:
   k8s:
     master_node: node1
-    join_command: 'kubeadm join 10.123.246.151:6443 --token 0pr08d.u8vg8a2w93wi4lxl
-      --discovery-token-ca-cert-hash sha256:e24ee054421d13917eaa48411bf6954a70349b9bd4bcd5209e3b6656bc3cc1e4 '
+    join_command: 'kubeadm join 10.123.16.14:6443 --token rwwrbl.f89ogm55de7cipsu
+      --discovery-token-ca-cert-hash sha256:59969a53d03a5bcf9c5dca002c5e9197fe93901a039cfd2a2cc0d022d183cfaa '
     used_ips:
-    - 10.244.31.94
-    - 10.244.254.211
+    - 10.244.27.204
+    - 10.244.32.46
   provisioning:
     project: post5g-beta
     experiment: 5gbp_exp
@@ -16,13 +16,13 @@ provisioners:
   pos:
     type: pos
     params:
-      start_time: '2026-09-29T23:43:19.144127+02:00'
-      end_time: '2026-09-29T23:43:19.144127+02:00'
+      start_time: '2026-09-30T20:54:24.623412+02:00'
+      end_time: '2026-09-30T20:54:24.623412+02:00'
 nodes:
   node1:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.246.151
+      hostname: 10.123.16.14
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -35,7 +35,7 @@ nodes:
   node2:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.192.33
+      hostname: 10.123.204.208
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -48,7 +48,7 @@ nodes:
   node3:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.42.83
+      hostname: 10.123.116.56
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -61,7 +61,7 @@ nodes:
   node4:
     is_provisioned: true
     ssh_info:
-      hostname: 10.123.135.218
+      hostname: 10.123.241.199
       user: ziyad
       jumphost:
         hostname: bastion1.theblueprintfactory.org
@@ -73,9 +73,29 @@ nodes:
     k8s_status: in_cluster
 core:
   components:
+    udr:
+      is_installed: true
+      network_info: 10.244.104.4
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udr
     smf:
       is_installed: true
-      network_info: 10.244.135.3
+      network_info: 10.244.3.67
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -96,49 +116,9 @@ core:
       node_selector:
         node-type.5g.blueprint/core: 'true'
       type: smf
-    bsf:
-      is_installed: true
-      network_info: 10.244.104.5
-      image:
-        repository: docker.io/gradiant/open5gs
-        image_tag: 2.8.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: open5gs-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-      type: bsf
-    ausf:
-      is_installed: true
-      network_info: 10.244.3.67
-      image:
-        repository: docker.io/gradiant/open5gs
-        image_tag: 2.8.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: open5gs-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-      type: ausf
     nssf:
       is_installed: true
-      network_info: 10.244.104.4
+      network_info: 10.244.135.4
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -176,29 +156,9 @@ core:
       node_selector:
         node-type.5g.blueprint/core: 'true'
       type: nrf
-    pcf:
-      is_installed: true
-      network_info: 10.244.135.4
-      image:
-        repository: docker.io/gradiant/open5gs
-        image_tag: 2.8.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: open5gs-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-      type: pcf
     amf:
       is_installed: true
-      network_info: 10.244.135.2
+      network_info: 10.244.3.66
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -219,10 +179,30 @@ core:
       node_selector:
         node-type.5g.blueprint/core: 'true'
       type: amf
+    udm:
+      is_installed: true
+      network_info: 10.244.3.68
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udm
     upf:
       is_installed: true
-      static_pod_ip: 10.244.254.211
-      network_info: 10.244.254.211
+      static_pod_ip: 10.244.32.46
+      network_info: 10.244.32.46
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -250,9 +230,9 @@ core:
       node_selector:
         node-type.5g.blueprint/core: 'true'
       type: upf
-    udm:
+    bsf:
       is_installed: true
-      network_info: 10.244.254.192
+      network_info: 10.244.135.5
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -269,8 +249,28 @@ core:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-      type: udm
-    udr:
+      type: bsf
+    pcf:
+      is_installed: true
+      network_info: 10.244.135.3
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: pcf
+    ausf:
       is_installed: true
       network_info: 10.244.104.3
       image:
@@ -289,19 +289,19 @@ core:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-      type: udr
+      type: ausf
   database_params:
     image:
       repository: docker.io/mongo
       image_tag: '8.3'
     is_installed: true
-    ip: 10.244.3.66
+    ip: 10.244.135.2
 ran:
   components:
     gnb:
       is_installed: true
-      static_pod_ip: 10.244.31.94
-      network_info: 10.244.31.94
+      static_pod_ip: 10.244.27.204
+      network_info: 10.244.27.204
       image:
         repository: docker.io/oaisoftwarealliance/oai-gnb
         image_tag: 2026.w31
@@ -382,8 +382,8 @@ ran:
         \        nrofDownlinkSymbols: 6\n        nrofUplinkSlots: 2\n        nrofUplinkSymbols:\
         \ 4\n        ssPBCH_BlockPower: -25\n\n    SCTP:\n      SCTP_INSTREAMS: 2\n\
         \      SCTP_OUTSTREAMS: 2\n\n    ##### AMF parameters:\n    amf_ip_address:\n\
-        \      - ipv4: 10.244.135.2\n\n    NETWORK_INTERFACES:\n      GNB_IPV4_ADDRESS_FOR_NG_AMF:\
-        \ 10.244.31.94\n      GNB_IPV4_ADDRESS_FOR_NGU: 10.244.31.94\n      GNB_PORT_FOR_S1U:\
+        \      - ipv4: 10.244.3.66\n\n    NETWORK_INTERFACES:\n      GNB_IPV4_ADDRESS_FOR_NG_AMF:\
+        \ 10.244.27.204\n      GNB_IPV4_ADDRESS_FOR_NGU: 10.244.27.204\n      GNB_PORT_FOR_S1U:\
         \ 2152 # Spec 2152\n\nMACRLCs:\n  - num_cc: 1\n    tr_s_preference: local_L1\n\
         \    tr_n_preference: local_RRC\n    pusch_TargetSNRx10: 200\n    pucch_TargetSNRx10:\
         \  200\n\nL1s:\n  - num_cc: 1\n    tr_n_preference: local_mac\n    prach_dtx_threshold:\
@@ -413,7 +413,7 @@ ran:
         \ Initialized RAN Context: RC.nb_nr_inst = 1, RC.nb_nr_macrlc_inst = 1, RC.nb_nr_L1_inst\
         \ = 1, RC.nb_RU = 1, RC.nb_nr_CC[0] = 1\n\e[0m[NR_PHY] Initializing gNB RAN\
         \ context: RC.nb_nr_L1_inst = 1 \n\e[0m[NR_PHY] Registered with MAC interface\
-        \ module (0x5d2ccdaeed90)\n\e[0m[NR_PHY] Initializing NR L1: RC.nb_nr_L1_inst\
+        \ module (0x59fe6b55bd90)\n\e[0m[NR_PHY] Initializing NR L1: RC.nb_nr_L1_inst\
         \ = 1\n\e[0m[NR_PHY] thread cores for L1_RX -1 L1_TX -1\n\e[0m[NR_PHY] TX_AMP\
         \ = 519 (-36 dBFS)\n\e[0m[PHY]    No prs_config configuration found..!!\n\e\
         [0m[GNB_APP] pdsch_AntennaPorts N1 1 N2 1 XP 1 pusch_AntennaPorts 1\n\e[0m[GNB_APP]\
@@ -465,68 +465,68 @@ ran:
         \ DU: cell ID 1, PCI 0\n\e[0m[GNB_APP] gNB 0: neighbour_list has 0 serving\
         \ cell(s)\n\e[0m[GNB_APP] SDAP UL/DL headers in RRC are present\n\e[0m[GNB_APP]\
         \ gNB 0 SIB2 config: q_Hyst=0 dB, cellReselPrio=0, q_RxLevMin=-56 dBm, t_ReselectionNR=1\
-        \ s\n\e[0m[GNB_APP] Parsed IPv4 address for NG AMF: 10.244.31.94\n\e[0m[UTIL]\
+        \ s\n\e[0m[GNB_APP] Parsed IPv4 address for NG AMF: 10.244.27.204\n\e[0m[UTIL]\
         \   threadCreate() for TASK_SCTP: creating thread with affinity ffffffff,\
         \ priority 50\n\e[0m[X2AP]   X2AP is disabled.\n\e[0m[UTIL]   threadCreate()\
         \ for TASK_NGAP: creating thread with affinity ffffffff, priority 50\n\e[0m\e\
         [34m[NGAP]   Starting NGAP layer\n\e[0m[UTIL]   threadCreate() for TASK_NRPPA:\
-        \ creating thread with affinity ffffffff, priority 50\n\e[0m[NGAP]   Registered\
-        \ new gNB[0] and macro gNB id 1\n\e[0m[NGAP]   [gNB 0] check the amf registration\
-        \ state\n\e[0m\e[32m[NGAP]   Send NGSetupRequest to AMF\n\e[0m[NGAP]   1 ->\
-        \ 00000010\n\e[0m[UTIL]   threadCreate() for TASK_RRC_GNB: creating thread\
-        \ with affinity ffffffff, priority 50\n\e[0m[NRPPA]  Starting NRPPA layer\n\
-        \e[0m[NR_RRC] Entering main loop of NR_RRC message task\n\e[0m[GTPU]   Configuring\
-        \ GTPu\n\e[0m[GTPU]   SA mode \n\e[0m[GTPU]   Configuring GTPu address : 10.244.31.94,\
-        \ port : 2152\n\e[0m[GTPU]   Initializing UDP for local address 10.244.31.94\
-        \ with port 2152\n\e[0m[GTPU]   Created gtpu instance id: 81\n\e[0m[UTIL]\
-        \   threadCreate() for GTPrx_81: creating thread with affinity ffffffff, priority\
-        \ 50\n\e[0m[UTIL]   threadCreate() for TASK_GNB_APP: creating thread with\
-        \ affinity ffffffff, priority 50\n\e[0m[NR_RRC] Accepting new CU-UP ID 1 name\
-        \ gnb (assoc_id -1)\n\e[0m\e[34m[NGAP]   Served GUAMIs for AMF open5gs-amf\
-        \ (assoc_id=3):\n\e[0m\e[34m[NGAP]    GUAMI:\n\e[0m\e[34m[NGAP]      PLMN:\
-        \ MCC=001, MNC=01\n\e[0m\e[34m[NGAP]      AMF Region ID: 2\n\e[0m\e[34m[NGAP]\
-        \      AMF Set ID: 1\n\e[0m\e[34m[NGAP]      AMF Pointer: 0\n\e[0m[NGAP] \
-        \  Supported PLMN 0: MCC=001 MNC=01\n\e[0m[NGAP]   Supported slice (PLMN 0):\
-        \ SST=0x01 SD=000\n\e[0m\e[93m[ITTI]   tried to remove a non existing timer\n\
-        \e[0m\e[32m[NGAP]   Received NGSetupResponse from AMF\n\e[0m[UTIL]   threadCreate()\
-        \ for TASK_GTPV1_U: creating thread with affinity ffffffff, priority 50\n\e\
-        [0m[GNB_APP] [gNB 0] Received NGAP_REGISTER_GNB_CNF: associated AMF 1\n\e\
-        [0m[NR_RRC] Received F1 Setup Request from gNB_DU 1 (gnb) on assoc_id -1\n\
-        \e[0m[NR_RRC] Accepting DU 1 (gnb) (RRC version 17.3.0)\n\e[0m[NR_RRC] Added\
-        \ cell 1 to DU cells array (total cells = 1)\n\e[0m[NR_RRC] DU 1: Added cell\
-        \ 1\n\e[0m[NR_RRC] DU 1 (gnb): sending F1 Setup Response\n\e[0m[MAC]    received\
-        \ F1 Setup Response from CU (null)\n\e[0m[MAC]    CU uses RRC version 17.3.0\n\
-        \e[0m[MAC]    Clearing the DU's UE states before, if any.\n\e[0m[NR_RRC] cell\
-        \ PLMN 001.01 Cell ID 1 is in service\n\e[0m[MAC]    received gNB-DU configuration\
-        \ update acknowledge\n\e[0m[UTIL]   threadCreate() for time source iq samples:\
-        \ creating thread with affinity ffffffff, priority 2\n\e[0m[UTIL]   time manager\
-        \ configuration: [time source: iq_samples] [mode: standalone] [server IP:\
-        \ 127.0.0.1} [server port: 7374] (server IP/port not used)\n\e[0m[PHY]   \
-        \ number of L1 instances 1, number of RU 1, number of CPU cores 4\n\e[0m[PHY]\
-        \    RU thread-pool core string -1,-1 (size 2)\n\e[0m[UTIL]   threadCreate()\
-        \ for Tpool0_-1: creating thread with affinity ffffffff, priority 97\n\e[0m[UTIL]\
-        \   threadCreate() for Tpool1_-1: creating thread with affinity ffffffff,\
-        \ priority 97\n\e[0m[UTIL]   threadCreate() for ru_thread: creating thread\
-        \ with affinity ffffffff, priority 97\n\e[0m[PHY]    Starting RU 0 (,synch_to_ext_device)\
-        \ on cpu 1\n\e[0m[PHY]    Initializing frame parms for mu 1, N_RB 106, Ncp\
-        \ 0\n\e[0m[PHY]    Init: N_RB_DL 106, first_carrier_offset 900, nb_prefix_samples\
-        \ 108,nb_prefix_samples0 132, ofdm_symbol_size 1536\n\e[0m[PHY]    fp->scs=30000\n\
-        \e[0m[PHY]    fp->ofdm_symbol_size=1536\n\e[0m[PHY]    fp->nb_prefix_samples0=132\n\
-        \e[0m[PHY]    fp->nb_prefix_samples=108\n\e[0m[PHY]    fp->slots_per_subframe=2\n\
-        \e[0m[PHY]    fp->samples_per_subframe_wCP=43008\n\e[0m[PHY]    fp->samples_per_frame_wCP=430080\n\
-        \e[0m[PHY]    fp->samples_per_subframe=46080\n\e[0m[PHY]    fp->samples_per_frame=460800\n\
-        \e[0m[PHY]    fp->dl_CarrierFreq=3319680000\n\e[0m[PHY]    fp->ul_CarrierFreq=3319680000\n\
-        \e[0m[PHY]    fp->Nid_cell=0\n\e[0m[PHY]    fp->first_carrier_offset=900\n\
-        \e[0m[PHY]    fp->ssb_start_subcarrier=0\n\e[0m[PHY]    fp->Ncp=0\n\e[0m[PHY]\
-        \    fp->N_RB_DL=106\n\e[0m[PHY]    fp->numerology_index=1\n\e[0m[PHY]   \
-        \ fp->ofdm_offset_divisor=8\n\e[0m[PHY]    fp->threequarter_fs=1\n\e[0m[PHY]\
-        \    fp->sl_CarrierFreq=0\n\e[0m[PHY]    fp->N_RB_SL=0\n\e[0m[NR_PHY] nb_tx_streams\
-        \ 1, nb_rx_streams 1\n\e[0m[PHY]    Setting RF config for N_RB 106, NB_RX\
-        \ 1, NB_TX 1\n\e[0m[PHY]    tune_offset 0 Hz, sample_rate 46080000 Hz\n\e\
-        [0m[PHY]    Channel 0: setting tx_gain offset 0, tx_freq 3319680000 Hz\n\e\
-        [0m[PHY]    Channel 0: setting rx_gain offset 75, rx_freq 3319680000 Hz\n\e\
-        [0m[HW]     Running as server waiting opposite rfsimulators to connect\n\e\
-        [0m[HW]     [RAU] has loaded RFSIMULATOR device.\n\e[0m[PHY]    RU 0 Setting\
+        \ creating thread with affinity ffffffff, priority 50\n\e[0m[NRPPA]  Starting\
+        \ NRPPA layer\n\e[0m[UTIL]   threadCreate() for TASK_RRC_GNB: creating thread\
+        \ with affinity ffffffff, priority 50\n\e[0m[NGAP]   Registered new gNB[0]\
+        \ and macro gNB id 1\n\e[0m[NGAP]   [gNB 0] check the amf registration state\n\
+        \e[0m[NR_RRC] Entering main loop of NR_RRC message task\n\e[0m\e[32m[NGAP]\
+        \   Send NGSetupRequest to AMF\n\e[0m[NGAP]   1 -> 00000010\n\e[0m[GTPU] \
+        \  Configuring GTPu\n\e[0m[GTPU]   SA mode \n\e[0m[GTPU]   Configuring GTPu\
+        \ address : 10.244.27.204, port : 2152\n\e[0m[GTPU]   Initializing UDP for\
+        \ local address 10.244.27.204 with port 2152\n\e[0m[GTPU]   Created gtpu instance\
+        \ id: 81\n\e[0m[UTIL]   threadCreate() for GTPrx_81: creating thread with\
+        \ affinity ffffffff, priority 50\n\e[0m[UTIL]   threadCreate() for TASK_GNB_APP:\
+        \ creating thread with affinity ffffffff, priority 50\n\e[0m[NR_RRC] Accepting\
+        \ new CU-UP ID 1 name gnb (assoc_id -1)\n\e[0m\e[34m[NGAP]   Served GUAMIs\
+        \ for AMF open5gs-amf (assoc_id=3):\n\e[0m\e[34m[NGAP]    GUAMI:\n\e[0m\e\
+        [34m[NGAP]      PLMN: MCC=001, MNC=01\n\e[0m\e[34m[NGAP]      AMF Region ID:\
+        \ 2\n\e[0m\e[34m[NGAP]      AMF Set ID: 1\n\e[0m\e[34m[NGAP]      AMF Pointer:\
+        \ 0\n\e[0m[NGAP]   Supported PLMN 0: MCC=001 MNC=01\n\e[0m[NGAP]   Supported\
+        \ slice (PLMN 0): SST=0x01 SD=000\n\e[0m\e[93m[ITTI]   tried to remove a non\
+        \ existing timer\n\e[0m\e[32m[NGAP]   Received NGSetupResponse from AMF\n\e\
+        [0m[UTIL]   threadCreate() for TASK_GTPV1_U: creating thread with affinity\
+        \ ffffffff, priority 50\n\e[0m[GNB_APP] [gNB 0] Received NGAP_REGISTER_GNB_CNF:\
+        \ associated AMF 1\n\e[0m[NR_RRC] Received F1 Setup Request from gNB_DU 1\
+        \ (gnb) on assoc_id -1\n\e[0m[NR_RRC] Accepting DU 1 (gnb) (RRC version 17.3.0)\n\
+        \e[0m[NR_RRC] Added cell 1 to DU cells array (total cells = 1)\n\e[0m[NR_RRC]\
+        \ DU 1: Added cell 1\n\e[0m[NR_RRC] DU 1 (gnb): sending F1 Setup Response\n\
+        \e[0m[MAC]    received F1 Setup Response from CU (null)\n\e[0m[MAC]    CU\
+        \ uses RRC version 17.3.0\n\e[0m[MAC]    Clearing the DU's UE states before,\
+        \ if any.\n\e[0m[NR_RRC] cell PLMN 001.01 Cell ID 1 is in service\n\e[0m[MAC]\
+        \    received gNB-DU configuration update acknowledge\n\e[0m[UTIL]   threadCreate()\
+        \ for time source iq samples: creating thread with affinity ffffffff, priority\
+        \ 2\n\e[0m[UTIL]   time manager configuration: [time source: iq_samples] [mode:\
+        \ standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not\
+        \ used)\n\e[0m[PHY]    number of L1 instances 1, number of RU 1, number of\
+        \ CPU cores 4\n\e[0m[PHY]    RU thread-pool core string -1,-1 (size 2)\n\e\
+        [0m[UTIL]   threadCreate() for Tpool0_-1: creating thread with affinity ffffffff,\
+        \ priority 97\n\e[0m[UTIL]   threadCreate() for Tpool1_-1: creating thread\
+        \ with affinity ffffffff, priority 97\n\e[0m[UTIL]   threadCreate() for ru_thread:\
+        \ creating thread with affinity ffffffff, priority 97\n\e[0m[PHY]    Starting\
+        \ RU 0 (,synch_to_ext_device) on cpu 1\n\e[0m[PHY]    Initializing frame parms\
+        \ for mu 1, N_RB 106, Ncp 0\n\e[0m[PHY]    Init: N_RB_DL 106, first_carrier_offset\
+        \ 900, nb_prefix_samples 108,nb_prefix_samples0 132, ofdm_symbol_size 1536\n\
+        \e[0m[PHY]    fp->scs=30000\n\e[0m[PHY]    fp->ofdm_symbol_size=1536\n\e[0m[PHY]\
+        \    fp->nb_prefix_samples0=132\n\e[0m[PHY]    fp->nb_prefix_samples=108\n\
+        \e[0m[PHY]    fp->slots_per_subframe=2\n\e[0m[PHY]    fp->samples_per_subframe_wCP=43008\n\
+        \e[0m[PHY]    fp->samples_per_frame_wCP=430080\n\e[0m[PHY]    fp->samples_per_subframe=46080\n\
+        \e[0m[PHY]    fp->samples_per_frame=460800\n\e[0m[PHY]    fp->dl_CarrierFreq=3319680000\n\
+        \e[0m[PHY]    fp->ul_CarrierFreq=3319680000\n\e[0m[PHY]    fp->Nid_cell=0\n\
+        \e[0m[PHY]    fp->first_carrier_offset=900\n\e[0m[PHY]    fp->ssb_start_subcarrier=0\n\
+        \e[0m[PHY]    fp->Ncp=0\n\e[0m[PHY]    fp->N_RB_DL=106\n\e[0m[PHY]    fp->numerology_index=1\n\
+        \e[0m[PHY]    fp->ofdm_offset_divisor=8\n\e[0m[PHY]    fp->threequarter_fs=1\n\
+        \e[0m[PHY]    fp->sl_CarrierFreq=0\n\e[0m[PHY]    fp->N_RB_SL=0\n\e[0m[NR_PHY]\
+        \ nb_tx_streams 1, nb_rx_streams 1\n\e[0m[PHY]    Setting RF config for N_RB\
+        \ 106, NB_RX 1, NB_TX 1\n\e[0m[PHY]    tune_offset 0 Hz, sample_rate 46080000\
+        \ Hz\n\e[0m[PHY]    Channel 0: setting tx_gain offset 0, tx_freq 3319680000\
+        \ Hz\n\e[0m[PHY]    Channel 0: setting rx_gain offset 75, rx_freq 3319680000\
+        \ Hz\n\e[0m[HW]     Running as server waiting opposite rfsimulators to connect\n\
+        \e[0m[HW]     [RAU] has loaded RFSIMULATOR device.\n\e[0m[PHY]    RU 0 Setting\
         \ N_TA_offset to 600 samples (UL Freq 3300600, N_RB 106, mu 1)\n\e[0m[PHY]\
         \    Signaling main thread that RU 0 is ready, sl_ahead 6\n\e[0m[PHY]    L1\
         \ configured without analog beamforming\n\e[0m[PHY]    Attaching RU 0 antenna\
@@ -544,16 +544,15 @@ ran:
         \ creating thread with affinity ffffffff, priority 97\n\e[0m[UTIL]   threadCreate()\
         \ for L1_tx_thread: creating thread with affinity ffffffff, priority 97\n\e\
         [0m[UTIL]   threadCreate() for L1_stats: creating thread with affinity ffffffff,\
-        \ priority 1\n\e[0m[PHY]    got sync (L1_stats_thread)\n\e[0m[PHY]    got\
-        \ sync (ru_thread)\n\e[0m[CONFIG] function config_yaml_init returned 0\nE2\
-        \ agent is DISABLED (for activation, define .e2_agent.{near_ric_ip_addr,sm_dir}\
-        \ parameters)\nInitializing random number generator, seed 11799301188099195657\n\
-        [PHY]    RU 0 rf device ready\n\e[0m[PHY]    RU 0 RF started cpu_meas_enabled\
-        \ 0\n\e[0m[HW]     No connected device, generating void samples...\n\e[0m\e\
-        [32m[PHY]    Command line parameters for OAI UE: -C 3319680000 -r 106 --numerology\
-        \ 1 --ssb 516 -E\n\e[0m[NR_MAC] Frame.Slot 128.0\n\n\e[0m[NR_MAC] Frame.Slot\
-        \ 256.0\n\n\e[0m[NR_MAC] Frame.Slot 384.0\n\n\e[0m[NR_MAC] Frame.Slot 512.0\n\
-        \n\e[0m[NR_MAC] Frame.Slot 640.0\n\n"
+        \ priority 1\n\e[0m[PHY]    got sync (L1_stats_thread)\n\e[0m[CONFIG] function\
+        \ config_yaml_init returned 0\nE2 agent is DISABLED (for activation, define\
+        \ .e2_agent.{near_ric_ip_addr,sm_dir} parameters)\nInitializing random number\
+        \ generator, seed 12240833875242465183\nTYPE <CTRL-C> TO TERMINATE\n[PHY]\
+        \    got sync (ru_thread)\n\e[0m[PHY]    RU 0 rf device ready\n\e[0m[PHY]\
+        \    RU 0 RF started cpu_meas_enabled 0\n\e[0m[HW]     No connected device,\
+        \ generating void samples...\n\e[0m\e[32m[PHY]    Command line parameters\
+        \ for OAI UE: -C 3319680000 -r 106 --numerology 1 --ssb 516 -E\n\e[0m[NR_MAC]\
+        \ Frame.Slot 128.0\n\n"
       type: gnb
       implementation: oai
       derived_radio_config:
@@ -568,7 +567,7 @@ ran:
 ues:
   sim_ue:
     is_installed: true
-    network_info: 10.244.254.193
+    network_info: 10.244.104.5
     image:
       repository: docker.io/oaisoftwarealliance/oai-nr-ue
       image_tag: 2026.w31
@@ -642,8 +641,8 @@ ues:
       \e[0m[UTIL]   threadCreate() for ru_start_thread: creating thread with affinity\
       \ ffffffff, priority 97\n\e[0m[HW]     Running as client: will connect to a\
       \ rfsimulator server side\n\e[0m[HW]     [RAU] has loaded RFSIMULATOR device.\n\
-      \e[0m[HW]     Trying to connect to 10.244.31.94:4043\n\e[0m[HW]     Connection\
-      \ to 10.244.31.94:4043 established\n\e[0m\e[32m[HW]     RFsim: Number of antennas\
+      \e[0m[HW]     Trying to connect to 10.244.27.204:4043\n\e[0m[HW]     Connection\
+      \ to 10.244.27.204:4043 established\n\e[0m\e[32m[HW]     RFsim: Number of antennas\
       \ changed from 0 to 1\n\e[0m[PHY]    Intializing UE Threads for instance 0 ...\n\
       \e[0m[UTIL]   threadCreate() for UEthread_0: creating thread with affinity ffffffff,\
       \ priority 97\n\e[0m[UTIL]   threadCreate() for L1_UE_stats_0: creating thread\
@@ -655,14 +654,14 @@ ues:
       \    Initial sync: pbch decoded sucessfully, ssb index 0\n\e[0m[PHY]    pbch\
       \ rx ok. rsrp:51 dB/RE, adjust_rxgain:-1 dB\n\e[0m[NR_PHY] Cell Detected with\
       \ GSCN: 0, SSB SC offset: 516, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS\
-      \ Corr Average: 55\n\e[0m[PHY]    [UE0] In synch, rx_offset 437760 samples\n\
-      \e[0m[PHY]    [UE 0] Measured Carrier Frequency offset 2 Hz\n\e[0m\e[32m[PHY]\
+      \ Corr Average: 55\n\e[0m[PHY]    [UE0] In synch, rx_offset 92160 samples\n\e\
+      [0m[PHY]    [UE 0] Measured Carrier Frequency offset 0 Hz\n\e[0m\e[32m[PHY]\
       \    Initial sync successful, PCI: 0\n\e[0m[PHY]    HW: Configuring channel\
-      \ 0 (rf_chain 0): setting tx_freq 3319680002 Hz, rx_freq 3319680002 Hz, tune_offset\
-      \ 0\n\e[0m[PHY]    Got synch: hw_slot_offset 38, carrier off 2 Hz\n\e[0m[NR_RRC]\
+      \ 0 (rf_chain 0): setting tx_freq 3319680000 Hz, rx_freq 3319680000 Hz, tune_offset\
+      \ 0\n\e[0m[PHY]    Got synch: hw_slot_offset 8, carrier off 0 Hz\n\e[0m[NR_RRC]\
       \ [UE 0] BCCH update: phyCellID 0->0, arfcn_ssb 0->621312\n\e[0m\e[32m[PHY]\
-      \    UE synchronized! decoded_frame_rx=62 UE->init_sync_frame=0 trashed_frames=24\n\
-      \e[0m[PHY]    Resynchronizing RX by 437760 samples\n\e[0m[HW]     received write\
+      \    UE synchronized! decoded_frame_rx=160 UE->init_sync_frame=1 trashed_frames=14\n\
+      \e[0m[PHY]    Resynchronizing RX by 92160 samples\n\e[0m[HW]     received write\
       \ reorder clear context\n\e[0m[PHY]    max_pos_acc = 0, shiftForNextFrame =\
       \ 0\n\e[0m\e[32m[NR_RRC] SIB1 decoded\n\e[0m[NR_MAC] [UE 0] Initial cell selection:\
       \ dl_frequency=3300600 kHz (from command-line, band=78, scs=1)\n\e[0m[NR_MAC]\
@@ -674,15 +673,15 @@ ues:
       \ 4 UL symbols)\n\e[0m[NR_MAC] Configured 1 TDD patterns (total slots: pattern1\
       \ = 10, pattern2 = 0)\n\e[0m[PHY]    N_TA_offset changed from 0 to 600\n\e[0m[MAC]\
       \    Initialization of 4-Step CBRA procedure\n\e[0m[NR_MAC] [UE 0] selected\
-      \ PRACH occasion: start_symbol 0 fdm 0 slot 19 format 162\n\e[0m[NR_MAC] PRACH\
-      \ scheduler: Selected RO Frame 89, Slot 19, Symbol 0, Fdm 0\n\e[0m[PHY]    PRACH\
-      \ [UE 0] in frame.slot 89.19, placing PRACH in position 1804, Msg1/MsgA-Preamble\
-      \ frequency start 0 (k1 0), preamble_offset 0, first_nonzero_root_idx 0, preambleIndex\
-      \ = 4\n\e[0m[PHY]    [UE 0] RAR-Msg2 decoded\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI\
-      \ 010b] Got BI RAR subPDU 5 ms\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI 010b] Got\
-      \ RAPID RAR subPDU\n\e[0m\e[32m[NR_MAC] [UE 0][RAPROC][90.10] Found RAR with\
-      \ the intended RAPID 4\n\e[0m\e[93m[MAC]    received TA command 31\n\e[0m\e\
-      [32m[NR_MAC] [RAPROC][90.19] RA-Msg3 transmitted\n\e[0m\e[32m[NR_MAC] [UE 0][91.12][RAPROC]\
+      \ PRACH occasion: start_symbol 8 fdm 0 slot 19 format 162\n\e[0m[NR_MAC] PRACH\
+      \ scheduler: Selected RO Frame 177, Slot 19, Symbol 8, Fdm 0\n\e[0m[PHY]   \
+      \ PRACH [UE 0] in frame.slot 177.19, placing PRACH in position 1804, Msg1/MsgA-Preamble\
+      \ frequency start 0 (k1 0), preamble_offset 11, first_nonzero_root_idx 0, preambleIndex\
+      \ = 55\n\e[0m[PHY]    [UE 0] RAR-Msg2 decoded\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI\
+      \ 0113] Got BI RAR subPDU 5 ms\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI 0113] Got\
+      \ RAPID RAR subPDU\n\e[0m\e[32m[NR_MAC] [UE 0][RAPROC][178.10] Found RAR with\
+      \ the intended RAPID 55\n\e[0m\e[93m[MAC]    received TA command 31\n\e[0m\e\
+      [32m[NR_MAC] [RAPROC][178.19] RA-Msg3 transmitted\n\e[0m\e[32m[NR_MAC] [UE 0][179.10][RAPROC]\
       \ 4-Step RA procedure succeeded. CBRA: Contention Resolution is successful.\n\
       \e[0m[NR_RRC] [UE0][RAPROC] Logical Channel DL-CCCH (SRB0), Received NR_RRCSetup\n\
       \e[0m[RLC]    Added srb 1 to UE 0\n\e[0m[NR_RRC] State = NR_RRC_CONNECTED\n\e\
@@ -700,16 +699,16 @@ ues:
       \ rrc_TransactionIdentifier: 0\n\e[0m[NR_RRC] Received Capability Enquiry (gNB\
       \ 0)\n\e[0m[NR_RRC] Receiving from SRB1 (DL-DCCH), Processing UECapabilityEnquiry\n\
       \e[0m[CONFIG] function config_libconfig_init returned 0\nInitializing random\
-      \ number generator, seed 12801697430665830636\nTYPE <CTRL-C> TO TERMINATE\n\
-      kausf:f3 7b 94 6 63 ec e3 cb e5 18 81 d5 9e e8 61 34 5 29 5c 51 94 9c 42 e0\
-      \ a5 8f d1 6c f8 a 78 a5 \nkseaf:d9 2 b4 a c7 bb 58 61 20 dc b 7c 8d d 43 f9\
-      \ 23 6e 27 f6 60 8e be 6a 79 a1 cb df 65 64 44 62 \nkamf:63 72 bb 97 b5 d6 bb\
-      \ 4b b3 20 b3 72 f5 0 db 91 ab 80 55 2f 25 ef bb cb 51 f3 b6 37 b0 56 62 76\
-      \ \nknas_int: e1 66 16 37 df 9c c9 4a c3 ef 76 35 b2 5c e9 c6 \nknas_enc: af\
-      \ 58 ca 11 9c 60 f2 9e 0 9 4f ec d8 2b d3 9a \nmac f9 b2 8d 45 \n[NR_RRC] deriving\
-      \ kRRCenc, kRRCint from KgNB=a6 00 0b b8 9c f7 de 69 88 f4 36 93 17 56 63 b6\
-      \ 99 55 c9 23 d4 65 05 d3 37 f8 67 30 06 53 c7 c0 \e[0m\n[NR_RRC] securityModeComplete\
-      \ payload: 28 00 00 00 00 00 00 00 c0 21 00 80 ab 77 00 00 \e[0m\n<UE-NR-Capability>\n\
+      \ number generator, seed 5996522332936536785\nTYPE <CTRL-C> TO TERMINATE\nkausf:c5\
+      \ 1c f7 c7 96 8c ed 9c 7b b2 61 2 46 14 89 e9 f0 92 f7 64 9a 31 cb 2b 2e a0\
+      \ cc c3 33 8e a1 54 \nkseaf:81 58 0 9d ec 98 e1 92 33 9a 12 ff 48 59 f2 ce 36\
+      \ 7c ab fe b0 d9 3f 6a d8 7d 8a 96 0 c2 4c 25 \nkamf:9a 9b 45 2f b2 f9 59 9d\
+      \ ed 7b 9c 42 9 64 ab e5 b2 c9 a7 e6 96 dd 4a 59 88 43 73 ad 65 93 1b 34 \n\
+      knas_int: da 45 55 61 3c 16 1c cb 48 c3 12 e6 ea d2 7b 25 \nknas_enc: 7a 47\
+      \ 5 12 db 85 6d 2c 3d e a7 36 c9 62 48 c6 \nmac aa 92 1b 94 \n[NR_RRC] deriving\
+      \ kRRCenc, kRRCint from KgNB=05 af 0f 91 16 c0 84 40 aa d7 03 e9 68 41 1d 1a\
+      \ 63 ae 51 06 4c df d6 e8 87 ff 54 50 45 fe 2b e3 \e[0m\n[NR_RRC] securityModeComplete\
+      \ payload: 28 00 00 00 00 00 00 00 10 e6 00 f4 15 75 00 00 \e[0m\n<UE-NR-Capability>\n\
       \    <accessStratumRelease><rel15/></accessStratumRelease>\n    <pdcp-Parameters>\n\
       \        <supportedROHC-Profiles>\n            <profile0x0000><false/></profile0x0000>\n\
       \            <profile0x0001><false/></profile0x0001>\n            <profile0x0002><false/></profile0x0002>\n\
@@ -726,201 +725,38 @@ ues:
       \    [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_REGISTRATION_ACCEPT with\
       \ length 46\n\e[0m[NAS]    Received Registration Accept with result 3GPP\n\e\
       [0m[NAS]    SMS not allowed in 5GS Registration Result\n\e[0m[NR_RRC] 5G-GUTI:\
-      \ AMF pointer 0, AMF Set ID 1, 5G-TMSI 3221226784 \n\e[0m[NAS]    Send NAS_UPLINK_DATA_REQ\
+      \ AMF pointer 0, AMF Set ID 1, 5G-TMSI 3221225860 \n\e[0m[NAS]    Send NAS_UPLINK_DATA_REQ\
       \ message(RegistrationComplete)\n\e[0m[NAS]    requested PDU session ID 1 type\
-      \ 1 NSSAI 1.16777215 DNN internet\n\e[0m[NR_MAC] [UE 0] paging UE_ID=288\n\e\
-      [0m[NAS]    Send NAS_UPLINK_DATA_REQ message(PduSessionEstablishRequest)\n\e\
-      [0m[NAS]    [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_CONFIGURATION_UPDATE_COMMAND\
-      \ with length 46\n\e[0m\e[93m[NR_RRC] unknown message type 84\n\e[0m[RLC]  \
-      \  Added srb 2 to UE 0\n\e[0m[RLC]    Added drb 1 to UE 0\n\e[0m[RLC]    Added\
-      \ DRB to UE 0\n\e[0m[NR_RRC] RRCReconfiguration includes radio Bearer Configuration\n\
-      \e[0m[MAC]    [UE 0] Applying CellGroupConfig from gNodeB\n\e[0m\e[93m[SDAP]\
-      \    Could not find SDAP entity: entity list empty (ue_id=0 pdu_session_id=1)\n\
-      \e[0m[SDAP]   Creating SDAP entity ue_id=0 pdu_session_id=1\n\e[0m[SDAP]   Default\
-      \ DRB for the created SDAP entity: DRB 1 \n\e[0m[PDCP]   Added DRB 1 to UE ID\
-      \ 0\n\e[0m[NR_RRC] State = NR_RRC_CONNECTED\n\e[0m[NR_RRC] RRCReconfiguration\
-      \ includes Measurement Configuration\n\e[0m\e[93m[NR_RRC] Measurement gaps not\
-      \ yet supported!\n\e[0m[NR_RRC] rrcReconfigurationComplete Encoded 10 bits (2\
-      \ bytes)\n\e[0m[NR_RRC]  Logical Channel UL-DCCH (SRB1), Generating RRCReconfigurationComplete\
-      \ (bytes 2)\n\e[0m[NAS]    [UE 0] Received NAS_CONN_ESTABLI_CNF: errCode 1,\
-      \ length 68\n\e[0m[NAS]    Received PDU Session Establishment Accept, UE IPv4:\
-      \ 11.1.1.2\n\e[0m[SDAP]   UE 0 PDU session 1: cached QFI 1\n\e[0m[SDAP]   UE\
-      \ 0 PDU session 1: bringing TUN oaitun_ue1 up\n\e[0m[UTIL]   threadCreate()\
-      \ for ue_tun_read_0_p1: creating thread with affinity ffffffff, priority 1\n\
-      \e[0m\e[32m[OIP]    TUN Interface oaitun_ue1 successfully configured, IPv4 11.1.1.2,\
-      \ IPv6 (null)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 128.8, cumulated bad\
-      \ DCI 0\n    DL harq: 15/0\n    UL harq: 38/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 29.9, nb symbols 4.3)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 256.8, cumulated bad DCI 0\n    DL harq: 32/0\n    UL harq: 89/0\
-      \ avg code rate 0.1, avg bit/symbol 2.1, avg per TB: (nb RBs 17.6, nb symbols\
-      \ 4.5)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 384.8, cumulated bad DCI 0\n\
-      \    DL harq: 33/0\n    UL harq: 102/0 avg code rate 0.1, avg bit/symbol 2.1,\
-      \ avg per TB: (nb RBs 16.0, nb symbols 5.5)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 512.8, cumulated bad DCI 0\n    DL harq: 35/0\n    UL harq: 115/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.1, avg per TB: (nb RBs 14.8, nb symbols 6.4)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 640.8, cumulated bad DCI 0\n    DL harq:\
-      \ 36/0\n    UL harq: 128/0 avg code rate 0.1, avg bit/symbol 2.1, avg per TB:\
-      \ (nb RBs 13.8, nb symbols 7.1)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 768.8,\
-      \ cumulated bad DCI 0\n    DL harq: 38/0\n    UL harq: 146/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 14.1, nb symbols 7.5)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 896.8, cumulated bad DCI 0\n    DL harq: 40/0\n\
-      \    UL harq: 159/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 13.3, nb symbols 8.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 0.8, cumulated\
-      \ bad DCI 0\n    DL harq: 41/0\n    UL harq: 172/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 12.7, nb symbols 8.3)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 128.8, cumulated bad DCI 0\n    DL harq: 42/0\n    UL harq: 184/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 12.2, nb symbols\
-      \ 8.7)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 256.8, cumulated bad DCI 0\n\
-      \    DL harq: 43/0\n    UL harq: 197/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 11.7, nb symbols 8.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 384.8, cumulated bad DCI 0\n    DL harq: 45/0\n    UL harq: 210/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 11.3, nb symbols 9.2)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 512.8, cumulated bad DCI 0\n    DL harq:\
-      \ 46/0\n    UL harq: 223/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 10.9, nb symbols 9.4)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 640.8,\
-      \ cumulated bad DCI 0\n    DL harq: 47/0\n    UL harq: 236/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 10.6, nb symbols 9.6)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 768.8, cumulated bad DCI 0\n    DL harq: 49/0\n\
-      \    UL harq: 248/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 10.3, nb symbols 9.8)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 896.8, cumulated\
-      \ bad DCI 0\n    DL harq: 50/0\n    UL harq: 261/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 10.1, nb symbols 9.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 0.8, cumulated bad DCI 0\n    DL harq: 52/0\n    UL harq: 279/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 10.5, nb symbols\
-      \ 10.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 128.8, cumulated bad DCI 0\n\
-      \    DL harq: 53/0\n    UL harq: 292/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 10.2, nb symbols 10.1)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 256.8, cumulated bad DCI 0\n    DL harq: 55/0\n    UL harq: 305/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 10.0, nb symbols 10.2)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 384.8, cumulated bad DCI 0\n    DL harq:\
-      \ 56/0\n    UL harq: 318/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 9.8, nb symbols 10.4)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 512.8,\
-      \ cumulated bad DCI 0\n    DL harq: 57/0\n    UL harq: 331/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 9.6, nb symbols 10.5)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 640.8, cumulated bad DCI 0\n    DL harq: 58/0\n\
-      \    UL harq: 343/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 9.4, nb symbols 10.6)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 768.8, cumulated\
-      \ bad DCI 0\n    DL harq: 60/0\n    UL harq: 356/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 9.3, nb symbols 10.6)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 896.8, cumulated bad DCI 0\n    DL harq: 61/0\n    UL harq: 369/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 9.1, nb symbols\
-      \ 10.7)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 0.8, cumulated bad DCI 0\n\
-      \    DL harq: 62/0\n    UL harq: 382/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 9.0, nb symbols 10.8)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 128.8, cumulated bad DCI 0\n    DL harq: 64/0\n    UL harq: 395/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 8.9, nb symbols 10.9)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 256.8, cumulated bad DCI 0\n    DL harq:\
-      \ 65/0\n    UL harq: 407/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 8.7, nb symbols 10.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 384.8,\
-      \ cumulated bad DCI 0\n    DL harq: 66/0\n    UL harq: 420/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 8.6, nb symbols 11.0)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 512.8, cumulated bad DCI 0\n    DL harq: 67/0\n\
-      \    UL harq: 433/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 8.5, nb symbols 11.1)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 640.8, cumulated\
-      \ bad DCI 0\n    DL harq: 69/0\n    UL harq: 446/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 8.4, nb symbols 11.1)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 768.8, cumulated bad DCI 0\n    DL harq: 70/0\n    UL harq: 459/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 8.3, nb symbols\
-      \ 11.2)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 896.8, cumulated bad DCI 0\n\
-      \    DL harq: 71/0\n    UL harq: 471/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 8.2, nb symbols 11.2)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 0.8, cumulated bad DCI 0\n    DL harq: 73/0\n    UL harq: 484/0 avg code\
-      \ rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 8.2, nb symbols 11.3)\n\e\
-      [0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 128.8, cumulated bad DCI 0\n    DL harq:\
-      \ 74/0\n    UL harq: 497/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 8.1, nb symbols 11.3)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 256.8,\
-      \ cumulated bad DCI 0\n    DL harq: 76/0\n    UL harq: 515/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 8.4, nb symbols 11.3)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 384.8, cumulated bad DCI 0\n    DL harq: 77/0\n\
-      \    UL harq: 528/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 8.3, nb symbols 11.3)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 512.8, cumulated\
-      \ bad DCI 0\n    DL harq: 79/0\n    UL harq: 541/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 8.2, nb symbols 11.4)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 640.8, cumulated bad DCI 0\n    DL harq: 80/0\n    UL harq: 554/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 8.1, nb symbols\
-      \ 11.4)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 768.8, cumulated bad DCI 0\n\
-      \    DL harq: 81/0\n    UL harq: 567/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 8.0, nb symbols 11.4)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 896.8, cumulated bad DCI 0\n    DL harq: 83/0\n    UL harq: 579/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 8.0, nb symbols 11.5)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 0.8, cumulated bad DCI 0\n    DL harq:\
-      \ 84/0\n    UL harq: 592/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 7.9, nb symbols 11.5)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 128.8,\
-      \ cumulated bad DCI 0\n    DL harq: 85/0\n    UL harq: 605/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 7.9, nb symbols 11.5)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 256.8, cumulated bad DCI 0\n    DL harq: 86/0\n\
-      \    UL harq: 618/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 7.8, nb symbols 11.6)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 384.8, cumulated\
-      \ bad DCI 0\n    DL harq: 88/0\n    UL harq: 631/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 7.7, nb symbols 11.6)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 512.8, cumulated bad DCI 0\n    DL harq: 89/0\n    UL harq: 643/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.7, nb symbols\
-      \ 11.6)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 640.8, cumulated bad DCI 0\n\
-      \    DL harq: 90/0\n    UL harq: 656/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 7.6, nb symbols 11.7)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 768.8, cumulated bad DCI 0\n    DL harq: 91/0\n    UL harq: 669/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.6, nb symbols 11.7)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 896.8, cumulated bad DCI 0\n    DL harq:\
-      \ 93/0\n    UL harq: 682/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 7.5, nb symbols 11.7)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 0.8,\
-      \ cumulated bad DCI 0\n    DL harq: 94/0\n    UL harq: 695/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 7.5, nb symbols 11.7)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 128.8, cumulated bad DCI 0\n    DL harq: 95/0\n\
-      \    UL harq: 707/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 7.4, nb symbols 11.8)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 256.8, cumulated\
-      \ bad DCI 0\n    DL harq: 97/0\n    UL harq: 720/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 7.4, nb symbols 11.8)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 384.8, cumulated bad DCI 0\n    DL harq: 98/0\n    UL harq: 733/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.4, nb symbols\
-      \ 11.8)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 512.8, cumulated bad DCI 0\n\
-      \    DL harq: 99/0\n    UL harq: 746/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 7.3, nb symbols 11.8)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 640.8, cumulated bad DCI 0\n    DL harq: 100/0\n    UL harq: 759/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.3, nb symbols 11.8)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 768.8, cumulated bad DCI 0\n    DL harq:\
-      \ 102/0\n    UL harq: 771/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 7.2, nb symbols 11.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 896.8,\
-      \ cumulated bad DCI 0\n    DL harq: 103/0\n    UL harq: 784/0 avg code rate\
-      \ 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.2, nb symbols 11.9)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 0.8, cumulated bad DCI 0\n    DL harq: 104/0\n \
-      \   UL harq: 797/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 7.2, nb symbols 11.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 128.8, cumulated\
-      \ bad DCI 0\n    DL harq: 106/0\n    UL harq: 810/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 7.1, nb symbols 11.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 256.8, cumulated bad DCI 0\n    DL harq: 107/0\n    UL harq: 823/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.1, nb symbols\
-      \ 11.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 384.8, cumulated bad DCI 0\n\
-      \    DL harq: 108/0\n    UL harq: 835/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 7.1, nb symbols 11.9)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 512.8, cumulated bad DCI 0\n    DL harq: 109/0\n    UL harq: 848/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.0, nb symbols 12.0)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 640.8, cumulated bad DCI 0\n    DL harq:\
-      \ 111/0\n    UL harq: 861/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 7.0, nb symbols 12.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 768.8,\
-      \ cumulated bad DCI 0\n    DL harq: 112/0\n    UL harq: 874/0 avg code rate\
-      \ 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.0, nb symbols 12.0)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 896.8, cumulated bad DCI 0\n    DL harq: 113/0\n\
-      \    UL harq: 887/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 6.9, nb symbols 12.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 0.8, cumulated\
-      \ bad DCI 0\n    DL harq: 115/0\n    UL harq: 899/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 6.9, nb symbols 12.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52\
-      \ stats sfn: 128.8, cumulated bad DCI 0\n    DL harq: 116/0\n    UL harq: 912/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 6.9, nb symbols\
-      \ 12.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 256.8, cumulated bad DCI 0\n\
-      \    DL harq: 117/0\n    UL harq: 925/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 6.9, nb symbols 12.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats\
-      \ sfn: 384.8, cumulated bad DCI 0\n    DL harq: 118/0\n    UL harq: 938/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 6.8, nb symbols 12.1)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 512.8, cumulated bad DCI 0\n    DL harq:\
-      \ 121/0\n    UL harq: 956/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 7.0, nb symbols 12.0)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 640.8,\
-      \ cumulated bad DCI 0\n    DL harq: 122/0\n    UL harq: 968/0 avg code rate\
-      \ 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 7.0, nb symbols 12.0)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 4a52 stats sfn: 768.8, cumulated bad DCI 0\n    DL harq: 123/0\n\
-      \    UL harq: 981/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 7.0, nb symbols 12.1)\n\e[0m[NR_MAC] UE 0 RNTI 4a52 stats sfn: 896.8, cumulated\
-      \ bad DCI 0\n    DL harq: 124/0\n    UL harq: 994/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 6.9, nb symbols 12.1)\n"
+      \ 1 NSSAI 1.16777215 DNN internet\n\e[0m[NAS]    Send NAS_UPLINK_DATA_REQ message(PduSessionEstablishRequest)\n\
+      \e[0m[NR_MAC] [UE 0] paging UE_ID=388\n\e[0m[NAS]    [UE 0] Received NAS_DOWNLINK_DATA_IND\
+      \ type FGS_CONFIGURATION_UPDATE_COMMAND with length 46\n\e[0m\e[93m[NR_RRC]\
+      \ unknown message type 84\n\e[0m[RLC]    Added srb 2 to UE 0\n\e[0m[RLC]   \
+      \ Added drb 1 to UE 0\n\e[0m[RLC]    Added DRB to UE 0\n\e[0m[NR_RRC] RRCReconfiguration\
+      \ includes radio Bearer Configuration\n\e[0m[MAC]    [UE 0] Applying CellGroupConfig\
+      \ from gNodeB\n\e[0m\e[93m[SDAP]    Could not find SDAP entity: entity list\
+      \ empty (ue_id=0 pdu_session_id=1)\n\e[0m[SDAP]   Creating SDAP entity ue_id=0\
+      \ pdu_session_id=1\n\e[0m[SDAP]   Default DRB for the created SDAP entity: DRB\
+      \ 1 \n\e[0m[PDCP]   Added DRB 1 to UE ID 0\n\e[0m[NR_RRC] State = NR_RRC_CONNECTED\n\
+      \e[0m[NR_RRC] RRCReconfiguration includes Measurement Configuration\n\e[0m\e\
+      [93m[NR_RRC] Measurement gaps not yet supported!\n\e[0m[NR_RRC] rrcReconfigurationComplete\
+      \ Encoded 10 bits (2 bytes)\n\e[0m[NAS]    [UE 0] Received NAS_CONN_ESTABLI_CNF:\
+      \ errCode 1, length 68\n\e[0m[NR_RRC]  Logical Channel UL-DCCH (SRB1), Generating\
+      \ RRCReconfigurationComplete (bytes 2)\n\e[0m[NAS]    Received PDU Session Establishment\
+      \ Accept, UE IPv4: 11.1.1.2\n\e[0m[SDAP]   UE 0 PDU session 1: cached QFI 1\n\
+      \e[0m[SDAP]   UE 0 PDU session 1: bringing TUN oaitun_ue1 up\n\e[0m[UTIL]  \
+      \ threadCreate() for ue_tun_read_0_p1: creating thread with affinity ffffffff,\
+      \ priority 1\n\e[0m\e[32m[OIP]    TUN Interface oaitun_ue1 successfully configured,\
+      \ IPv4 11.1.1.2, IPv6 (null)\n\e[0m[NR_MAC] UE 0 RNTI 46e2 stats sfn: 256.8,\
+      \ cumulated bad DCI 0\n    DL harq: 31/0\n    UL harq: 77/0 avg code rate 0.1,\
+      \ avg bit/symbol 2.1, avg per TB: (nb RBs 19.6, nb symbols 3.6)\n\e[0m[NR_MAC]\
+      \ UE 0 RNTI 46e2 stats sfn: 384.8, cumulated bad DCI 0\n    DL harq: 33/0\n\
+      \    UL harq: 90/0 avg code rate 0.1, avg bit/symbol 2.1, avg per TB: (nb RBs\
+      \ 17.5, nb symbols 5.0)\n\e[0m[NR_MAC] UE 0 RNTI 46e2 stats sfn: 512.8, cumulated\
+      \ bad DCI 0\n    DL harq: 34/0\n    UL harq: 102/0 avg code rate 0.1, avg bit/symbol\
+      \ 2.1, avg per TB: (nb RBs 16.0, nb symbols 5.9)\n\e[0m[NR_MAC] UE 0 RNTI 46e2\
+      \ stats sfn: 640.8, cumulated bad DCI 0\n    DL harq: 35/0\n    UL harq: 115/0\
+      \ avg code rate 0.1, avg bit/symbol 2.1, avg per TB: (nb RBs 14.8, nb symbols\
+      \ 6.7)\n"
     type: containerized
     derived_radio_config:
       dl_carrier_freq_hz: 3319680000
@@ -932,7 +768,7 @@ ues:
       additional_flags: -E --rfsim
   sim_ue2:
     is_installed: true
-    network_info: 10.244.104.6
+    network_info: 10.244.135.6
     image:
       repository: docker.io/oaisoftwarealliance/oai-nr-ue
       image_tag: 2026.w31
@@ -1006,8 +842,8 @@ ues:
       \e[0m[UTIL]   threadCreate() for ru_start_thread: creating thread with affinity\
       \ ffffffff, priority 97\n\e[0m[HW]     Running as client: will connect to a\
       \ rfsimulator server side\n\e[0m[HW]     [RAU] has loaded RFSIMULATOR device.\n\
-      \e[0m[HW]     Trying to connect to 10.244.31.94:4043\n\e[0m[HW]     Connection\
-      \ to 10.244.31.94:4043 established\n\e[0m\e[32m[HW]     RFsim: Number of antennas\
+      \e[0m[HW]     Trying to connect to 10.244.27.204:4043\n\e[0m[HW]     Connection\
+      \ to 10.244.27.204:4043 established\n\e[0m\e[32m[HW]     RFsim: Number of antennas\
       \ changed from 0 to 1\n\e[0m[PHY]    Intializing UE Threads for instance 0 ...\n\
       \e[0m[UTIL]   threadCreate() for UEthread_0: creating thread with affinity ffffffff,\
       \ priority 97\n\e[0m[UTIL]   threadCreate() for L1_UE_stats_0: creating thread\
@@ -1019,14 +855,14 @@ ues:
       \    Initial sync: pbch decoded sucessfully, ssb index 0\n\e[0m[PHY]    pbch\
       \ rx ok. rsrp:51 dB/RE, adjust_rxgain:-1 dB\n\e[0m[NR_PHY] Cell Detected with\
       \ GSCN: 0, SSB SC offset: 516, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS\
-      \ Corr Average: 55\n\e[0m[PHY]    [UE0] In synch, rx_offset 414720 samples\n\
-      \e[0m[PHY]    [UE 0] Measured Carrier Frequency offset 1 Hz\n\e[0m\e[32m[PHY]\
+      \ Corr Average: 55\n\e[0m[PHY]    [UE0] In synch, rx_offset 161280 samples\n\
+      \e[0m[PHY]    [UE 0] Measured Carrier Frequency offset 2 Hz\n\e[0m\e[32m[PHY]\
       \    Initial sync successful, PCI: 0\n\e[0m[PHY]    HW: Configuring channel\
-      \ 0 (rf_chain 0): setting tx_freq 3319680001 Hz, rx_freq 3319680001 Hz, tune_offset\
-      \ 0\n\e[0m[PHY]    Got synch: hw_slot_offset 36, carrier off 1 Hz\n\e[0m[NR_RRC]\
+      \ 0 (rf_chain 0): setting tx_freq 3319680002 Hz, rx_freq 3319680002 Hz, tune_offset\
+      \ 0\n\e[0m[PHY]    Got synch: hw_slot_offset 14, carrier off 2 Hz\n\e[0m[NR_RRC]\
       \ [UE 0] BCCH update: phyCellID 0->0, arfcn_ssb 0->621312\n\e[0m\e[32m[PHY]\
-      \    UE synchronized! decoded_frame_rx=50 UE->init_sync_frame=0 trashed_frames=20\n\
-      \e[0m[PHY]    Resynchronizing RX by 414720 samples\n\e[0m[HW]     received write\
+      \    UE synchronized! decoded_frame_rx=820 UE->init_sync_frame=1 trashed_frames=10\n\
+      \e[0m[PHY]    Resynchronizing RX by 161280 samples\n\e[0m[HW]     received write\
       \ reorder clear context\n\e[0m[PHY]    max_pos_acc = 0, shiftForNextFrame =\
       \ 0\n\e[0m\e[32m[NR_RRC] SIB1 decoded\n\e[0m[NR_MAC] [UE 0] Initial cell selection:\
       \ dl_frequency=3300600 kHz (from command-line, band=78, scs=1)\n\e[0m[NR_MAC]\
@@ -1038,23 +874,23 @@ ues:
       \ 4 UL symbols)\n\e[0m[NR_MAC] Configured 1 TDD patterns (total slots: pattern1\
       \ = 10, pattern2 = 0)\n\e[0m[PHY]    N_TA_offset changed from 0 to 600\n\e[0m[MAC]\
       \    Initialization of 4-Step CBRA procedure\n\e[0m[NR_MAC] [UE 0] selected\
-      \ PRACH occasion: start_symbol 0 fdm 0 slot 19 format 162\n\e[0m[NR_MAC] PRACH\
-      \ scheduler: Selected RO Frame 73, Slot 19, Symbol 0, Fdm 0\n\e[0m[PHY]    PRACH\
-      \ [UE 0] in frame.slot 73.19, placing PRACH in position 1804, Msg1/MsgA-Preamble\
-      \ frequency start 0 (k1 0), preamble_offset 5, first_nonzero_root_idx 0, preambleIndex\
-      \ = 28\n\e[0m[PHY]    [UE 0] RAR-Msg2 decoded\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI\
-      \ 010b] Got BI RAR subPDU 5 ms\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI 010b] Got\
-      \ RAPID RAR subPDU\n\e[0m\e[32m[NR_MAC] [UE 0][RAPROC][74.10] Found RAR with\
-      \ the intended RAPID 28\n\e[0m\e[93m[MAC]    received TA command 31\n\e[0m\e\
-      [32m[NR_MAC] [RAPROC][74.19] RA-Msg3 transmitted\n\e[0m\e[32m[NR_MAC] [UE 0][75.10][RAPROC]\
+      \ PRACH occasion: start_symbol 4 fdm 0 slot 19 format 162\n\e[0m[NR_MAC] PRACH\
+      \ scheduler: Selected RO Frame 833, Slot 19, Symbol 4, Fdm 0\n\e[0m[PHY]   \
+      \ PRACH [UE 0] in frame.slot 833.19, placing PRACH in position 1804, Msg1/MsgA-Preamble\
+      \ frequency start 0 (k1 0), preamble_offset 6, first_nonzero_root_idx 0, preambleIndex\
+      \ = 34\n\e[0m[PHY]    [UE 0] RAR-Msg2 decoded\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI\
+      \ 010f] Got BI RAR subPDU 5 ms\n\e[0m[NR_MAC] [UE 0][RAPROC][RA-RNTI 010f] Got\
+      \ RAPID RAR subPDU\n\e[0m\e[32m[NR_MAC] [UE 0][RAPROC][834.10] Found RAR with\
+      \ the intended RAPID 34\n\e[0m\e[93m[MAC]    received TA command 31\n\e[0m\e\
+      [32m[NR_MAC] [RAPROC][834.19] RA-Msg3 transmitted\n\e[0m\e[32m[NR_MAC] [UE 0][835.10][RAPROC]\
       \ 4-Step RA procedure succeeded. CBRA: Contention Resolution is successful.\n\
       \e[0m[NR_RRC] [UE0][RAPROC] Logical Channel DL-CCCH (SRB0), Received NR_RRCSetup\n\
       \e[0m[RLC]    Added srb 1 to UE 0\n\e[0m[NR_RRC] State = NR_RRC_CONNECTED\n\e\
-      [0m[NAS]    Generate Initial NAS Message: Registration Request\n\e[0m[NAS] \
-      \   [UE 0] Received NR_NAS_CONN_ESTABLISH_IND: asCause 0\n\e[0m[MAC]    [UE\
-      \ 0] Applying CellGroupConfig from gNodeB\n\e[0m[NR_RRC] [UE 0][RAPROC] Logical\
-      \ Channel UL-DCCH (SRB1), Generating RRCSetupComplete (bytes33)\n\e[0m[NAS]\
-      \    [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_AUTHENTICATION_REQUEST with\
+      [0m[NAS]    Generate Initial NAS Message: Registration Request\n\e[0m[NR_RRC]\
+      \ [UE 0][RAPROC] Logical Channel UL-DCCH (SRB1), Generating RRCSetupComplete\
+      \ (bytes33)\n\e[0m[NAS]    [UE 0] Received NR_NAS_CONN_ESTABLISH_IND: asCause\
+      \ 0\n\e[0m[MAC]    [UE 0] Applying CellGroupConfig from gNodeB\n\e[0m[NAS] \
+      \   [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_AUTHENTICATION_REQUEST with\
       \ length 42\n\e[0m[NAS]    [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_SECURITY_MODE_COMMAND\
       \ with length 19\n\e[0m[NAS]    Generate Initial NAS Message: Registration Request\n\
       \e[0m[NR_RRC] Received securityModeCommand (gNB 0)\n\e[0m[NR_RRC] Receiving\
@@ -1064,16 +900,16 @@ ues:
       \ rrc_TransactionIdentifier: 0\n\e[0m[NR_RRC] Received Capability Enquiry (gNB\
       \ 0)\n\e[0m[NR_RRC] Receiving from SRB1 (DL-DCCH), Processing UECapabilityEnquiry\n\
       \e[0m[CONFIG] function config_libconfig_init returned 0\nInitializing random\
-      \ number generator, seed 13012762530542093522\nTYPE <CTRL-C> TO TERMINATE\n\
-      kausf:b2 a2 da 78 5b 3c 16 eb 49 6a 4a 3 ed dc 67 66 8a 74 2b 7a 60 78 a 25\
-      \ 2 5f 74 c9 9c 3b 52 45 \nkseaf:db 33 14 c2 30 98 17 15 7e 71 1b 33 cc bf 4a\
-      \ 64 70 9b 6 df e9 22 ae d0 90 87 f5 fe 40 39 73 20 \nkamf:7e c5 a1 bd 58 cf\
-      \ 62 aa f1 b0 ce fd 99 a8 8d 1f 56 9b ad a2 b0 d7 94 cf d6 fc 74 77 2f 56 ac\
-      \ 77 \nknas_int: a2 5c f3 82 80 14 3 df d0 5b 8a 61 76 49 6b 4a \nknas_enc:\
-      \ ff ea 5e 22 1f e1 77 ae 96 25 3a 9 c7 a5 74 4b \nmac 6e 4c a9 38 \n[NR_RRC]\
-      \ deriving kRRCenc, kRRCint from KgNB=06 b2 ad db 95 02 b6 79 d7 af c1 2b 39\
-      \ 72 b5 a8 9a 9e 43 86 6a 75 00 28 58 8d c9 30 40 b5 cb f8 \e[0m\n[NR_RRC] securityModeComplete\
-      \ payload: 28 00 00 00 00 00 00 00 00 4e 00 0c e7 7a 00 00 \e[0m\n<UE-NR-Capability>\n\
+      \ number generator, seed 13287643523068418072\nTYPE <CTRL-C> TO TERMINATE\n\
+      kausf:eb b4 68 6a 55 ca 9c 7 e1 31 f0 d7 59 c 29 a1 1f dc b0 5d a c2 48 d1 f4\
+      \ 56 b5 44 93 99 b5 3d \nkseaf:cc 8d f8 f5 32 f4 62 c0 6e 6b 7e dc c6 46 3b\
+      \ 8b ac d2 d8 47 15 ee 3d f5 e1 b7 b2 df 17 72 e1 7 \nkamf:19 b8 e4 2d c6 5b\
+      \ 13 af 30 4f 80 5c 7c c4 85 8c 6a 26 14 f2 20 6f 3f d8 28 b7 c7 2 6 8f ae ae\
+      \ \nknas_int: c6 0 9d ad 36 6a 7c 26 bd 6a ee 67 5 75 9 86 \nknas_enc: cf 17\
+      \ 4e db eb ec 92 6 86 24 e5 c7 43 8d cf d2 \nmac 9e 57 e6 3f \n[NR_RRC] deriving\
+      \ kRRCenc, kRRCint from KgNB=af 5e 1e c4 a5 89 9a 43 03 77 e3 13 16 5b b9 4a\
+      \ 6a 1f 2b 9a e2 f7 2f 66 bb c8 bd c1 57 7d 79 8c \e[0m\n[NR_RRC] securityModeComplete\
+      \ payload: 28 00 00 00 00 00 00 00 00 df 00 9c 65 76 00 00 \e[0m\n<UE-NR-Capability>\n\
       \    <accessStratumRelease><rel15/></accessStratumRelease>\n    <pdcp-Parameters>\n\
       \        <supportedROHC-Profiles>\n            <profile0x0000><false/></profile0x0000>\n\
       \            <profile0x0001><false/></profile0x0001>\n            <profile0x0002><false/></profile0x0002>\n\
@@ -1090,79 +926,31 @@ ues:
       \    [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_REGISTRATION_ACCEPT with\
       \ length 46\n\e[0m[NAS]    Received Registration Accept with result 3GPP\n\e\
       [0m[NAS]    SMS not allowed in 5GS Registration Result\n\e[0m[NR_RRC] 5G-GUTI:\
-      \ AMF pointer 0, AMF Set ID 1, 5G-TMSI 3221227439 \n\e[0m[NAS]    Send NAS_UPLINK_DATA_REQ\
-      \ message(RegistrationComplete)\n\e[0m[NAS]    requested PDU session ID 1 type\
-      \ 1 NSSAI 1.16777215 DNN internet\n\e[0m[NAS]    Send NAS_UPLINK_DATA_REQ message(PduSessionEstablishRequest)\n\
-      \e[0m[NR_MAC] [UE 0] paging UE_ID=943\n\e[0m[NAS]    [UE 0] Received NAS_DOWNLINK_DATA_IND\
-      \ type FGS_CONFIGURATION_UPDATE_COMMAND with length 46\n\e[0m\e[93m[NR_RRC]\
-      \ unknown message type 84\n\e[0m[RLC]    Added srb 2 to UE 0\n\e[0m[RLC]   \
-      \ Added drb 1 to UE 0\n\e[0m[RLC]    Added DRB to UE 0\n\e[0m[NR_RRC] RRCReconfiguration\
-      \ includes radio Bearer Configuration\n\e[0m[MAC]    [UE 0] Applying CellGroupConfig\
-      \ from gNodeB\n\e[0m\e[93m[SDAP]    Could not find SDAP entity: entity list\
-      \ empty (ue_id=0 pdu_session_id=1)\n\e[0m[SDAP]   Creating SDAP entity ue_id=0\
-      \ pdu_session_id=1\n\e[0m[SDAP]   Default DRB for the created SDAP entity: DRB\
-      \ 1 \n\e[0m[PDCP]   Added DRB 1 to UE ID 0\n\e[0m[NR_RRC] State = NR_RRC_CONNECTED\n\
-      \e[0m[NR_RRC] RRCReconfiguration includes Measurement Configuration\n\e[0m\e\
-      [93m[NR_RRC] Measurement gaps not yet supported!\n\e[0m[NR_RRC] rrcReconfigurationComplete\
-      \ Encoded 10 bits (2 bytes)\n\e[0m[NR_RRC]  Logical Channel UL-DCCH (SRB1),\
-      \ Generating RRCReconfigurationComplete (bytes 2)\n\e[0m[NAS]    [UE 0] Received\
-      \ NAS_CONN_ESTABLI_CNF: errCode 1, length 68\n\e[0m[NAS]    Received PDU Session\
-      \ Establishment Accept, UE IPv4: 11.1.1.3\n\e[0m[SDAP]   UE 0 PDU session 1:\
-      \ cached QFI 1\n\e[0m[SDAP]   UE 0 PDU session 1: bringing TUN oaitun_ue1 up\n\
-      \e[0m[UTIL]   threadCreate() for ue_tun_read_0_p1: creating thread with affinity\
-      \ ffffffff, priority 1\n\e[0m\e[32m[OIP]    TUN Interface oaitun_ue1 successfully\
-      \ configured, IPv4 11.1.1.3, IPv6 (null)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats\
-      \ sfn: 128.8, cumulated bad DCI 0\n    DL harq: 21/0\n    UL harq: 56/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.1, avg per TB: (nb RBs 21.9, nb symbols 3.9)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 256.8, cumulated bad DCI 0\n    DL harq:\
-      \ 32/0\n    UL harq: 91/0 avg code rate 0.1, avg bit/symbol 2.1, avg per TB:\
-      \ (nb RBs 17.3, nb symbols 4.6)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 384.8,\
-      \ cumulated bad DCI 0\n    DL harq: 34/0\n    UL harq: 104/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.1, avg per TB: (nb RBs 15.8, nb symbols 5.7)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 78a2 stats sfn: 512.8, cumulated bad DCI 0\n    DL harq: 35/0\n\
-      \    UL harq: 117/0 avg code rate 0.1, avg bit/symbol 2.1, avg per TB: (nb RBs\
-      \ 14.6, nb symbols 6.5)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 640.8, cumulated\
-      \ bad DCI 0\n    DL harq: 36/0\n    UL harq: 130/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 13.6, nb symbols 7.2)\n\e[0m[NR_MAC] UE 0 RNTI 78a2\
-      \ stats sfn: 768.8, cumulated bad DCI 0\n    DL harq: 38/0\n    UL harq: 147/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 14.0, nb symbols\
-      \ 7.6)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 896.8, cumulated bad DCI 0\n\
-      \    DL harq: 40/0\n    UL harq: 160/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 13.3, nb symbols 8.0)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats\
-      \ sfn: 0.8, cumulated bad DCI 0\n    DL harq: 41/0\n    UL harq: 173/0 avg code\
-      \ rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 12.7, nb symbols 8.4)\n\e\
-      [0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 128.8, cumulated bad DCI 0\n    DL harq:\
-      \ 42/0\n    UL harq: 186/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 12.1, nb symbols 8.7)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 256.8,\
-      \ cumulated bad DCI 0\n    DL harq: 44/0\n    UL harq: 199/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 11.7, nb symbols 9.0)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 78a2 stats sfn: 384.8, cumulated bad DCI 0\n    DL harq: 45/0\n\
-      \    UL harq: 211/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 11.3, nb symbols 9.2)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 512.8, cumulated\
-      \ bad DCI 0\n    DL harq: 46/0\n    UL harq: 224/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 10.9, nb symbols 9.4)\n\e[0m[NR_MAC] UE 0 RNTI 78a2\
-      \ stats sfn: 640.8, cumulated bad DCI 0\n    DL harq: 47/0\n    UL harq: 237/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 10.6, nb symbols\
-      \ 9.6)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 768.8, cumulated bad DCI 0\n\
-      \    DL harq: 50/0\n    UL harq: 255/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 11.0, nb symbols 9.7)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats\
-      \ sfn: 896.8, cumulated bad DCI 0\n    DL harq: 51/0\n    UL harq: 267/0 avg\
-      \ code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 10.7, nb symbols 9.9)\n\
-      \e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 0.8, cumulated bad DCI 0\n    DL harq:\
-      \ 52/0\n    UL harq: 280/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB:\
-      \ (nb RBs 10.4, nb symbols 10.0)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 128.8,\
-      \ cumulated bad DCI 0\n    DL harq: 54/0\n    UL harq: 293/0 avg code rate 0.1,\
-      \ avg bit/symbol 2.0, avg per TB: (nb RBs 10.2, nb symbols 10.1)\n\e[0m[NR_MAC]\
-      \ UE 0 RNTI 78a2 stats sfn: 256.8, cumulated bad DCI 0\n    DL harq: 55/0\n\
-      \    UL harq: 306/0 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs\
-      \ 10.0, nb symbols 10.3)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 384.8, cumulated\
-      \ bad DCI 0\n    DL harq: 56/0\n    UL harq: 319/0 avg code rate 0.1, avg bit/symbol\
-      \ 2.0, avg per TB: (nb RBs 9.8, nb symbols 10.4)\n\e[0m[NR_MAC] UE 0 RNTI 78a2\
-      \ stats sfn: 512.8, cumulated bad DCI 0\n    DL harq: 57/0\n    UL harq: 331/0\
-      \ avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 9.6, nb symbols\
-      \ 10.5)\n\e[0m[NR_MAC] UE 0 RNTI 78a2 stats sfn: 640.8, cumulated bad DCI 0\n\
-      \    DL harq: 59/0\n    UL harq: 344/0 avg code rate 0.1, avg bit/symbol 2.0,\
-      \ avg per TB: (nb RBs 9.4, nb symbols 10.6)\n"
+      \ AMF pointer 0, AMF Set ID 1, 5G-TMSI 3221226362 \n\e[0m[NR_MAC] [UE 0] paging\
+      \ UE_ID=890\n\e[0m[NAS]    Send NAS_UPLINK_DATA_REQ message(RegistrationComplete)\n\
+      \e[0m[NAS]    requested PDU session ID 1 type 1 NSSAI 1.16777215 DNN internet\n\
+      \e[0m[NAS]    Send NAS_UPLINK_DATA_REQ message(PduSessionEstablishRequest)\n\
+      \e[0m[NAS]    [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_CONFIGURATION_UPDATE_COMMAND\
+      \ with length 46\n\e[0m\e[93m[NR_RRC] unknown message type 84\n\e[0m[RLC]  \
+      \  Added srb 2 to UE 0\n\e[0m[RLC]    Added drb 1 to UE 0\n\e[0m[RLC]    Added\
+      \ DRB to UE 0\n\e[0m[NR_RRC] RRCReconfiguration includes radio Bearer Configuration\n\
+      \e[0m[MAC]    [UE 0] Applying CellGroupConfig from gNodeB\n\e[0m\e[93m[SDAP]\
+      \    Could not find SDAP entity: entity list empty (ue_id=0 pdu_session_id=1)\n\
+      \e[0m[SDAP]   Creating SDAP entity ue_id=0 pdu_session_id=1\n\e[0m[SDAP]   Default\
+      \ DRB for the created SDAP entity: DRB 1 \n\e[0m[PDCP]   Added DRB 1 to UE ID\
+      \ 0\n\e[0m[NR_RRC] State = NR_RRC_CONNECTED\n\e[0m[NR_RRC] RRCReconfiguration\
+      \ includes Measurement Configuration\n\e[0m\e[93m[NR_RRC] Measurement gaps not\
+      \ yet supported!\n\e[0m[NR_RRC] rrcReconfigurationComplete Encoded 10 bits (2\
+      \ bytes)\n\e[0m[NR_RRC]  Logical Channel UL-DCCH (SRB1), Generating RRCReconfigurationComplete\
+      \ (bytes 2)\n\e[0m[NAS]    [UE 0] Received NAS_CONN_ESTABLI_CNF: errCode 1,\
+      \ length 68\n\e[0m[NAS]    Received PDU Session Establishment Accept, UE IPv4:\
+      \ 11.1.1.3\n\e[0m[SDAP]   UE 0 PDU session 1: cached QFI 1\n\e[0m[SDAP]   UE\
+      \ 0 PDU session 1: bringing TUN oaitun_ue1 up\n\e[0m[UTIL]   threadCreate()\
+      \ for ue_tun_read_0_p1: creating thread with affinity ffffffff, priority 1\n\
+      \e[0m\e[32m[OIP]    TUN Interface oaitun_ue1 successfully configured, IPv4 11.1.1.3,\
+      \ IPv6 (null)\n\e[0m[NR_MAC] UE 0 RNTI 0469 stats sfn: 896.8, cumulated bad\
+      \ DCI 0\n    DL harq: 14/0\n    UL harq: 42/0 avg code rate 0.1, avg bit/symbol\
+      \ 2.0, avg per TB: (nb RBs 25.9, nb symbols 5.4)\n"
     type: containerized
     derived_radio_config:
       dl_carrier_freq_hz: 3319680000
