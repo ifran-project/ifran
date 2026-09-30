@@ -23,9 +23,9 @@ OFFICIAL_ORAN_SC_M_TYPES = {
     RICComponentType.SUBMGR,
 }
 
-# Namespace names defined by the O-RAN SC deployment convention.  Keep these
-# here as the single source of truth: component reconciliation feeds the
-# namespace into Helm values and generated Service names.
+# Namespace names defined by the O-RAN SC deployment convention.
+# Keep these here as the single source of truth:
+# component reconciliation feeds the namespace into Helm values and generated Service names.
 ORAN_SC_PLATFORM_NAMESPACE = "ricplt"
 ORAN_SC_XAPP_NAMESPACE = "ricxapp"
 
