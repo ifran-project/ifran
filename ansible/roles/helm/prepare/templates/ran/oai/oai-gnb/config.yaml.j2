@@ -183,6 +183,45 @@ RUs:
 {% if component.config.ru.ips %}
     sdr_addrs: "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
 {% endif %}
+{% if component.advanced_config and component.advanced_config.num_tp_cores %}
+    num_tp_cores: {{ component.advanced_config.num_tp_cores }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.rxfh_core_id %}
+    rxfh_core_id: {{ component.advanced_config.rxfh_core_id }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.txfh_core_id %}
+    txfh_core_id: {{ component.advanced_config.txfh_core_id }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.tp_cores %}
+    tp_cores: {{ component.advanced_config.tp_cores }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.nr_flag %}
+    nr_flag: {{ component.advanced_config.nr_flag }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.sl_ahead %}
+    sl_ahead: {{ component.advanced_config.sl_ahead }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.local_if_name %}
+    local_if_name: "{{ component.advanced_config.local_if_name }}"
+{% endif %}
+{% if component.advanced_config and component.advanced_config.remote_address %}
+    remote_address: "{{ component.advanced_config.remote_address }}"
+{% endif %}
+{% if component.advanced_config and component.advanced_config.local_address %}
+    local_address: "{{ component.advanced_config.local_address }}"
+{% endif %}
+{% if component.advanced_config and component.advanced_config.local_portc %}
+    local_portc: {{ component.advanced_config.local_portc }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.remote_portc %}
+    remote_portc: {{ component.advanced_config.remote_portc }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.local_portd %}
+    local_portd: {{ component.advanced_config.local_portd }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.remote_portd %}
+    remote_portd: {{ component.advanced_config.remote_portd }}
+{% endif %}
 
 {% if component.config.ru.type == "simulated" %}
 rfsimulator:
