@@ -18,8 +18,8 @@ gNBs:
       - mcc: {{ plmn.plmnId.mcc }}
         mnc: {{ plmn.plmnId.mnc }}
         mnc_length: {{ plmn.plmnId.mncLength }}
-{% for slice in plmn.snssaiList %}
         snssaiList:
+{% for slice in plmn.snssaiList %}
           - sst: {{ slice.sst }}
 {% if slice.sd %}
             sd: 0x{{ slice.sd }}
