@@ -152,21 +152,21 @@ def derive_oai_ran_config(
 
     if radio_config.duplexMode == DuplexMode.FDD:
         # compute uplink point a based on the shift between dl and ul arfcn
-        arfcn_shift = radio_config.uplinkArfcn - radio_config.downlinkArfcn
+        arfcn_shift = radio_config.uplinkArfcn - radio_config.downlinkArfcn # type: ignore
         ul_point_a_arfcn = radio_config.pointAFrequencyArfcn + arfcn_shift
 
         oai_tdd_periodicity = None
 
     elif radio_config.duplexMode == DuplexMode.TDD:
         ul_point_a_arfcn = None
-        oai_tdd_periodicity = OAI_TDD_PERIODICITY.get(radio_config.tddConfiguration.periodicityMilliseconds)
+        oai_tdd_periodicity = OAI_TDD_PERIODICITY.get(radio_config.tddConfiguration.periodicityMilliseconds) # type: ignore
 
     # additional flags for rfsim
     if component_deployment.advanced_config and component_deployment.advanced_config.useAdditionalOptions:
         additional_flags = component_deployment.advanced_config.useAdditionalOptions
     else:
         # -E enables continuous synchronization/transmission optimizations
-        additional_flags = "-E --rfsim" if ru.type is RUType.SIMULATED else "-E"
+        additional_flags = "-E --rfsim" if ru.type is RUType.SIMULATED else "-E" # type: ignore
 
     return {
         "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
@@ -175,7 +175,7 @@ def derive_oai_ran_config(
         "ssb_numerology": NUMEROLOGY[radio_config.ssbSubcarrierSpacing],
         "oai_tdd_periodicity": oai_tdd_periodicity,
         "oai_ssb_periodicity": OAI_SSB_PERIODICITY.get(radio_config.ssbPeriodicityMs, 2),
-        "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
+        "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""), # type: ignore
         "additional_flags": additional_flags,
     }
 
@@ -190,20 +190,20 @@ def derive_ocudu_ran_config(
     ru = component_meta.config.ru
     radio_config: RadioConfiguration = component_meta.config.radioConfiguration
 
-    if ru.type is RUType.SIMULATED:
+    if ru.type is RUType.SIMULATED: # type: ignore
         device_driver = "zmq"
-    elif ru.type is RUType.USRP:
+    elif ru.type is RUType.USRP: # type: ignore
         device_driver = "uhd"
     else:
         device_driver = None
 
     derived = {
         "device_driver": device_driver,
-        "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
+        "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""), # type: ignore
     }
     if radio_config.duplexMode is DuplexMode.TDD:
         tdd = radio_config.tddConfiguration
-        period = tdd.periodicityMilliseconds.value
+        period = tdd.periodicityMilliseconds.value # type: ignore
         period_slots = round(period / (15.0 / radio_config.subcarrierSpacingKhz.value))
         derived["tdd_period_slots"] = period_slots
 
@@ -229,10 +229,10 @@ RAN_CONFIG_DERIVATOR: dict[RANImplementation, Callable] = {
 def derive_ran_radio_config(
         component_meta: GNBComponent | DUComponent,
         component_deployment: DeployedRANComponent,
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any]: # type: ignore
     """Derive gNB or DU's component's implementation-specific radio parameters."""
 
-    component_deployment.derived_radio_config = RAN_CONFIG_DERIVATOR[component_deployment.implementation](
+    component_deployment.derived_radio_config = RAN_CONFIG_DERIVATOR[component_deployment.implementation]( # type: ignore
         component_meta=component_meta,
         component_deployment=component_deployment,
         )
@@ -251,7 +251,7 @@ def derive_oai_ue_config(
     if ue_meta.type is UEType.CONTAINERIZED:
         ru = ue_meta.config.ru
         gnb = ue_meta.config.gnbs[0]
-        radio_config: RadioConfiguration = gnb.config.radioConfiguration
+        radio_config: RadioConfiguration = gnb.config.radioConfiguration # type: ignore
 
         # calculate the ue parameters
         # https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/runmodem-nrue.md
@@ -261,7 +261,7 @@ def derive_oai_ue_config(
 
         # --CO : uplink frequency offset for FDD in Hz
         if radio_config.duplexMode == DuplexMode.FDD:
-            ul_carrier_freq_hz = nr_arfcn_to_frequency_hz(radio_config.uplinkArfcn)
+            ul_carrier_freq_hz = nr_arfcn_to_frequency_hz(radio_config.uplinkArfcn) # type: ignore
             offset_hz = ul_carrier_freq_hz - dl_carrier_freq_hz
         else:
             # set to 0 for tdd
@@ -297,7 +297,7 @@ def derive_oai_ue_config(
         else:
             # -E enables continuous synchronization/transmission optimizations
             additional_flags = (
-                "-E --rfsim" if ru.type is RUType.SIMULATED and gnb.implementation is RANImplementation.OAI
+                "-E --rfsim" if ru.type is RUType.SIMULATED and gnb.implementation is RANImplementation.OAI # type: ignore
                 else "-E"
             )
 
@@ -307,7 +307,7 @@ def derive_oai_ue_config(
             "numerology": numerology, # numerology
             "bandwidth_rb": bandwidth_rb, # N_RB_DL
             "ssb_start": ssb_start, # ssb_start
-            "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
+            "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""), # type: ignore
             "additional_flags": additional_flags,
         }
 
@@ -330,20 +330,20 @@ def derive_srsue_ue_config(
 
     if ue_meta.type is UEType.CONTAINERIZED:
         # gnb references must be resolved by now
-        radio_config: RadioConfiguration = ue_meta.config.gnbs[0].config.radioConfiguration
+        radio_config: RadioConfiguration = ue_meta.config.gnbs[0].config.radioConfiguration # type: ignore
 
         ru = ue_meta.config.ru # must be resolved by now
 
-        if ru.type is RUType.SIMULATED:
+        if ru.type is RUType.SIMULATED: # type: ignore
             device_driver = "zmq"
-        elif ru.type is RUType.USRP:
+        elif ru.type is RUType.USRP: # type: ignore
             device_driver = "uhd"
         else:
             device_driver = None
 
         derived = {
             "device_driver": device_driver,
-            "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""),
+            "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""), # type: ignore
             "nof_prb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
         }
 
@@ -361,7 +361,7 @@ UE_CONFIG_DERIVATOR: dict[UEImplementation, Callable] = {
 def derive_ue_radio_config(
         ue_meta: UE,
         ue_deployment: DeployedUE,
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any]: # type: ignore
     """Derive UE's implementation-specific radio parameters."""
 
     ue_deployment.derived_radio_config = UE_CONFIG_DERIVATOR[ue_deployment.implementation](
