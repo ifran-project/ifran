@@ -443,9 +443,9 @@ class K8SComponent(StrictBaseModel):
 
 
     @model_validator(mode="after")
-    def ensure_network_status(self) -> Self:
-        """Ensure installed component has network status."""
+    def ensure_network_info(self) -> Self:
+        """Ensure installed component has network info."""
 
         if self.is_installed and self.network_info is None:
-            raise ValueError("Component is installed but has no 'network_status'.")
+            raise ValueError("Component is installed but has no 'network_info'.")
         return self
