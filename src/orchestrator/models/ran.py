@@ -261,7 +261,7 @@ class DeployedRANComponent(Deployed5GComponent):
 class RANDeployment(Deployed5GNetwork):
     """5G RAN deployment."""
 
-    implementation: RANImplementation | None = Field(default=RANImplementation.OAI)
+    implementation: RANImplementation = Field(default=RANImplementation.OAI)
     """RAN implementation."""
 
     components: dict[str, DeployedRANComponent] = Field(default_factory=dict)
