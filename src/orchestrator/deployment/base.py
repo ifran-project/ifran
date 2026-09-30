@@ -206,7 +206,7 @@ class BaseManagement:
         )
 
         # NOTE the deployment model should retrigger its validation functions for the newly added components
-        # this is mainly important to populate the implementation for the added core, ran, ric and ues components
+        # this is mainly important to populate the implementation for the added core, ric and ran components
         self.deployment_model = DeploymentModel.model_validate(self.deployment_model.model_dump())
 
 
