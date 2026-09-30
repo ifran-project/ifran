@@ -13,7 +13,7 @@ from orchestrator.models.ran import ADVANCED_RAN_CONFIG_MAPPING, DeployedRANComp
 from orchestrator.models.ric import MergedRIC
 from orchestrator.utils.common_5g import (
     get_5g_components_by_type,
-    populate_iface_for_deployed,
+    populate_iface,
     reconcile_5g_component,
     reconcile_5g_components,
     resolve_component_reference,
@@ -31,16 +31,18 @@ def resolve_amf_ref(
         component_meta: RANComponent,
         amfs_meta: dict[str, AMFComponent],
         amfs_deployment: dict[str, Deployed5GComponent],
+        check_is_installed: bool = True,
     ) -> None:
     """Resolve name reference of AMF in a RAN component."""
 
     amfs: dict[str, MergedAMF] = {}
 
-    # before resolving amf reference, amf's n2 interface needs to be populated from its network info
+    # before resolving amf reference, amf's n2 interface needs to be populated
+    # from its network info if it was deployed, or static IPs if not
     for amf_name, amf_meta in amfs_meta.items():
         amf_deployment = amfs_deployment[amf_name]
 
-        populate_iface_for_deployed(
+        populate_iface(
             iface_name="n2",
             component_meta=amf_meta,
             component_deployment=amf_deployment,
@@ -57,7 +59,7 @@ def resolve_amf_ref(
         component_meta=component_meta,
         ref_attribute="amf",
         registry=amfs,
-        ready_attribute="is_installed",
+        ready_attribute="is_installed" if check_is_installed else None,
         value_attribute="config.n2.ipv4EndPointAddress",
     )
 
@@ -67,16 +69,18 @@ def resolve_ric_ref(
         component_meta: RANComponent,
         rics_meta: dict[str, ValidatedRICComponent],
         rics_deployment: dict[str, Deployed5GComponent],
+        check_is_installed: bool = True,
     ) -> None:
     """Resolve name reference of RIC in a RAN component."""
 
     rics: dict[str, MergedRIC] = {}
 
-    # before resolving ric references, its e2 interface needs to be populated from its network info
+    # before resolving ric references, its e2 interface needs to be populated
+    # from its network info if it was deployed, or static IPs if not
     for ric_name, ric_meta in rics_meta.items():
         ric_deployment = rics_deployment[ric_name]
 
-        populate_iface_for_deployed(
+        populate_iface(
             iface_name="e2",
             component_meta=ric_meta,
             component_deployment=ric_deployment,
@@ -93,7 +97,7 @@ def resolve_ric_ref(
         component_meta=component_meta,
         ref_attribute="ric",
         registry=rics,
-        ready_attribute="is_installed",
+        ready_attribute="is_installed" if check_is_installed else None,
         value_attribute="config.e2.ipv4EndPointAddress",
     )
 
