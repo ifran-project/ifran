@@ -15,7 +15,7 @@
 - name: Reset Kubernetes node state  on '{{ node.name }}'
   ansible.builtin.command: kubeadm reset --force
   changed_when: false
-  ignore_errors: true
+  failed_when: false
   when: kubeadm_binary.rc == 0
 
 - name: Remove Kubernetes manifests  on '{{ node.name }}'
