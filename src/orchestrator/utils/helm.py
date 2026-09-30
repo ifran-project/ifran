@@ -156,6 +156,8 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
 
     elif action == "uninstall":
         component_deployment.is_installed = False
+        # reset network info to None
+        component_deployment.network_info = None
 
 
 async def run_parallel_helm_action(  # noqa: PLR0917
