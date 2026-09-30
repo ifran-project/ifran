@@ -166,7 +166,9 @@ def derive_oai_ran_config(
         additional_flags = component_deployment.advanced_config.useAdditionalOptions
     else:
         # -E enables continuous synchronization/transmission optimizations
-        additional_flags = "-E --rfsim" if ru.type is RUType.SIMULATED else "-E" # type: ignore
+        # NOTE don't use -E with real RUs
+        # for some reason the gNB can't see radio signals anymore (tested on N300 and N320)
+        additional_flags = "-E --rfsim" if ru.type is RUType.SIMULATED else "" # type: ignore
 
     return {
         "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
@@ -298,7 +300,7 @@ def derive_oai_ue_config(
             # -E enables continuous synchronization/transmission optimizations
             additional_flags = (
                 "-E --rfsim" if ru.type is RUType.SIMULATED and gnb.implementation is RANImplementation.OAI # type: ignore
-                else "-E"
+                else ""
             )
 
         derived = {
