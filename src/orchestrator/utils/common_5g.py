@@ -210,6 +210,7 @@ def resolve_ru_reference(
         component_meta: Component5G,
         rus_meta: dict[str, RU],
         rus_provisioning: dict[str, ProvisionableRU],
+        check_is_porvisioned: bool = True,
     ) -> None:
     """Resolve RU name reference in a 5G component."""
 
@@ -231,23 +232,17 @@ def resolve_ru_reference(
         component_meta=component_meta,
         ref_attribute="ru",
         registry=rus,
-        ready_attribute="is_provisioned",
+        ready_attribute="is_provisioned" if check_is_porvisioned else None,
     )
 
 
+# NOTE all deployed 5g components are supposed to have a defined implementation
 def populate_default_images(
         component_name: str,
         component_meta: Component5G,
         component_deployment: Deployed5GComponent,
     ) -> None:
     """Populate 5G component image from default images."""
-
-    # if not implementation is defined raise an error
-    if component_deployment.implementation is None:
-        raise ValueError(
-            f"{component_meta.category.value.upper()} component {component_name!r} "
-            f"has no defined {component_meta.category.value} implementation."
-        )
 
     # look for default image if not image was explicitly given
     if component_deployment.image is None:
@@ -295,12 +290,13 @@ def add_node_selection_labels(
     component_deployment.node_selector = selector
 
 
+# NOTE this should not be used on undeployed components, otherwise the interface's endpoint will be ovewirtten to None
 def populate_iface_for_deployed(
         iface_name: str,
         component_meta: Component5G,
         component_deployment: Deployed5GComponent,
     ) -> None:
-    """Populate component interface endpoint for deployed 5G component from its network info."""
+    """Populate component interface endpoint for a deployed 5G component from its network info."""
 
     iface_meta: TransportEndpoint = getattr(component_meta.config, iface_name)
 
@@ -342,6 +338,41 @@ def populate_iface_for_undeployed(
                 break
 
 
+def populate_iface(
+        iface_name: str,
+        component_meta: Component5G,
+        component_deployment: Deployed5GComponent,
+    ) -> None:
+    """
+    Populate component interface endpoint for a 5G component if not explicitly set.
+
+    The interface endpoint is populated from the component's network info if it has one,
+    meaning it is deployed, otherwise, its static IPs are used when it is not yet deployed.
+    If no defined IP was found, the existing default value (0.0.0.0) is kept.
+    """
+
+    iface_meta: TransportEndpoint = getattr(component_meta.config, iface_name)
+
+    # populate interface ip if not explicitly set
+    if iface_meta.ipv4EndPointAddress == IPv4Address("0.0.0.0"):
+
+        # if component is already deployed
+        if component_deployment.network_info:
+            populate_iface_for_deployed(
+                iface_name=iface_name,
+                component_meta=component_meta,
+                component_deployment=component_deployment,
+            )
+
+        # component hasn't been deployed yet => look for predefined static ips
+        else:
+            populate_iface_for_undeployed(
+                iface_name=iface_name,
+                component_meta=component_meta,
+                component_deployment=component_deployment,
+            )
+
+
 def populate_exposed_endpoints(
         component_meta: Component5G,
         component_deployment: Deployed5GComponent,
@@ -360,24 +391,12 @@ def populate_exposed_endpoints(
                 ExposedPort(port=iface_meta.port, protocol=iface_meta.protocol)
             )
 
-            # populate interface ip if not explicitly set
-            if iface_meta.ipv4EndPointAddress == IPv4Address("0.0.0.0"):
-
-                # if component is already deployed
-                if component_deployment.network_info:
-                    populate_iface_for_deployed(
-                        iface_name=iface_name,
-                        component_meta=component_meta,
-                        component_deployment=component_deployment,
-                    )
-
-                # component hasn't been deployed yet => look for predefined static ips
-                else:
-                    populate_iface_for_undeployed(
-                        iface_name=iface_name,
-                        component_meta=component_meta,
-                        component_deployment=component_deployment,
-                    )
+            # populate interface ip
+            populate_iface(
+                iface_name=iface_name,
+                component_meta=component_meta,
+                component_deployment=component_deployment,
+            )
 
 
 def reconcile_5g_component(
