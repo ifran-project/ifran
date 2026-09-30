@@ -12,6 +12,7 @@
 # - flavor: str
 # - create_experiment: bool
 # - experiment_duration: str
+# - allow_created: bool
 
 # Output:
 # - ssh_info: SSHInfo
@@ -23,7 +24,7 @@
 - name: Delete experiment with name '{{ experiment }}' if it exists before attempting create for '{{ resource_name }}'
   ansible.builtin.command: slices experiment delete {{ experiment }} --force
   register: delete_result
-  ignore_errors: true
+  failed_when: false
   when: create_experiment
 
 - name: Wait for experiment deletion to take effect for '{{ resource_name }}'
@@ -36,7 +37,7 @@
 
 - name: Try to create experiment '{{ experiment }}' for '{{ resource_name }}'
   ansible.builtin.command: slices experiment create {{ experiment }} --duration {{ experiment_duration }}
-  ignore_errors: true
+  failed_when: false
   when: create_experiment
 
 - name: Define SLICES_BI_INFRA and SLICES_EXPERIMENT environment variables for '{{ resource_name }}'
@@ -48,6 +49,7 @@
 - name: Create '{{ resource_name }}' on infrastructure '{{ infra }}' using experiment '{{ experiment }}'
   ansible.builtin.command: slices bi create {{ resource_name }} --image "{{ image }}" --flavor "{{ flavor }}" --duration {{ node_duration }} --wait
   environment: "{{ bi_env }}"
+  failed_when: not allow_created
 
 - name: Get '{{ resource_name }}' information
   ansible.builtin.command: slices bi show {{ resource_name }} --format json
