@@ -41,6 +41,7 @@ doc = [
 
 [tool.ruff]
 line-length = 120
+extend-exclude = ["examples"]
 
 [tool.ruff.lint]
 select = [
@@ -125,6 +126,7 @@ exclude = [
     ".venv",
     "dist",
     "build",
+    "exclude",
 ]
 pythonVersion = "3.12"
 typeCheckingMode = "basic"
