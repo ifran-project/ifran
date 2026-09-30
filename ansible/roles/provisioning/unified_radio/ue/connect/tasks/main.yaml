@@ -21,10 +21,22 @@
       Authorization: "Bearer {{ generated_token }}"
     body_format: json
     body:
-      nr5g_info:
-        nr5g_bands:
-          - "n{{ ue.config.nrBands[0] }}"
-      ue_configuration_data: "{{ ue.config }}"
+      nr_bands: "{{ ue.config.nrBands }}"
+      contexts: >-
+        [
+          {% for pdu_session in ue_config.pduSessions %}
+            {% set subscription = ue_config.subscriptions[pdu_session.subscriptionIndex] %}
+            {
+              "ssc": "{{ pdu_session.sscMode }}",
+              "dnn": {{ subscription.dnn.name }},
+              "pdu_session_type": "{{ subscription.dnn.pduSessionType }}",
+              "s_nssai": {
+                "sst": {{ subscription.snssai.sst }},
+                "sd": 0x{{ subscription.snssai.sd }},
+              },
+            },
+          {% endfor %}
+        ]
     status_code: 200
 
 - name: Turn radio on for '{{ ue_name }}'
@@ -42,5 +54,19 @@
     headers:
       Authorization: "Bearer {{ generated_token }}"
     body_format: json
-    body: "{{ ue.config }}"
+    body: >-
+      [
+        {% for pdu_session in ue_config.pduSessions %}
+          {% set subscription = ue_config.subscriptions[pdu_session.subscriptionIndex] %}
+          {
+            "ssc": "{{ pdu_session.sscMode }}",
+            "dnn": {{ subscription.dnn.name }},
+            "pdu_session_type": "{{ subscription.dnn.pduSessionType }}",
+            "s_nssai": {
+              "sst": {{ subscription.snssai.sst }},
+              "sd": 0x{{ subscription.snssai.sd }},
+            },
+          },
+        {% endfor %}
+      ]
     status_code: 200
