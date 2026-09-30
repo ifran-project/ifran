@@ -13,6 +13,36 @@
     name: provisioning/unified_radio/get_token
     public: true # share role vars for next tasks (token)
 
+- name: Initialize contexts for '{{ ue_name }}'
+  ansible.builtin.set_fact:
+    ue_contexts: []
+
+- name: Build contexts for '{{ ue_name }}'
+  ansible.builtin.set_fact:
+    ue_contexts: >-
+      {{
+        ue_contexts + [
+          {
+            'ssc': pdu_session.sscMode,
+            'dnn': subscription.dnn.name,
+            'pdu_session_type': subscription.dnn.pduSessionType,
+            's_nssai': {
+              'sst': subscription.snssai.sst,
+              'sd': subscription.snssai.sd | int(base=16)
+            }
+          }
+        ]
+      }}
+  vars:
+    subscription: "{{ ue.config.subscriptions[pdu_session.subscriptionIndex] }}"
+  loop: "{{ ue.config.pduSessions }}"
+  loop_control:
+    loop_var: pdu_session
+    label: "{{ subscription.dnn.name }}"
+
+- debug:
+    var: ue_contexts
+
 - name: Disconnect '{{ ue_name }}'
   ansible.builtin.uri:
     url: "{{ base_url }}/ue/{{ ue_name }}/disconnect"
@@ -20,5 +50,6 @@
     headers:
       Authorization: "Bearer {{ generated_token }}"
     body_format: json
-    body: "{{ ue.config }}"
+    body: "{{ ue_contexts }}"
+    timeout: 300 # disconnect takes some time
   loop: "{{ ue_config.pduSessions }}"
