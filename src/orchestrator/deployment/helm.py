@@ -7,7 +7,6 @@ from metamodel.models.ue import UEType
 
 from orchestrator.deployment.base import BaseManagement
 from orchestrator.models.provisioning import ProvisionableNode
-from orchestrator.utils.common_5g import get_nested_attribute, reconcile_5g_component
 from orchestrator.utils.helm import ComponentDependencyGraph, run_parallel_helm_action
 from orchestrator.utils.utils import ReferenceNotFoundError
 
