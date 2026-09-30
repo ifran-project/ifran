@@ -266,7 +266,10 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
     ) -> None:
     """Reserve provided reservable resources in parallel."""
 
-    grouped: dict[str, list[str]] = get_resources_by_provisioner(resources)
+    # only reserve unprovisioned resources and not all of them
+    target_resources = {k: v for k, v in resources.items() if not v.is_provisioned} if not force else resources
+
+    grouped: dict[str, list[str]] = get_resources_by_provisioner(target_resources)
     tasks: dict[str, asyncio.Task] = {}
 
     for provisioner_name, resources_list in grouped.items():
