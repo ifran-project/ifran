@@ -18,7 +18,7 @@ class Deployed5GComponent(K8SComponent):
     """Component type in the 5G category it's in (e.g. amf, upf, gnb, ... etc)."""
 
     # populated by parent metamodel validator before validation
-    implementation: str | None = Field(default=None)
+    implementation: str = Field()
     """Component 5G category's implementation (e.g. oai, open5gs, srsran, ... etc)."""
 
     # incoming 'advanced_config' is validated into concrete model afterwards
@@ -53,22 +53,54 @@ class Deployed5GComponent(K8SComponent):
 class Deployed5GNetwork(StrictBaseModel):
     """Base class for 5G network deployment."""
 
-    implementation: str | None = Field(default=None)
+    implementation: str = Field()
     """5G network implementation."""
 
     components: dict[str, Deployed5GComponent] = Field(default_factory=dict)
     """5G network components."""
 
-    @model_validator(mode="after")
-    def populate_component_implementation(self) -> Self:
-        """Populate 5G network component implementation after validation."""
 
-        # if network implementation is None, each component should define its implementation
-        if self.implementation:
-            for component in self.components.values():
-                if component.implementation is None:
-                    component.implementation = self.implementation
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def populate_component_implementation(cls, data: Any) -> Any:
+        """Populate component implementation from the network implementation."""
+
+        if not isinstance(data, dict):
+            return data
+
+        # resolve the network implementation from the input or the model's default value
+        # NOTE the model's default value is NOT populated yet in a before validator
+        implementation = data.get("implementation")
+
+        if implementation is None:
+            # if None, use the model's default value
+            # NOTE the model's default value is NOT populated yet in a before validator
+            implementation = cls.model_fields["implementation"].get_default(call_default_factory=True)
+
+        if implementation is None:
+            # if it's still None, the inheriting classes should handle that
+            return data
+
+        components = data.get("components")
+        if not components:
+            return data
+
+        data = data.copy()
+        data["components"] = {
+            name: {
+                **component,
+                # NOTE the populated implementation takes precedence
+                # over the previous one in the component and overwrites it
+                "implementation": (
+                    component.get("implementation")
+                    if component.get("implementation") is not None
+                    else implementation
+                ),
+            }
+            for name, component in components.items()
+        }
+
+        return data
 
 
     def validate_supported_component_types(self, supported: dict) -> Self:
