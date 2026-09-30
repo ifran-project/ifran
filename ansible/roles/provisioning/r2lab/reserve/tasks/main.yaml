@@ -55,3 +55,17 @@
           ).strftime('%Y-%m-%dT%H:%M:%S%z')
         }}
     status_code: 201
+
+- name: Get access token if missing for R2lab
+  ansible.builtin.include_role:
+    name: provisioning/unified_radio/get_token
+    public: true # share role vars for next tasks (token)
+
+- name: Turn all off on R2lab
+  ansible.builtin.uri:
+    url: "{{ base_url }}/power/r2lab-all/power_off"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    status_code: 200
+    timeout: 300 # r2lab all-off takes a long time to execute, tolerate up to 5 minutes timeout

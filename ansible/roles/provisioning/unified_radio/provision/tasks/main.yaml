@@ -23,6 +23,7 @@
     headers:
       Authorization: "Bearer {{ generated_token }}"
     status_code: 200
+    timeout: 300 # power on takes some time
 
 - name: Get resource info for '{{ resource_name }}'
   ansible.builtin.uri:

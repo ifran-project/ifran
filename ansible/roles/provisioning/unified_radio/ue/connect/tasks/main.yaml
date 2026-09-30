@@ -13,6 +13,36 @@
     name: provisioning/unified_radio/get_token
     public: true # share role vars for next tasks (token)
 
+- name: Initialize contexts for '{{ ue_name }}'
+  ansible.builtin.set_fact:
+    ue_contexts: []
+
+- name: Build contexts for '{{ ue_name }}'
+  ansible.builtin.set_fact:
+    ue_contexts: >-
+      {{
+        ue_contexts + [
+          {
+            'ssc': pdu_session.sscMode,
+            'dnn': subscription.dnn.name,
+            'pdu_session_type': subscription.dnn.pduSessionType,
+            's_nssai': {
+              'sst': subscription.snssai.sst,
+              'sd': subscription.snssai.sd | int(base=16)
+            }
+          }
+        ]
+      }}
+  vars:
+    subscription: "{{ ue.config.subscriptions[pdu_session.subscriptionIndex] }}"
+  loop: "{{ ue.config.pduSessions }}"
+  loop_control:
+    loop_var: pdu_session
+    label: "{{ subscription.dnn.name }}"
+
+- debug:
+    var: ue_contexts
+
 - name: Initialize '{{ ue_name }}'
   ansible.builtin.uri:
     url: "{{ base_url }}/ue/{{ ue_name }}/initialize"
@@ -22,22 +52,9 @@
     body_format: json
     body:
       nr_bands: "{{ ue.config.nrBands }}"
-      contexts: >-
-        [
-          {% for pdu_session in ue_config.pduSessions %}
-            {% set subscription = ue_config.subscriptions[pdu_session.subscriptionIndex] %}
-            {
-              "ssc": "{{ pdu_session.sscMode }}",
-              "dnn": {{ subscription.dnn.name }},
-              "pdu_session_type": "{{ subscription.dnn.pduSessionType }}",
-              "s_nssai": {
-                "sst": {{ subscription.snssai.sst }},
-                "sd": 0x{{ subscription.snssai.sd }},
-              },
-            },
-          {% endfor %}
-        ]
+      contexts: "{{ ue_contexts }}"
     status_code: 200
+    timeout: 300 # initialize takes some time
 
 - name: Turn radio on for '{{ ue_name }}'
   ansible.builtin.uri:
@@ -46,6 +63,7 @@
     headers:
       Authorization: "Bearer {{ generated_token }}"
     status_code: 200
+    timeout: 300 # radio on takes some time
 
 - name: Connect '{{ ue_name }}'
   ansible.builtin.uri:
@@ -54,19 +72,6 @@
     headers:
       Authorization: "Bearer {{ generated_token }}"
     body_format: json
-    body: >-
-      [
-        {% for pdu_session in ue_config.pduSessions %}
-          {% set subscription = ue_config.subscriptions[pdu_session.subscriptionIndex] %}
-          {
-            "ssc": "{{ pdu_session.sscMode }}",
-            "dnn": {{ subscription.dnn.name }},
-            "pdu_session_type": "{{ subscription.dnn.pduSessionType }}",
-            "s_nssai": {
-              "sst": {{ subscription.snssai.sst }},
-              "sd": 0x{{ subscription.snssai.sd }},
-            },
-          },
-        {% endfor %}
-      ]
+    body: "{{ ue_contexts }}"
     status_code: 200
+    timeout: 300 # connect takes some time

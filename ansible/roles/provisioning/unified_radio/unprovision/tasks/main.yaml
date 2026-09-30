@@ -20,3 +20,4 @@
     headers:
       Authorization: "Bearer {{ generated_token }}"
     status_code: 200
+    timeout: 300 # power off takes some time
