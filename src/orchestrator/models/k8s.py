@@ -94,7 +94,10 @@ class K8SParams(StrictBaseModel):
     calico_version: str = Field(default="3.32.1", pattern=SEM_VER_PATTERN)
     """Calico CNI version."""
 
-    install_multus: bool = Field(default=True)
+    # NOTE leave install_multus=False as default to avoid possible OOMKilled error
+    # whene many pods are created in parallel. See this related issue:
+    # https://github.com/k8snetworkplumbingwg/multus-cni/issues/1346
+    install_multus: bool = Field(default=False)
     """If True, Multus CNI will be deployed on the cluster."""
 
     multus_version: str = Field(default="4.3.0")
