@@ -316,6 +316,9 @@ class BIParams(GenericProvisionerParams):
     node_duration: str = Field(default="3h", pattern=r"^\d+[mhdwy]$")
     """BI node lifetime duration."""
 
+    allow_created: bool = Field(default=True)
+    """Allow the BI nodes creation to fail, and only try to get the SSH info if the node is already created."""
+
 
 class UnifiedRadioTokenParams(StrictBaseModel):
     """Parameters/fields to generate a valid token for the unified radio management API."""
