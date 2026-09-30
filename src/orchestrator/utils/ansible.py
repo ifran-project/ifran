@@ -27,7 +27,7 @@ def get_ansible_inventory_line(
         f"ansible_user={ssh_info.user}",
     ]
     if ssh_info.private_key_file:
-        vars.append(f"ansible_ssh_info_private_key_file={ssh_info.private_key_file}")
+        vars.append(f"ansible_ssh_private_key_file={ssh_info.private_key_file}")
     if ssh_info.password:
         vars.append(f"ansible_password={ssh_info.password}")
     if ssh_info.sudo_password:
