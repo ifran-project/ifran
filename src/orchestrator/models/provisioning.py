@@ -60,6 +60,9 @@ class SSHInfo(StrictBaseModel):
     no_host_key_checking: bool = Field(default=True)
     """If True, flags will be added to disable host key checkin."""
 
+    ssh_pipelining: bool = Field(default=True)
+    """If True, use SSH pipelining """
+
     # auto-generated
     common_args: str | None = Field(default=None)
     """Auto-generated SSH flags."""
@@ -97,6 +100,9 @@ class SSHInfo(StrictBaseModel):
         args = []
         if self.no_host_key_checking:
             args.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
+        if self.ssh_pipelining:
+            args.append("-o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto")
+            args.append("-o ControlPersist=60s -o ControlPath=/tmp/cm-%C")
         if self.extra_args:
             args.append(self.extra_args)
 
