@@ -393,7 +393,7 @@ class DeployedCoreComponent(Deployed5GComponent):
     type: CoreComponentType = Field()
     """5G core component type."""
 
-    implementation: CoreImplementation = Field(default=CoreImplementation.OPEN5GS)
+    implementation: CoreImplementation | None = Field(default=None)
     """5G core component implementation."""
 
     @model_validator(mode="after")
