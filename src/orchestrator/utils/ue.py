@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+from ipaddress import IPv4Address, IPv6Address
 from typing import Any, Literal
 
 from metamodel.models.metamodel import MetaModel
@@ -92,8 +93,12 @@ def resolve_gnb_ref(
             component_meta.type is UEType.CONTAINERIZED and
             component_meta.config.ru.type is RUType.SIMULATED # type: ignore
             ):
-            # NOTE gnb/du's static pod ip is used as 'gnb_ip' for the simulated ue to reach it
-            gnb_ip = gnb_deployment.static_pod_ip
+            # if gnb/du has non-multus network info (one IP address), use it
+            # else, use the static_pod_ip that is supposed to populated before RAN deployment
+            if isinstance(gnb_deployment.network_info, (IPv4Address, IPv6Address)):
+                gnb_ip = gnb_deployment.network_info
+            else:
+                gnb_ip = gnb_deployment.static_pod_ip
 
             if gnb_ip is None:
                 raise ReferenceNotFoundError(
