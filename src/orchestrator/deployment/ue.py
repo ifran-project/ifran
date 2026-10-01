@@ -34,6 +34,7 @@ class UEManagement(HelmManagement):
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
+            quiet: bool = False,
         ) -> None:
         """Run Helm action on containerized UEs."""
 
@@ -69,6 +70,7 @@ class UEManagement(HelmManagement):
                 force=force,
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
+                quiet=quiet,
                 )
         elif action in cots_actions:
             await run_parallel_ue_action(
@@ -81,6 +83,7 @@ class UEManagement(HelmManagement):
                 force=force,
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
+                quiet=quiet,
             )
 
     # NOTE don't use kwargs to expose the function signature

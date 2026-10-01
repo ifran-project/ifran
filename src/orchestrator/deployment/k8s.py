@@ -10,13 +10,14 @@ from orchestrator.utils.k8s import run_parallel_k8s_setup_action
 class K8SManagement(BaseManagement):
     """Kubernetes setup lifecycle management class."""
 
-    async def run_action(
+    async def run_action(  # noqa: PLR0917
             self,
             action: Literal["prepare", "create", "join", "remove"],
             nodes: list[str] | None = None,
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
+            quiet: bool = False,
         ) -> None:
         """Run Kubernetes setup action on all nodes or a given subset."""
 
@@ -34,6 +35,7 @@ class K8SManagement(BaseManagement):
             force=force,
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
+            quiet=quiet,
         )
 
 

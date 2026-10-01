@@ -225,6 +225,7 @@ async def run_core_database_helm_action(  # noqa: PLR0917
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
         force: bool = False,
+        quiet: bool = False,
     ) -> None:
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
@@ -256,6 +257,7 @@ async def run_core_database_helm_action(  # noqa: PLR0917
         "hosts": node_name,
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
+        "quiet": quiet,
     }
 
     # expect database network info output after installation

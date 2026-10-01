@@ -19,6 +19,7 @@ class Miscellaneous(BaseManagement):
             roles_paths: list[str] | None = None,
             inventory: str | dict[str, Any] | list | None = None,
             store: bool = True,
+            quiet: bool = False,
             ) -> dict[str, Any] | None:
         """
         Run a custom Ansible playbook on deployment model resources (nodes and UEs) or a custom inventory of resources.
@@ -36,6 +37,7 @@ class Miscellaneous(BaseManagement):
                 (defaults to deployment model resources inventory).
             store: whether to store the output of this play in the 'miscellaneous' field of the deployment model or not
                 (defaults to True).
+            quiet: whether to suppress Ansible playbook execution output.
 
         """
 
@@ -48,6 +50,7 @@ class Miscellaneous(BaseManagement):
                 else f"{self.deployment_model.params.ansible.runner_path}/miscellaneous"),
             roles_paths=roles_paths if roles_paths else self.deployment_model.params.ansible.roles_paths,
             inventory=inventory if inventory else self.get_ansible_inventory(),
+            quiet=quiet,
             )
 
         if results and store:

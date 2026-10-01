@@ -59,6 +59,7 @@ async def run_ansible_playbook(  # noqa: PLR0917
         output_keys: list[str] | None = None,
         roles_paths: list[str] | None = None,
         inventory: str | dict[str, Any] | list | None = None,
+        quiet: bool = False,
     ) -> dict[str, Any] | None:
     """Run an Ansible playbook."""
 
@@ -78,6 +79,7 @@ async def run_ansible_playbook(  # noqa: PLR0917
         "inventory": inventory,
         "playbook": playbook,
         "extravars": inputs,
+        "quiet": quiet,
     }
 
     thread, runner = ansible_runner.run_async(**run_args)
@@ -109,6 +111,7 @@ async def run_ansible_role(  # noqa: PLR0917
         hosts: str = "localhost",
         inventory: str | dict[str, Any] | list | None = None,
         become: bool = False,
+        quiet: bool = False,
     ) -> dict[str, Any] | None:
     """Run an Ansible role."""
 
@@ -130,6 +133,7 @@ async def run_ansible_role(  # noqa: PLR0917
         output_keys=output_keys,
         roles_paths=roles_paths,
         inventory=inventory,
+        quiet=quiet,
         )
 
 

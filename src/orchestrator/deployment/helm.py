@@ -124,6 +124,7 @@ class HelmManagement(BaseManagement):
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
+        quiet: bool = False,
     ) -> None:
         """Run Helm action on 5G components of a specific category."""
 
@@ -177,6 +178,7 @@ class HelmManagement(BaseManagement):
             force=force,
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
+            quiet=quiet,
         )
 
 

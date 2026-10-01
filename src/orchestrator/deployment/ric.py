@@ -96,6 +96,7 @@ class RICManagement(HelmManagement):
             components: list[str] | None = None,
             node: str | None = None,
             order: ComponentDependencyGraph | None = RIC_COMPONENT_DEPENDENCIES,
+            quiet: bool = False,
             **kwargs,
         ) -> None:
         """Install RIC components."""
@@ -104,9 +105,14 @@ class RICManagement(HelmManagement):
 
         if self.deployment_model.ric.implementation is RICImplementation.ORAN_SC:
             # osc ric needs an extra xapp namespace
-            await create_xapp_namespace(node_name, node_data, self.deployment_model.params.ansible)
+            await create_xapp_namespace(
+                node_name=node_name,
+                node_data=node_data,
+                ansible_params=self.deployment_model.params.ansible,
+                quiet=quiet,
+                )
 
-        await super().install(components=components, node=node, order=order, **kwargs)
+        await super().install(components=components, node=node, order=order, quiet=quiet, **kwargs)
 
 
     # override dependency graph

@@ -100,13 +100,14 @@ class CoreManagement(HelmManagement):
         super().remove_component(category=Category5G.CORE, name=name)
 
 
-    async def run_database_action(
+    async def run_database_action(  # noqa: PLR0917
             self,
             action: Literal["prepare", "install", "uninstall"],
             node: str | None = None,
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
+            quiet: bool = False,
         ) -> None:
         """Run 5G core database Helm action."""
 
@@ -119,6 +120,7 @@ class CoreManagement(HelmManagement):
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
             force=force,
+            quiet=quiet,
             )
 
         if isinstance(result, Exception):

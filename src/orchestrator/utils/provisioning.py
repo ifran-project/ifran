@@ -95,6 +95,7 @@ async def run_reservation_action(  # noqa: PLR0917
         ignore_failures: bool = False,
         force: bool = False,
         skip_unreservable: bool = True,
+        quiet: bool = False,
     ) -> None:
     """Run the 'reserve' Ansible role of the given provisioner once for the given resources list."""
 
@@ -127,6 +128,7 @@ async def run_reservation_action(  # noqa: PLR0917
             else None,
         "runner_path": f"{ansible_params.runner_path}/reserve/{provisioner_name}",
         "roles_paths": ansible_params.roles_paths,
+        "quiet": quiet,
     }
     try:
         await run_ansible_role(**args)
@@ -146,6 +148,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         provisioning_params: dict[str, Any],
         ansible_params: AnsibleParams,
         force: bool = False,
+        quiet: bool = False,
     ) -> None:
     """Run the Ansible role of the provisioner corresponding to the given action on a single resource."""
 
@@ -194,6 +197,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         "output_keys": output_keys if action == "provision" else None,
         "runner_path": f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
+        "quiet": quiet,
     }
 
     try:
@@ -229,6 +233,7 @@ async def run_parallel_provisioning_action(  # noqa: PLR0917
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
+        quiet: bool = False,
     ) -> None:
     """Provision or unprovision action on provided provisionable resources in parallel."""
 
@@ -243,6 +248,7 @@ async def run_parallel_provisioning_action(  # noqa: PLR0917
                 provisioning_params=provisioning_params,
                 ansible_params=ansible_params,
                 force=force,
+                quiet=quiet,
         ))
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
@@ -263,6 +269,7 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
         force: bool = False,
         ignore_failures: bool = False,
         skip_unreservable: bool = True,
+        quiet: bool = False,
     ) -> None:
     """Reserve provided reservable resources in parallel."""
 
@@ -282,6 +289,7 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
                 ignore_failures=ignore_failures,
                 force=force,
                 skip_unreservable=skip_unreservable,
+                quiet=quiet,
             ))
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)

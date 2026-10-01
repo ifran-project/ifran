@@ -13,13 +13,14 @@ from orchestrator.utils.provisioning import (
 class ProvisioningManagement(BaseManagement):
     """Provisioning management class."""
 
-    async def run_action(
+    async def run_action(  # noqa: PLR0917
             self,
             action: Literal["provision", "unprovision", "reserve"],
             resources: list[str] | None = None,
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
+            quiet: bool = False,
         ) -> None:
         """Run provisioning/reservation action on all provisionable resources or a given subset."""
 
@@ -37,6 +38,7 @@ class ProvisioningManagement(BaseManagement):
                 force=(force if action == "reserve" else False), # don't force reserve when main action is provision
                 ignore_failures=ignore_failures,
                 skip_unreservable=(action == "provision"), # skip unreservable resources when main action is provision
+                quiet=quiet,
             )
 
         if action in ["provision", "unprovision"]:
@@ -49,6 +51,7 @@ class ProvisioningManagement(BaseManagement):
                 force=force,
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
+                quiet=quiet,
             )
 
 
