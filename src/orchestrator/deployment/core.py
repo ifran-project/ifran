@@ -1,12 +1,13 @@
 """5G core deployment lifecycle management."""
 
 import asyncio
-from typing import Literal, override
+from typing import Any, Literal, override
 
 from metamodel.models.common import Category5G
-from metamodel.models.core import CoreComponentType
+from metamodel.models.core import CoreComponent, CoreComponentType
 
 from orchestrator.deployment.helm import HelmManagement
+from orchestrator.models.core import DeployedCoreComponent
 from orchestrator.utils.ansible import (
     handle_ansible_result_exception,
 )
@@ -75,6 +76,23 @@ class CoreManagement(HelmManagement):
         """Run Helm action on 5G core components."""
         await super().run_action(category=Category5G.CORE, **kwargs)
 
+    # NOTE don't use kwargs to expose the function signature
+    @override
+    def add_component(
+        self,
+        name: str,
+        component_meta: CoreComponent | None = None,
+        component_deployment: DeployedCoreComponent | None = None,
+        merged: dict[str, Any] | None = None,
+        ) -> None:
+        """Add or update a 5G core component if it exists."""
+        super().add_component(
+            name=name,
+            category=Category5G.CORE,
+            component_meta=component_meta,
+            component_deployment=component_deployment,
+            merged=merged,
+        )
 
     @override
     def remove_component(self, name: str) -> None:

@@ -1,12 +1,12 @@
 """UEs lifecycle management."""
 
-from typing import Literal, override
+from typing import Any, Literal, override
 
 from metamodel.models.common import Category5G
-from metamodel.models.ue import UEType
+from metamodel.models.ue import UE, UEType
 
 from orchestrator.deployment.helm import HelmManagement
-from orchestrator.models.common import ComponentDependencyGraph
+from orchestrator.models.ue import DeployedUE
 from orchestrator.utils.ue import reconcile_ues, run_parallel_ue_action
 
 
@@ -31,7 +31,6 @@ class UEManagement(HelmManagement):
             action: Literal["prepare", "install", "uninstall", "get_logs", "connect", "disconnect"],
             components: list[str] | None = None,
             node: str | None = None,
-            order: ComponentDependencyGraph | None = None,
             force: bool = False,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
@@ -84,6 +83,23 @@ class UEManagement(HelmManagement):
                 ignore_failures=ignore_failures,
             )
 
+    # NOTE don't use kwargs to expose the function signature
+    @override
+    def add_component(
+        self,
+        name: str,
+        component_meta: UE | None = None,
+        component_deployment: DeployedUE | None = None,
+        merged: dict[str, Any] | None = None,
+        ) -> None:
+        """Add or update a UE if it exists."""
+        super().add_component(
+            name=name,
+            category=Category5G.UE,
+            component_meta=component_meta,
+            component_deployment=component_deployment,
+            merged=merged,
+        )
 
     @override
     def remove_component(self, name: str) -> None:

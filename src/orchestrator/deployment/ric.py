@@ -1,12 +1,12 @@
 """RAN Intelligent Controller lifecycle management."""
 
-from typing import override
+from typing import Any, override
 
 from metamodel.models.common import Category5G
-from metamodel.models.ric import RICComponentType
+from metamodel.models.ric import RICComponent, RICComponentType
 
 from orchestrator.deployment.helm import HelmManagement
-from orchestrator.models.ric import RICImplementation
+from orchestrator.models.ric import DeployedRICComponent, RICImplementation
 from orchestrator.utils.common_5g import ComponentDependencyGraph
 from orchestrator.utils.ric import create_xapp_namespace, reconcile_ric
 
@@ -66,6 +66,23 @@ class RICManagement(HelmManagement):
         """Run Helm action on 5G RIC components."""
         await super().run_action(category=Category5G.RIC, **kwargs)
 
+    # NOTE don't use kwargs to expose the function signature
+    @override
+    def add_component(
+        self,
+        name: str,
+        component_meta: RICComponent | None = None,
+        component_deployment: DeployedRICComponent | None = None,
+        merged: dict[str, Any] | None = None,
+        ) -> None:
+        """Add or update a RIC component if it exists."""
+        super().add_component(
+            name=name,
+            category=Category5G.RIC,
+            component_meta=component_meta,
+            component_deployment=component_deployment,
+            merged=merged,
+        )
 
     @override
     def remove_component(self, name: str) -> None:
