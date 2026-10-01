@@ -1,11 +1,14 @@
 """Kubernetes 5G components Helm lifecycle management."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from metamodel.models.common import Category5G, Component5G
+from metamodel.models.metamodel import MetaModel
 from metamodel.models.ue import UEType
 
 from orchestrator.deployment.base import BaseManagement
+from orchestrator.models.common import Deployed5GComponent
+from orchestrator.models.deployment import DeploymentModel
 from orchestrator.models.provisioning import ProvisionableNode
 from orchestrator.utils.helm import ComponentDependencyGraph, run_parallel_helm_action
 from orchestrator.utils.utils import ReferenceNotFoundError
@@ -35,21 +38,56 @@ class HelmManagement(BaseManagement):
         return node, self.deployment_model.nodes[node]
 
 
-    def add_component(self, name: str, component: Component5G) -> None:
-        """Add a 5G component."""
+    def add_component(
+            self,
+            name: str,
+            category: Category5G,
+            component_meta: Component5G | None = None,
+            component_deployment: Deployed5GComponent | None = None,
+            merged: dict[str, Any] | None = None,
+        ) -> None:
+        """Add or update a 5G component if it exists."""
 
-        category = component.category
-        match category:
-            case Category5G.CORE:
-                self.metamodel.core.components[name] = component.model_copy(deep=True) # type: ignore
-            case Category5G.RIC:
-                self.metamodel.ric.components[name] = component.model_copy(deep=True) # type: ignore
-            case Category5G.RAN:
-                self.metamodel.ran.components[name] = component.model_copy(deep=True) # type: ignore
-            case Category5G.UE:
-                self.metamodel.ues[name] = component.model_copy(deep=True) # type: ignore
+        # NOTE merged always takes precedence
+        if merged:
 
-        # NOTE make sure the mutable metamodel is reseset (resolved references are removed)
+            # if merged dict is provided, let metamodel and deployment model chose
+            # the right pydantic model to validate the added component's meta and deployment
+            metamodel = self.metamodel.model_dump(mode="json")
+            deployment_model = self.deployment_model.model_dump(mode="json")
+
+            if category is Category5G.UE:
+                metamodel["ues"][name] = merged
+                deployment_model["ues"][name] = merged
+
+            else:
+                metamodel[category.value]["components"][name] = merged
+                deployment_model[category.value]["components"][name] = merged
+
+            self.metamodel = MetaModel.model_validate(metamodel, extra="allow")
+            self.deployment_model = DeploymentModel.model_validate(deployment_model, extra="allow")
+
+        elif component_meta:
+
+            if category is Category5G.UE:
+                self.metamodel.ues[name] = component_meta.model_copy(deep=True) # type: ignore
+
+                if component_deployment:
+                    self.deployment_model.ues[name] = component_meta.model_copy(deep=True) # type: ignore
+            else:
+                getattr(
+                    self.metamodel, category.value
+                ).components[name] = component_meta.model_copy(deep=True)
+
+                if component_deployment:
+                    getattr(
+                        self.metamodel, category.value
+                    ).components[name] = component_meta.model_copy(deep=True)
+
+        else:
+            raise ValueError("No valid input was given.")
+
+        # NOTE make sure the mutable metamodel is reset (resolved references are removed)
         # so the reconciliation can redo it again
         self.mutable_metamodel = self.metamodel.model_copy(deep=True)
         self.reconcile()

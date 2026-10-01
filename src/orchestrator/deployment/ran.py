@@ -1,11 +1,12 @@
 """RAN deployment lifecycle management."""
 
-from typing import override
+from typing import Any, override
 
 from metamodel.models.common import Category5G
-from metamodel.models.ran import RANComponentType
+from metamodel.models.ran import RANComponent, RANComponentType
 
 from orchestrator.deployment.helm import HelmManagement
+from orchestrator.models.ran import DeployedRANComponent
 from orchestrator.utils.common_5g import (
     ComponentDependencyGraph,
 )
@@ -42,6 +43,23 @@ class RANManagement(HelmManagement):
         """Run Helm action on RAN components."""
         await super().run_action(category=Category5G.RAN, **kwargs)
 
+    # NOTE don't use kwargs to expose the function signature
+    @override
+    def add_component(
+        self,
+        name: str,
+        component_meta: RANComponent | None = None,
+        component_deployment: DeployedRANComponent | None = None,
+        merged: dict[str, Any] | None = None,
+        ) -> None:
+        """Add or update a RAN component if it exists."""
+        super().add_component(
+            name=name,
+            category=Category5G.RAN,
+            component_meta=component_meta,
+            component_deployment=component_deployment,
+            merged=merged,
+        )
 
     @override
     def remove_component(self, name: str) -> None:
