@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self
+from typing import Annotated, Any, Literal, Self, override
 from zoneinfo import ZoneInfo
 
 from metamodel.models.base import (
@@ -102,7 +102,7 @@ class SSHInfo(StrictBaseModel):
             args.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
         if self.ssh_pipelining:
             args.append("-o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto")
-            args.append("-o ControlPersist=60s -o ControlPath=/tmp/cm-%C")
+            args.append("-o ControlPersist=1200s -o ControlPath=/tmp/cm-%C")
         if self.extra_args:
             args.append(self.extra_args)
 
@@ -220,14 +220,13 @@ class ReservableProvisionerParams(GenericProvisionerParams):
     def _populate_reservation(self, default_params_model = GenericReservationParams) -> None:
         """Ensures reservation fields are present when 'attempt_reservation' is True."""
 
-        if self.attempt_reservation:
-            if self.reservation_period is None:
-                self.reservation_period = 120 # default to 2 hours
+        if self.reservation_period is None:
+            self.reservation_period = 120 # default to 2 hours
 
-            if self.reservation_params is None:
-                if default_params_model is None:
-                    raise ValueError("Required reservation parameters are missing.")
-                self.reservation_params = default_params_model()
+        if self.reservation_params is None:
+            if default_params_model is None:
+                raise ValueError("Required reservation parameters are missing.")
+            self.reservation_params = default_params_model()
 
 
     def _populate_start_time(self) -> Self:
@@ -248,7 +247,8 @@ class ReservableProvisionerParams(GenericProvisionerParams):
     def validate_reservation(self) -> Self:
         """Populate reservation reservation fields."""
 
-        self._populate_reservation()
+        if self.attempt_reservation:
+            self._populate_reservation()
         self._populate_start_time()
         return self
 
@@ -380,7 +380,7 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
     reservation_params: R2LabReservationParams | None = Field(default=None)
     """R2Lab reservation parameters if 'attempt_reservation' is True."""
 
-    # override
+    @override
     def _populate_reservation(self) -> None:
         """Populate 'reservation_params' if missing from 'token_params.input_body' if given."""
 
