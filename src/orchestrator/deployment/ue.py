@@ -6,6 +6,7 @@ from metamodel.models.common import Category5G
 from metamodel.models.ue import UE, UEType
 
 from orchestrator.deployment.helm import HelmManagement
+from orchestrator.models.common import ComponentDependencyGraph
 from orchestrator.models.ue import DeployedUE
 from orchestrator.utils.ue import reconcile_ues, run_parallel_ue_action
 
@@ -32,6 +33,7 @@ class UEManagement(HelmManagement):
             components: list[str] | None = None,
             node: str | None = None,
             force: bool = False,
+            order: ComponentDependencyGraph | None = None,
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
             quiet: bool = False,
