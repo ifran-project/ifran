@@ -102,7 +102,7 @@ class SSHInfo(StrictBaseModel):
             args.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
         if self.ssh_pipelining:
             args.append("-o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto")
-            args.append("-o ControlPersist=1200s -o ControlPath=/tmp/cm-%C")
+            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C") # 2 hours
         if self.extra_args:
             args.append(self.extra_args)
 
