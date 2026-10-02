@@ -39,9 +39,10 @@ class RANManagement(HelmManagement):
 
     # override category
     @override
-    async def run_action(self, **kwargs) -> None:
+    async def run_action(self, **kwargs) -> dict[str, str] | None:
         """Run Helm action on RAN components."""
-        await super().run_action(category=Category5G.RAN, **kwargs)
+        return await super().run_action(category=Category5G.RAN, **kwargs)
+
 
     # NOTE don't use kwargs to expose the function signature
     @override

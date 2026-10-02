@@ -137,6 +137,60 @@ async def run_ansible_role(  # noqa: PLR0917
         )
 
 
+async def run_ansible_command(  # noqa: PLR0917
+        command: list[str],
+        runner_path: str,
+        hosts: str,
+        inventory: str | dict[str, Any] | list,
+        become: bool = False,
+        quiet: bool = False,
+    ) -> str:
+    """Run a command on an Ansible inventory."""
+
+    playbook = [
+        {
+            "hosts": hosts,
+            "gather_facts": False,
+            "become": become,
+            "tasks": [
+                {
+                    "name": f"Run command {" ".join(command)!r}",
+                    "ansible.builtin.command": {
+                        "argv": command,
+                    },
+                    "register": "command_result",
+                    "changed_when": False,
+                },
+                {
+                    "name": f"Display command output for {" ".join(command)!r}",
+                    "ansible.builtin.debug": {
+                        "var": "command_result.stdout",
+                    },
+                },
+                {
+                    "name": f"Return command output for {" ".join(command)!r}",
+                    "ansible.builtin.set_stats":
+                    {
+                        "data": {
+                            "command_output": "{{ command_result.stdout }}",
+                        },
+                    },
+                },
+            ],
+        }
+    ]
+
+    result = await run_ansible_playbook(
+        playbook=playbook,
+        runner_path=runner_path,
+        inventory=inventory,
+        output_keys=["command_output"],
+        quiet=quiet,
+    )
+
+    return result["command_output"] # type: ignore
+
+
 def handle_ansible_result_exception(
         result: Exception,
         ignore_invalid_states: bool,

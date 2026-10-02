@@ -3,8 +3,10 @@
 from typing import Literal
 
 from orchestrator.deployment.base import BaseManagement
+from orchestrator.models.provisioning import ProvisioningCategory
 from orchestrator.utils.provisioning import (
     get_provisionable_resources,
+    run_parallel_command,
     run_parallel_provisioning_action,
     run_parallel_reservation_action,
 )
@@ -68,6 +70,63 @@ class ProvisioningManagement(BaseManagement):
     async def reserve(self, **kwargs) -> None:
         """Reserve all reservable resources."""
         await self.run_action(action="reserve", **kwargs)
+
+
+    async def run_command(  # noqa: PLR0917
+            self,
+            command: list[str],
+            resources: list[str] | None = None,
+            become: bool = False,
+            force: bool = False,
+            ignore_invalid_states: bool = True,
+            ignore_failures: bool = False,
+            quiet: bool = False,
+        ) -> dict[str, str]:
+        """Run command on SSH-able resources (nodes and UEs)."""
+
+        ssh_able_categories = [ProvisioningCategory.NODE, ProvisioningCategory.UE]
+
+        # get only ssh-able resources
+        target_resources = {
+            k: v for k, v in get_provisionable_resources(
+                                deployment_model=self.deployment_model,
+                                filter=resources
+                            ).items()
+            if v.category in ssh_able_categories
+        }
+
+        return await run_parallel_command(
+            resources=target_resources, # type: ignore
+            command=command,
+            become=become,
+            ansible_params=self.deployment_model.params.ansible,
+            force=force,
+            ignore_invalid_states=ignore_invalid_states,
+            ignore_failures=ignore_failures,
+            quiet=quiet,
+        )
+
+
+    async def run_node_command(self, command: list[str], nodes: list[str] | None = None, **kwargs) -> dict[str, str]:
+        """Run nodes on all or a targeted list of nodes."""
+
+        # if no specific node names are passed, default to all nodes
+        if nodes is None:
+            nodes = list(self.deployment_model.nodes.keys())
+
+        return await self.run_command(command=command, resources=nodes, **kwargs)
+
+
+    async def run_ue_command(self, command: list[str], ues: list[str] | None = None, **kwargs) -> dict[str, str]:
+        """Run nodes on all or a targeted list of UEs."""
+
+        # if no specific ue names are passed, default to all ues
+        if ues is None:
+            # NOTE it's ok to pass ues that are deployed as well
+            # because they will be filtered out either way
+            ues = list(self.deployment_model.ues.keys())
+
+        return await self.run_command(command=command, resources=ues, **kwargs)
 
 
     async def _run_type_action(

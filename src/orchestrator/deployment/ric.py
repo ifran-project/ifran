@@ -62,9 +62,10 @@ class RICManagement(HelmManagement):
         )
 
 
-    async def run_action(self, **kwargs) -> None:
+    async def run_action(self, **kwargs) -> dict[str, str] | None:
         """Run Helm action on 5G RIC components."""
-        await super().run_action(category=Category5G.RIC, **kwargs)
+        return await super().run_action(category=Category5G.RIC, **kwargs)
+
 
     # NOTE don't use kwargs to expose the function signature
     @override

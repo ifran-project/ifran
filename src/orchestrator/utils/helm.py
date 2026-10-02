@@ -64,13 +64,14 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
         component_name: str,
         component_meta: Component5G,
         component_deployment: Deployed5GComponent,
-        action: Literal["prepare", "install", "uninstall", "get_logs"],
+        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd"],
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
+        command_to_run: list[str] | None = None, # only used in the case of run_cmd action
         force: bool = False,
         quiet: bool = False,
-    ) -> None:
+    ) -> str | None:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
 
     chart_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
@@ -87,11 +88,13 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
             )
 
         # cannot uninstall or get logs if not installed
-        if not is_installed and action in ["uninstall", "get_logs"]:
+        if not is_installed and action in ["uninstall", "get_logs", "run_cmd"]:
             if action == "uninstall":
                 msg = f"{category} component {component_name!r} is already uninstalled."
-            else:
+            elif action == "get_logs":
                 msg = f"Cannot fetch logs for uninstalled {category} component {component_name!r}."
+            elif action == "run_cmd":
+                msg = f"Cannot run a command on uninstalled {category} component {component_name!r}."
 
             raise InvalidResourceStateError(msg)
 
@@ -130,6 +133,14 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
     elif action == "get_logs":
         args["output_keys"] = ["logs"]
 
+    # give command_to_run as input for run_cmd action
+    elif action == "run_cmd":
+        if not command_to_run:
+            raise ValueError(f"Invalid command_to_run {command_to_run!r} for {category} component {component_name!r}")
+
+        args["inputs"]["command"] = command_to_run
+        args["output_keys"] = ["command_output"]
+
     try:
         result = await run_ansible_role(**args)
     except Exception as e:
@@ -154,27 +165,33 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
             component_deployment.network_info = IPv4Address(result["network_info"]) # type: ignore
 
     elif action == "get_logs":
-        component_deployment.logs = result["logs"] # type: ignore
+        return result["logs"] # type: ignore
+
+    elif action == "run_cmd":
+        return result["command_output"] # type: ignore
 
     elif action == "uninstall":
         component_deployment.is_installed = False
         # reset network info to None
         component_deployment.network_info = None
 
+    return None
+
 
 async def run_parallel_helm_action(  # noqa: PLR0917
         components_meta: dict[str, Component5G],
         components_deployment: dict[str, Deployed5GComponent],
-        action: Literal["prepare", "install", "uninstall", "get_logs"],
+        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd"],
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
         order: ComponentDependencyGraph | None = None,
+        command_to_run: list[str] | None = None, # only used in the case of run_cmd action
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
-    ) -> None:
+    ) -> dict[str, str] | None:
     """Run Helm action in parallel on provided 5G components."""
 
     levels = resolve_component_dependency_levels(
@@ -182,13 +199,15 @@ async def run_parallel_helm_action(  # noqa: PLR0917
         dependencies=order,
     )
 
+    outputs: dict[str, str] = {}
+
     for level in levels:
 
-        level_components = (
+        level_components = [
             (name, components_meta[name], components_deployment[name])
             for name in level
             if name in components_meta and name in components_deployment
-        )
+        ]
 
         results = await asyncio.gather(
             *(
@@ -200,6 +219,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
                     node_name=node_name,
                     node_data=node_data,
                     ansible_params=ansible_params,
+                    command_to_run=command_to_run,
                     force=force,
                     quiet=quiet,
                 )
@@ -208,7 +228,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
             return_exceptions=True,
         )
 
-        for result in results:
+        for (name, _, _), result in zip(level_components, results, strict=False):
             # NOTE ignoring errors here means we would pass to the next level even tough this required level has failed
             if isinstance(result, Exception):
                 handle_ansible_result_exception(
@@ -216,3 +236,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
                     ignore_invalid_states=ignore_invalid_states,
                     ignore_failures=ignore_failures,
                 )
+            elif action in ["get_logs", "run_cmd"]:
+                outputs[name] = result  # type: ignore
+
+    return outputs if action in ["get_logs", "run_cmd"] else None

@@ -15,10 +15,13 @@ from orchestrator.models.provisioning import (
     ProvisionableResource,
     Provisioner,
     ProvisioningCategory,
+    SSHableResource,
     SSHInfo,
 )
 from orchestrator.utils.ansible import (
+    get_ansible_inventory_line,
     handle_ansible_result_exception,
+    run_ansible_command,
     run_ansible_role,
 )
 from orchestrator.utils.utils import (
@@ -76,7 +79,7 @@ def resolve_provisioner(
 
     if provisioner is None:
         raise ReferenceNotFoundError(
-            f"{resource_data.category.value.capitalize()} {resource_name!r} "
+            f"{resource_data.category.value.upper()} {resource_name!r} "
             f"references undefined provisioner {resource_data.provisioner!r}."
         )
 
@@ -157,7 +160,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         (action == "unprovision" and not resource_data.is_provisioned)):
 
             raise InvalidResourceStateError(
-                f"{resource_data.category.value.capitalize()} {resource_name!r} is already {action}ed."
+                f"{resource_data.category.value.upper()} {resource_name!r} is already {action}ed."
             )
 
     if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
@@ -203,7 +206,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     try:
         result = await run_ansible_role(**args)
     except Exception as e:
-        raise RuntimeError(f"{resource_data.category.value.capitalize()} {resource_name!r} {action}ing failed.") from e
+        raise RuntimeError(f"{resource_data.category.value.upper()} {resource_name!r} {action}ing failed.") from e
 
     if action == "provision":
         resource_data.is_provisioned = True
@@ -301,3 +304,59 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
                 ignore_invalid_states=True,
                 ignore_failures=ignore_failures,
             )
+
+
+async def run_parallel_command(  # noqa: PLR0917
+        resources: dict[str, SSHableResource],
+        command: list[str],
+        ansible_params: AnsibleParams,
+        become: bool = False,
+        force: bool = False,
+        ignore_invalid_states: bool = True,
+        ignore_failures: bool = False,
+        quiet: bool = False,
+    ) -> dict[str, str]:
+    """Run a command on provided SSH-able resources in parallel."""
+
+    if not command:
+        raise ValueError(f"Invalid command {command!r}.")
+
+    tasks: dict[str, asyncio.Task] = {}
+
+    for resource_name, resource_data in resources.items():
+        if not force and not resource_data.is_provisioned:
+            raise InvalidResourceStateError(
+                f"{resource_data.category.value.upper()} {resource_name!r} is not provisioned."
+            )
+
+        inventory = get_ansible_inventory_line(
+            resource_name=resource_name,
+            resource_data=resource_data,
+        )
+
+        tasks[resource_name] = asyncio.create_task(
+            run_ansible_command(
+                command=command,
+                runner_path=f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/run_cmd",
+                inventory=inventory,
+                hosts=resource_name,
+                become=become,
+                quiet=quiet,
+            )
+        )
+
+    results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+
+    outputs: dict[str, str] = {}
+
+    for resource_name, result in zip(tasks, results, strict=False):
+        if isinstance(result, Exception):
+            handle_ansible_result_exception(
+                result=result,
+                ignore_invalid_states=ignore_invalid_states,
+                ignore_failures=ignore_failures,
+            )
+        else:
+            outputs[resource_name] = result # type: ignore
+
+    return outputs

@@ -29,18 +29,19 @@ class UEManagement(HelmManagement):
     @override
     async def run_action(  # noqa: PLR0917
             self,
-            action: Literal["prepare", "install", "uninstall", "get_logs", "connect", "disconnect"],
+            action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "connect", "disconnect"],
             components: list[str] | None = None,
             node: str | None = None,
             force: bool = False,
-            order: ComponentDependencyGraph | None = None,
+            order: ComponentDependencyGraph | None = None, # only for consistency with parent run_action
+            command_to_run: list[str] | None = None, # only used in the case of run_cmd action
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
             quiet: bool = False,
-        ) -> None:
+        ) -> dict[str, str] | None:
         """Run Helm action on containerized UEs."""
 
-        containarized_actions = ["prepare", "install", "uninstall", "get_logs"]
+        containarized_actions = ["prepare", "install", "uninstall", "get_logs", "run_cmd"]
         cots_actions = ["connect", "disconnect"]
 
         all_ues = self.mutable_metamodel.ues
@@ -64,17 +65,18 @@ class UEManagement(HelmManagement):
                     )
 
         if action in containarized_actions:
-            await super().run_action(
+            return await super().run_action(
                 category=Category5G.UE,
                 action=action, # type: ignore
                 components=components,
                 node=node,
+                command_to_run=command_to_run,
                 force=force,
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
                 quiet=quiet,
                 )
-        elif action in cots_actions:
+        if action in cots_actions:
             await run_parallel_ue_action(
                 ues_meta=target_meta,
                 ues_prov={ue_name: self.deployment_model.ues[ue_name] for ue_name in target_meta}, # type: ignore
@@ -87,6 +89,8 @@ class UEManagement(HelmManagement):
                 ignore_failures=ignore_failures,
                 quiet=quiet,
             )
+
+        return None
 
     # NOTE don't use kwargs to expose the function signature
     @override

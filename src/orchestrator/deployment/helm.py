@@ -117,15 +117,16 @@ class HelmManagement(BaseManagement):
     async def run_action(  # noqa: PLR0917
         self,
         category: Category5G,
-        action: Literal["prepare", "install", "uninstall", "get_logs"],
+        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd"],
         components: list[str] | None = None,
         node: str | None = None,
         order: ComponentDependencyGraph | None = None,
+        command_to_run: list[str] | None = None, # only used in the case of run_cmd action
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
-    ) -> None:
+    ) -> dict[str, str] | None:
         """Run Helm action on 5G components of a specific category."""
 
         # get the node from which the helm action will be executed
@@ -167,7 +168,7 @@ class HelmManagement(BaseManagement):
             target_meta = {k: v for k, v in all_meta.items() if k in components}
             target_deployment = {k: v for k, v in all_deployment.items() if k in components}
 
-        await run_parallel_helm_action(
+        return await run_parallel_helm_action(
             components_meta=target_meta, # type: ignore
             components_deployment=target_deployment, # type: ignore
             action=action,
@@ -175,6 +176,7 @@ class HelmManagement(BaseManagement):
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
             order=order,
+            command_to_run=command_to_run,
             force=force,
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
@@ -198,9 +200,19 @@ class HelmManagement(BaseManagement):
         await self.run_action(action="uninstall", components=components, **kwargs)
 
 
-    async def get_logs(self, components: list[str] | None = None, **kwargs) -> None:
+    async def get_logs(self, components: list[str] | None = None, **kwargs) -> dict[str, str]:
         """Get components logs."""
-        await self.run_action(action="get_logs", components=components, **kwargs)
+        return await self.run_action(action="get_logs", components=components, **kwargs) # type: ignore
+
+
+    async def run_command(
+            self,
+            command: list[str],
+            components: list[str] | None = None,
+            **kwargs,
+        ) -> dict[str, str]:
+        """Run command on components."""
+        return await self.run_action(action="run_cmd", command_to_run=command, components=components, **kwargs) # type: ignore
 
 
     async def deploy(self, order: ComponentDependencyGraph | None = None, **kwargs) -> None:

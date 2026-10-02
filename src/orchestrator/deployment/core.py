@@ -72,9 +72,10 @@ class CoreManagement(HelmManagement):
 
     # override category
     @override
-    async def run_action(self, **kwargs) -> None:
+    async def run_action(self, **kwargs) -> dict[str, str] | None:
         """Run Helm action on 5G core components."""
-        await super().run_action(category=Category5G.CORE, **kwargs)
+        return await super().run_action(category=Category5G.CORE, **kwargs)
+
 
     # NOTE don't use kwargs to expose the function signature
     @override
