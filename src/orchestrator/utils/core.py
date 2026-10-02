@@ -288,6 +288,7 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
         force: bool = False,
+        quiet: bool = False,
     ) -> None:
     """Add/remove a single UE/subscriber on the 5G core database."""
 
@@ -310,6 +311,7 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
         "hosts": node_name,
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
+        "quiet": quiet,
     }
     try:
         await run_ansible_role(**args)
@@ -330,6 +332,7 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
         force: bool = False,
         ignore_invalid_states: bool = False,
         ignore_failures: bool = False,
+        quiet: bool = False,
     ) -> None:
     """Add/remove multiple UEs in parallel."""
 
@@ -346,6 +349,7 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
                 node_data=node_data,
                 ansible_params=ansible_params,
                 force=force,
+                quiet=quiet,
         ))
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
