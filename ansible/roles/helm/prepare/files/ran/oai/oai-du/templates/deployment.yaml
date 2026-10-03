@@ -66,28 +66,28 @@ spec:
           volumeMounts:
             - name: configuration
               mountPath: /opt/oai-gnb/etc
-          {{- if eq .Values.config.usrp "b2xx" }}
-            - name: usrp
+          {{- if eq .Values.config.radio "b2xx" }}
+            - name: radio
               mountPath: /dev/bus/usb/
           {{- end }}
           env:
             - name: TZ
-              value: {{ .Values.config.timeZone }}
+              value: {{ .Values.config.timeZone | quote }}
             - name: USE_ADDITIONAL_OPTIONS
-              value: {{ .Values.config.useAdditionalOptions }}
+              value: {{ .Values.config.useAdditionalOptions | quote }}
             - name: OAI_GDBSTACKS
               value: "{{ .Values.config.gdbstack }}"
-          {{- if eq .Values.config.usrp "b2xx" }}
+          {{- if eq .Values.config.radio "b2xx" }}
             - name: USE_B2XX
-              value: true
+              value: "yes"
           {{- end }}
-          {{- if eq .Values.config.usrp "x3xx" }}
+          {{- if eq .Values.config.radio "x3xx" }}
             - name: USE_X3XX
-              value: true
+              value: "yes"
           {{- end }}
-          {{- if eq .Values.config.usrp "n3xx" }}
+          {{- if eq .Values.config.radio "n3xx" }}
             - name: USE_N3XX
-              value: true
+              value: "yes"
           {{- end }}
           {{- if .Values.resources.define }}
           resources:
@@ -109,11 +109,6 @@ spec:
           {{- if not .Values.start.du }}
           command: [ "/bin/sleep", "infinity" ]
           {{- end }}
-          env:
-            - name: TZ
-              value: {{ .Values.config.timeZone | quote }}
-            - name: USE_ADDITIONAL_OPTIONS
-              value: {{ .Values.config.useAdditionalOptions | quote }}
 
         {{- if .Values.includeTcpDumpContainer }}
         - name: tcpdump
@@ -144,8 +139,8 @@ spec:
             name: {{ .Chart.Name }}-configmap
         - name: shared-data
           emptyDir: {}
-        {{- if eq .Values.config.usrp "b2xx" }}
-        - name: usrp
+        {{- if eq .Values.config.radio "b2xx" }}
+        - name: radio
           hostPath:
             path: /dev/bus/usb/
         {{- end }}
