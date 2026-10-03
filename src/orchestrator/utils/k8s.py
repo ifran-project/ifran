@@ -52,7 +52,7 @@ def generate_random_ip(k8s_params: K8SParams) -> IPvAnyAddress | None:
 async def run_single_k8s_setup_action(  # noqa: PLR0917
         node_name: str,
         node_data: ProvisionableNode,
-        action: Literal["prepare", "create", "join", "remove"],
+        action: Literal["prepare", "create", "join", "wait", "remove"],
         k8s_params: K8SParams,
         ansible_params: AnsibleParams,
         force: bool = False,

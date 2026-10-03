@@ -1,0 +1,43 @@
+# Kubernetes wait role
+
+# Wait until the Kubernetes system pods (kube-system and calico-system) have been created and report a 'Ready' status.
+
+# Input: None
+# Output: None
+---
+- name: Wait for 'calico-system' namespace to be created by the Tigera operator
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: calico-system
+    wait: yes
+    wait_sleep: 10
+    wait_timeout: 300
+
+- name: Wait for pods to be populated in system namespaces
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ item }}"
+  loop:
+    - kube-system
+    - calico-system
+  register: ns_pods
+  until: ns_pods.resources | length > 0
+  retries: 60
+  delay: 5
+
+- name: Wait for all system pods to become ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ item }}"
+    field_selectors:
+      - status.phase!=Succeeded
+    wait: yes
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: 300
+    wait_sleep: 10
+  loop:
+    - kube-system
+    - calico-system

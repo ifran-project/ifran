@@ -4,7 +4,7 @@ from typing import Literal
 
 from orchestrator.deployment.base import BaseManagement
 from orchestrator.models.k8s import K8SStatus
-from orchestrator.utils.k8s import run_parallel_k8s_setup_action
+from orchestrator.utils.k8s import run_parallel_k8s_setup_action, run_single_k8s_setup_action
 
 
 class K8SManagement(BaseManagement):
@@ -115,6 +115,17 @@ class K8SManagement(BaseManagement):
         # join remaining prepared worker nodes in parallel
         worker_nodes = [name for name in prepared_nodes if name != master_node_name]
         await self.join(nodes=worker_nodes, **kwargs)
+
+        # wait until k8s system pods are ready on all nodes
+        await run_single_k8s_setup_action(
+            node_name=master_node_name,
+            node_data=self.deployment_model.nodes[master_node_name],
+            action="wait",
+            k8s_params=k8s_params,
+            ansible_params=self.deployment_model.params.ansible,
+            force=kwargs.get("force", False),
+            quiet=kwargs.get("quiet", False),
+        )
 
 
     async def remove(self, nodes: list[str] | None = None, **kwargs) -> None:
