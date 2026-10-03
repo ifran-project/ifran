@@ -1,0 +1,28 @@
+ran:
+  components:
+    gnb:
+      type: gnb
+      config:
+        radioConfiguration:
+          duplexMode: tdd
+          downlinkArfcn: 620000
+          uplinkArfcn: 620000
+          pointAFrequencyArfcn: 639996
+          channelBandwidthMhz: 20
+          ssbArfcn: 640704
+          tddConfiguration: {}
+        ru: b210
+rus:
+  b210:
+    type: usrp
+    model: b210
+    capabilities:
+      max_bw_mhz: 56.0
+      min_freq_mhz: 70.0
+      max_freq_mhz: 6000.0
+      max_tx_antennas: 2
+      max_rx_antennas: 2
+      supported_duplex_modes:
+      - fdd
+      - tdd
+    rxGainDB: 114
