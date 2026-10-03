@@ -7,9 +7,8 @@ ran:
           duplexMode: tdd
           downlinkArfcn: 620000
           uplinkArfcn: 620000
-          pointAFrequencyArfcn: 639996
-          channelBandwidthMhz: 20
-          ssbArfcn: 640704
+          pointAFrequencyArfcn: 640008
+          ssbArfcn: 641280
           tddConfiguration: {}
         ru: b210
 rus:
@@ -23,6 +22,13 @@ rus:
       max_tx_antennas: 2
       max_rx_antennas: 2
       supported_duplex_modes:
-      - fdd
       - tdd
-    rxGainDB: 114
+      - fdd
+    txAttenuationDB: 10
+    rxAttenuationDB: 10
+ues:
+  qdong01:
+    type: cots
+    config:
+      supi: '001010000000017'
+      ru: null

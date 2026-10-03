@@ -1,34 +1,39 @@
 params:
   k8s:
     master_node: ptb-04015558.inria.fr
-    join_command: 'kubeadm join 138.96.193.106:6443 --token 4u7fp6.7hbnv5qmr9faun25
-      --discovery-token-ca-cert-hash sha256:9b79b3f2a30b9f439c8c52f1ee4b45a54406e56c5c9d7b188692721263eb7afe '
+    join_command: 'kubeadm join 138.96.193.106:6443 --token 3fhail.35ydde6oj9dynl7i
+      --discovery-token-ca-cert-hash sha256:d72ab38367437f677b5ac2f1deb2ee4ef53e6c52391277e4da7a22f1cc8ef5bc '
     used_ips:
-    - 10.244.210.188
-    - 10.244.67.24
+    - 10.244.169.216
+    - 10.244.106.34
 provisioners:
   bi:
     type: bi
   pos:
     type: pos
     params:
-      start_time: '2026-10-03T05:08:15.138882+02:00'
-      end_time: '2026-10-03T05:08:15.138882+02:00'
+      start_time: '2026-10-03T22:33:46.903080+02:00'
+      end_time: '2026-10-03T22:33:46.903080+02:00'
 nodes:
   ptb-04015558.inria.fr:
     is_provisioned: true
     provisioner: null
+    k8s_status: in_cluster
+  pacify.inria.fr:
+    is_provisioned: true
+    provisioner: null
     ssh_info:
-      hostname: 138.96.193.106
+      user: ubuntu
+      sudo_password: ubuntu
       common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
         ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
         -o ControlPath=/tmp/cm-%C
-    k8s_status: in_cluster
 core:
   components:
-    smf:
+    upf:
       is_installed: true
-      network_info: 10.244.38.73
+      static_pod_ip: 10.244.106.34
+      network_info: 10.244.106.34
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -36,9 +41,37 @@ core:
         sbi:
           port: 80
           protocol: TCP
+        n3:
+          port: 2152
+          protocol: UDP
         n4:
           port: 8805
           protocol: UDP
+        n9:
+          port: 2153
+          protocol: UDP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          - SYS_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: upf
+      implementation: open5gs
+    pcf:
+      is_installed: true
+      network_info: 10.244.38.74
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
       namespace: open5gs-core
       security_context:
         capabilities:
@@ -48,11 +81,11 @@ core:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-      type: smf
+      type: pcf
       implementation: open5gs
     nssf:
       is_installed: true
-      network_info: 10.244.210.131
+      network_info: 10.244.106.2
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -95,9 +128,9 @@ core:
         node-type.5g.blueprint/core: 'true'
       type: amf
       implementation: open5gs
-    udm:
+    smf:
       is_installed: true
-      network_info: 10.244.210.129
+      network_info: 10.244.38.73
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -105,6 +138,9 @@ core:
         sbi:
           port: 80
           protocol: TCP
+        n4:
+          port: 8805
+          protocol: UDP
       namespace: open5gs-core
       security_context:
         capabilities:
@@ -114,11 +150,11 @@ core:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-      type: udm
+      type: smf
       implementation: open5gs
-    pcf:
+    bsf:
       is_installed: true
-      network_info: 10.244.210.128
+      network_info: 10.244.106.3
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -135,49 +171,7 @@ core:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-      type: pcf
-      implementation: open5gs
-    udr:
-      is_installed: true
-      network_info: 10.244.210.130
-      image:
-        repository: docker.io/gradiant/open5gs
-        image_tag: 2.8.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: open5gs-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-      type: udr
-      implementation: open5gs
-    ausf:
-      is_installed: true
-      network_info: 10.244.38.72
-      image:
-        repository: docker.io/gradiant/open5gs
-        image_tag: 2.8.0
-      exposed_ports:
-        sbi:
-          port: 80
-          protocol: TCP
-      namespace: open5gs-core
-      security_context:
-        capabilities:
-          add:
-          - NET_ADMIN
-          drop:
-          - ALL
-      node_selector:
-        node-type.5g.blueprint/core: 'true'
-      type: ausf
+      type: bsf
       implementation: open5gs
     nrf:
       is_installed: true
@@ -200,10 +194,9 @@ core:
         node-type.5g.blueprint/core: 'true'
       type: nrf
       implementation: open5gs
-    upf:
+    udr:
       is_installed: true
-      static_pod_ip: 10.244.210.188
-      network_info: 10.244.210.188
+      network_info: 10.244.106.1
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -211,30 +204,20 @@ core:
         sbi:
           port: 80
           protocol: TCP
-        n3:
-          port: 2152
-          protocol: UDP
-        n4:
-          port: 8805
-          protocol: UDP
-        n9:
-          port: 2153
-          protocol: UDP
       namespace: open5gs-core
       security_context:
         capabilities:
           add:
           - NET_ADMIN
-          - SYS_ADMIN
           drop:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-      type: upf
+      type: udr
       implementation: open5gs
-    bsf:
+    udm:
       is_installed: true
-      network_info: 10.244.210.132
+      network_info: 10.244.106.0
       image:
         repository: docker.io/gradiant/open5gs
         image_tag: 2.8.0
@@ -251,7 +234,28 @@ core:
           - ALL
       node_selector:
         node-type.5g.blueprint/core: 'true'
-      type: bsf
+      type: udm
+      implementation: open5gs
+    ausf:
+      is_installed: true
+      network_info: 10.244.38.72
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: ausf
       implementation: open5gs
   database_params:
     image:
@@ -263,8 +267,8 @@ ran:
   components:
     gnb:
       is_installed: true
-      static_pod_ip: 10.244.67.24
-      network_info: 10.244.67.24
+      static_pod_ip: 10.244.169.216
+      network_info: 10.244.169.216
       image:
         repository: docker.io/oaisoftwarealliance/oai-gnb
         image_tag: 2026.w31
@@ -288,30 +292,31 @@ ran:
       type: gnb
       implementation: oai
       advanced_config:
-        initialDLBWPlocationAndBandwidth: 13750
+        useAdditionalOptions: -E --continuous-tx
+        initialDLBWPlocationAndBandwidth: 28875
         initialDLBWPcontrolResourceSetZero: 12
-        initialULBWPlocationAndBandwidth: 13750
-        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: 15
-        pusch_TargetSNRx10: 200
+        initialULBWPlocationAndBandwidth: 28875
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: 14
+        pusch_TargetSNRx10: 250
         pucch_TargetSNRx10: 200
         prach_dtx_threshold: 120
         pucch0_dtx_threshold: 100
       derived_radio_config:
-        bandwidth_rb: 51
+        bandwidth_rb: 106
         ul_point_a_arfcn: null
         numerology: 1
         ssb_numerology: 1
         oai_tdd_periodicity: 6
         oai_ssb_periodicity: 2
         radio: b2xx
-        additional_flags: ''
+        additional_flags: -E --continuous-tx
 rus:
   b210:
     is_provisioned: true
     provisioner: null
 ues:
-  sim_ue:
-    type: containerized
+  qdong01:
+    type: cots
 ric:
   components:
     ric:
