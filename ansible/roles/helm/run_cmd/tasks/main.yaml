@@ -1,0 +1,35 @@
+# Role to run a command for a deployed Helm chart on a Kubernetes cluster
+
+# Command output is displayed in the Ansible output to be stored in the 'stdout' file of ansible-runner's run directory
+
+# Input:
+# - chart_name: str
+# - component: Deployed5GComponent
+# - command: list[str]
+
+# Output:
+# - command_output: str
+---
+- name: Get Pod for '{{ chart_name }}' Helm chart
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ component.namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/instance={{ chart_name }}"
+  register: chart_pods
+
+- name: Run '{{ command | join(' ') }}' on '{{ chart_name }}' Helm chart
+  kubernetes.core.k8s_exec:
+    namespace: "{{ component.namespace }}"
+    pod: "{{ chart_pods.resources[0].metadata.name }}"
+    command: "{{ command | join(' ') }}"
+  register: chart_command
+
+- name: Display command output for '{{ chart_name }}' Helm chart
+  ansible.builtin.debug:
+    var: chart_command.stdout
+
+- name: Return command output for '{{ chart_name }}' Helm chart
+  ansible.builtin.set_stats:
+    data:
+      command_output: "{{ chart_command.stdout }}"
