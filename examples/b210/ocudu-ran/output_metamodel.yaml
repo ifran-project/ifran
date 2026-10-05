@@ -1,0 +1,34 @@
+ran:
+  components:
+    gnb:
+      type: gnb
+      config:
+        radioConfiguration:
+          duplexMode: tdd
+          downlinkArfcn: 650000
+          uplinkArfcn: 650000
+          channelBandwidthMhz: 20
+          prachConfigurationIndex: 1
+          tddConfiguration: {}
+        ru: b210
+rus:
+  b210:
+    type: usrp
+    model: b210
+    capabilities:
+      max_bw_mhz: 56.0
+      min_freq_mhz: 70.0
+      max_freq_mhz: 6000.0
+      max_tx_antennas: 2
+      max_rx_antennas: 2
+      supported_duplex_modes:
+      - tdd
+      - fdd
+    txGainDB: 80
+    rxGainDB: 40
+ues:
+  qdong01:
+    type: cots
+    config:
+      supi: '001010000000017'
+      ru: null
