@@ -222,11 +222,15 @@ async def run_single_ue_action(  # noqa: PLR0917
     ) -> None:
     """Run the 'ue/connect' or 'ue/disconnect' Ansible role of the provisioner on a single provisionable UE."""
 
-    if not force and (
-        (action == "connect" and ue_prov.is_connected) or
-        (action == "disconnect" and not ue_prov.is_connected)):
-
+    if not force:
+        if (
+            (action == "connect" and ue_prov.is_connected) or 
+            (action == "disconnect" and not ue_prov.is_connected)
+        ):
             raise InvalidResourceStateError(f"UE {ue_name!r} is already {action}ed.")
+
+        if not ue_prov.is_provisioned:
+            raise InvalidResourceStateError(f"UE {ue_name!r} is not provisioned.")
 
     provisioner = resolve_provisioner(
         resource_name=ue_name,
