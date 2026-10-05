@@ -133,12 +133,8 @@ ru_sdr:
 {% if component.derived_radio_config.device_driver %}
   device_driver: {{ component.derived_radio_config.device_driver }}
 {% endif %}
-{% if component.config.ru.type == "usrp" %}
-  device_args: "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
-  clock: {{ component.config.ru.clockSource }}
-  sync: {{ component.config.ru.timeSource }}
-{% elif component.config.ru.type == "simulated" %}
-  device_args: tx_port=tcp://{{ component.static_pod_ip }}:2000,rx_port=tcp://{{ component.advanced_config.ue_ip }}:2001,base_srate={{ component.advanced_config.base_srate | default("61.44e6", true) }}
+{% if component.derived_radio_config.device_args %}
+  device_args: {{ component.derived_radio_config.device_args }}
 {% endif %}
   tx_gain: {{ component.config.ru.txGainDB }}
   rx_gain: {{ component.config.ru.rxGainDB }}
@@ -184,7 +180,7 @@ log:
 {{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   filename: /tmp/gnb.log
-  all_level: warning
+  all_level: debug
   config_level: debug
 {% endif %}
 
@@ -193,9 +189,11 @@ pcap:
 {{ component.advanced_config.pcap | to_nice_yaml(indent=2) | indent(2, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.metrics %}
 metrics:
+{% if component.advanced_config and component.advanced_config.metrics %}
 {{ component.advanced_config.metrics | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  autostart_stdout_metrics: true
 {% endif %}
 
 {% if component.advanced_config and component.advanced_config.trace %}

@@ -69,7 +69,7 @@ log:
 {{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   filename: /tmp/cu.log
-  all_level: warning
+  all_level: debug
   config_level: debug
 {% endif %}
 
@@ -78,9 +78,11 @@ pcap:
 {{ component.advanced_config.pcap | to_nice_yaml(indent=2) | indent(2, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.metrics %}
 metrics:
+{% if component.advanced_config and component.advanced_config.metrics %}
 {{ component.advanced_config.metrics | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+  autostart_stdout_metrics: true
 {% endif %}
 
 {% endif %}
