@@ -12,10 +12,10 @@ from metamodel.models.ran import (
     SubcarrierSpacing,
     TDDPeriodicity,
 )
-from metamodel.models.ru import RUModel, RUType, USRPModel
+from metamodel.models.ru import AW2SModel, RUModel, RUType, USRPModel
 from metamodel.models.ue import UE, UEType
 
-from orchestrator.models.ran import DeployedRANComponent, RANImplementation
+from orchestrator.models.ran import ADVANCED_RAN_CONFIG_MAPPING, DeployedRANComponent, RANImplementation
 from orchestrator.models.ue import DeployedUE, UEImplementation
 
 NUMEROLOGY: dict[SubcarrierSpacing, int] = {
@@ -108,6 +108,10 @@ RADIO_TYPE_BY_RU: dict[RUType, dict[RUModel | None, str]] = {
         USRPModel.N300: "n3xx",
         USRPModel.N320: "n3xx",
     },
+    RUType.AW2S: {
+        AW2SModel.JAGUAR: "aw2s",
+        AW2SModel.PANTHER: "aw2s",
+    },
 }
 
 
@@ -141,7 +145,7 @@ def get_rbs(subcarrierSpacingKhz: SubcarrierSpacing, channelBandwidthMhz: int):
 
 ## RAN radio parameter derivation
 
-def derive_oai_ran_config(
+def derive_oai_ran_config(  # noqa: C901
         component_meta: GNBComponent | DUComponent,
         component_deployment: DeployedRANComponent,
     ) -> dict[str, Any]:
@@ -170,6 +174,36 @@ def derive_oai_ran_config(
         # for some reason the gNB can't see radio signals anymore (tested on N300 and N320)
         additional_flags = "-E --rfsim" if ru.type is RUType.SIMULATED else "" # type: ignore
 
+    # aw2s specific configuration
+    if ru.type is RUType.AW2S: # type: ignore
+        if not component_deployment.advanced_config:
+            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[
+                RANImplementation.OAI][component_meta.type]
+
+        adv_conf = component_deployment.advanced_config
+
+        adv_conf.local_rf = adv_conf.local_rf or "no"
+        adv_conf.local_portc = adv_conf.local_portc or 50000
+        adv_conf.remote_portc = adv_conf.remote_portc or 55444
+        adv_conf.local_portd = adv_conf.local_portd or 52001
+        adv_conf.remote_portd = adv_conf.remote_portd or 52183
+        adv_conf.tr_preference = adv_conf.tr_preference or "udp_ecpri_if5"
+        adv_conf.nr_flag = adv_conf.nr_flag or 1
+        adv_conf.sl_ahead = adv_conf.sl_ahead or 5
+
+        if ru.ips: # type: ignore
+            adv_conf.remote_address = adv_conf.remote_address or ru.ips[0] # type: ignore
+
+        if component_deployment.multus.enabled:
+            ru_iface = None
+            for iface in component_deployment.multus.interfaces:
+                if iface.enabled and iface.name.startswith("ru"):
+                    ru_iface = iface
+
+            if ru_iface:
+                adv_conf.local_if_name = adv_conf.local_if_name or ru_iface.name
+                adv_conf.local_address = adv_conf.local_address or ru_iface.ip_address
+
     return {
         "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
         "ul_point_a_arfcn": ul_point_a_arfcn,
@@ -194,13 +228,32 @@ def derive_ocudu_ran_config(
 
     if ru.type is RUType.SIMULATED: # type: ignore
         device_driver = "zmq"
+        device_args = (
+            f"tx_port=tcp://{component_deployment.static_pod_ip}:2000,"
+            f"rx_port=tcp://{component_deployment.advanced_config.ue_ip}:2001"
+        )
+        if component_deployment.advanced_config.base_srate:
+            device_args += f",base_srate={component_deployment.advanced_config.base_srate}"
+
     elif ru.type is RUType.USRP: # type: ignore
         device_driver = "uhd"
+        if ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+            device_args = "type=b200,num_recv_frames=64,num_send_frames=64"
+        elif ru.ips: # type: ignore
+            device_args = (
+                f"addr={ru.ips[0]}," # type: ignore
+                f"clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
+            )
+            if component_deployment.advanced_config.master_clock_rate:
+                device_args += f",master_clock_rate={component_deployment.advanced_config.master_clock_rate}"
     else:
         device_driver = None
+        device_args = None
+
 
     derived = {
         "device_driver": device_driver,
+        "device_args": device_args,
         "radio": RADIO_TYPE_BY_RU.get(ru.type, {}).get(ru.model, ""), # type: ignore
     }
     if radio_config.duplexMode is DuplexMode.TDD:
