@@ -67,8 +67,13 @@ spec:
           hostIPC: true
           {{- end }}
           volumeMounts:
+          {{- if eq .Values.config.radio "aw2s" }}
+            - name: configuration
+              mountPath: /opt/oai-gnb-aw2s/etc
+          {{- else }}
             - name: configuration
               mountPath: /opt/oai-gnb/etc
+          {{- end }}
           {{- if eq .Values.config.radio "b2xx" }}
             - name: radio
               mountPath: /dev/bus/usb/
