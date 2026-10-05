@@ -147,39 +147,52 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
     RANImplementation.OCUDU: {
         RUType.USRP: {
             RANComponentType.GNB: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-uhd", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/gnb-uhd",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.CU: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.DU: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-du-uhd", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/du-uhd",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu-cp", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-cp",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu-up", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-up",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
         },
         RUType.BENETEL: {
             RANComponentType.GNB: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-dpdk", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/gnb-dpdk",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.CU: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.DU: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-du-dpdk", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/du-dpdk",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu-cp", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-cp",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu-up", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-up",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
         },
         RUType.SIMULATED: {
             RANComponentType.GNB: ContainerImage(
                 repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-zmq", image_tag="release_26_04"),
             RANComponentType.CU: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.DU: ContainerImage(
                 repository="ghcr.io/ziyad-mabrouk/ocudu-du-zmq", image_tag="release_26_04"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu-cp", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-cp",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-cu-up", image_tag="release_26_04"),
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-up",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
         },
     },
     RANImplementation.UERANSIM: {
