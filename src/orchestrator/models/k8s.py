@@ -242,7 +242,7 @@ class MultusInterface(StrictBaseModel):
     ip_address: IPvAnyAddress | None = Field(default=None)
     """Static IP address assigned to the interface."""
 
-    netmask: int | None = Field(default=None, ge=0, le=128)
+    netmask: int = Field(default=24, ge=0, le=128)
     """Network prefix length."""
 
     gateway: IPvAnyAddress | None = Field(default=None)

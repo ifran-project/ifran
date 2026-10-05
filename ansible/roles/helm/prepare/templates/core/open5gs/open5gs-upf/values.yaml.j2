@@ -116,9 +116,7 @@ multus:
 {% if iface.ip_address %}
       ipAdd: "{{ iface.ip_address }}"
 {% endif %}
-{% if iface.netmask is not none %}
       netmask: "{{ iface.netmask }}"
-{% endif %}
 {% if iface.default_route %}
       defaultRoute: "{{ iface.gateway }}"
 {% elif iface.gateway %}

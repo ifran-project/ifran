@@ -238,7 +238,7 @@ def reconcile_ran(
         # resolve references between split ran components
         # NOTE static ip assignment needs to be done before this
         if component_meta.type is RANComponentType.CU_UP:
-            # resolve cu_cp reference in cu_cp with cu_cp's e1 ip address
+            # resolve cu_cp reference in cu_up with cu_cp's e1 ip address
             resolve_component_reference(
                 **args,
                 ref_attribute="cu_cp",
