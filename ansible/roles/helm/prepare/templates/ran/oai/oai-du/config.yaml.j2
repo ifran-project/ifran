@@ -148,15 +148,18 @@ MACRLCs:
     tr_s_preference: "local_L1"
     tr_n_preference: "f1"
 
-    local_n_address: "{{ component.config.f1c.ipv4EndPointAddress }}"
-    remote_n_address: "{{ component.config.cu_cp }}"
-    local_n_portd: {{ component.config.f1c.port }}
-    remote_n_portd: {{ component.config.f1c.port }}
+    local_n_address: "{{ component.config.f1c.ipv4EndPointAddress }}" # DU address
+    remote_n_address: "{{ component.config.cu_cp }}" # CU address
+
+    # F1-U port
+    local_n_portd: {{ component.config.f1u.port }}
+    remote_n_portd: {{ component.config.f1u.port }}
+
+    # F1-C port
+    local_n_portc: {{ component.config.f1c.port }}
+    remote_n_portc: {{ component.config.f1c.port }}
 
     local_n_address_f1u: "{{ component.config.f1u.ipv4EndPointAddress }}"
-    remote_n_address_f1u: "{{ component.config.cu_up }}"
-    local_n_portd_f1u: {{ component.config.f1u.port }}
-    remote_n_portd_f1u: {{ component.config.f1u.port }}
 
     pusch_TargetSNRx10: {{ component.advanced_config.pusch_TargetSNRx10 | default(200, true) }}
     pucch_TargetSNRx10: {{ component.advanced_config.pucch_TargetSNRx10 | default(200, true) }}
