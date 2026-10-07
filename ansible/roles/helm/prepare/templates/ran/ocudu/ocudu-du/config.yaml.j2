@@ -162,7 +162,7 @@ log:
 {% if component.advanced_config and component.advanced_config.log %}
 {{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
-  filename: /tmp/du.log
+  filename: stdout
   all_level: debug
   config_level: debug
 {% endif %}
