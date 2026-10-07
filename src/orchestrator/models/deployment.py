@@ -54,7 +54,7 @@ class DeploymentModel(StrictBaseModel):
         "node3": ProvisionableNode(category=ProvisioningCategory.NODE),
         "node4": ProvisionableNode(category=ProvisioningCategory.NODE),
     })
-    """Deployment nodes (node names should correspond to their actual hostname)."""
+    """Deployment nodes."""
 
     core: CoreDeployment = Field(default_factory=CoreDeployment)
     """5G core deployment."""
