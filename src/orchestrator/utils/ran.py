@@ -119,7 +119,7 @@ def resolve_ocudu_zmq_ran(
         # make sure advanced_config is populated
         if component_deployment.advanced_config is None:
             component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[
-                RANImplementation.OCUDU][component_meta.type]
+                RANImplementation.OCUDU][component_meta.type]()
 
         component_deployment.advanced_config.ue_ip = component_deployment.advanced_config.ue_ip or ue_ip
         # NOTE this ip will later be taken from here and given as static_pod_ip to the ue component
@@ -222,18 +222,19 @@ def reconcile_ran(
                 k8s_params=k8s_params,
             )
 
-            # derive implementation-specific radio parameters for gnb and du after ru name reference resolution
-            derive_ran_radio_config(
-                component_meta=component_meta, # type: ignore
-                component_deployment=component_deployment,
-                )
-
             # ocudu zmq specific case
             resolve_ocudu_zmq_ran(
                 component_meta=component_meta,
                 component_deployment=component_deployment,
                 k8s_params=k8s_params,
             )
+
+            # derive implementation-specific radio parameters for gnb and du
+            # after ru name reference resolution and ocudu zmq specific case
+            derive_ran_radio_config(
+                component_meta=component_meta, # type: ignore
+                component_deployment=component_deployment,
+                )
 
         # resolve references between split ran components
         # NOTE static ip assignment needs to be done before this
