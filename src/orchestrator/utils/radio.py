@@ -1,7 +1,6 @@
 """Utility functions to derive radio configuration based on the implementation."""
 
 from collections.abc import Callable
-from ipaddress import IPv4Address
 from typing import Any
 
 from metamodel.models.common import DuplexMode
@@ -197,7 +196,7 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
         adv_conf.sl_ahead = adv_conf.sl_ahead or 5
 
         if ru.ips: # type: ignore
-            adv_conf.remote_address = adv_conf.remote_address or IPv4Address(ru.ips[0]) # type: ignore
+            adv_conf.remote_address = adv_conf.remote_address or ru.ips[0] # type: ignore
 
         if component_deployment.multus.enabled:
             ru_iface = None
@@ -207,7 +206,7 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
 
             if ru_iface:
                 adv_conf.local_if_name = adv_conf.local_if_name or ru_iface.name
-                adv_conf.local_address = adv_conf.local_address or IPv4Address(ru_iface.ip_address)
+                adv_conf.local_address = adv_conf.local_address or ru_iface.ip_address
 
     return {
         "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
