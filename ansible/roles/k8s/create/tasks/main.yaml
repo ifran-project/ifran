@@ -73,7 +73,21 @@
 - name: Install Multus CNI on '{{ node.name }}'
   kubernetes.core.k8s:
     state: present
-    src: https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/v{{ multus_version }}/deployments/multus-daemonset-thick.yml
+    src: https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/v{{ multus_version }}/deployments/multus-daemonset.yml
+  when: install_multus
+
+# remove all Multus resource constraints to avoid frequent OOMKilled when deploying multiple pods
+- name: Remove Multus resource limits and requests on '{{ node.name }}'
+  kubernetes.core.k8s_json_patch:
+    api_version: apps/v1
+    kind: DaemonSet
+    name: kube-multus-ds
+    namespace: kube-system
+    patch:
+      - op: remove
+        path: /spec/template/spec/containers/0/resources
+      - op: remove
+        path: /spec/template/spec/initContainers/0/resources
   when: install_multus
 
 - name: Remove default NoSchedule taint from master node '{{ node.name }}'
