@@ -1,6 +1,7 @@
 """Utility functions to derive radio configuration based on the implementation."""
 
 from collections.abc import Callable
+from ipaddress import IPv4Address
 from typing import Any
 
 from metamodel.models.common import DuplexMode
@@ -145,7 +146,7 @@ def get_rbs(subcarrierSpacingKhz: SubcarrierSpacing, channelBandwidthMhz: int):
 
 ## RAN radio parameter derivation
 
-def derive_oai_ran_config(  # noqa: C901
+def derive_oai_ran_config(  # noqa: C901, PLR0912
         component_meta: GNBComponent | DUComponent,
         component_deployment: DeployedRANComponent,
     ) -> dict[str, Any]:
@@ -166,13 +167,17 @@ def derive_oai_ran_config(  # noqa: C901
         oai_tdd_periodicity = OAI_TDD_PERIODICITY.get(radio_config.tddConfiguration.periodicityMilliseconds) # type: ignore
 
     # additional flags for rfsim
+    # -E enables continuous synchronization/transmission optimizations
+    # NOTE don't use -E with real RUs, except for USRP B210/B205
+    # for some reason the gNB can't see radio signals anymore (tested on N300 and N320)
     if component_deployment.advanced_config and component_deployment.advanced_config.useAdditionalOptions:
         additional_flags = component_deployment.advanced_config.useAdditionalOptions
+    elif ru.type is RUType.SIMULATED: # type: ignore
+        additional_flags = "-E --rfsim"
+    elif ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+        additional_flags = "-E --continuous-tx"
     else:
-        # -E enables continuous synchronization/transmission optimizations
-        # NOTE don't use -E with real RUs
-        # for some reason the gNB can't see radio signals anymore (tested on N300 and N320)
-        additional_flags = "-E --rfsim" if ru.type is RUType.SIMULATED else "" # type: ignore
+        additional_flags = ""
 
     # aw2s specific configuration
     if ru.type is RUType.AW2S: # type: ignore
@@ -192,7 +197,7 @@ def derive_oai_ran_config(  # noqa: C901
         adv_conf.sl_ahead = adv_conf.sl_ahead or 5
 
         if ru.ips: # type: ignore
-            adv_conf.remote_address = adv_conf.remote_address or ru.ips[0] # type: ignore
+            adv_conf.remote_address = adv_conf.remote_address or IPv4Address(ru.ips[0]) # type: ignore
 
         if component_deployment.multus.enabled:
             ru_iface = None
@@ -202,7 +207,7 @@ def derive_oai_ran_config(  # noqa: C901
 
             if ru_iface:
                 adv_conf.local_if_name = adv_conf.local_if_name or ru_iface.name
-                adv_conf.local_address = adv_conf.local_address or ru_iface.ip_address
+                adv_conf.local_address = adv_conf.local_address or IPv4Address(ru_iface.ip_address)
 
     return {
         "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
