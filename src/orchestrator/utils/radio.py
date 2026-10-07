@@ -182,7 +182,7 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
     if ru.type is RUType.AW2S: # type: ignore
         if not component_deployment.advanced_config:
             component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[
-                RANImplementation.OAI][component_meta.type]
+                RANImplementation.OAI][component_meta.type]()
 
         adv_conf = component_deployment.advanced_config
 
