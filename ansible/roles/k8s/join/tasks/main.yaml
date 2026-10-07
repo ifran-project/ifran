@@ -12,7 +12,9 @@
 # Output: None
 ---
 - name: Join '{{ node.name }}' to the Kubernetes cluster
-  ansible.builtin.command: "{{ join_command }}"
+  ansible.builtin.command: >-
+    {{ join_command }}
+    --node-name {{ node.name }}
   args:
     creates: /etc/kubernetes/kubelet.conf
 
