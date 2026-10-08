@@ -8,7 +8,6 @@ from typing import Any, Literal, Self
 
 from metamodel.models.base import StrictBaseModel
 from pydantic import (
-    ConfigDict,
     Field,
     IPvAnyAddress,
     IPvAnyNetwork,
