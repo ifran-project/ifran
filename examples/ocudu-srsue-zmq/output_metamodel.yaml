@@ -1,0 +1,31 @@
+ran:
+  components:
+    gnb:
+      type: gnb
+      config:
+        radioConfiguration:
+          nrBand: 3
+          duplexMode: fdd
+          downlinkArfcn: 368500
+          uplinkArfcn: 349500
+          channelBandwidthMhz: 10
+          subcarrierSpacingKhz: 15
+          ssbPeriodicityMs: 10
+          prachConfigurationIndex: 1
+        ru: sim_ru_gnb
+rus:
+  sim_ru_gnb:
+    txGainDB: 0
+    rxGainDB: 0
+  sim_ru_ue:
+    txGainDB: 50
+    rxGainDB: 40
+ues:
+  sim_ue:
+    config:
+      ru: sim_ru_ue
+      nrBands:
+      - 3
+slices:
+  internet:
+    sd: FFFFFF
