@@ -1,5 +1,5 @@
 ---
-- name: Configure CPU and tuned profile on Ubuntu 22.04
+- name: Configure CPU and tuned profile on Ubuntu 24.04
   block:
   
     - name: CPU_CHECK
