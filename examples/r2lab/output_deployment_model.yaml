@@ -1,0 +1,669 @@
+params:
+  k8s:
+    master_node: sopnode-f1
+    join_command: 'kubeadm join 172.28.2.76:6443 --token 5t0sr7.5mgrqr7xmcoixa07 --discovery-token-ca-cert-hash
+      sha256:78f4e417cc41ba6c1e925020bceaf98317f998adf8618e9ff11ec2ba568b7385 '
+    used_ips:
+    - 10.244.196.103
+    - 10.244.51.142
+    - 10.244.160.222
+    - 10.244.56.186
+    - 10.244.159.135
+  provisioning:
+    extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
+provisioners:
+  pos:
+    type: pos
+    params:
+      attempt_reservation: true
+      reservation_period: 120
+      reservation_params: {}
+      start_time: '2026-10-08T13:55:09.696654+02:00'
+      end_time: '2026-10-08T15:55:09.696654+02:00'
+  legacy_pos:
+    type: legacy_pos
+    params:
+      start_time: '2026-10-08T13:55:09.696678+02:00'
+      central_pos_ssh_info:
+        hostname: duckburg.net.cit.tum.de
+        port: 10022
+        user: <YOUR_SLICES_USERNAME>
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      end_time: '2026-10-08T13:55:09.696678+02:00'
+  r2lab:
+    type: r2lab
+    params:
+      reservation_params:
+        email: <YOUR_R2LAB_EMAIL>
+        password: <YOUR_R2LAB_PASSWORD>
+      start_time: '2026-10-08T13:55:09.696689+02:00'
+      token_params:
+        input_body:
+          email: <YOUR_R2LAB_EMAIL>
+          password: <YOUR_R2LAB_PASSWORD>
+          slice: <YOUR_R2LAB_SLICE>
+      r2lab_slice: <YOUR_R2LAB_SLICE>
+      end_time: '2026-10-08T13:55:09.696689+02:00'
+nodes:
+  sopnode-f1:
+    is_provisioned: true
+    provisioner: legacy_pos
+    provisioning_params:
+      boot_params: biosdevname=0 net.ifnames=0 mitigations=off intel_iommu=on iommu=pt
+        selinux=0 enforcing=0 isolcpus=managed_irq,16-63 nohz_full=16-63 nohz=on rcu_nocbs=16-63
+        kthread_cpus=0-4 irqaffinity=0-4 rcu_nocb_poll nosoftlockup intel_pstate=disable
+        idle=poll skew_tick=1 tsc=nowatchdog nmi_watchdog=0 softlockup_panic=0 audit=0
+        nosmt
+    ssh_info:
+      hostname: sopnode-f1
+      jumphost:
+        hostname: duckburg.net.cit.tum.de
+        port: 10022
+        user: <YOUR_SLICES_USERNAME>
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p <YOUR_SLICES_USERNAME>@duckburg.net.cit.tum.de -p
+        10022"
+    roles:
+    - ran
+    k8s_status: in_cluster
+  sopnode-f2:
+    is_provisioned: true
+    provisioner: legacy_pos
+    provisioning_params:
+      boot_params: biosdevname=0 net.ifnames=0 mitigations=off intel_iommu=on iommu=pt
+        selinux=0 enforcing=0 isolcpus=managed_irq,16-63 nohz_full=16-63 nohz=on rcu_nocbs=16-63
+        kthread_cpus=0-4 irqaffinity=0-4 rcu_nocb_poll nosoftlockup intel_pstate=disable
+        idle=poll skew_tick=1 tsc=nowatchdog nmi_watchdog=0 softlockup_panic=0 audit=0
+        nosmt
+    ssh_info:
+      hostname: sopnode-f2
+      jumphost:
+        hostname: duckburg.net.cit.tum.de
+        port: 10022
+        user: <YOUR_SLICES_USERNAME>
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p <YOUR_SLICES_USERNAME>@duckburg.net.cit.tum.de -p
+        10022"
+    roles:
+    - ran
+    k8s_status: in_cluster
+  sopnode-f4:
+    is_provisioned: true
+    provisioner: pos
+    ssh_info:
+      hostname: 172.28.2.96
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy_for_pos
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p proxy_for_pos@bastion1.theblueprintfactory.org
+        -p 22"
+    roles:
+    - core
+    - ric
+    k8s_status: in_cluster
+core:
+  components:
+    amf:
+      is_installed: true
+      network_info: 10.244.159.142
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n2:
+          port: 38412
+          protocol: SCTP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: amf
+      implementation: open5gs
+    nssf:
+      is_installed: true
+      network_info: 10.244.159.148
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: nssf
+      implementation: open5gs
+    bsf:
+      is_installed: true
+      network_info: 10.244.159.149
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: bsf
+      implementation: open5gs
+    pcf:
+      is_installed: true
+      network_info: 10.244.159.145
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: pcf
+      implementation: open5gs
+    nrf:
+      is_installed: true
+      network_info: 10.244.159.141
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: nrf
+      implementation: open5gs
+    smf:
+      is_installed: true
+      network_info: 10.244.159.144
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n4:
+          port: 8805
+          protocol: UDP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: smf
+      implementation: open5gs
+    ausf:
+      is_installed: true
+      network_info: 10.244.159.143
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: ausf
+      implementation: open5gs
+    upf:
+      is_installed: true
+      static_pod_ip: 10.244.159.135
+      network_info: 10.244.159.135
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n3:
+          port: 2152
+          protocol: UDP
+        n4:
+          port: 8805
+          protocol: UDP
+        n9:
+          port: 2153
+          protocol: UDP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          - SYS_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: upf
+      implementation: open5gs
+    udr:
+      is_installed: true
+      network_info: 10.244.159.147
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udr
+      implementation: open5gs
+    udm:
+      is_installed: true
+      network_info: 10.244.159.146
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udm
+      implementation: open5gs
+  database_params:
+    image:
+      repository: docker.io/mongo
+      image_tag: '8.3'
+    is_installed: true
+    ip: 10.244.159.140
+ran:
+  components:
+    cucp:
+      is_installed: true
+      static_pod_ip: 10.244.160.222
+      network_info: 10.244.160.222
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-gnb
+        image_tag: 2026.w31
+      exposed_ports:
+        e1:
+          port: 38462
+          protocol: SCTP
+        f1c:
+          port: 38472
+          protocol: SCTP
+        n2:
+          port: 38412
+          protocol: SCTP
+      namespace: oai-ran
+      security_context:
+        capabilities:
+          add:
+          - SYS_NICE
+          - IPC_LOCK
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/ran: 'true'
+      type: cu_cp
+      implementation: oai
+      advanced_config:
+        useAdditionalOptions: --telnetsrv --telnetsrv.shrmod ci
+    cuup:
+      is_installed: true
+      static_pod_ip: 10.244.51.142
+      network_info: 10.244.51.142
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-nr-cuup
+        image_tag: 2026.w31
+      exposed_ports:
+        e1:
+          port: 38462
+          protocol: SCTP
+        f1u:
+          port: 2153
+          protocol: UDP
+        n3:
+          port: 2152
+          protocol: UDP
+      namespace: oai-ran
+      security_context:
+        capabilities:
+          add:
+          - SYS_NICE
+          - IPC_LOCK
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/ran: 'true'
+      type: cu_up
+      implementation: oai
+    du01:
+      is_installed: true
+      static_pod_ip: 10.244.56.186
+      network_info:
+      - name: k8s-pod-network
+        interface: eth0
+        ips:
+        - 10.244.56.186
+        mac: 66:1b:d2:20:7f:01
+        default: true
+        dns: {}
+        gateway: []
+      - name: oai-ran/oai-du01-ru
+        interface: ru
+        ips:
+        - 192.168.236.102
+        mac: 0a:6a:8a:06:87:11
+        default: false
+        dns: {}
+        gateway: []
+      image:
+        repository: docker.io/r2labuser/oai-gnb-aw2s-csi
+        image_tag: 2026.w31
+      exposed_ports:
+        f1c:
+          port: 38472
+          protocol: SCTP
+        f1u:
+          port: 2153
+          protocol: UDP
+      namespace: oai-ran
+      security_context:
+        capabilities:
+          add:
+          - SYS_NICE
+          - IPC_LOCK
+          drop:
+          - ALL
+      node_name: sopnode-f1
+      node_selector:
+        node-type.5g.blueprint/ran: 'true'
+      multus:
+        enabled: true
+        interfaces:
+        - name: ru
+          host_interface: r2lab_aw2s
+          ip_address: 192.168.236.102
+      type: du
+      implementation: oai
+      advanced_config:
+        useAdditionalOptions: --thread-pool 17,19,21,23,25,27,29,31
+        initialDLBWPlocationAndBandwidth: 36300
+        initialDLBWPcontrolResourceSetZero: 11
+        initialULBWPlocationAndBandwidth: 36300
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: 15
+        p0_NominalWithGrant: -76
+        p0_nominal: -90
+        ssb_PositionsInBurst_Bitmap: 1
+        pusch_TargetSNRx10: 290
+        pucch_TargetSNRx10: 200
+        local_rf: 'no'
+        tr_preference: udp_ecpri_if5
+        num_tp_cores: 4
+        rxfh_core_id: 12
+        txfh_core_id: 14
+        tp_cores:
+        - 16
+        - 18
+        - 20
+        - 22
+        nr_flag: 1
+        sl_ahead: 5
+        local_if_name: ru
+        remote_address: 192.168.236.101
+        local_address: 192.168.236.102
+        local_portc: 50000
+        remote_portc: 55444
+        local_portd: 52001
+        remote_portd: 52183
+      derived_radio_config:
+        bandwidth_rb: 133
+        ul_point_a_arfcn: null
+        numerology: 1
+        ssb_numerology: 1
+        oai_tdd_periodicity: 5
+        oai_ssb_periodicity: 2
+        radio: aw2s
+        additional_flags: --thread-pool 17,19,21,23,25,27,29,31
+    du02:
+      is_installed: true
+      static_pod_ip: 10.244.196.103
+      network_info:
+      - name: k8s-pod-network
+        interface: eth0
+        ips:
+        - 10.244.196.103
+        mac: 36:55:df:0f:b7:fe
+        default: true
+        dns: {}
+        gateway: []
+      - name: oai-ran/oai-du02-ru
+        interface: ru
+        ips:
+        - 192.168.236.104
+        mac: 0e:33:86:81:66:15
+        default: false
+        dns: {}
+        gateway: []
+      image:
+        repository: docker.io/r2labuser/oai-gnb-aw2s-csi
+        image_tag: 2026.w31
+      exposed_ports:
+        f1c:
+          port: 38472
+          protocol: SCTP
+        f1u:
+          port: 2153
+          protocol: UDP
+      namespace: oai-ran
+      security_context:
+        capabilities:
+          add:
+          - SYS_NICE
+          - IPC_LOCK
+          drop:
+          - ALL
+      node_name: sopnode-f2
+      node_selector:
+        node-type.5g.blueprint/ran: 'true'
+      multus:
+        enabled: true
+        interfaces:
+        - name: ru
+          host_interface: r2lab_aw2s
+          ip_address: 192.168.236.104
+      type: du
+      implementation: oai
+      advanced_config:
+        useAdditionalOptions: --thread-pool 17,19,21,23,25,27,29,31
+        initialDLBWPlocationAndBandwidth: 36300
+        initialDLBWPcontrolResourceSetZero: 11
+        initialULBWPlocationAndBandwidth: 36300
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: 15
+        p0_NominalWithGrant: -76
+        p0_nominal: -90
+        ssb_PositionsInBurst_Bitmap: 2
+        pusch_TargetSNRx10: 290
+        pucch_TargetSNRx10: 200
+        local_rf: 'no'
+        tr_preference: udp_ecpri_if5
+        num_tp_cores: 4
+        rxfh_core_id: 12
+        txfh_core_id: 14
+        tp_cores:
+        - 16
+        - 18
+        - 20
+        - 22
+        nr_flag: 1
+        sl_ahead: 5
+        local_if_name: ru
+        remote_address: 192.168.236.103
+        local_address: 192.168.236.104
+        local_portc: 50000
+        remote_portc: 55444
+        local_portd: 52001
+        remote_portd: 52183
+      derived_radio_config:
+        bandwidth_rb: 133
+        ul_point_a_arfcn: null
+        numerology: 1
+        ssb_numerology: 1
+        oai_tdd_periodicity: 5
+        oai_ssb_periodicity: 2
+        radio: aw2s
+        additional_flags: --thread-pool 17,19,21,23,25,27,29,31
+rus:
+  jaguar:
+    is_provisioned: true
+    ips:
+    - 192.168.236.101
+  panther:
+    is_provisioned: true
+    ips:
+    - 192.168.236.103
+ues:
+  qhat01:
+    is_provisioned: true
+    ssh_info:
+      hostname: qhat01
+      jumphost:
+        hostname: faraday.inria.fr
+        user: <YOUR_R2LAB_SLICE>
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p <YOUR_R2LAB_SLICE>@faraday.inria.fr
+        -p 22"
+    type: cots
+  qhat02:
+    is_provisioned: true
+    ssh_info:
+      hostname: qhat02
+      jumphost:
+        hostname: faraday.inria.fr
+        user: <YOUR_R2LAB_SLICE>
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p <YOUR_R2LAB_SLICE>@faraday.inria.fr
+        -p 22"
+    type: cots
+  qhat03:
+    is_provisioned: true
+    ssh_info:
+      hostname: qhat03
+      jumphost:
+        hostname: faraday.inria.fr
+        user: <YOUR_R2LAB_SLICE>
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p <YOUR_R2LAB_SLICE>@faraday.inria.fr
+        -p 22"
+    type: cots
+ric:
+  components:
+    flexric:
+      is_installed: true
+      network_info: 10.244.159.150
+      image:
+        repository: docker.io/oaisoftwarealliance/oai-flexric
+        image_tag: develop
+      exposed_ports:
+        e2:
+          port: 36421
+          protocol: SCTP
+      namespace: oai-ric
+      node_selector:
+        node-type.5g.blueprint/ric: 'true'
+      type: ric
+      implementation: oai
