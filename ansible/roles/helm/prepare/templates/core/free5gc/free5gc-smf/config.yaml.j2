@@ -169,7 +169,7 @@ logger: # log output setting
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false
-  level: debug # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
+  level: info # how detailed to output, value: trace, debug, info, warn, error, fatal, panic
   reportCaller: false # enable the caller report or not, value: true or false
 {% endif %}
 

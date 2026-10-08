@@ -18,7 +18,7 @@ log_level:
 {% if component.advanced_config and component.advanced_config.log_level %}
 {{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
-  general: debug
+  general: info
 {% endif %}
 
 # If you enable registration, the other NFs will use the NRF discovery mechanism
