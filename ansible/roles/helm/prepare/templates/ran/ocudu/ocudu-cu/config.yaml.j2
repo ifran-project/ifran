@@ -11,6 +11,7 @@ cu_cp:
 {% if component.advanced_config and component.advanced_config.cu_cp %}
 {{ component.advanced_config.cu_cp | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
+  inactivity_timer: {{ component.advanced_config.inactivity_timer | default(120, true) }}
   amf:
     addr: {{ component.config.amf }}
     port: {{ component.config.n2.port }}
@@ -69,8 +70,8 @@ log:
 {{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   filename: stdout
-  all_level: debug
-  config_level: debug
+  all_level: info
+  config_level: info
 {% endif %}
 
 {% if component.advanced_config and component.advanced_config.pcap %}

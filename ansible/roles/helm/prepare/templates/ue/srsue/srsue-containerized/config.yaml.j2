@@ -16,7 +16,7 @@ device_name = {{ component.derived_radio_config.device_driver }}
 device_args = {{ component.advanced_config.device_args }}
 {% else %}
 {% if component.config.ru.type == "usrp" %}
-device_args = "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+device_args = addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}
 {% elif component.config.ru.type == "simulated" %}
 device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnbs[0].gnb_ip }}:2000,base_srate={{ component.advanced_config.srate | default("23.04e6", true) }}
 {% endif %}
@@ -51,8 +51,8 @@ nas_filename = /tmp/ue_nas.pcap
 {% if component.advanced_config and component.advanced_config.log %}
 {{ component.advanced_config.log }}
 {% else %}
-all_level = debug
-phy_lib_level = debug
+all_level = info
+phy_lib_level = info
 all_hex_limit = 32
 filename = stdout
 file_max_size = -1
@@ -85,8 +85,8 @@ ue_category = 4
 {% if component.advanced_config and component.advanced_config.nas %}
 {{ component.advanced_config.nas }}
 {% else %}
-apn = "{{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].dnn.name }}"
-apn_protocol = "{{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].dnn.pduSessionType }}"
+apn = {{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].dnn.name }}
+apn_protocol = {{ component.config.subscriptions[component.config.pduSessions[0].subscriptionIndex].dnn.pduSessionType }}
 {% endif %}
 
 [slicing]
@@ -104,7 +104,6 @@ nssai-sd = {{ component.config.subscriptions[component.config.pduSessions[0].sub
 {% if component.advanced_config and component.advanced_config.gw %}
 {{ component.advanced_config.gw }}
 {% else %}
-netns = ue
 ip_devname = tun_srsue
 ip_netmask = 255.255.255.0
 {% endif %}

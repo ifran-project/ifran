@@ -176,6 +176,7 @@ class OCUDUAdvancedCUCPConfig(GenericOCUDUAdvancedRANConfig):
     """Advanced configuration for OCUDU CU-CP."""
 
     cu_cp: dict[str, Any] | None = Field(default=None)
+    inactivity_timer: int | None = Field(default=None)
 
 
 class OCUDUAdvancedCUUPConfig(GenericOCUDUAdvancedRANConfig):
@@ -188,6 +189,7 @@ class OCUDUAdvancedCUConfig(GenericOCUDUAdvancedRANConfig):
     """Advanced configuration for OCUDU CU."""
 
     cu_cp: dict[str, Any] | None = Field(default=None)
+    inactivity_timer: int | None = Field(default=None)
     cu_up: dict[str, Any] | None = Field(default=None)
 
 
@@ -199,6 +201,10 @@ class OCUDUAdvancedCommonGNBConfig(GenericOCUDUAdvancedRANConfig):
    srbs: dict[str, Any] | None = Field(default=None)
    du: dict[str, Any] | None = Field(default=None)
    cell_cfg: dict[str, Any] | None = Field(default=None)
+   pdcch: dict[str, Any] | None = Field(default=None)
+   pdsch: dict[str, Any] | None = Field(default=None)
+   pusch: dict[str, Any] | None = Field(default=None)
+   prach: dict[str, Any] | None = Field(default=None)
    ntn: dict[str, Any] | None = Field(default=None)
    custom_freq_bands: dict[str, Any] | None = Field(default=None)
    ru_ofh: dict[str, Any] | None = Field(default=None)
@@ -227,6 +233,7 @@ class OCUDUAdvancedGNBConfig(OCUDUAdvancedCommonGNBConfig):
     """Advanced configuration for OCUDU GNB."""
 
     cu_cp: dict[str, Any] | None = Field(default=None)
+    inactivity_timer: int | None = Field(default=None)
     cu_up: dict[str, Any] | None = Field(default=None)
 
 

@@ -48,8 +48,8 @@ log:
 {{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   filename: stdout
-  all_level: debug
-  config_level: debug
+  all_level: info
+  config_level: info
 {% endif %}
 
 {% if component.advanced_config and component.advanced_config.pcap %}

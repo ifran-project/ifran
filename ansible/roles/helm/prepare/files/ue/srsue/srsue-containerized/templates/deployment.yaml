@@ -86,7 +86,7 @@ spec:
         command:
           - /bin/sh
           - -c
-          - ip netns add ue && exec /usr/local/bin/srsue /etc/config/ue.conf
+          - /usr/local/bin/srsue /etc/config/ue.conf
         {{- else }}
         command: [ "/bin/sleep", "infinity" ]
         {{- end }}

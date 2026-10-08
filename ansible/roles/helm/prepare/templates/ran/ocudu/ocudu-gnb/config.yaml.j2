@@ -26,6 +26,7 @@ cu_cp:
 {% if component.advanced_config and component.advanced_config.cu_cp %}
 {{ component.advanced_config.cu_cp | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
+  inactivity_timer: {{ component.advanced_config.inactivity_timer | default(120, true) }}
   amf:
     addr: {{ component.config.amf }}
     port: {{ component.config.n2.port }}
@@ -72,8 +73,24 @@ cell_cfg:
   pci: {{ component.config.physicalCellId }}
   nof_antennas_dl: {{ component.config.ru.numberOfTxPorts }}
   nof_antennas_ul: {{ component.config.ru.numberOfRxPorts }}
+{% if component.advanced_config and component.advanced_config.pdcch %}
+  pdcch:
+{{ component.advanced_config.pdcch | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.pdsch %}
+  pdsch:
+{{ component.advanced_config.pdsch | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.pusch %}
+  pusch:
+{{ component.advanced_config.pusch | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
   prach:
+{% if component.advanced_config and component.advanced_config.prach %}
+{{ component.advanced_config.prach | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
     prach_config_index: {{ component.config.radioConfiguration.prachConfigurationIndex }}
+{% endif %}
   ssb:
     ssb_period: {{ component.config.radioConfiguration.ssbPeriodicityMs }}
 {% if component.config.radioConfiguration.duplexMode == "tdd" %}
@@ -180,7 +197,7 @@ log:
 {{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   filename: stdout
-  all_level: debug
+  all_level: info
   config_level: debug
 {% endif %}
 
