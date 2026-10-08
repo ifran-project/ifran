@@ -18,7 +18,7 @@ device_args = {{ component.advanced_config.device_args }}
 {% if component.config.ru.type == "usrp" %}
 device_args = "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
 {% elif component.config.ru.type == "simulated" %}
-device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnbs[0].gnb_ip }}:2000,base_srate={{ component.advanced_config.srate | default("61.44e6", true) }}
+device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnbs[0].gnb_ip }}:2000,base_srate={{ component.advanced_config.srate | default("23.04e6", true) }}
 {% endif %}
 {% endif %}
 {% endif %}
@@ -51,10 +51,10 @@ nas_filename = /tmp/ue_nas.pcap
 {% if component.advanced_config and component.advanced_config.log %}
 {{ component.advanced_config.log }}
 {% else %}
-all_level = info
-phy_lib_level = none
+all_level = debug
+phy_lib_level = debug
 all_hex_limit = 32
-filename = /tmp/ue.log
+filename = stdout
 file_max_size = -1
 {% endif %}
 
@@ -64,13 +64,13 @@ file_max_size = -1
 {% else %}
 mode = soft
 algo = milenage
-opc  = "{{ component.config.authenticationData.opc }}"
+opc  = {{ component.config.authenticationData.opc }}
 {% if component.config.authenticationData.op %}
-op   = "{{ component.config.authenticationData.op }}"
+op   = {{ component.config.authenticationData.op }}
 {% endif %}
-k    = "{{ component.config.authenticationData.k }}"
-imsi = "{{ component.config.supi }}"
-imei = "{{ component.config.pei }}"
+k    = {{ component.config.authenticationData.k }}
+imsi = {{ component.config.supi }}
+imei = {{ component.config.pei }}
 {% endif %}
 
 [rrc]

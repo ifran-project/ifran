@@ -85,9 +85,8 @@ spec:
         {{- if .Values.start.ue }}
         command:
           - /bin/sh
-        args:
-          - |
-            ip netns add ue && exec /usr/local/bin/srsue /etc/config/ue.conf
+          - -c
+          - ip netns add ue && exec /usr/local/bin/srsue /etc/config/ue.conf
         {{- else }}
         command: [ "/bin/sleep", "infinity" ]
         {{- end }}
