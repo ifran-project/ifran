@@ -28,7 +28,7 @@
             'pdu_session_type': subscription.dnn.pduSessionType,
             's_nssai': {
               'sst': subscription.snssai.sst,
-              'sd': subscription.snssai.sd | int(base=16)
+              'sd': (subscription.snssai.sd | default('ffffff', true)) | int(base=16)
             }
           }
         ]
