@@ -266,6 +266,9 @@ async def run_single_ue_action(  # noqa: PLR0917
     except Exception as e:
         raise RuntimeError(f"UE {ue_name!r} {action} action failed.") from e
 
+    # update ue connection state
+    ue_prov.is_connected = (action == "connect")
+
 
 async def run_parallel_ue_action(  # noqa: PLR0917
         ues_meta: dict[str, UE],
