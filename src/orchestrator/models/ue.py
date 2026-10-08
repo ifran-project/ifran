@@ -68,6 +68,8 @@ class SRSUEAdvancedUEConfig(GenericAdvancedUEConfig):
     srate: str | float | None = Field(default=None)
     device_args: str | None = Field(default=None)
     nof_carriers: int | None = Field(default=None)
+    max_nof_prb: int | None = Field(default=None)
+    nof_prb: int | None = Field(default=None)
     rf: SerializableINIConfigDict | None = Field(default=None)
     rat_eutra: SerializableINIConfigDict | None = Field(default=None)
     pcap: SerializableINIConfigDict | None = Field(default=None)
