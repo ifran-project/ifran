@@ -8,9 +8,11 @@ from typing import Any, Literal, Self
 
 from metamodel.models.base import StrictBaseModel
 from pydantic import (
+    ConfigDict,
     Field,
     IPvAnyAddress,
     IPvAnyNetwork,
+    field_serializer,
     model_validator,
 )
 
@@ -446,3 +448,13 @@ class K8SComponent(StrictBaseModel):
         if self.is_installed and self.network_info is None:
             raise ValueError("Component is installed but has no 'network_info'.")
         return self
+
+
+    # NOTE pydantic fails to serizalize network_info when it is a list and fallbacks to a string instead
+    @field_serializer("network_info")
+    def serialize_network_info(self, value):
+        """Force correct serialization of 'network_info'."""
+
+        if isinstance(value, list):
+            return [item.model_dump(mode="json") for item in value]
+        return str(value) if value else None
