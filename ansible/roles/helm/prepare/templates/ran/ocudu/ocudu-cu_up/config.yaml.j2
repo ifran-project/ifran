@@ -15,12 +15,12 @@ cu_up:
     socket:
       - bind_addr: {{ component.config.n3.ipv4EndPointAddress }}
   e1ap:
-    addrs:
-      - {{ component.config.cu_cp }}
-    bind_addrs:
-      - {{ component.config.e1.ipv4EndPointAddress }}
+    gateways:
+      - addrs: {{ component.config.cu_cp }}
+        bind_addrs: {{ component.config.e1.ipv4EndPointAddress }}
   f1u:
     bind_port: {{ component.config.f1u.port }}
+    peer_port: {{ component.config.f1u.port }}
     socket:
       - bind_addr: {{ component.config.f1u.ipv4EndPointAddress }}
 {% endif %}

@@ -42,6 +42,7 @@ cu_up:
       - bind_addr: {{ component.config.n3.ipv4EndPointAddress }}
   f1u:
     bind_port: {{ component.config.f1u.port }}
+    peer_port: {{ component.config.f1u.port }}
     socket:
       - bind_addr: {{ component.config.f1u.ipv4EndPointAddress }}
 {% endif %}
