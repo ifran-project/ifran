@@ -68,11 +68,19 @@ cell_cfg:
   pusch:
 {{ component.advanced_config.pusch | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
+{% if component.advanced_config and component.advanced_config.pucch %}
+  pucch:
+{{ component.advanced_config.pucch | to_nice_yaml(indent=4) | indent(4, True) }}
+{% endif %}
   prach:
 {% if component.advanced_config and component.advanced_config.prach %}
 {{ component.advanced_config.prach | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     prach_config_index: {{ component.config.radioConfiguration.prachConfigurationIndex }}
+{% endif %}
+{% if component.advanced_config and component.advanced_config.csi %}
+  csi:
+{{ component.advanced_config.csi | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
   ssb:
     ssb_period: {{ component.config.radioConfiguration.ssbPeriodicityMs }}
