@@ -66,11 +66,11 @@ cells = (
     {
         ru_id = 0;
         band = {{ component.config.gnbs[0].config.radioConfiguration.nrBand }};
-        rf_freq = {{ component.derived_radio_config.dl_carrier_freq_hz }}L;
-        rf_offset = {{ component.derived_radio_config.offset_hz }};
+        rf_freq = {{ component.advanced_config.rf_freq | default(component.derived_radio_config.dl_carrier_freq_hz, true) }}L;
+        rf_offset = {{ component.advanced_config.rf_offset | default(component.derived_radio_config.offset_hz, true) }};
         numerology = {{ component.derived_radio_config.numerology }};
         N_RB_DL = {{ component.derived_radio_config.bandwidth_rb }};
-        ssb_start = {{ component.derived_radio_config.ssb_start }};
+        ssb_start = {{ component.advanced_config.ssb_start | default(component.derived_radio_config.ssb_start, true) }};
     }
 );
 

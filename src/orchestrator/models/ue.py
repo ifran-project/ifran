@@ -34,6 +34,10 @@ class GenericAdvancedUEConfig(StrictBaseModel):
 class OAIAdvancedUEConfig(GenericAdvancedUEConfig):
     """Advanced configuration for OAI NR UE."""
 
+    useAdditionalOptions: str | None = Field(default=None)
+    rf_freq: int | None = Field(default=None)
+    rf_offset: int | None = Field(default=None)
+    ssb_start: int | None = Field(default=None)
     position0: SerializableLibconfigDict | None = Field(default=None)
     channelmod: SerializableLibconfigDict | None = Field(default=None)
     gdbstack: int | None = Field(default=None)
