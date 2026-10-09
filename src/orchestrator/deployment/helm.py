@@ -73,7 +73,7 @@ class HelmManagement(BaseManagement):
                 self.metamodel.ues[name] = component_meta.model_copy(deep=True) # type: ignore
 
                 if component_deployment:
-                    self.deployment_model.ues[name] = component_meta.model_copy(deep=True) # type: ignore
+                    self.deployment_model.ues[name] = component_deployment.model_copy(deep=True) # type: ignore
             else:
                 getattr(
                     self.metamodel, category.value
@@ -81,8 +81,8 @@ class HelmManagement(BaseManagement):
 
                 if component_deployment:
                     getattr(
-                        self.metamodel, category.value
-                    ).components[name] = component_meta.model_copy(deep=True)
+                        self.deployment_model, category.value
+                    ).components[name] = component_deployment.model_copy(deep=True)
 
         else:
             raise ValueError("No valid input was given.")
