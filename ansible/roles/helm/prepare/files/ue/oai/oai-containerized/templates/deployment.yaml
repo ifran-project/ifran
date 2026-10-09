@@ -161,6 +161,13 @@ spec:
       volumes:
       - configMap:
           name: {{ .Chart.Name }}-configmap
+          {{- if .Values.config.ocudu }}
+          items:
+            - key: nr-ue.conf
+              path: nr-ue.conf
+            - key: uecap_ports1.xml
+              path: uecap_ports1.xml
+          {{- end }}
         name: configuration
       - name: dev-net-tun
         hostPath:

@@ -315,8 +315,23 @@ def derive_oai_ue_config(
         # calculate the ue parameters
         # https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/runmodem-nrue.md
 
+        # -r : bandwidth in terms of RBs
+        bandwidth_rb = get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz)
+
         # -C : downlink carrier frequency in Hz
-        dl_carrier_freq_hz = nr_arfcn_to_frequency_hz(radio_config.ssbArfcn)
+        # SSB and Point A frequencies are distinct from the carrier center.
+        ssb_freq_hz = nr_arfcn_to_frequency_hz(radio_config.ssbArfcn)
+        scs_hz = int(radio_config.subcarrierSpacingKhz.value) * 1000
+        dl_point_a_hz = nr_arfcn_to_frequency_hz(radio_config.pointAFrequencyArfcn)
+
+        if gnb.implementation is RANImplementation.OCUDU: # type: ignore
+            # Point A is at the lowest subcarrier of the resource grid.
+            # The carrier center is halfway across the occupied RB grid.
+            occupied_bandwidth_hz = bandwidth_rb * 12 * scs_hz
+
+            dl_carrier_freq_hz = dl_point_a_hz + occupied_bandwidth_hz // 2
+        else:
+            dl_carrier_freq_hz = ssb_freq_hz
 
         # --CO : uplink frequency offset for FDD in Hz
         if radio_config.duplexMode == DuplexMode.FDD:
@@ -329,17 +344,12 @@ def derive_oai_ue_config(
         # --numerology : numerology index
         numerology = NUMEROLOGY[radio_config.subcarrierSpacingKhz]
 
-        # -r : bandwidth in terms of RBs
-        bandwidth_rb = get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz)
-
         # --ssb : SSB start subcarrier
         # delta_f_SSB in hz
         scs_ssb_hz = radio_config.ssbSubcarrierSpacing.value * 1000
-        ssb_freq_hz = nr_arfcn_to_frequency_hz(radio_config.ssbArfcn)
 
         # 3GPP TS 38.211: SSB center is subcarrier #120 of the 240 subcarriers (20 RBs)
         # SSB lowest subcarrier = f_SSB - 120 * SCS_SSB
-        dl_point_a_hz = nr_arfcn_to_frequency_hz(radio_config.pointAFrequencyArfcn)
         ssb_start_freq_hz = ssb_freq_hz - (120 * scs_ssb_hz)
         ssb_offset_hz = ssb_start_freq_hz - dl_point_a_hz
 
@@ -353,12 +363,17 @@ def derive_oai_ue_config(
         # additional flags for rfsim
         if ue_deployment.advanced_config and ue_deployment.advanced_config.useAdditionalOptions:
             additional_flags = ue_deployment.advanced_config.useAdditionalOptions
+
+        elif ru.type is RUType.SIMULATED: # type: ignore
+            if gnb.implementation is RANImplementation.OAI: # type: ignore
+                additional_flags = "-E --rfsim"
+            elif gnb.implementation is RANImplementation.OCUDU: # type: ignore
+                additional_flags =(
+                    "-E --ue-scan-carrier --thread-pool -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 "
+                    "--uecap_file /opt/oai-nr-ue/etc/uecap_ports1.xml"
+                    )
         else:
-            # -E enables continuous synchronization/transmission optimizations
-            additional_flags = (
-                "-E --rfsim" if ru.type is RUType.SIMULATED and gnb.implementation is RANImplementation.OAI # type: ignore
-                else ""
-            )
+            additional_flags = ""
 
         derived = {
             "dl_carrier_freq_hz": dl_carrier_freq_hz, # rf_freq

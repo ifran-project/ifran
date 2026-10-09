@@ -10,3 +10,7 @@ data:
   # even tough the file is a .conf, we put it in config.yaml for compatibility with all the other charts
   nr-ue.conf: |-
 {{ .Files.Get "config.yaml" | nindent 4 }}
+{{- if .Values.config.ocudu }}
+  uecap_ports1.xml: |-
+{{ .Files.Get "uecap_ports1.xml" | nindent 4 }}
+{{- end }}
