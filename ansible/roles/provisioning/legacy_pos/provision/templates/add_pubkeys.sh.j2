@@ -5,7 +5,7 @@ mkdir -p /root/.ssh
 chmod 700 /root/.ssh
 
 cat >> /root/.ssh/authorized_keys <<'EOF'
-{{ public_key }}
+{{ public_keys }}
 EOF
 
 chmod 600 /root/.ssh/authorized_keys

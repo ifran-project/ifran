@@ -30,6 +30,15 @@ from pydantic import (
 from orchestrator.models.k8s import K8SStatus
 
 
+def _get_default_ssh_keys() -> list[str]:
+    """Get the list of absolute paths for all public SSH keys from ~/.ssh."""
+
+    ssh_dir = Path.home() / ".ssh"
+    if ssh_dir.exists():
+        return [str(p) for p in ssh_dir.glob("*.pub")]
+    return []
+
+
 class SSHInfo(StrictBaseModel):
     """SSH information about a host."""
 
@@ -288,9 +297,9 @@ class LegacyPOSParams(CommonPOSParams):
     ))
     """SSH information to access the central POS server."""
 
-    public_key_file: str = Field(default=str(Path.home() / ".ssh/id_rsa.pub"))
+    public_key_files: list[str] = Field(default=_get_default_ssh_keys())
     """
-    Path to public key file.
+    Paths to public key files.
     Will be added to 'authorized_keys' of provisioned nodes to allow subsequent SSH access.
     """
 
