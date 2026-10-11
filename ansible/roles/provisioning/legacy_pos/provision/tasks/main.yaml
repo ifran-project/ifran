@@ -87,3 +87,8 @@
             }}
 
   delegate_to: central_pos
+
+- name: Remove local temporary SSH public keys installation script for '{{ resource_name }}'
+  ansible.builtin.file:
+    path: "/tmp/add_pubkeys_{{ resource_name }}.sh"
+    state: absent
