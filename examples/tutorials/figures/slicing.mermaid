@@ -1,0 +1,34 @@
+flowchart TD
+    Core --- RAN
+    %% Core --> gnb2
+    info[MCC: 001
+        MNC: 01]
+    subgraph node-core[node-Core]
+        subgraph Core ["Core (Open5GS)"]
+            amf["AMF"]
+            ausf["AUSF"]
+            bsf["BSF"]
+            nssf["NSSF"]
+            nrf["NRF"]
+            pcf["PCF"]
+            smf["SMF"]
+            upf1["UPF1 (slice:internet)"]
+            upf2["UPF2 (slice:streaming)"]
+            udm["UDM"]
+            udr["UDR"]
+        end
+    end
+
+    subgraph node-ran[node-RAN]
+        subgraph RAN ["RAN (OAI)
+                            slices: - internet"]
+            gnb[gnb]
+        end
+    end
+
+    subgraph node-ues[node-UEs]
+        subgraph ues ["UEs (OAI)"]
+            gnb --slice: internet [rfsim] --- sim_ue1["sim_ue1"]
+            gnb --slice: streaming [rfsim] --- sim_ue2["sim_ue2"]
+        end
+    end
