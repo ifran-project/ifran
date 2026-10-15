@@ -19,6 +19,7 @@ f1u:
 {{ component.advanced_config.f1u | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   bind_port: {{ component.config.f1u.port }}
+  peer_port: {{ component.config.f1u.port }}
   socket:
     - bind_addr: {{ component.config.f1u.ipv4EndPointAddress }}
 {% endif %}

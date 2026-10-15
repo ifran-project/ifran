@@ -8,7 +8,7 @@
 # - only_bootstrap: bool
 # - boot_params: str | None
 # - central_pos_ssh_info: SSHInfo
-# - public_key_file: str
+# - public_key_files: list[str]
 
 # Output:
 # - ssh_info: SSHInfo
@@ -22,18 +22,19 @@
     ansible_port: "{{ central_pos_ssh_info.port }}"
     ansible_ssh_common_args: "{{ central_pos_ssh_info.common_args | default(omit, true) }}"
 
-- name: Read public key from localhost for '{{ resource_name }}'
+- name: Read SSH public keys from localhost for '{{ resource_name }}'
   ansible.builtin.slurp:
-    src: "{{ public_key_file }}"
-  register: public_key_content
+    src: "{{ item }}"
+  loop: "{{ public_key_files }}"
+  register: public_key_contents
 
-- name: Render SSH key installation script for '{{ resource_name }}'
+- name: Render SSH public keys installation script for '{{ resource_name }}'
   ansible.builtin.template:
-    src: add_pubkey.sh.j2
-    dest: "/tmp/add_pubkey_{{ resource_name }}.sh"
+    src: add_pubkeys.sh.j2
+    dest: "/tmp/add_pubkeys_{{ resource_name }}.sh"
     mode: "0700"
   vars:
-    public_key: "{{ public_key_content.content | b64decode }}"
+    public_keys: "{{ public_key_contents.results | map(attribute='content') | map('b64decode') | join('\n') }}"
 
 - block:
   - name: Free any existing allocation for '{{ resource_name }}'
@@ -60,14 +61,19 @@
     ansible.builtin.command: pos nodes bootstrap {{ resource_name }}
     when: only_bootstrap
 
-  - name: Copy SSH key installation script to central POS for '{{ resource_name }}'
+  - name: Copy SSH public keys installation script to central POS for '{{ resource_name }}'
     ansible.builtin.copy:
-      src: "/tmp/add_pubkey_{{ resource_name }}.sh"
-      dest: "/tmp/add_pubkey_{{ resource_name }}.sh"
+      src: "/tmp/add_pubkeys_{{ resource_name }}.sh"
+      dest: "/tmp/add_pubkeys_{{ resource_name }}.sh"
       mode: "0700"
 
-  - name: Install SSH public key on '{{ resource_name }}'
-    ansible.builtin.command: pos commands launch {{ resource_name }} --infile /tmp/add_pubkey_{{ resource_name }}.sh
+  - name: Install SSH public keys on '{{ resource_name }}'
+    ansible.builtin.command: pos commands launch {{ resource_name }} --infile /tmp/add_pubkeys_{{ resource_name }}.sh
+
+  - name: Remove local temporary SSH public keys installation script for '{{ resource_name }}'
+    ansible.builtin.file:
+      path: "/tmp/add_pubkeys_{{ resource_name }}.sh"
+      state: absent
 
   - name: Return updated SSH info object for '{{ resource_name }}'
     ansible.builtin.set_stats:

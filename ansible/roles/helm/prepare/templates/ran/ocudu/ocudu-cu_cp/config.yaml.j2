@@ -24,7 +24,7 @@ cu_cp:
 {% for slice in plmn.snssaiList %}
               - sst: {{ slice.sst }}
 {% if slice.sd %}
-                sd: {{ slice.sd | int(base=16) }}l
+                sd: {{ slice.sd | int(base=16) }}
 {% endif %}
 {% endfor %}
 {% endfor %}

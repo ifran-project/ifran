@@ -1,0 +1,118 @@
+core:
+  components:
+    nrf:
+      type: nrf
+      config:
+        plmnList:
+        - snssaiList:
+          - internet
+          - streaming
+          - testing
+    ausf:
+      type: ausf
+    amf:
+      type: amf
+      config:
+        plmnList:
+        - snssaiList:
+          - internet
+          - streaming
+          - testing
+    smf:
+      type: smf
+      config:
+        snssaiList:
+        - internet
+        - streaming
+        - testing
+    upf:
+      type: upf
+      config:
+        snssaiList:
+        - internet
+        - streaming
+        - testing
+    udr:
+      type: udr
+    udm:
+      type: udm
+ran:
+  components:
+    gnb:
+      type: gnb
+      config:
+        plmnList:
+        - snssaiList:
+          - internet
+          - streaming
+          - testing
+ues:
+  ue1:
+    config:
+      supi: '001010000000001'
+  ue2:
+    config:
+      supi: '001010000000002'
+  ue3:
+    config:
+      supi: '001010000000003'
+  ue4:
+    config:
+      supi: '001010000000004'
+      subscriptions:
+      - snssai: streaming
+        dnn: streaming
+  ue5:
+    config:
+      supi: '001010000000005'
+      subscriptions:
+      - snssai: streaming
+        dnn: streaming
+  ue6:
+    config:
+      supi: '001010000000006'
+      subscriptions:
+      - snssai: streaming
+        dnn: streaming
+  ue7:
+    config:
+      supi: '001010000000007'
+      subscriptions:
+      - snssai: testing
+        dnn: testing
+  ue8:
+    config:
+      supi: 001010000000008
+      subscriptions:
+      - snssai: testing
+        dnn: testing
+  ue9:
+    config:
+      supi: 001010000000009
+      subscriptions:
+      - snssai: testing
+        dnn: testing
+slices:
+  internet:
+    sd: FFFFFF
+    dnns:
+      internet:
+        ipv4Network: 10.0.0.0/24
+        ipv4Gateway: 10.0.0.1
+  streaming:
+    sd: '000001'
+    name: streaming
+    dnns:
+      streaming:
+        name: streaming
+        ipv4Network: 11.0.0.0/24
+        ipv4Gateway: 11.0.0.1
+  testing:
+    sst: 2
+    sd: '000002'
+    name: testing
+    dnns:
+      testing:
+        name: testing
+        ipv4Network: 12.0.0.0/24
+        ipv4Gateway: 12.0.0.1
