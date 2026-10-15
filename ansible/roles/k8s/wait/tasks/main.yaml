@@ -36,7 +36,7 @@
     wait_condition:
       type: Ready
       status: "True"
-    wait_timeout: 300
+    wait_timeout: 3600 # 1h of waiting before timeout
     wait_sleep: 10
   loop:
     - kube-system
