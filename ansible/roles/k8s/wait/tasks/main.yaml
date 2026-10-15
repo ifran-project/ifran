@@ -12,7 +12,7 @@
     name: calico-system
     wait: yes
     wait_sleep: 10
-    wait_timeout: 300
+    wait_timeout: 3600 # 1h of waiting before timeout
 
 - name: Wait for pods to be populated in system namespaces
   kubernetes.core.k8s_info:
@@ -23,7 +23,7 @@
     - calico-system
   register: ns_pods
   until: ns_pods.resources | length > 0
-  retries: 60
+  retries: 100
   delay: 5
 
 - name: Wait for all system pods to become ready
