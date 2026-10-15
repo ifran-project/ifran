@@ -1,0 +1,549 @@
+params:
+  k8s:
+    master_node: vm1
+    join_command: 'kubeadm join 10.123.62.255:6443 --token hwsgie.mv1v1a7vg922otsr
+      --discovery-token-ca-cert-hash sha256:2839ef0b315a45f94e663ff0b0ac6973a255f31349b1efd44c0cfb4e1d6dfba4 '
+    install_multus: false
+    used_ips:
+    - 10.244.192.42
+    - 10.244.126.216
+provisioners:
+  bi:
+    type: bi
+    params:
+      extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
+      flavor: xlarge
+      project: cnria2026
+      experiment: digitafrica_test2
+      create_experiment: true
+      experiment_duration: 7d
+      node_duration: 7d
+nodes:
+  vm1:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.62.255
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p proxy@bastion1.theblueprintfactory.org
+        -p 22"
+    roles:
+    - core
+    k8s_status: in_cluster
+  vm2:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.145.216
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p proxy@bastion1.theblueprintfactory.org
+        -p 22"
+    roles:
+    - core
+    k8s_status: in_cluster
+  vm3:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.57.18
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p proxy@bastion1.theblueprintfactory.org
+        -p 22"
+    roles:
+    - ran
+    k8s_status: in_cluster
+  vm4:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.178.199
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p proxy@bastion1.theblueprintfactory.org
+        -p 22"
+    roles:
+    - ue
+    k8s_status: in_cluster
+  vm5:
+    is_provisioned: true
+    ssh_info:
+      hostname: 10.123.89.92
+      user: ziyad
+      jumphost:
+        hostname: bastion1.theblueprintfactory.org
+        user: proxy
+        common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+          ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o
+          ControlPersist=7200s -o ControlPath=/tmp/cm-%C
+      common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o
+        ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto -o ControlPersist=7200s
+        -o ControlPath=/tmp/cm-%C -o ProxyCommand="ssh -o StrictHostKeyChecking=no
+        -o UserKnownHostsFile=/dev/null  -W %h:%p proxy@bastion1.theblueprintfactory.org
+        -p 22"
+    roles:
+    - ue
+    k8s_status: in_cluster
+core:
+  components:
+    nssf:
+      is_installed: true
+      network_info: 10.244.225.5
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: nssf
+      implementation: open5gs
+    udr:
+      is_installed: true
+      network_info: 10.244.185.201
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udr
+      implementation: open5gs
+    amf:
+      is_installed: true
+      network_info: 10.244.185.196
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n2:
+          port: 38412
+          protocol: SCTP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: amf
+      implementation: open5gs
+    smf:
+      is_installed: true
+      network_info: 10.244.185.198
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n4:
+          port: 8805
+          protocol: UDP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: smf
+      implementation: open5gs
+    ausf:
+      is_installed: true
+      network_info: 10.244.185.197
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: ausf
+      implementation: open5gs
+    upf:
+      is_installed: true
+      static_pod_ip: 10.244.192.42
+      network_info: 10.244.192.42
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+        n3:
+          port: 2152
+          protocol: UDP
+        n4:
+          port: 8805
+          protocol: UDP
+        n9:
+          port: 2153
+          protocol: UDP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          - SYS_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: upf
+      implementation: open5gs
+    pcf:
+      is_installed: true
+      network_info: 10.244.185.199
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: pcf
+      implementation: open5gs
+    bsf:
+      is_installed: true
+      network_info: 10.244.185.202
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: bsf
+      implementation: open5gs
+    udm:
+      is_installed: true
+      network_info: 10.244.185.200
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: udm
+      implementation: open5gs
+    nrf:
+      is_installed: true
+      network_info: 10.244.185.195
+      image:
+        repository: docker.io/gradiant/open5gs
+        image_tag: 2.8.0
+      exposed_ports:
+        sbi:
+          port: 80
+          protocol: TCP
+      namespace: open5gs-core
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/core: 'true'
+      type: nrf
+      implementation: open5gs
+  database_params:
+    image:
+      repository: docker.io/mongo
+      image_tag: '8.3'
+    is_installed: true
+    ip: 10.244.185.194
+ran:
+  implementation: ueransim
+  components:
+    gnb:
+      is_installed: true
+      static_pod_ip: 10.244.126.216
+      network_info: 10.244.126.216
+      image:
+        repository: docker.io/gradiant/ueransim
+        image_tag: 3.3.0
+      exposed_ports:
+        n2:
+          port: 38412
+          protocol: SCTP
+        n3:
+          port: 2152
+          protocol: UDP
+      namespace: ueransim-ran
+      security_context:
+        capabilities:
+          add:
+          - NET_ADMIN
+          drop:
+          - ALL
+      node_selector:
+        node-type.5g.blueprint/ran: 'true'
+      type: gnb
+      implementation: ueransim
+      derived_radio_config: {}
+ues:
+  ue1:
+    is_installed: true
+    network_info: 10.244.64.194
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue2:
+    is_installed: true
+    network_info: 10.244.193.133
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue3:
+    is_installed: true
+    network_info: 10.244.193.132
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue4:
+    is_installed: true
+    network_info: 10.244.64.195
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue5:
+    is_installed: true
+    network_info: 10.244.193.131
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue6:
+    is_installed: true
+    network_info: 10.244.193.130
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue7:
+    is_installed: true
+    network_info: 10.244.193.134
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue8:
+    is_installed: true
+    network_info: 10.244.64.196
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+  ue9:
+    is_installed: true
+    network_info: 10.244.64.197
+    image:
+      repository: docker.io/gradiant/ueransim
+      image_tag: 3.3.0
+    namespace: ueransim-ue
+    security_context:
+      capabilities:
+        add:
+        - NET_ADMIN
+        drop:
+        - ALL
+    node_selector:
+      node-type.5g.blueprint/ue: 'true'
+    type: containerized
+    implementation: ueransim
+    derived_radio_config: {}
+ric:
+  components:
+    ric:
+      network_info: null
+      type: ric
+      implementation: oai
