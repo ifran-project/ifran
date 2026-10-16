@@ -337,21 +337,11 @@ class ExposedPort(StrictBaseModel):
     """Protocol going through exposed port."""
 
 
-class LogFetchParams(StrictBaseModel):
-    """Kubernetes log fetching parameters."""
-
-    kind: Literal["Pod", "Deployment", "StatefulSet"] = Field(default="Deployment")
-    """Kubernetes workload kind for which to retrieve logs."""
-
-    since_seconds: int = Field(default=3600) # last hour
-    """Time in seconds before the current time from which to show logs."""
-
-    all_containers: bool = Field(default=False)
-    """If set to True, retrieve all containers' logs in the pod(s)."""
-
-
 class K8SComponent(StrictBaseModel):
     """Generic Kubernetes component."""
+
+    kind: Literal["Pod", "Deployment", "StatefulSet"] = Field(default="Deployment")
+    """Kubernetes workload kind."""
 
     is_installed: bool = Field(default=False)
     """If this component is installed or not."""
@@ -435,9 +425,6 @@ class K8SComponent(StrictBaseModel):
 
     rendered_files: list[str] = Field(default_factory=lambda: ["values.yaml", "config.yaml"])
     """List of Helm chart template files to be rendered."""
-
-    log_fetch_params: LogFetchParams = Field(default_factory=LogFetchParams)
-    """Kubernetes log fetching parameters for this component."""
 
 
     @model_validator(mode="after")

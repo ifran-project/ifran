@@ -10,6 +10,7 @@ from orchestrator.utils.provisioning import (
     run_parallel_provisioning_action,
     run_parallel_reservation_action,
 )
+from orchestrator.utils.utils import flatten_dict
 
 
 class ProvisioningManagement(BaseManagement):
@@ -81,7 +82,8 @@ class ProvisioningManagement(BaseManagement):
             ignore_invalid_states: bool = True,
             ignore_failures: bool = False,
             quiet: bool = False,
-        ) -> dict[str, str]:
+            flatten: bool = True,
+        ) -> str | dict[str, str]:
         """Run command on SSH-able resources (nodes and UEs)."""
 
         ssh_able_categories = [ProvisioningCategory.NODE, ProvisioningCategory.UE]
@@ -95,7 +97,7 @@ class ProvisioningManagement(BaseManagement):
             if v.category in ssh_able_categories
         }
 
-        return await run_parallel_command(
+        cmd_outputs = await run_parallel_command(
             resources=target_resources, # type: ignore
             command=command,
             become=become,
@@ -106,8 +108,18 @@ class ProvisioningManagement(BaseManagement):
             quiet=quiet,
         )
 
+        if flatten:
+            return flatten_dict(cmd_outputs) # type: ignore
 
-    async def run_node_command(self, command: list[str], nodes: list[str] | None = None, **kwargs) -> dict[str, str]:
+        return cmd_outputs # type: ignore
+
+
+    async def run_node_command(
+            self,
+            command: list[str],
+            nodes: list[str] | None = None,
+            **kwargs,
+        ) -> str | dict[str, str]:
         """Run nodes on all or a targeted list of nodes."""
 
         # if no specific node names are passed, default to all nodes
@@ -117,7 +129,12 @@ class ProvisioningManagement(BaseManagement):
         return await self.run_command(command=command, resources=nodes, **kwargs)
 
 
-    async def run_ue_command(self, command: list[str], ues: list[str] | None = None, **kwargs) -> dict[str, str]:
+    async def run_ue_command(
+            self,
+            command: list[str],
+            ues: list[str] | None = None,
+            **kwargs,
+        ) -> str | dict[str, str]:
         """Run nodes on all or a targeted list of UEs."""
 
         # if no specific ue names are passed, default to all ues

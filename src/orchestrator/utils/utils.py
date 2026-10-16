@@ -178,3 +178,13 @@ SerializableINIConfigDict = Annotated[
     WithJsonSchema({'type': 'string'}, mode='serialization'),
 ]
 """Python dictionary type for Pydantic that can be serialized into INI block fields."""
+
+
+def flatten_dict(d: dict[str, str] | dict[str, dict[str, str]]) -> str:
+    """Concatenate dict values into one string."""
+
+    return "\n".join(
+        value if isinstance(value, str)
+        else "\n".join(value.values())
+        for value in d.values()
+    )

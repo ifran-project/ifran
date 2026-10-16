@@ -11,7 +11,7 @@ from orchestrator.models.common import Deployed5GComponent
 from orchestrator.models.deployment import DeploymentModel
 from orchestrator.models.provisioning import ProvisionableNode
 from orchestrator.utils.helm import ComponentDependencyGraph, run_parallel_helm_action
-from orchestrator.utils.utils import ReferenceNotFoundError
+from orchestrator.utils.utils import ReferenceNotFoundError, flatten_dict
 
 
 class HelmManagement(BaseManagement):
@@ -121,11 +121,11 @@ class HelmManagement(BaseManagement):
         components: list[str] | None = None,
         node: str | None = None,
         order: ComponentDependencyGraph | None = None,
-        command_to_run: list[str] | None = None, # only used in the case of run_cmd action
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        **kwargs,
     ) -> dict[str, str] | None:
         """Run Helm action on 5G components of a specific category."""
 
@@ -176,11 +176,11 @@ class HelmManagement(BaseManagement):
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
             order=order,
-            command_to_run=command_to_run,
             force=force,
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
             quiet=quiet,
+            **kwargs,
         )
 
 
@@ -200,19 +200,47 @@ class HelmManagement(BaseManagement):
         await self.run_action(action="uninstall", components=components, **kwargs)
 
 
-    async def get_logs(self, components: list[str] | None = None, **kwargs) -> dict[str, str]:
-        """Get components logs."""
-        return await self.run_action(action="get_logs", components=components, **kwargs) # type: ignore
+    async def get_logs(
+            self,
+            components: list[str] | None = None,
+            containers: list[str] | None = None,
+            since_seconds: int = 3600, # 1 hour
+            flatten: bool = True,
+            **kwargs,
+        ) -> str | dict[str, dict[str, str]]:
+        """
+        Fetch components' logs from all containers, or a given set of containers.
+
+        Return a dictionary keyed by component and container names, or a single concatenated text if flatten is True.
+        """
+        logs = await self.run_action(
+            action="get_logs", components=components, containers=containers, since_seconds=since_seconds, **kwargs
+            )
+
+        if flatten:
+            return flatten_dict(logs) # type: ignore
+
+        return logs # type: ignore
 
 
     async def run_command(
             self,
             command: list[str],
             components: list[str] | None = None,
+            flatten: bool = True,
             **kwargs,
-        ) -> dict[str, str]:
-        """Run command on components."""
-        return await self.run_action(action="run_cmd", command_to_run=command, components=components, **kwargs) # type: ignore
+        ) -> str | dict[str, str]:
+        """
+        Run command on components.
+
+        Return a dictionary keyed by component, or a single concatenated text if flatten is True.
+        """
+        cmd_outputs = await self.run_action(action="run_cmd", command=command, components=components, **kwargs) # type: ignore
+
+        if flatten:
+            return flatten_dict(cmd_outputs) # type: ignore
+
+        return cmd_outputs # type: ignore
 
 
     async def deploy(self, order: ComponentDependencyGraph | None = None, **kwargs) -> None:

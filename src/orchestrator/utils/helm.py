@@ -60,7 +60,7 @@ def update_exposed_endpoints(
                     iface_meta.ipv4EndPointAddress = component_deployment.network_info # type: ignore
 
 
-async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
+async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         component_name: str,
         component_meta: Component5G,
         component_deployment: Deployed5GComponent,
@@ -68,10 +68,10 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
-        command_to_run: list[str] | None = None, # only used in the case of run_cmd action
         force: bool = False,
         quiet: bool = False,
-    ) -> str | None:
+        **kwargs,
+    ) -> None | str | dict[str, str]:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
 
     chart_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
@@ -129,16 +129,39 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0917
     if action == "install":
         args["output_keys"] = ["network_info"]
 
-    # expect logs output after get_logs actions
+    # expect logs output after get_logs action
     elif action == "get_logs":
-        args["output_keys"] = ["logs"]
+        containers = kwargs["containers"]
 
-    # give command_to_run as input for run_cmd action
+        # containers can be None => get logs for all containers
+        if not containers:
+            containers = []
+
+        if not isinstance(containers, list) and all(isinstance(item, str) for item in containers):
+            raise ValueError(f"Invalid containers list {containers!r} for {category} component {component_name!r}")
+
+        since_seconds = kwargs["since_seconds"]
+        if not since_seconds:
+            since_seconds = 3600 # 1 hour
+
+        if not isinstance(since_seconds, int):
+            raise ValueError(
+                f"Invalid since_seconds value {since_seconds!r} for {category} component {component_name!r}"
+                )
+
+        args["inputs"]["containers"] = containers
+        args["inputs"]["since_seconds"] = since_seconds
+        args["output_keys"] = ["logs"] # output is always a dict indexed by container name
+
+    # give command as input for run_cmd action
     elif action == "run_cmd":
-        if not command_to_run:
-            raise ValueError(f"Invalid command_to_run {command_to_run!r} for {category} component {component_name!r}")
+        command = kwargs["command"]
+        if not isinstance(command, list) and all(isinstance(item, str) for item in command):
+            raise ValueError(
+                f"Invalid command {command!r} for {category} component {component_name!r}. Should be a list of strings."
+                )
 
-        args["inputs"]["command"] = command_to_run
+        args["inputs"]["command"] = command
         args["output_keys"] = ["command_output"]
 
     try:
@@ -186,12 +209,12 @@ async def run_parallel_helm_action(  # noqa: PLR0917
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
         order: ComponentDependencyGraph | None = None,
-        command_to_run: list[str] | None = None, # only used in the case of run_cmd action
         force: bool = False,
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
-    ) -> dict[str, str] | None:
+        **kwargs,
+    ) -> dict[str, str | dict[str, str]] | None:
     """Run Helm action in parallel on provided 5G components."""
 
     levels = resolve_component_dependency_levels(
@@ -199,7 +222,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
         dependencies=order,
     )
 
-    outputs: dict[str, str] = {}
+    outputs: dict[str, str | dict[str, str]] = {}
 
     for level in levels:
 
@@ -219,9 +242,9 @@ async def run_parallel_helm_action(  # noqa: PLR0917
                     node_name=node_name,
                     node_data=node_data,
                     ansible_params=ansible_params,
-                    command_to_run=command_to_run,
                     force=force,
                     quiet=quiet,
+                    **kwargs,
                 )
                 for name, component_meta, component_deployment in level_components
             ),

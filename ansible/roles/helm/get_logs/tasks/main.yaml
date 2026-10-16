@@ -1,30 +1,73 @@
 # Role to get logs for a deployed Helm chart on a Kubernetes cluster
 
-# Logs are displayed in the Ansible output to be stored in the 'stdout' file of ansible-runner's run directory
+# Logs are outputted in the form of a dictionary indexed by container
 
 # Input:
 # - chart_name: str
 # - component: Deployed5GComponent
+# - containers: list[str]
+# - since_seconds: int
 
 # Output:
-# - logs: str
+# - logs: dict[str, str]
 ---
-- name: Get logs for '{{ chart_name }}' Helm chart
-  kubernetes.core.k8s_log:
-    api_version: "{{ 'apps/v1' if component.log_fetch_params.kind in ['Deployment', 'StatefulSet'] else 'v1' }}"
+- name: Get '{{ chart_name }}' workload info to discover container names
+  kubernetes.core.k8s_info:
+    api_version: "{{ 'apps/v1' if component.kind in ['Deployment', 'StatefulSet'] else 'v1' }}"
+    kind: "{{ component.kind }}"
     name: "{{ chart_name }}"
-    kind: "{{ component.log_fetch_params.kind }}"
     namespace: "{{ component.namespace }}"
-    since_seconds: "{{ component.log_fetch_params.since_seconds }}"
-    all_containers: "{{ component.log_fetch_params.all_containers }}"
+  register: chart_resource
+  when: containers | length == 0
+
+- name: Discover container names for '{{ chart_name }}' if none are specified
+  vars:
+    pod_spec: >-
+      {{
+        chart_resource.resources[0].spec.template.spec
+        if component.kind in ['Deployment', 'StatefulSet']
+        else chart_resource.resources[0].spec
+      }}
+  ansible.builtin.set_fact:
+    discovered_containers: >-
+      {{
+        (
+          pod_spec.containers | default([])
+          + pod_spec.initContainers | default([])
+          + pod_spec.ephemeralContainers | default([])
+        )
+        | map(attribute='name')
+        | list
+      }}
+  when: containers | length == 0
+
+- name: Get logs for '{{ chart_name }}' Helm chart per container
+  kubernetes.core.k8s_log:
+    api_version: "{{ 'apps/v1' if component.kind in ['Deployment', 'StatefulSet'] else 'v1' }}"
+    name: "{{ chart_name }}"
+    kind: "{{ component.kind }}"
+    namespace: "{{ component.namespace }}"
+    since_seconds: "{{ since_seconds }}"
+    container: "{{ item }}"
   register: chart_logs
   changed_when: false
+  loop: "{{ containers if containers | length > 0 else discovered_containers }}"
 
-- name: Display logs for '{{ chart_name }}' Helm chart
-  ansible.builtin.debug:
-    var: chart_logs.log
+- name: Initialize logs dictionary
+  ansible.builtin.set_fact:
+    logs_by_container: {}
+
+- name: Build dictionary indexed by container name
+  ansible.builtin.set_fact:
+    logs_by_container: >-
+      {{
+        logs_by_container | combine({
+          item.item: (item.log | default('', true) | string)
+        })
+      }}
+  loop: "{{ chart_logs.results | default([]) }}"
 
 - name: Return fetched logs for '{{ chart_name }}' Helm chart
   ansible.builtin.set_stats:
     data:
-      logs: "{{ chart_logs.log }}"
+      logs: "{{ logs_by_container }}"
