@@ -77,7 +77,8 @@ async def run_ansible_playbook(  # noqa: PLR0917
         "private_data_dir": run_path,
         "roles_path": roles_paths,
         "inventory": inventory,
-        "playbook": playbook,
+        # resolve playbook if it's a relative path (is a string)
+        "playbook": str(Path(playbook).resolve()) if isinstance(playbook, str) else playbook,  # noqa: ASYNC240
         "extravars": inputs,
         "quiet": quiet,
     }

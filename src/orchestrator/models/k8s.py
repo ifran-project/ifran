@@ -15,6 +15,8 @@ from pydantic import (
     model_validator,
 )
 
+from orchestrator.utils.utils import ResolvedPath
+
 
 class K8SStatus(StrEnum):
     """Supported node Kubernetes status values."""
@@ -119,7 +121,7 @@ class K8SParams(StrictBaseModel):
     copy_kubeconfig_to_workers: bool = Field(default=True)
     """If True, cluster admin credentials will be shared over all workers."""
 
-    local_kubeconfig_path: str = Field(default=str(Path(__file__).resolve().parents[3] / ".k8s-admin.conf"))
+    local_kubeconfig_path: ResolvedPath = Field(default=str(Path(__file__).resolve().parents[3] / ".k8s-admin.conf"))
     """
     Local path on Ansible controller where master's admin.conf is temporarily saved
     before distribution over workers if 'copy_kubeconfig_to_workers' is True.
