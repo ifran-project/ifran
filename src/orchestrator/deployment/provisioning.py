@@ -58,19 +58,19 @@ class ProvisioningManagement(BaseManagement):
             )
 
 
-    async def provision(self, **kwargs) -> None:
-        """Provision all nodes, RUs, and UEs."""
-        await self.run_action(action="provision", resources=None, **kwargs)
+    async def provision(self, resources: list[str] | None = None, **kwargs) -> None:
+        """Provision nodes, RUs, and UEs."""
+        await self.run_action(action="provision", resources=resources, **kwargs)
 
 
-    async def unprovision(self, **kwargs) -> None:
-        """Unprovision all nodes, RUs, and UEs."""
-        await self.run_action(action="unprovision", resources=None, **kwargs)
+    async def unprovision(self, resources: list[str] | None = None, **kwargs) -> None:
+        """Unprovision nodes, RUs, and UEs."""
+        await self.run_action(action="unprovision", resources=resources, **kwargs)
 
 
-    async def reserve(self, **kwargs) -> None:
-        """Reserve all reservable resources."""
-        await self.run_action(action="reserve", **kwargs)
+    async def reserve(self, resources: list[str] | None = None, **kwargs) -> None:
+        """Reserve reservable resources."""
+        await self.run_action(action="reserve", resources=resources, **kwargs)
 
 
     async def run_command(  # noqa: PLR0917
