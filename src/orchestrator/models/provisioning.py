@@ -28,6 +28,7 @@ from pydantic import (
 )
 
 from orchestrator.models.k8s import K8SStatus
+from orchestrator.utils.utils import ResolvedPath
 
 
 def _get_default_ssh_keys() -> list[str]:
@@ -51,7 +52,7 @@ class SSHInfo(StrictBaseModel):
     user: str = Field(default="root")
     """SSH username."""
 
-    private_key_file: str | None = Field(default=None)
+    private_key_file: ResolvedPath | None = Field(default=None)
     """Path to SSH private key."""
 
     password: str | None = Field(default=None)
@@ -159,7 +160,7 @@ class ProvisioningType(StrEnum):
 class GenericProvisionerParams(TolerantBaseModel):
     """Base class for provisioner params."""
 
-    extra_path: str | None = Field(default=None)
+    extra_path: ResolvedPath | None = Field(default=None)
     """Extra Ansible environment path added to PATH used in the provisioner role."""
 
 
@@ -297,7 +298,7 @@ class LegacyPOSParams(CommonPOSParams):
     ))
     """SSH information to access the central POS server."""
 
-    public_key_files: list[str] = Field(default=_get_default_ssh_keys())
+    public_key_files: list[ResolvedPath] = Field(default=_get_default_ssh_keys())
     """
     Paths to public key files.
     Will be added to 'authorized_keys' of provisioned nodes to allow subsequent SSH access.

@@ -2,10 +2,12 @@
 
 import configparser
 import io
+from pathlib import Path
 from typing import Annotated, Any
 
 from pydantic import (
     BaseModel,
+    BeforeValidator,
     PlainSerializer,
     WithJsonSchema,
 )
@@ -188,3 +190,14 @@ def flatten_dict(d: dict[str, str] | dict[str, dict[str, str]]) -> str:
         else "\n".join(value.values())
         for value in d.values()
     )
+
+
+def resolve_path(value: str) -> str:
+    """Ensure relative paths are resolevd."""
+
+    path = Path(value)
+    return str(path) if path.is_absolute() else str(path.resolve())
+
+
+type ResolvedPath = Annotated[str, BeforeValidator(resolve_path)]
+"""Resolved path type."""
