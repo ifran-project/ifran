@@ -132,6 +132,22 @@ spec:
           protocol: {{ $port.protocol }}
           {{- end }}
         {{- end }}
+        {{- if .Values.customEntrypointCommand}}
+        command:
+          {{- toYaml .Values.customEntrypointCommand | nindent 10 }}
+        {{- else if .Values.start.nrf}}
+        {{- else}}
+        command:
+          - /bin/sleep
+          - infinity
+        {{- end}}
+        {{- if .Values.extraEnvVars }}
+        env:
+          {{- range $key, $value := .Values.extraEnvVars }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+        {{- end }}
       volumes:
       - configMap:
       {{- if .Values.global }}

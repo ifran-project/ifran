@@ -428,6 +428,17 @@ class K8SComponent(StrictBaseModel):
     rendered_files: list[str] = Field(default_factory=lambda: ["values.yaml", "config.yaml"])
     """List of Helm chart template files to be rendered."""
 
+    extra_env_vars: dict[str, Any] | None = Field(default=None)
+    """Extra environment variables to give to the main container."""
+
+    custom_entrypoint_command: list[str] | None = Field(default=None)
+    """Custom entrypoint command for the main container."""
+
+    custom_chart_path: ResolvedPath | None = Field(default=None)
+    """Path to a custom Helm chart directory to use instead of the built-in one."""
+
+    custom_rendered_files: list[ResolvedPath] | None = Field(default=None)
+    """List of paths to custom Jinja templates (.j2) to be rendered for the custom Helm chart."""
 
     @model_validator(mode="after")
     def ensure_network_info(self) -> Self:

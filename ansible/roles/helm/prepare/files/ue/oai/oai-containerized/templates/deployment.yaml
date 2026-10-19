@@ -88,7 +88,10 @@ spec:
             memory: {{ .Values.resources.limits.nf.memory | quote }}
             cpu: {{ .Values.resources.limits.nf.cpu | quote }}
         {{- end}}
-        {{- if .Values.start.ue}}
+        {{- if .Values.customEntrypointCommand}}
+        command:
+          {{- toYaml .Values.customEntrypointCommand | nindent 10 }}
+        {{- else if .Values.start.ue}}
         command: [ "/bin/bash", "-c" ]
         args:
           - {{- if eq .Values.config.radio "b2xx"}}
@@ -126,6 +129,10 @@ spec:
           {{- if eq .Values.config.radio "n3xx" }}
             - name: USE_N3XX
               value: true
+          {{- end }}
+          {{- range $key, $value := .Values.extraEnvVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
           {{- end }}
       {{- if .Values.includeTcpDumpContainer }}
       - name: tcpdump

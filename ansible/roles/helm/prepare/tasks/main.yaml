@@ -17,21 +17,40 @@
     state: directory
     mode: "0700"
 
-- name: Copy local '{{ component.implementation }}-{{ component.type }}' Helm chart directory for '{{ chart_name }}'
+- name: Copy custom Helm chart directory for '{{ chart_name }}' if provided
+  ansible.builtin.copy:
+    src: "{{ component.custom_chart_path }}/"
+    dest: "{{ helm_build_dir }}/"
+    mode: "0755"
+  when: component.custom_chart_path | default('', true) | length > 0
+
+- name: Copy local built-in '{{ component.implementation }}-{{ component.type }}' Helm chart directory for '{{ chart_name }}'
   ansible.builtin.copy:
     src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/"
     dest: "{{ helm_build_dir }}"
     mode: "0755"
+  when: component.custom_chart_path | default('', true) | length == 0
 
-- name: Render '{{ chart_name }}' Helm Chart.yaml file from Jinja template
+# NOTE make sure the Chart.yaml is always handled by the orchestrator
+# to be able to manage the chart by its know naming later on
+- name: Render built-in Helm Chart.yaml templated file for '{{ chart_name }}'
   ansible.builtin.template:
     src: "Chart.yaml.j2"
     dest: "{{ helm_build_dir }}/Chart.yaml"
     mode: "0600"
 
-- name: Render templated Helm files for '{{ chart_name }}'
+- name: Render custom templated Helm files for '{{ chart_name }}' if provided
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ helm_build_dir }}/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    mode: "0600"
+  loop: "{{ component.custom_rendered_files | default([], true) }}"
+  when: component.custom_rendered_files | default([], true) | length > 0
+
+- name: Render built-in templated Helm files for '{{ chart_name }}'
   ansible.builtin.template:
     src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/{{ item }}.j2"
     dest: "{{ helm_build_dir }}/{{ item }}"
     mode: "0600"
   loop: "{{ component.rendered_files }}"
+  when: component.custom_rendered_files | default([], true) | length == 0
