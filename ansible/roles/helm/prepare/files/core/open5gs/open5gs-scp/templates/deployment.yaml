@@ -128,7 +128,10 @@ spec:
           protocol: {{ $port.protocol }}
           {{- end }}
         {{- end }}
-        {{- if .Values.start.scp}}
+        {{- if .Values.customEntrypointCommand}}
+        command:
+          {{- toYaml .Values.customEntrypointCommand | nindent 10 }}
+        {{- else if .Values.start.scp}}
         command:
           - /opt/open5gs/bin/open5gs-scpd
         args:
@@ -144,6 +147,10 @@ spec:
             value: {{ .Values.config.db_uri }}
           - name: GIN_MODE
             value: release # used to configure the Gin Web Framework to optimize performance and disable verbose debug logging
+          {{- range $key, $value := .Values.extraEnvVars }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
       volumes:
       {{- if .Values.includeTcpDumpContainer}}
       {{- if .Values.persistent.sharedvolume}}

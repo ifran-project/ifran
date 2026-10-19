@@ -20,6 +20,7 @@
 - name: Select project '{{ project }}' for '{{ resource_name }}' provisioning
   # use shell instead of command here to avoid cli error
   ansible.builtin.shell: slices project use {{ project }}
+  failed_when: false # ignore select project errors
 
 - name: Delete experiment with name '{{ experiment }}' if it exists before attempting create for '{{ resource_name }}'
   ansible.builtin.command: slices experiment delete {{ experiment }} --force

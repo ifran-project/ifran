@@ -72,6 +72,10 @@ spec:
             value: {{ .Values.config.timeZone }}
           - name: USE_ADDITIONAL_OPTIONS
             value: {{ .Values.config.useAdditionalOptions }}
+          {{- range $key, $value := .Values.extraEnvVars }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.nf.cpu | quote }}
@@ -88,7 +92,10 @@ spec:
             protocol: {{ $port.protocol }}
             {{- end }}
           {{- end }}
-          {{- if not .Values.start.cu }}
+          {{- if .Values.customEntrypointCommand}}
+          command:
+            {{- toYaml .Values.customEntrypointCommand | nindent 12 }}
+          {{- else if not .Values.start.cu }}
           command: [ "/bin/sleep", "infinity" ]
           {{- end }}
           env:

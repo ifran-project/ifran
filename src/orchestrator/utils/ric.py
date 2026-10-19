@@ -115,7 +115,7 @@ def reconcile_ric(
 
             if component_meta.type is RICComponentType.DBAAS:
                 # osc ric dbaas is a statefulset
-                component_deployment.log_fetch_params.kind = "StatefulSet"
+                component_deployment.kind = "StatefulSet"
 
     type_counts = {
         component_meta.type: sum(

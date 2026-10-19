@@ -153,6 +153,10 @@ spec:
               valueFrom:
                fieldRef:
                 fieldPath: metadata.name
+            {{- range $key, $value := .Values.extraEnvVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
           ports:
             - name: "rmrroute-{{ $key }}"
               containerPort: {{ include "common.serviceport.e2term.rmr.route" $topCtx }}

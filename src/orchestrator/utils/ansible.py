@@ -3,7 +3,7 @@
 import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import ansible_runner
 
@@ -32,6 +32,9 @@ def get_ansible_inventory_line(
         vars.append(f"ansible_password={ssh_info.password}")
     if ssh_info.sudo_password:
         vars.append(f"ansible_become_password={ssh_info.sudo_password}")
+    for key, value in resource_data.provisioning_params.items():
+        if key.startswith("ansible_"):
+            vars.append(f"{key}={value}")
 
     args = ssh_info.common_args
     if args:
@@ -77,7 +80,8 @@ async def run_ansible_playbook(  # noqa: PLR0917
         "private_data_dir": run_path,
         "roles_path": roles_paths,
         "inventory": inventory,
-        "playbook": playbook,
+        # resolve playbook if it's a relative path (is a string)
+        "playbook": str(Path(playbook).resolve()) if isinstance(playbook, str) else playbook,  # noqa: ASYNC240
         "extravars": inputs,
         "quiet": quiet,
     }
@@ -154,7 +158,7 @@ async def run_ansible_command(  # noqa: PLR0917
             "become": become,
             "tasks": [
                 {
-                    "name": f"Run command {" ".join(command)!r}",
+                    "name": f"Run command {" ".join(command)!r} on '{{{{ inventory_hostname }}}}'",
                     "ansible.builtin.command": {
                         "argv": command,
                     },
@@ -162,13 +166,13 @@ async def run_ansible_command(  # noqa: PLR0917
                     "changed_when": False,
                 },
                 {
-                    "name": f"Display command output for {" ".join(command)!r}",
+                    "name": f"Display command output for {" ".join(command)!r} on '{{{{ inventory_hostname }}}}'",
                     "ansible.builtin.debug": {
                         "var": "command_result.stdout",
                     },
                 },
                 {
-                    "name": f"Return command output for {" ".join(command)!r}",
+                    "name": f"Return command output for {" ".join(command)!r} on '{{{{ inventory_hostname }}}}'",
                     "ansible.builtin.set_stats":
                     {
                         "data": {
@@ -189,6 +193,53 @@ async def run_ansible_command(  # noqa: PLR0917
     )
 
     return result["command_output"] # type: ignore
+
+
+async def run_ansible_copy(  # noqa: PLR0917
+    local_path: str,
+    remote_path: str,
+    direction: Literal["to_resource", "from_resource"],
+    runner_path: str,
+    hosts: str,
+    inventory: str | dict[str, Any] | list,
+    become: bool = False,
+    quiet: bool = False,
+    ) -> None:
+    """Copy a file/directory to or from an Ansible inventory host."""
+
+    if direction == "to_resource":
+        transfer_task = {
+            "name": f"Copy {local_path!r} to '{{{{ inventory_hostname }}}}' at {remote_path!r}",
+            "ansible.builtin.copy": {
+                "src": local_path,
+                "dest": remote_path,
+            },
+        }
+    else:
+        transfer_task = {
+            "name": f"Copy {local_path!r} from '{{{{ inventory_hostname }}}}' at {remote_path!r}",
+            "ansible.builtin.fetch": {
+                "src": remote_path,
+                "dest": local_path,
+                "flat": True,
+            },
+        }
+
+    playbook = [
+        {
+            "hosts": hosts,
+            "gather_facts": False,
+            "become": become,
+            "tasks": [transfer_task],
+        }
+    ]
+
+    await run_ansible_playbook(
+        playbook=playbook,
+        runner_path=runner_path,
+        inventory=inventory,
+        quiet=quiet,
+    )
 
 
 def handle_ansible_result_exception(

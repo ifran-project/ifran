@@ -15,6 +15,8 @@ from pydantic import (
     model_validator,
 )
 
+from orchestrator.utils.utils import ResolvedPath
+
 
 class K8SStatus(StrEnum):
     """Supported node Kubernetes status values."""
@@ -119,7 +121,7 @@ class K8SParams(StrictBaseModel):
     copy_kubeconfig_to_workers: bool = Field(default=True)
     """If True, cluster admin credentials will be shared over all workers."""
 
-    local_kubeconfig_path: str = Field(default=str(Path(__file__).resolve().parents[3] / ".k8s-admin.conf"))
+    local_kubeconfig_path: ResolvedPath = Field(default=str(Path(__file__).resolve().parents[3] / ".k8s-admin.conf"))
     """
     Local path on Ansible controller where master's admin.conf is temporarily saved
     before distribution over workers if 'copy_kubeconfig_to_workers' is True.
@@ -337,21 +339,11 @@ class ExposedPort(StrictBaseModel):
     """Protocol going through exposed port."""
 
 
-class LogFetchParams(StrictBaseModel):
-    """Kubernetes log fetching parameters."""
-
-    kind: Literal["Pod", "Deployment", "StatefulSet"] = Field(default="Deployment")
-    """Kubernetes workload kind for which to retrieve logs."""
-
-    since_seconds: int = Field(default=3600) # last hour
-    """Time in seconds before the current time from which to show logs."""
-
-    all_containers: bool = Field(default=False)
-    """If set to True, retrieve all containers' logs in the pod(s)."""
-
-
 class K8SComponent(StrictBaseModel):
     """Generic Kubernetes component."""
+
+    kind: Literal["Pod", "Deployment", "StatefulSet"] = Field(default="Deployment")
+    """Kubernetes workload kind."""
 
     is_installed: bool = Field(default=False)
     """If this component is installed or not."""
@@ -436,9 +428,17 @@ class K8SComponent(StrictBaseModel):
     rendered_files: list[str] = Field(default_factory=lambda: ["values.yaml", "config.yaml"])
     """List of Helm chart template files to be rendered."""
 
-    log_fetch_params: LogFetchParams = Field(default_factory=LogFetchParams)
-    """Kubernetes log fetching parameters for this component."""
+    extra_env_vars: dict[str, Any] | None = Field(default=None)
+    """Extra environment variables to give to the main container."""
 
+    custom_entrypoint_command: list[str] | None = Field(default=None)
+    """Custom entrypoint command for the main container."""
+
+    custom_chart_path: ResolvedPath | None = Field(default=None)
+    """Path to a custom Helm chart directory to use instead of the built-in one."""
+
+    custom_rendered_files: list[ResolvedPath] | None = Field(default=None)
+    """List of paths to custom Jinja templates (.j2) to be rendered for the custom Helm chart."""
 
     @model_validator(mode="after")
     def ensure_network_info(self) -> Self:

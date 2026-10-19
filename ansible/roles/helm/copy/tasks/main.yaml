@@ -1,0 +1,64 @@
+# Role to copy a file to or from a pod for a deployed Helm chart on a Kubernetes cluster
+
+# A chart-specific temporary directory prevents the staging path from adding an unwanted directory level when uploading.
+
+# Downloads are staged on the managed node before being fetched back to the controller.
+
+# Input:
+# - chart_name: str
+# - component: Deployed5GComponent
+# - local_path: str
+# - remote_path: str
+# - direction: str
+
+# Output: None
+---
+- name: Get Pod for '{{ chart_name }}' Helm chart
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ component.namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/instance={{ chart_name }}"
+  register: chart_pods
+
+- name: Create temporary staging directory on master node for '{{ chart_name }}'
+  ansible.builtin.file:
+    path: "/tmp/{{ chart_name }}-{{ local_path | basename }}"
+    state: directory
+    mode: "0700"
+
+- name: Stage local '{{ local_path }}' to master node for '{{ chart_name }}'
+  ansible.builtin.copy:
+    src: "{{ local_path }}"
+    dest: "/tmp/{{ chart_name }}-{{ local_path | basename }}/"
+    mode: "0644"
+  when: direction == 'to_pod'
+
+- name: Copy '{{ local_path }}' {{ direction | replace('_', ' ') }} '{{ chart_name }}'
+  kubernetes.core.k8s_cp:
+    namespace: "{{ component.namespace }}"
+    pod: "{{ chart_pods.resources[0].metadata.name }}"
+    # kubernetes.core.k8s_cp does not automatically select Kubernetes' default-container annotation
+    container: >-
+      {{
+        (chart_pods.resources[0].metadata.annotations | default({}))
+        .get(
+          'kubectl.kubernetes.io/default-container',
+          chart_pods.resources[0].spec.containers[0].name
+        )
+      }}
+    local_path: "/tmp/{{ chart_name }}-{{ local_path | basename }}/{{ local_path | basename }}"
+    remote_path: "{{ remote_path }}"
+    state: "{{ direction }}"
+
+- name: Fetch '{{ local_path }}' from master node to local for '{{ chart_name }}'
+  ansible.builtin.fetch:
+    src: "/tmp/{{ chart_name }}-{{ local_path | basename }}/{{ local_path | basename }}"
+    dest: "{{ local_path }}"
+    flat: true
+  when: direction == 'from_pod'
+
+- name: Clean up temporary staged '{{ local_path }}' on master node for '{{ chart_name }}'
+  ansible.builtin.file:
+    path: "/tmp/{{ chart_name }}-{{ local_path | basename }}"
+    state: absent

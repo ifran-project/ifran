@@ -6,7 +6,6 @@ from metamodel.models.common import Category5G
 from metamodel.models.ue import UE, UEType
 
 from orchestrator.deployment.helm import HelmManagement
-from orchestrator.models.common import ComponentDependencyGraph
 from orchestrator.models.ue import DeployedUE
 from orchestrator.utils.ue import reconcile_ues, run_parallel_ue_action
 
@@ -31,13 +30,7 @@ class UEManagement(HelmManagement):
             self,
             action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "connect", "disconnect"],
             components: list[str] | None = None,
-            node: str | None = None,
-            force: bool = False,
-            order: ComponentDependencyGraph | None = None, # only for consistency with parent run_action
-            command_to_run: list[str] | None = None, # only used in the case of run_cmd action
-            ignore_invalid_states: bool = True,
-            ignore_failures: bool = False,
-            quiet: bool = False,
+            **kwargs,
         ) -> dict[str, str] | None:
         """Run Helm action on containerized UEs."""
 
@@ -69,12 +62,7 @@ class UEManagement(HelmManagement):
                 category=Category5G.UE,
                 action=action, # type: ignore
                 components=components,
-                node=node,
-                command_to_run=command_to_run,
-                force=force,
-                ignore_invalid_states=ignore_invalid_states,
-                ignore_failures=ignore_failures,
-                quiet=quiet,
+                **kwargs,
                 )
         if action in cots_actions:
             await run_parallel_ue_action(
@@ -84,10 +72,7 @@ class UEManagement(HelmManagement):
                 provisioners=self.deployment_model.provisioners,
                 provisioning_params=self.deployment_model.params.provisioning,
                 ansible_params=self.deployment_model.params.ansible,
-                force=force,
-                ignore_invalid_states=ignore_invalid_states,
-                ignore_failures=ignore_failures,
-                quiet=quiet,
+                **kwargs,
             )
 
         return None
