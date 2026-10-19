@@ -7,6 +7,7 @@ from orchestrator.models.provisioning import ProvisioningCategory
 from orchestrator.utils.provisioning import (
     get_provisionable_resources,
     run_parallel_command,
+    run_parallel_copy,
     run_parallel_provisioning_action,
     run_parallel_reservation_action,
 )
@@ -144,6 +145,86 @@ class ProvisioningManagement(BaseManagement):
             ues = list(self.deployment_model.ues.keys())
 
         return await self.run_command(command=command, resources=ues, **kwargs)
+
+
+    async def copy(  # noqa: PLR0917
+            self,
+            local_path: str,
+            remote_path: str,
+            direction: Literal["to_resource", "from_resource"] = "to_resource",
+            resources: list[str] | None = None,
+            become: bool = False,
+            force: bool = False,
+            ignore_invalid_states: bool = True,
+            ignore_failures: bool = False,
+            quiet: bool = False,
+        ) -> None:
+        """Copy a file/directory to SSH-able resources (nodes and UEs) or fetch a file from them."""
+
+        ssh_able_categories = [ProvisioningCategory.NODE, ProvisioningCategory.UE]
+
+        # get only ssh-able resources
+        target_resources = {
+            k: v for k, v in get_provisionable_resources(
+                                deployment_model=self.deployment_model,
+                                filter=resources
+                            ).items()
+            if v.category in ssh_able_categories
+        }
+
+        await run_parallel_copy(
+            resources=target_resources, # type: ignore
+            local_path=local_path,
+            remote_path=remote_path,
+            direction=direction,
+            become=become,
+            ansible_params=self.deployment_model.params.ansible,
+            force=force,
+            ignore_invalid_states=ignore_invalid_states,
+            ignore_failures=ignore_failures,
+            quiet=quiet,
+        )
+
+
+    async def node_copy(
+            self,
+            local_path: str,
+            remote_path: str,
+            direction: Literal["to_node", "from_node"] = "to_node",
+            nodes: list[str] | None = None,
+            **kwargs,
+        ) -> None:
+        """Copy a file/directory to all or a targeted list of nodes or fetch a file from them."""
+
+        direction = "to_resource" if direction == "to_node" else "from_resource" # type: ignore
+
+        # if no specific node names are passed, default to all nodes
+        if nodes is None:
+            nodes = list(self.deployment_model.nodes.keys())
+
+        await self.copy(local_path=local_path, remote_path=remote_path, direction=direction, resources=nodes, **kwargs) # type: ignore
+
+
+    async def ue_copy(
+            self,
+            local_path: str,
+            remote_path: str,
+            direction: Literal["to_ue", "from_ue"] = "to_ue",
+            ues: list[str] | None = None,
+            **kwargs,
+        ) -> None:
+        """Copy a file/directory to all or a targeted list of UEs or fetch a file from them."""
+
+        direction = "to_resource" if direction == "to_ue" else "from_resource" # type: ignore
+
+        # if no specific ue names are passed, default to all ues
+        if ues is None:
+            # NOTE it's ok to pass ues that are deployed as well
+            # because they will be filtered out either way
+            ues = list(self.deployment_model.ues.keys())
+
+        await self.copy(local_path=local_path, remote_path=remote_path, direction=direction, resources=ues, **kwargs) # type: ignore
+
 
 
     async def _run_type_action(
