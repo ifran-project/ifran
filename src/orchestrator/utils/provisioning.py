@@ -22,11 +22,13 @@ from orchestrator.utils.ansible import (
     get_ansible_inventory_line,
     handle_ansible_result_exception,
     run_ansible_command,
+    run_ansible_copy,
     run_ansible_role,
 )
 from orchestrator.utils.utils import (
     InvalidResourceStateError,
     ReferenceNotFoundError,
+    resolve_path,
 )
 
 
@@ -360,3 +362,54 @@ async def run_parallel_command(  # noqa: PLR0917
             outputs[resource_name] = result # type: ignore
 
     return outputs
+
+
+async def run_parallel_copy(  # noqa: PLR0917
+        resources: dict[str, SSHableResource],
+        local_path: str,
+        remote_path: str,
+        direction: Literal["to_resource", "from_resource"],
+        ansible_params: AnsibleParams,
+        become: bool = False,
+        force: bool = False,
+        ignore_invalid_states: bool = True,
+        ignore_failures: bool = False,
+        quiet: bool = False,
+    ) -> None:
+    """Copy a file/directory from or to the provided SSH-able resources in parallel."""
+
+    tasks: dict[str, asyncio.Task] = {}
+
+    for resource_name, resource_data in resources.items():
+        if not force and not resource_data.is_provisioned:
+            raise InvalidResourceStateError(
+                f"{resource_data.category.value.upper()} {resource_name!r} is not provisioned."
+            )
+
+        inventory = get_ansible_inventory_line(
+            resource_name=resource_name,
+            resource_data=resource_data,
+        )
+
+        tasks[resource_name] = asyncio.create_task(
+            run_ansible_copy(
+                local_path=resolve_path(local_path), # resolve relative local path
+                remote_path=remote_path, # do not resolve remote path
+                direction=direction,
+                runner_path=f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/copy",
+                inventory=inventory,
+                hosts=resource_name,
+                become=become,
+                quiet=quiet,
+            )
+        )
+
+    results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+
+    for result in results:
+        if isinstance(result, Exception):
+            handle_ansible_result_exception(
+                result=result,
+                ignore_invalid_states=ignore_invalid_states,
+                ignore_failures=ignore_failures,
+            )

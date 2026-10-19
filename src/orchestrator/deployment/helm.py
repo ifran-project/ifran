@@ -117,7 +117,7 @@ class HelmManagement(BaseManagement):
     async def run_action(  # noqa: PLR0917
         self,
         category: Category5G,
-        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd"],
+        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"],
         components: list[str] | None = None,
         node: str | None = None,
         order: ComponentDependencyGraph | None = None,
@@ -241,6 +241,19 @@ class HelmManagement(BaseManagement):
             return flatten_dict(cmd_outputs) # type: ignore
 
         return cmd_outputs # type: ignore
+
+
+    async def copy(
+            self,
+            local_path: str,
+            remote_path: str,
+            direction: Literal["to_pod", "from_pod"] = "to_pod",
+            components: list[str] | None = None,
+            **kwargs,
+        ) -> None:
+        """Copy a file/directory to components or fetch a file from them."""
+        await self.run_action(action="copy", local_path=local_path, remote_path=remote_path,
+                              direction=direction, components=components, **kwargs)
 
 
     async def deploy(self, order: ComponentDependencyGraph | None = None, **kwargs) -> None:

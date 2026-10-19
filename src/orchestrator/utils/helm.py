@@ -26,7 +26,7 @@ from orchestrator.utils.common_5g import (
     resolve_component_dependency_levels,
 )
 from orchestrator.utils.k8s import build_k8s_safe
-from orchestrator.utils.utils import InvalidResourceStateError
+from orchestrator.utils.utils import InvalidResourceStateError, resolve_path
 
 
 def update_exposed_endpoints(
@@ -64,7 +64,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         component_name: str,
         component_meta: Component5G,
         component_deployment: Deployed5GComponent,
-        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd"],
+        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"],
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
@@ -131,7 +131,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
     # expect logs output after get_logs action
     elif action == "get_logs":
-        containers = kwargs["containers"]
+        containers = kwargs.get("containers")
 
         # containers can be None => get logs for all containers
         if not containers:
@@ -140,7 +140,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         if not isinstance(containers, list) and all(isinstance(item, str) for item in containers):
             raise ValueError(f"Invalid containers list {containers!r} for {category} component {component_name!r}")
 
-        since_seconds = kwargs["since_seconds"]
+        since_seconds = kwargs.get("since_seconds")
         if not since_seconds:
             since_seconds = 3600 # 1 hour
 
@@ -155,14 +155,33 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
     # give command as input for run_cmd action
     elif action == "run_cmd":
-        command = kwargs["command"]
-        if not isinstance(command, list) and all(isinstance(item, str) for item in command):
+        command = kwargs.get("command")
+        if not isinstance(command, list) and all(isinstance(item, str) for item in command): # type: ignore
             raise ValueError(
                 f"Invalid command {command!r} for {category} component {component_name!r}. Should be a list of strings."
                 )
 
         args["inputs"]["command"] = command
         args["output_keys"] = ["command_output"]
+
+    # give input for copy action
+    elif action == "copy":
+        local_path = kwargs.get("local_path")
+        remote_path = kwargs.get("remote_path")
+        direction = kwargs.get("direction")
+
+        if not isinstance(local_path, str):
+            raise ValueError(f"Invalid local path for {category} component {component_name!r}")
+
+        if not isinstance(remote_path, str):
+            raise ValueError(f"Invalid remote path for {category} component {component_name!r}")
+
+        if not isinstance(direction, str) and direction in ["to_pod", "from_pod"]:
+            raise ValueError(f"Invalid remote path for {category} component {component_name!r}")
+
+        args["inputs"]["local_path"] = resolve_path(local_path) # resolve relative local path
+        args["inputs"]["remote_path"] = remote_path # do not resolve remote path
+        args["inputs"]["direction"] = direction
 
     try:
         result = await run_ansible_role(**args)
@@ -204,7 +223,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 async def run_parallel_helm_action(  # noqa: PLR0917
         components_meta: dict[str, Component5G],
         components_deployment: dict[str, Deployed5GComponent],
-        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd"],
+        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"],
         node_name: str,
         node_data: ProvisionableNode,
         ansible_params: AnsibleParams,
