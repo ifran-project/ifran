@@ -62,6 +62,13 @@ spec:
                 name: {{ include "common.configmapname.rtmgr" . }}-env
             - configMapRef:
                 name: {{ include "common.configmapname.dbaas" . }}-appconfig
+          {{- if .Values.extraEnvVars }}
+          env:
+            {{- range $key, $value := .Values.extraEnvVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
           volumeMounts:
             - mountPath: /cfg
               name: rtmgrcfg

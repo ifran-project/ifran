@@ -140,12 +140,22 @@ spec:
           protocol: {{ $port.protocol }}
           {{- end }}
         {{- end }}
-        {{- if .Values.start.upf }}
+        {{- if .Values.customEntrypointCommand}}
+        command:
+          {{- toYaml .Values.customEntrypointCommand | nindent 10 }}
+        {{- else if .Values.start.upf }}
         {{- else}}
         command:
           - /bin/sleep
           - infinity
         {{- end}}
+        {{- if .Values.extraEnvVars }}
+        env:
+          {{- range $key, $value := .Values.extraEnvVars }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+        {{- end }}
         {{- if .Values.resources.define }}
         resources:
           requests:

@@ -94,6 +94,10 @@ spec:
             - name: USE_N3XX
               value: "yes"
           {{- end }}
+          {{- range $key, $value := .Values.extraEnvVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+          {{- end }}
           {{- if .Values.resources.define }}
           resources:
             requests:
@@ -111,7 +115,10 @@ spec:
             protocol: {{ $port.protocol }}
             {{- end }}
           {{- end }}
-          {{- if not .Values.start.du }}
+          {{- if .Values.customEntrypointCommand}}
+          command:
+            {{- toYaml .Values.customEntrypointCommand | nindent 12 }}
+          {{- else if not .Values.start.du }}
           command: [ "/bin/sleep", "infinity" ]
           {{- end }}
 

@@ -67,3 +67,17 @@ nodeName: {{ component.node_name }}
 tolerations:
 {{ component.tolerations | to_nice_yaml(indent=2) | indent(2, True) }}
 {% endif %}
+
+{% if component.extra_env_vars %}
+extraEnvVars:
+{{ component.extra_env_vars | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+extraEnvVars: {}
+{% endif %}
+
+{% if component.custom_entrypoint_command %}
+customEntrypointCommand:
+{{ component.custom_entrypoint_command | to_nice_yaml(indent=2) | indent(2, True) }}
+{% else %}
+customEntrypointCommand: null
+{% endif %}
