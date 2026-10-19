@@ -1,0 +1,45 @@
+flowchart TD
+    Core --> node-ran
+    
+    cuup -.- cucp
+
+    cuup -.- du1
+    cucp -.- du1
+
+    %% cuup -.- du2
+    %% cucp -.- du2    
+    
+    subgraph node-core[node-Core]
+        subgraph Core ["Core (Open5GS)"]
+            amf["AMF"]
+            ausf["AUSF"]
+            bsf["BSF"]
+            nssf["NSSF"]
+            nrf["NRF"]
+            pcf["PCF"]
+            smf["SMF"]
+            upf["UPF"]
+            udm["UDM"]
+            udr["UDR"]
+        end
+    end
+
+    subgraph ran["RAN (OAI)"]
+        subgraph node-ran[node-RAN]
+            cucp[CU-CP]
+            cuup[CU-UP]
+        end
+
+        subgraph sopnode-f1[sopnode-f1]
+            du1["DU1"]
+        end
+        %% subgraph sopnode-f2[sopnode-f2]
+        %%     du2["DU2"]
+        %% end
+    end
+    subgraph r2lab["R2LAB (radio spectrum)"]
+            du1 ---> jaguar["jaguar (RU)"]
+            %% du2 ---> panther["panther (RU)"]
+            qhat01["QHAT 01 (UE)"]
+            qhat02["QHAT 02 (UE)"]
+    end
