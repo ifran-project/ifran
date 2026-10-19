@@ -32,6 +32,9 @@ def get_ansible_inventory_line(
         vars.append(f"ansible_password={ssh_info.password}")
     if ssh_info.sudo_password:
         vars.append(f"ansible_become_password={ssh_info.sudo_password}")
+    for key, value in resource_data.provisioning_params.items():
+        if key.startswith("ansible_"):
+            vars.append(f"{key}={value}")
 
     args = ssh_info.common_args
     if args:
