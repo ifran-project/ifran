@@ -221,6 +221,7 @@ class Open5GSAdvancedUPFConfig(GenericOpen5GSAdvancedCoreConfig):
 
     metrics: dict[str, Any] | None = Field(default=None)
     pfcp_client: dict[str, Any] | None = Field(default=None)
+    gtpu_client: dict[str, Any] | None = Field(default=None)
     teid_range_indication: int
     teid_range: int | None = Field(default=None)
     network_instance: str | None = Field(default=None)
