@@ -1,13 +1,14 @@
 flowchart TD
     Core --> node-ran
+    Core --> ran3
     
     cuup -.- cucp
 
     cuup -.- du1
     cucp -.- du1
 
-    %% cuup -.- du2
-    %% cucp -.- du2    
+    cuup -.- du2
+    cucp -.- du2
     
     subgraph node-core[node-Core]
         subgraph Core ["Core (Open5GS)"]
@@ -33,13 +34,29 @@ flowchart TD
         subgraph sopnode-f1[sopnode-f1]
             du1["DU1"]
         end
-        %% subgraph sopnode-f2[sopnode-f2]
-        %%     du2["DU2"]
-        %% end
     end
+    
+    subgraph ran2["RAN (OCUDU)"]
+        subgraph sopnode-f2[sopnode-f2]
+            du2["DU2"]
+        end
+    end
+
+    subgraph node-ues["node-ues"]
+            subgraph ran3 ["RAN (UERANSIM)"]
+                gnb[gnb]
+            end
+            subgraph ues ["UEs (UERANSIM)"]
+                gnb --> sim_ue1["sim_ue1"]
+                etc["..."]
+                gnb --> sim_ue10["sim_ue_10"]
+            end
+    end
+
     subgraph r2lab["R2LAB (radio spectrum)"]
             du1 ---> jaguar["jaguar (RU)"]
-            %% du2 ---> panther["panther (RU)"]
+            du2 ---> n320["n320 (RU)"]
             qhat01["QHAT 01 (UE)"]
             qhat02["QHAT 02 (UE)"]
+            qhat03["QHAT 03 (UE)"]
     end
