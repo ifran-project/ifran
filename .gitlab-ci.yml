@@ -23,11 +23,13 @@ build:
   stage: build
   extends: .python-base
   script:
-    - pip install build
+    - pip install build nbconvert jupyter
     - python -m build
+    - jupyter nbconvert --to markdown docs/tutorials/*.ipynb --output-dir docs/tutorials/markdown
   artifacts:
     paths:
       - dist/
+      - docs/tutorials/markdown/
 
 lint:
   stage: lint
