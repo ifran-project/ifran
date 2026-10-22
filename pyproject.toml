@@ -41,7 +41,7 @@ doc = [
 
 [tool.ruff]
 line-length = 120
-extend-exclude = ["examples"]
+extend-exclude = ["examples", "docs"]
 
 [tool.ruff.lint]
 select = [
