@@ -8,16 +8,16 @@
 3. [Kubernetes Cluster](./k8s.ipynb)
 
 ## 5G network deployments and configuration
-4. [Post5G - Simple Scenario](./simple.ipynb)
-5. [Post5G - Add 5G components to a running network](./add_components.ipynb)
+4. [Simple Scenario](./simple.ipynb)
+5. [Add 5G components to a running network](./add_components.ipynb)
 
 6. [Cleanup deployments](./clean.ipynb)
 
-7. [Post5G - TDD Patterns](./tdd.ipynb)
-8. [Post5G - Network Slicing](./slicing.ipynb)
-9. [Post5G - RAN Split](./split.ipynb)
+7. [TDD Patterns](./tdd.ipynb)
+8. [Network Slicing](./slicing.ipynb)
+9. [RAN Split](./split.ipynb)
 
 ## Radio Units (RU) and Software Defined Radios (SDR)
 
 10. [OAI with Physical Radio Unit in R2LAB](./ru.ipynb)
-11. [OCUDU and OAI with Physical Radio Units in R2LAB](./ru_full.ipynb)
+11. [hybrid deployment with OCUDU and OAI with Physical Radio Units in R2LAB and UERANSIM](./ru_full.ipynb)
