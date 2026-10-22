@@ -4,6 +4,7 @@ __pycache__
 
 .vscode
 .devcontainer/devcontainer.json
+docs/tutorials/state
 
 # macos
 .DS_Store
