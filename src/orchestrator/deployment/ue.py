@@ -28,13 +28,13 @@ class UEManagement(HelmManagement):
     @override
     async def run_action(  # noqa: PLR0917
             self,
-            action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "connect", "disconnect"],
+            action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy", "connect", "disconnect"],
             components: list[str] | None = None,
             **kwargs,
         ) -> dict[str, str] | None:
         """Run Helm action on containerized UEs."""
 
-        containarized_actions = ["prepare", "install", "uninstall", "get_logs", "run_cmd"]
+        containarized_actions = ["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"]
         cots_actions = ["connect", "disconnect"]
 
         all_ues = self.mutable_metamodel.ues
