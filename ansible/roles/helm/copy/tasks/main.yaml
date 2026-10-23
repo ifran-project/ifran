@@ -25,13 +25,12 @@
   ansible.builtin.file:
     path: "/tmp/{{ chart_name }}-{{ local_path | basename }}"
     state: directory
-    mode: "0700"
 
 - name: Stage local '{{ local_path }}' to master node for '{{ chart_name }}'
   ansible.builtin.copy:
     src: "{{ local_path }}"
     dest: "/tmp/{{ chart_name }}-{{ local_path | basename }}/"
-    mode: "0644"
+    mode: preserve
   when: direction == 'to_pod'
 
 - name: Copy '{{ local_path }}' {{ direction | replace('_', ' ') }} '{{ chart_name }}'
