@@ -394,7 +394,7 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
     def _populate_reservation(self) -> None:
         """Populate 'reservation_params' if missing from 'token_params.input_body' if given."""
 
-        if self.reservation_params is None and self.token_params:
+        if self.attempt_reservation and self.token is None and self.reservation_params is None and self.token_params:
             try:
                 self.reservation_params = R2LabReservationParams(
                     email=self.token_params.input_body.get("email"), # type: ignore
@@ -416,7 +416,7 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
         if self.attempt_reservation and self.r2lab_slice is None:
             raise ValueError("'r2lab_slice' cannot be left None when 'attempt_reservation' is True.")
 
-        if self.token_params:
+        if not self.token and self.token_params:
             self.token_params.infra = "r2lab"
 
             if not self.token_params.input_body:
