@@ -116,9 +116,32 @@ smf:
 
   mtu: {{ component.advanced_config.mtu | default(1400, true) }}
 
-{% if component.advanced_config and component.advanced_config.info %}
+################################################################################
+# SMF Info
+################################################################################
+#  <SMF Selection - 5G Core only>
   info:
+{% if component.advanced_config and component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    s_nssai:
+{% for slice in component.config.snssaiList %}
+      - sst: {{ slice.sst }}
+{% if slice.sd %}
+        sd: {{ slice.sd }}
+{% endif %}
+        dnn:
+{% for dnn in slice.dnns.values() %}
+          - {{ dnn.name }}
+{% endfor %}
+{% endfor %}
+    tai:
+{% for tai in component.config.taiList %}
+      - plmn_id:
+          mcc: {{ tai.plmnId.mcc }}
+          mnc: {{ tai.plmnId.mnc }}
+        tac: {{ tai.tac }}
+{% endfor %}
 {% endif %}
 
 {% if component.advanced_config and component.advanced_config.p_cscf %}

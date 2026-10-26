@@ -41,6 +41,7 @@ nrf:
     server:
       - dev: {{ component.config.sbi.interfaceName }}
         port: {{ component.config.sbi.port }}
+        advertise: {{ chart_name }}
 
 {% if component.advanced_config and component.advanced_config.sbi_client %}
     client:

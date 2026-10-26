@@ -47,7 +47,7 @@ nssf:
 {{ component.advanced_config.sbi_client | to_nice_yaml(indent=6) | indent(6, True) }}
 {% else %}
       nrf:
-        - uri: http://open5gs-nrf
+        - uri: {{ component.config.nrfUri }}
 {% endif %}
       nsi:
 {% for nsi_info in component.config.nsiInfoList %}
