@@ -10,7 +10,7 @@ import ansible_runner
 from orchestrator.models.provisioning import (
     SSHableResource,
 )
-from orchestrator.utils.utils import InvalidResourceStateError
+from orchestrator.utils.utils import InvalidResourceStateError, resolve_path
 
 
 def get_ansible_inventory_line(
@@ -76,12 +76,18 @@ async def run_ansible_playbook(  # noqa: PLR0917
     run_path = Path(runner_path) / timestamp
     run_path.mkdir(parents=True, exist_ok=True)
 
+    # resolve relative paths in roles_paths if it's a list or a single path string
+    if isinstance(roles_paths, list):
+        resolved_roles_paths = [resolve_path(p) for p in roles_paths]
+    else:
+        resolved_roles_paths = resolve_path(roles_paths)
+
     run_args = {
         "private_data_dir": run_path,
-        "roles_path": roles_paths,
+        "roles_path": resolved_roles_paths,
         "inventory": inventory,
-        # resolve playbook if it's a relative path (is a string)
-        "playbook": str(Path(playbook).resolve()) if isinstance(playbook, str) else playbook,  # noqa: ASYNC240
+        # resolve playbook if it's a relative path
+        "playbook": resolve_path(playbook),
         "extravars": inputs,
         "quiet": quiet,
     }

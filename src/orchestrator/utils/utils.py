@@ -192,11 +192,13 @@ def flatten_dict(d: dict[str, str] | dict[str, dict[str, str]]) -> str:
     )
 
 
-def resolve_path(value: str) -> str:
-    """Ensure relative paths are resolevd."""
+def resolve_path(value: Any) -> Any:
+    """Ensure string relative paths are resolevd."""
 
-    path = Path(value)
-    return str(path) if path.is_absolute() else str(path.resolve())
+    if isinstance(value, str):
+        path = Path(value)
+        return str(path) if path.is_absolute() else str(path.resolve())
+    return value
 
 
 type ResolvedPath = Annotated[str, BeforeValidator(resolve_path)]
