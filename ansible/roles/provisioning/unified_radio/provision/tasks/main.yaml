@@ -25,6 +25,18 @@
     status_code: 200
     timeout: 300 # power on takes some time
 
+- name: Wait for '{{ resource_name }}' to be ready (responds to ping)
+  ansible.builtin.uri:
+    url: "{{ base_url }}/resource/{{ resource_name }}/ready"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ generated_token }}"
+    status_code: 200
+  register: readiness_check
+  until: readiness_check.status == 200
+  retries: 100
+  delay: 5
+
 - name: Get resource info for '{{ resource_name }}'
   ansible.builtin.uri:
     url: "{{ base_url }}/resource/{{ resource_name }}"
