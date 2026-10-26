@@ -100,7 +100,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
     helm_params = HelmParams(
         chart_name=chart_name,
-        helm_build_dir=f"/root/helm-charts/{component_meta.category}/{chart_name}",
+        helm_build_dir=f"$HOME/helm-charts/{component_meta.category}/{chart_name}",
         output_with_multus=component_deployment.multus.enabled,
     )
 
