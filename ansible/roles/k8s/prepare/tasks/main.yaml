@@ -241,13 +241,13 @@
   when: k9s_install
 
 # install mongosh to be used later on to add/remove Open5GS and Free5GC subscribers
-- name: Add MongoDB GPG key
+- name: Add MongoDB GPG key on '{{ node.name }}'
   ansible.builtin.get_url:
     url: https://pgp.mongodb.com/server-8.0.asc
     dest: /etc/apt/keyrings/mongodb-server-8.0.asc
     mode: '0644'
 
-- name: Add MongoDB repository
+- name: Add MongoDB repository on '{{ node.name }}'
   ansible.builtin.deb822_repository:
     name: mongodb
     types: deb
@@ -264,7 +264,7 @@
     state: present
     enabled: true
 
-- name: Install mongosh
+- name: Install mongosh on '{{ node.name }}'
   ansible.builtin.apt:
     name:
       - mongodb-mongosh

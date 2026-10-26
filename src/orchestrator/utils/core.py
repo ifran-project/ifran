@@ -237,7 +237,7 @@ async def run_core_database_helm_action(  # noqa: PLR0917
 
     helm_params = HelmParams(
         chart_name=f"{core_deployment.implementation.value}-database",
-        helm_build_dir=f"/root/helm-charts/{Category5G.CORE}/{core_deployment.implementation.value}-database",
+        helm_build_dir=f"$HOME/helm-charts/{Category5G.CORE}/{core_deployment.implementation.value}-database",
     ).model_dump(mode="json")
 
     component = {

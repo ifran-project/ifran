@@ -20,7 +20,7 @@
 
 - name: Create .kube directory on '{{ node.name }}' root if desired
   ansible.builtin.file:
-    path: "/root/.kube"
+    path: "$HOME/.kube"
     state: directory
     mode: "0700"
   when: copy_kubeconfig_to_workers
@@ -28,7 +28,7 @@
 - name: Copy admin.conf to kube config for '{{ node.name }}'
   ansible.builtin.copy:
     src: "{{ local_kubeconfig_path }}"
-    dest: "/root/.kube/config"
+    dest: "$HOME/.kube/config"
     mode: "0600"
   when: copy_kubeconfig_to_workers
 

@@ -38,14 +38,14 @@
 
 - name: Ensure kube config directory exists on '{{ node.name }}' root
   ansible.builtin.file:
-    path: /root/.kube
+    path: $HOME/.kube
     state: directory
     mode: "0755"
 
 - name: Copy admin.conf to kube config on '{{ node.name }}'
   ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf
-    dest: "/root/.kube/config"
+    dest: $HOME/.kube/config
     remote_src: yes
     mode: "0600"
 

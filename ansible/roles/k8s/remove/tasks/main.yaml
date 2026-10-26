@@ -79,7 +79,7 @@
     - /var/lib/kubelet
     - /var/lib/etcd
     - /var/lib/containerd
-    - /root/.kube
+    - $HOME/.kube
     - /etc/cni
     - /opt/cni
     - /tmp/helm.tar.gz
