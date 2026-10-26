@@ -2,6 +2,7 @@ stages:
   - build
   - lint
   - publish
+  - build_doc
   - pages
 
 variables:
@@ -26,13 +27,9 @@ build:
   script:
     - pip install build
     - python -m build
-    - pip install -r docs/requirements.txt
-    - pip install . --index-url https://gitlab.inria.fr/api/v4/projects/70914/packages/pypi/simple
-    - sphinx-build -b html docs public
   artifacts:
     paths:
       - dist/
-      - public/
 
 lint:
   stage: lint
@@ -49,6 +46,17 @@ publish:
     - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
   rules:
     - if: $CI_COMMIT_TAG
+
+build_doc:
+  stage: build_doc
+  extends: lint
+  script:
+    - pip install -r docs/requirements.txt
+    - pip install . --index-url https://gitlab.inria.fr/api/v4/projects/70914/packages/pypi/simple
+    - sphinx-build -b html docs public
+  artifacts:
+    paths:
+      - public/
 
 pages:
   stage: pages
