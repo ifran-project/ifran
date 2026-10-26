@@ -63,7 +63,7 @@ pages:
   script:
     - echo "Publishing documentation to GitLab Pages"
   needs:
-    - job: build
+    - job: build_doc
       artifacts: true
   artifacts:
     paths:
