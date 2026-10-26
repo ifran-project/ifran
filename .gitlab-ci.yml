@@ -27,7 +27,7 @@ build:
     - pip install build
     - python -m build
     - pip install -r docs/requirements.txt
-    - pip install .
+    - pip install . --index-url https://gitlab.inria.fr/api/v4/projects/70914/packages/pypi/simple
     - sphinx-build -b html docs public
   artifacts:
     paths:
