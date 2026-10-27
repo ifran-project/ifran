@@ -36,6 +36,7 @@
   until: readiness_check.status == 200
   retries: 100
   delay: 5
+  when: is_ru
 
 - name: Get resource info for '{{ resource_name }}'
   ansible.builtin.uri:
