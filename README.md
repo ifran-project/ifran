@@ -321,6 +321,6 @@ If you already have machines, replace the provisioner with `provisioner: null` o
 
 The `tutorials` folder provides step-by-step tutorials.
 
-The `00_preparation` tutorial covers the complete setup and installation instructions.
+The `Environment Preparation` tutorial covers the complete setup and installation instructions.
 
 The `examples` folder contains ready-to-use examples with various scenarios (FlexRIC, O-RAN SC, USRP B210, R2LAB...).
