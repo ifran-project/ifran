@@ -6,7 +6,6 @@ from typing import Literal
 
 from metamodel.models.common import Category5G
 from metamodel.models.core import (
-    Core,
     CoreComponentType,
     NSSFComponent,
     SMFComponent,
@@ -105,14 +104,6 @@ def resolve_nssf_refs(
             )
 
 
-def populate_nrf_uri(core_meta: Core, nrf_uri: URL) -> None:
-    """Populate 'nrfUri' field for all 5G core components."""
-
-    for component_meta in core_meta.components.values():
-        if component_meta.config.nrfUri is None:
-            component_meta.config.nrfUri = nrf_uri
-
-
 def populate_core_database_image(core_deployment: CoreDeployment) -> None:
     """Populate 5G core database image from known defaults."""
 
@@ -126,7 +117,7 @@ def populate_core_database_image(core_deployment: CoreDeployment) -> None:
         core_deployment.database_params.image = DEFAULT_CORE_DATABASE_IMAGES.get(core_deployment.implementation)
 
 
-def reconcile_core(
+def reconcile_core(  # noqa: C901
         metamodel: MetaModel,
         deployment_model: DeploymentModel,
     ) -> None:
@@ -173,15 +164,11 @@ def reconcile_core(
         args = {"component_name": component_name, "component_meta": component_meta}
 
         # resolve references in core components
-        if component_meta.type is CoreComponentType.SMF:
+        if component_meta.type in [CoreComponentType.SMF, CoreComponentType.UPF]:
             resolve_snssai_list(**args, slices=slices)
-            resolve_smf_refs(**args, upfs=upfs) # type: ignore
 
         elif component_meta.type is CoreComponentType.NSSF:
             resolve_nssf_refs(**args, slices=slices)
-
-        elif component_meta.type is CoreComponentType.UPF:
-            resolve_snssai_list(**args, slices=slices)
 
         elif component_meta.type in [CoreComponentType.AMF, CoreComponentType.NRF]:
             resolve_plmn_list(**args, slices=slices)
@@ -193,11 +180,21 @@ def reconcile_core(
             service_name = f"{component_deployment.implementation}-{component_name}"
             nrf_uri = TypeAdapter(URL).validate_python(f"{scheme}://{service_name}:{component_meta.config.sbi.port}")
 
-    # populate nrf uri field after nrf component has been found
+
+    # second loop: populate NRF URI and resolve SMF's UPF references
+    # NOTE UPF's 'snssaiList' needs to be resolved before the SMF's 'upfs' list is resolved with actual UPF components
+
+    # populate nrf uri field only after nrf component has been found
     if nrf_uri is None:
         raise RuntimeError("Couldn't find any NRF component in the 5G core components.")
 
-    populate_nrf_uri(core_meta=core_meta, nrf_uri=nrf_uri)
+    for component_name, component_meta in core_meta.components.items():
+
+        if component_meta.config.nrfUri is None:
+            component_meta.config.nrfUri = nrf_uri
+
+        if component_meta.type is CoreComponentType.SMF:
+            resolve_smf_refs(component_name=component_name, component_meta=component_meta, upfs=upfs) # type: ignore
 
     # resolve ues references to prepare them for database registration
     for ue_name, ue_meta in metamodel.ues.items():

@@ -71,6 +71,12 @@ smf:
       upf:
 {% for upf in component.config.upfs %}
         - address: {{ upf.config.n4.ipv4EndPointAddress }}
+          dnn:
+{% for slice in upf.config.snssaiList %}
+{% for dnn in slice.dnns.values() %}
+            - {{ dnn.name }}
+{% endfor %}
+{% endfor %}
 {% endfor %}
 {% endif %}
 
