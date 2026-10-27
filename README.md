@@ -319,8 +319,8 @@ If you already have machines, replace the provisioner with `provisioner: null` o
 
 ## Going further
 
-The [preparation tutorial](./docs/tutorials/00_preparation.ipynb) covers the complete setup and instsallation instructions.
+The `tutorials` folder provides step-by-step tutorials.
 
-The [tutorials](./docs/README.md) are the main documentation. Suggested reading order:
+The `00_preparation` tutorial covers the complete setup and installation instructions.
 
-The [`examples/`](./examples) folder also contains ready-to-use examples with various scenarios (FlexRIC, O-RAN SC, USRP B210, R2LAB...).
+The `examples` folder contains ready-to-use examples with various scenarios (FlexRIC, O-RAN SC, USRP B210, R2LAB...).
