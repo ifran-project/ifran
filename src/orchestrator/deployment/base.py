@@ -171,38 +171,39 @@ class BaseManagement:
             target_dict=self.deployment_model.core.components,
             source_dict=self.metamodel.core.components,
             default_factory=DeployedCoreComponent,
-            populate_type=True,
+            populated_fields=["type"],
         )
         # ran components
         sync_dict_keys(
             target_dict=self.deployment_model.ran.components,
             source_dict=self.metamodel.ran.components,
             default_factory=DeployedRANComponent,
-            populate_type=True,
+            populated_fields=["type"],
         )
         # rus (only real rus are provisionable)
         sync_dict_keys(
             target_dict=self.deployment_model.rus,
             source_dict={k: ru for k, ru in self.metamodel.rus.items() if ru.type is not RUType.SIMULATED},
-            default_factory=lambda: ProvisionableRU(category=ProvisioningCategory.RU),
+            default_factory=lambda name: ProvisionableRU(name=name, category=ProvisioningCategory.RU),
+            populated_fields=["name"],
         )
         # ues (only cots ues are provisionable, others are deployed)
         sync_dict_keys(
             target_dict=self.deployment_model.ues,
             source_dict=self.metamodel.ues,
             default_factory=(
-                lambda type:
-                    ProvisionableUE(category=ProvisioningCategory.UE, type=type) if type is UEType.COTS
+                lambda name, type:
+                    ProvisionableUE(name=name, category=ProvisioningCategory.UE, type=type) if type is UEType.COTS
                     else DeployedUE(type=type)
             ),
-            populate_type=True,
+            populated_fields=["name", "type"],
         )
         # ric components
         sync_dict_keys(
             target_dict=self.deployment_model.ric.components,
             source_dict=self.metamodel.ric.components,
             default_factory=DeployedRICComponent,
-            populate_type=True,
+            populated_fields=["type"],
         )
 
         # NOTE the deployment model should retrigger its validation functions for the newly added components

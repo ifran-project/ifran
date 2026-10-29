@@ -23,7 +23,7 @@ def get_ansible_inventory_line(
     ssh_info = resource_data.ssh_info
 
     vars = [
-        f"ansible_host={ssh_info.hostname or resource_name}",
+        f"ansible_host={ssh_info.hostname or resource_data.name}",
         f"ansible_port={ssh_info.port}",
         f"ansible_user={ssh_info.user}",
     ]

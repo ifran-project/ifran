@@ -55,13 +55,13 @@ def get_provisionable_resources(
 
 def get_resources_by_provisioner(
         resources: dict[str, ProvisionableResource],
-    ) -> dict[str, list[str]]:
+    ) -> dict[str, dict[str, ProvisionableResource]]:
     "Get provisionable resource names by their provisioner."
 
-    grouped: dict[str, list[str]] = defaultdict(list)
+    grouped: dict[str, dict[str, ProvisionableResource]] = defaultdict(dict)
     for resource_name, resource_data in resources.items():
         if resource_data.provisioner:
-            grouped[resource_data.provisioner].append(resource_name)
+            grouped[resource_data.provisioner][resource_name] = resource_data
 
     return grouped
 
@@ -94,7 +94,7 @@ def resolve_provisioner(
 
 
 async def run_reservation_action(  # noqa: PLR0917
-        resources: list[str],
+        resources: dict[str, ProvisionableResource],
         provisioner_name: str,
         provisioners: dict[str, Provisioner],
         ansible_params: AnsibleParams,
@@ -125,7 +125,7 @@ async def run_reservation_action(  # noqa: PLR0917
     args = {
         "role": f"provisioning/{provisioner_data.type.value}/reserve",
         "inputs": {
-            "resources": resources,
+            "resources": [r.name for r in resources.values()],
             **provisioner_data.params.model_dump(mode="json"),
         },
         "extra_params": {
@@ -142,7 +142,7 @@ async def run_reservation_action(  # noqa: PLR0917
         if ignore_failures:
             return
         raise RuntimeError(
-            f"Provisioner {provisioner_name!r} failed to reserve resources: {', '.join(resources)}."
+            f"Provisioner {provisioner_name!r} failed to reserve resources: {', '.join(list(resources.keys()))}."
             ) from e
 
 
@@ -191,7 +191,8 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     args = {
         "role": f"provisioning/{provisioner.type.value}/{action}",
         "inputs": {
-            "resource_name": resource_name,
+            # NOTE use resource name from its provided data rather that its key in the dictionary
+            "resource_name": resource_data.name,
             **merged_prov_params.model_dump(mode="json"),
             # bool used by provisioners that manage ssh-able (nodes and ues) and non-ssh-ables resources (rus)
             # for now, it used to decide whether to return 'ssh_info' or 'ru_ips' instead
@@ -285,13 +286,13 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
     # only reserve unprovisioned resources and not all of them
     target_resources = {k: v for k, v in resources.items() if not v.is_provisioned} if not force else resources
 
-    grouped: dict[str, list[str]] = get_resources_by_provisioner(target_resources)
+    grouped: dict[str, dict[str, ProvisionableResource]] = get_resources_by_provisioner(target_resources)
     tasks: dict[str, asyncio.Task] = {}
 
-    for provisioner_name, resources_list in grouped.items():
+    for provisioner_name, resources_dict in grouped.items():
         tasks[provisioner_name] = asyncio.create_task(
             run_reservation_action(
-                resources=resources_list,
+                resources=resources_dict,
                 provisioner_name=provisioner_name,
                 provisioners=provisioners,
                 ansible_params=ansible_params,

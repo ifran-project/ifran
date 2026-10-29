@@ -525,6 +525,9 @@ type Provisioner = Annotated[
 class GenericProvisionableResource(StrictBaseModel):
     """Base class for provisionable resource."""
 
+    name: str = Field()
+    """Resource name."""
+
     category: ProvisioningCategory = Field()
     """Provisioning category."""
 

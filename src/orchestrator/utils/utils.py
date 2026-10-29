@@ -25,8 +25,8 @@ def sync_dict_keys(
         target_dict: dict,
         source_dict: dict,
         default_factory: Any,
-        populate_type: bool = False,
         remove_extra: bool = True,
+        populated_fields: list[str] | None = None,
     ) -> None:
     """Synchronize 'target_dict' keys with 'source_dict' keys."""
 
@@ -35,11 +35,17 @@ def sync_dict_keys(
 
     # add missing keys
     for key in missing_keys:
-        if populate_type:
-            # ran, core, and ric components need the type field
-            target_dict[key] = default_factory(type=source_dict[key].type)
-        else:
-            target_dict[key] = default_factory()
+        args = {}
+
+        if populated_fields:
+            # add fields that need to be populated from source_dict item
+            args = {
+                field: getattr(source_dict[key], field)
+                for field in populated_fields
+            }
+
+        target_dict[key] = default_factory(**args)
+
 
     # remove extra keys
     if remove_extra:
