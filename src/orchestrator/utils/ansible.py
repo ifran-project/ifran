@@ -1,6 +1,7 @@
 """Ansible utilities and helpers."""
 
 import asyncio
+import shlex
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -27,7 +28,7 @@ def get_ansible_inventory_line(
         f"ansible_user={ssh_info.user}",
     ]
     if ssh_info.private_key_file:
-        vars.append(f"ansible_ssh_private_key_file={ssh_info.private_key_file}")
+        vars.append(f"ansible_ssh_private_key_file={shlex.quote(ssh_info.private_key_file)}")
     if ssh_info.password:
         vars.append(f"ansible_password={ssh_info.password}")
     if ssh_info.sudo_password:
@@ -38,7 +39,7 @@ def get_ansible_inventory_line(
 
     args = ssh_info.common_args
     if args:
-        vars.append(f"ansible_ssh_common_args={args!r}")
+        vars.append(f"ansible_ssh_common_args={shlex.quote(args)}")
 
     return f"{resource_name} " + " ".join(vars)
 

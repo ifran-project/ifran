@@ -1,6 +1,7 @@
 """Provisioning models."""
 
 import re
+import shlex
 from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from pathlib import Path
@@ -90,17 +91,16 @@ class SSHInfo(StrictBaseModel):
         if jump.no_host_key_checking:
             opts.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
         if jump.private_key_file:
-            opts.append(f"-i \'{jump.private_key_file}\'")
+            opts.append(f"-i {shlex.quote(jump.private_key_file)}")
         if jump.extra_args:
             opts.append(jump.extra_args)
 
-        jump_opts = f"{' '.join(opts)} " if opts else ""
-        proxy_cmd = f"ssh {jump_opts} -W %h:%p {jump.user}@{jump.hostname} -p {jump.port}"
+        proxy_cmd = f"ssh {' '.join(opts)} -W %h:%p {jump.user}@{jump.hostname} -p {jump.port}"
 
         # if jump host itself has a jump host, nest the proxy command
         if jump.jumphost:
             nested_proxy = jump._build_proxy_command()
-            proxy_cmd += f" -o ProxyCommand=\"{nested_proxy}\""
+            proxy_cmd += f" -o ProxyCommand={shlex.quote(nested_proxy)}" # type: ignore
 
         return proxy_cmd
 
