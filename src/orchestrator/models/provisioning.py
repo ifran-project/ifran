@@ -89,6 +89,8 @@ class SSHInfo(StrictBaseModel):
         opts = []
         if jump.no_host_key_checking:
             opts.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
+        if jump.private_key_file:
+            opts.append(f"-i \'{jump.private_key_file}\'")
         if jump.extra_args:
             opts.append(jump.extra_args)
 
