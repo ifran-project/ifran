@@ -97,51 +97,51 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
     RANImplementation.OAI: {
         RUType.USRP: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
         RUType.SIMULATED: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
         RUType.AW2S: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
         RUType.BENETEL: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
     },
     RANImplementation.OCUDU: {
@@ -207,7 +207,7 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
 DEFAULT_UE_IMAGES: dict[UEImplementation, dict[UEType, ContainerImage]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-nr-ue", image_tag="2026.w31"),
+            repository="docker.io/oaisoftwarealliance/oai-nr-ue", image_tag="2026.w42"),
     },
     UEImplementation.UERANSIM: {
         UEType.CONTAINERIZED: ContainerImage(
