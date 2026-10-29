@@ -66,29 +66,29 @@ DEFAULT_CORE_IMAGES: dict[CoreImplementation, dict[CoreComponentType, ContainerI
     },
     CoreImplementation.FREE5GC: {
         CoreComponentType.AMF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-amf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-amf", image_tag="v4.3.0"),
         CoreComponentType.AUSF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-ausf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-ausf", image_tag="v4.3.0"),
         CoreComponentType.BSF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-bsf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-bsf", image_tag="v4.3.0"),
         CoreComponentType.CHF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-chf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-chf", image_tag="v4.3.0"),
         CoreComponentType.NEF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-nef", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-nef", image_tag="v4.3.0"),
         CoreComponentType.NRF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-nrf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-nrf", image_tag="v4.3.0"),
         CoreComponentType.NSSF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-nssf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-nssf", image_tag="v4.3.0"),
         CoreComponentType.PCF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-pcf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-pcf", image_tag="v4.3.0"),
         CoreComponentType.SMF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-smf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-smf", image_tag="v4.3.0"),
         CoreComponentType.UDM: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-udm", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-udm", image_tag="v4.3.0"),
         CoreComponentType.UDR: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-udr", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-udr", image_tag="v4.3.0"),
         CoreComponentType.UPF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-upf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-upf", image_tag="v4.3.0"),
     },
 }
 
