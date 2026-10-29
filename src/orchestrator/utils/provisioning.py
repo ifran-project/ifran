@@ -28,6 +28,7 @@ from orchestrator.utils.ansible import (
 from orchestrator.utils.utils import (
     InvalidResourceStateError,
     ReferenceNotFoundError,
+    deep_merge,
     resolve_path,
 )
 
@@ -215,7 +216,10 @@ async def run_single_provisioning_action(  # noqa: PLR0917
 
         if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
             # validate and update resource ssh info for nodes and ues
-            resource_data.ssh_info = SSHInfo.model_validate(result["ssh_info"]) # type: ignore
+            # NOTE ssh_info is merged with precedence to the provisioning's ssh_info
+            # NOTE deep_merge is used to also merge nested jumphost ssh info
+            resource_data.ssh_info = SSHInfo.model_validate( # type: ignore
+                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"])) # type: ignore
 
         elif resource_data.category is ProvisioningCategory.RU:
             # update ips for rus
