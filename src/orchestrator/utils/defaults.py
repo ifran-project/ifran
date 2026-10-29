@@ -20,25 +20,25 @@ from orchestrator.models.ue import UEImplementation
 DEFAULT_CORE_IMAGES: dict[CoreImplementation, dict[CoreComponentType, ContainerImage]] = {
     CoreImplementation.OAI: {
         CoreComponentType.AMF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-amf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-amf", image_tag="v2.2.2"),
         CoreComponentType.AUSF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.2"),
         CoreComponentType.LMF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-lmf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-lmf", image_tag="v2.2.2"),
         CoreComponentType.NRF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-nrf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-nrf", image_tag="v2.2.2"),
         CoreComponentType.NSSF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.2"),
         CoreComponentType.PCF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.2"),
         CoreComponentType.SMF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-smf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-smf", image_tag="v2.2.2"),
         CoreComponentType.UDM: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-udm", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-udm", image_tag="v2.2.2"),
         CoreComponentType.UDR: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-udr", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-udr", image_tag="v2.2.2"),
         CoreComponentType.UPF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-upf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-upf", image_tag="v2.2.2"),
     },
     CoreImplementation.OPEN5GS: {
         CoreComponentType.AMF: ContainerImage(
