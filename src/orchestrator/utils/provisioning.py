@@ -221,8 +221,8 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             resource_data.ssh_info = SSHInfo.model_validate( # type: ignore
                 deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"])) # type: ignore
 
-        elif resource_data.category is ProvisioningCategory.RU:
-            # update ips for rus
+        elif resource_data.category is ProvisioningCategory.RU and not resource_data.ips:
+            # update ips for rus if not already set
             resource_data.ips = [IPv4Address(ip) for ip in result["ru_ips"]] # type: ignore
 
     if action == "unprovision":
