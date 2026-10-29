@@ -196,7 +196,7 @@ def resolve_path(value: Any) -> Any:
     """Ensure string relative paths are resolevd."""
 
     if isinstance(value, str):
-        path = Path(value)
+        path = Path(value).expanduser() # expand user home (~) to avoid it being treated as relative path
         return str(path) if path.is_absolute() else str(path.resolve())
     return value
 
