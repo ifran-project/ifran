@@ -114,19 +114,19 @@ class CoreManagement(HelmManagement):
 
         node_name, node_data = self._get_deployment_node(node)
 
-        result = await run_core_database_helm_action(
-            core_deployment=self.deployment_model.core,
-            action=action,
-            node_name=node_name,
-            node_data=node_data,
-            ansible_params=self.deployment_model.params.ansible,
-            force=force,
-            quiet=quiet,
-            )
-
-        if isinstance(result, Exception):
+        try:
+            await run_core_database_helm_action(
+                core_deployment=self.deployment_model.core,
+                action=action,
+                node_name=node_name,
+                node_data=node_data,
+                ansible_params=self.deployment_model.params.ansible,
+                force=force,
+                quiet=quiet,
+                )
+        except Exception as e:
             handle_ansible_result_exception(
-                result=result,
+                result=e,
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
             )
@@ -209,7 +209,7 @@ class CoreManagement(HelmManagement):
         await self.install(node=node, order=order, **kwargs)
 
         # add subscribers
-        await self.register_ues(node=node)
+        await self.register_ues(node=node, **kwargs)
 
 
     @override
