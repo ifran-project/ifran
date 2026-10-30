@@ -1,6 +1,6 @@
 [project]
 name = "orchestrator"
-version = "0.0.3"
+version = "0.0.4"
 description = "Post-5G orchestrator"
 authors = [
     {name = "Ziyad Mabrouk", email = "ziyad.mabrouk@inria.fr"},
