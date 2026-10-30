@@ -76,10 +76,13 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
     chart_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
 
-    # NOTE preparing a prepared component is not considered in the check given its idempotence
     if not force:
         is_installed = component_deployment.is_installed
         category = component_meta.category.value.upper()
+
+        # don't prepare already installed components but don't raise an error for it
+        if is_installed and action == "prepare":
+            return None
 
         # cannot install if already installed
         if is_installed and action == "install":
