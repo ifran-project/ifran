@@ -171,21 +171,21 @@ class BaseManagement:
             target_dict=self.deployment_model.core.components,
             source_dict=self.metamodel.core.components,
             default_factory=DeployedCoreComponent,
-            populated_fields=["type"],
+            populate_type=True,
         )
         # ran components
         sync_dict_keys(
             target_dict=self.deployment_model.ran.components,
             source_dict=self.metamodel.ran.components,
             default_factory=DeployedRANComponent,
-            populated_fields=["type"],
+            populate_type=True,
         )
         # rus (only real rus are provisionable)
         sync_dict_keys(
             target_dict=self.deployment_model.rus,
             source_dict={k: ru for k, ru in self.metamodel.rus.items() if ru.type is not RUType.SIMULATED},
             default_factory=lambda name: ProvisionableRU(name=name, category=ProvisioningCategory.RU),
-            populated_fields=["name"],
+            populate_name=True,
         )
         # ues (only cots ues are provisionable, others are deployed)
         sync_dict_keys(
@@ -196,14 +196,15 @@ class BaseManagement:
                     ProvisionableUE(name=name, category=ProvisioningCategory.UE, type=type) if type is UEType.COTS
                     else DeployedUE(type=type)
             ),
-            populated_fields=["name", "type"],
+            populate_type=True,
+            populate_name=True,
         )
         # ric components
         sync_dict_keys(
             target_dict=self.deployment_model.ric.components,
             source_dict=self.metamodel.ric.components,
             default_factory=DeployedRICComponent,
-            populated_fields=["type"],
+            populate_type=True,
         )
 
         # NOTE the deployment model should retrigger its validation functions for the newly added components
