@@ -421,8 +421,8 @@ def derive_srsue_ue_config(
         if ru.type is RUType.SIMULATED: # type: ignore
             device_driver = "zmq"
             device_args = (
-                f"tx_port=tcp://{ue_deployment.static_pod_ip}:2000,"
-                f"rx_port=tcp://{ue_meta.config.gnbs[0].gnb_ip}:2001" # type: ignore
+                f"tx_port=tcp://{ue_deployment.static_pod_ip}:2001,"
+                f"rx_port=tcp://{ue_meta.config.gnbs[0].gnb_ip}:2000" # type: ignore
             )
             if ue_deployment.advanced_config.srate:
                 device_args += f",base_srate={ue_deployment.advanced_config.srate}"

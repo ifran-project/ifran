@@ -13,7 +13,7 @@ srate = {{ component.advanced_config.srate | default("61.44e6", true) }}
 nof_antennas = {{ component.config.ru.numberOfTxPorts }}
 device_name = {{ component.derived_radio_config.device_driver }}
 {% if component.derived_radio_config.device_args %}
-  device_args: {{ component.derived_radio_config.device_args }}
+device_args = {{ component.derived_radio_config.device_args }}
 {% endif %}
 {% endif %}
 
