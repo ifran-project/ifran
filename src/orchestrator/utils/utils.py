@@ -40,7 +40,7 @@ def sync_dict_keys(
         if populated_fields:
             # add fields that need to be populated from source_dict item
             args = {
-                field: getattr(source_dict[key], field)
+                field: getattr(source_dict[key], field, None)
                 for field in populated_fields
             }
 
