@@ -603,11 +603,80 @@ class ProvisionableUE(SSHableResource):
     """If this UE is connected or not."""
 
 
+class RUVendor(StrEnum):
+    """Supported Radio Unit vendors."""
+
+    USRP = auto()
+    """Ettus/USRP Radio Unit."""
+
+    AW2S = auto()
+    """AW2S Radio Unit."""
+
+    BENETEL = auto()
+    """Benetel Radio Unit."""
+
+    LITEON = auto()
+    """Liteon Radio Unit."""
+
+
+class USRPModel(StrEnum):
+    """Ettus/USRP models."""
+
+    B210 = auto()
+    """USRP B210 model."""
+
+    B205 = auto()
+    """USRP B205 model."""
+
+    N300 = auto()
+    """USRP N300 model."""
+
+    N320 = auto()
+    """USRP N320 model."""
+
+
+class AW2SModel(StrEnum):
+    """AW2S models."""
+
+    JAGUAR = auto()
+    """AW2S Jaguar model."""
+
+    PANTHER = auto()
+    """AW2S Panther model."""
+
+
+class BenetelModel(StrEnum):
+    """Benetel models."""
+
+    RAN550 = auto()
+    """Benetel RAN550 model."""
+
+    RAN650 = auto()
+    """Benetel RAN650 model."""
+
+
+class LiteonModel(StrEnum):
+    """Liteon models."""
+
+    FLEXFI = auto()
+    """Liteon FlexFi model."""
+
+
+# union type
+type RUModel = USRPModel | AW2SModel | BenetelModel | LiteonModel
+
+
 # NOTE radio units are not ssh-able resources
 class ProvisionableRU(GenericProvisionableResource):
     """Radio Unit (RU) provisioning."""
 
     category: Literal[ProvisioningCategory.RU] = Field(default=ProvisioningCategory.RU, frozen=True)
+
+    vendor: RUVendor = Field(default=RUVendor.USRP)
+    """RU vendor name."""
+
+    model: RUModel = Field(default=USRPModel.B210)
+    """RU model name."""
 
     provisioner: str | None = Field(default="r2lab")
     """RU provisioner's name."""
