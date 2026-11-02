@@ -30,7 +30,7 @@ class HelmManagement(BaseManagement):
             master_node = self.deployment_model.params.k8s.master_node
             if master_node is None:
                 raise RuntimeError(
-                    f"Target node {node!r} for Helm action was not provided "
+                    "Target node for Helm action was not provided "
                     "and Kubernetes master node does not exist."
                 )
             node = master_node
