@@ -115,6 +115,7 @@ class OAIAdvancedCommonGNBConfig(GenericOAIAdvancedRANConfig):
    initialULBWPlocationAndBandwidth: int | None = Field(default=None)
    prach_msg1_FDM: int | None = Field(default=None)
    zeroCorrelationZoneConfig: int | None = Field(default=None)
+   preambleReceivedTargetPower: int | None = Field(default=None)
    preambleTransMax: int | None = Field(default=None)
    powerRampingStep: int | None = Field(default=None)
    ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR: int | None = Field(default=None)
