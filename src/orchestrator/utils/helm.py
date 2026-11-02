@@ -2,6 +2,7 @@
 
 import asyncio
 from ipaddress import IPv4Address
+from pathlib import Path
 from typing import Literal
 
 from metamodel.models.common import Component5G, TransportEndpoint
@@ -76,10 +77,13 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
     chart_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
 
-    # NOTE preparing a prepared component is not considered in the check given its idempotence
     if not force:
         is_installed = component_deployment.is_installed
         category = component_meta.category.value.upper()
+
+        # don't prepare already installed components but don't raise an error for it
+        if is_installed and action == "prepare":
+            return None
 
         # cannot install if already installed
         if is_installed and action == "install":
@@ -104,6 +108,28 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         output_with_multus=component_deployment.multus.enabled,
     )
 
+    component_data = (
+        component_meta.model_dump(mode="json", serialize_as_any=True) |
+        component_deployment.model_dump(mode="json")
+        )
+
+    # handle plain_text_config as a path or a text string
+    plain_text_config = component_deployment.plain_text_config
+
+    if plain_text_config:
+        path = Path(resolve_path(plain_text_config))
+
+        if path.is_file():  # noqa: ASYNC240
+            # if plain_text_config is a path, overwrite it with file's text content
+            try:
+                component_data["plain_text_config"] = path.read_text(encoding="utf-8")  # noqa: ASYNC240
+            except Exception as e:
+                raise RuntimeError(
+                    f"Could not read 'plain_text_config' {str(path)!r} file content"
+                    f"for {category} component {component_name!r}."
+                ) from e
+
+
     args = {
         "role": f"helm/{action}",
         "inputs": {
@@ -111,10 +137,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
             # merged component (meta + deployment)
             # NOTE use serialize_as_any=True to prevent pydantic from replacing models
             # because of type mismatch after reference resolution
-            "component": {**(
-                component_meta.model_dump(mode="json", serialize_as_any=True) |
-                component_deployment.model_dump(mode="json")
-            )},
+            "component": component_data,
             **helm_params.model_dump(mode="json"),
         },
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",

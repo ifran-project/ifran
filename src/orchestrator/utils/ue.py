@@ -196,17 +196,18 @@ def reconcile_ues(
                 k8s_params=k8s_params,
             )
 
-            # derive implementation-specific radio parameters for ue after ru name reference resolution
-            derive_ue_radio_config(
-                ue_meta=ue_meta,
-                ue_deployment=ue_deployment # type: ignore
-                )
-
             # zmq-based ue specific case
             resolve_ocudu_zmq_ran(
                 **args,
                 component_deployment=ue_deployment, # type: ignore
             )
+
+            # derive implementation-specific radio parameters for ue
+            # AFTER ru name reference resolution and zmq case
+            derive_ue_radio_config(
+                ue_meta=ue_meta,
+                ue_deployment=ue_deployment # type: ignore
+                )
 
 
 async def run_single_ue_action(  # noqa: PLR0917

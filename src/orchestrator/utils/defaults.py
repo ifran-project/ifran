@@ -4,7 +4,6 @@ from metamodel.models.common import Category5G
 from metamodel.models.core import CoreComponentType
 from metamodel.models.ran import RANComponentType
 from metamodel.models.ric import RICComponentType
-from metamodel.models.ru import RUType
 from metamodel.models.ue import UEType
 
 from orchestrator.models.core import CoreImplementation
@@ -13,6 +12,7 @@ from orchestrator.models.k8s import (
     ContainerImage,
     SecurityContext,
 )
+from orchestrator.models.provisioning import RUVendor
 from orchestrator.models.ran import RANImplementation
 from orchestrator.models.ric import RICImplementation
 from orchestrator.models.ue import UEImplementation
@@ -20,25 +20,25 @@ from orchestrator.models.ue import UEImplementation
 DEFAULT_CORE_IMAGES: dict[CoreImplementation, dict[CoreComponentType, ContainerImage]] = {
     CoreImplementation.OAI: {
         CoreComponentType.AMF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-amf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-amf", image_tag="v2.2.2"),
         CoreComponentType.AUSF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-ausf", image_tag="v2.2.2"),
         CoreComponentType.LMF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-lmf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-lmf", image_tag="v2.2.2"),
         CoreComponentType.NRF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-nrf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-nrf", image_tag="v2.2.2"),
         CoreComponentType.NSSF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-nssf", image_tag="v2.2.2"),
         CoreComponentType.PCF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-pcf", image_tag="v2.2.2"),
         CoreComponentType.SMF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-smf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-smf", image_tag="v2.2.2"),
         CoreComponentType.UDM: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-udm", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-udm", image_tag="v2.2.2"),
         CoreComponentType.UDR: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-udr", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-udr", image_tag="v2.2.2"),
         CoreComponentType.UPF: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-upf", image_tag="v2.2.0"),
+            repository="docker.io/oaisoftwarealliance/oai-upf", image_tag="v2.2.2"),
     },
     CoreImplementation.OPEN5GS: {
         CoreComponentType.AMF: ContainerImage(
@@ -66,86 +66,101 @@ DEFAULT_CORE_IMAGES: dict[CoreImplementation, dict[CoreComponentType, ContainerI
     },
     CoreImplementation.FREE5GC: {
         CoreComponentType.AMF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-amf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-amf", image_tag="v4.3.0"),
         CoreComponentType.AUSF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-ausf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-ausf", image_tag="v4.3.0"),
         CoreComponentType.BSF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-bsf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-bsf", image_tag="v4.3.0"),
         CoreComponentType.CHF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-chf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-chf", image_tag="v4.3.0"),
         CoreComponentType.NEF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-nef", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-nef", image_tag="v4.3.0"),
         CoreComponentType.NRF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-nrf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-nrf", image_tag="v4.3.0"),
         CoreComponentType.NSSF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-nssf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-nssf", image_tag="v4.3.0"),
         CoreComponentType.PCF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-pcf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-pcf", image_tag="v4.3.0"),
         CoreComponentType.SMF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-smf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-smf", image_tag="v4.3.0"),
         CoreComponentType.UDM: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-udm", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-udm", image_tag="v4.3.0"),
         CoreComponentType.UDR: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-udr", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-udr", image_tag="v4.3.0"),
         CoreComponentType.UPF: ContainerImage(
-            repository="ghcr.io/ziyad-mabrouk/free5gc-upf", image_tag="v4.2.3"),
+            repository="ghcr.io/ziyad-mabrouk/free5gc-upf", image_tag="v4.3.0"),
     },
 }
 
-
-DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, ContainerImage]]] = {
+# NOTE simulated RU => vendor = None
+DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUVendor | None, dict[RANComponentType, ContainerImage]]] = {
     RANImplementation.OAI: {
-        RUType.USRP: {
+        None: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
-        RUType.SIMULATED: {
+        RUVendor.USRP: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
-        RUType.AW2S: {
+        RUVendor.AW2S: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w31"),
+                repository="docker.io/r2labuser/oai-gnb-aw2s-csi", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
-        RUType.BENETEL: {
+        RUVendor.BENETEL: {
             RANComponentType.GNB: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.CU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.DU: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.CU_CP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-gnb-fhi72", image_tag="2026.w42"),
             RANComponentType.CU_UP: ContainerImage(
-                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w31"),
+                repository="docker.io/oaisoftwarealliance/oai-nr-cuup", image_tag="2026.w42"),
         },
     },
     RANImplementation.OCUDU: {
-        RUType.USRP: {
+        None: {
+            RANComponentType.GNB: ContainerImage(
+                repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-zmq", image_tag="release_26_04"),
+            RANComponentType.CU: ContainerImage(
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
+            RANComponentType.DU: ContainerImage(
+                repository="ghcr.io/ziyad-mabrouk/ocudu-du-zmq", image_tag="release_26_04"),
+            RANComponentType.CU_CP: ContainerImage(
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-cp",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
+            RANComponentType.CU_UP: ContainerImage(
+                repository="registry.gitlab.com/ocudu/ocudu/images/cu-up",
+                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
+        },
+        RUVendor.USRP: {
             RANComponentType.GNB: ContainerImage(
                 repository="registry.gitlab.com/ocudu/ocudu/images/gnb-uhd",
                 image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
@@ -162,7 +177,7 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
                 repository="registry.gitlab.com/ocudu/ocudu/images/cu-up",
                 image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
         },
-        RUType.BENETEL: {
+        RUVendor.BENETEL: {
             RANComponentType.GNB: ContainerImage(
                 repository="registry.gitlab.com/ocudu/ocudu/images/gnb-dpdk",
                 image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
@@ -179,24 +194,9 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
                 repository="registry.gitlab.com/ocudu/ocudu/images/cu-up",
                 image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
         },
-        RUType.SIMULATED: {
-            RANComponentType.GNB: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-gnb-zmq", image_tag="release_26_04"),
-            RANComponentType.CU: ContainerImage(
-                repository="registry.gitlab.com/ocudu/ocudu/images/cu",
-                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
-            RANComponentType.DU: ContainerImage(
-                repository="ghcr.io/ziyad-mabrouk/ocudu-du-zmq", image_tag="release_26_04"),
-            RANComponentType.CU_CP: ContainerImage(
-                repository="registry.gitlab.com/ocudu/ocudu/images/cu-cp",
-                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
-            RANComponentType.CU_UP: ContainerImage(
-                repository="registry.gitlab.com/ocudu/ocudu/images/cu-up",
-                image_tag="ubuntu-24.04-avx2-20261001_920f88c7-stable"),
-        },
     },
     RANImplementation.UERANSIM: {
-        RUType.SIMULATED: {
+        None: {
             RANComponentType.GNB: ContainerImage(
                 repository="docker.io/gradiant/ueransim", image_tag="3.3.0"),
         },
@@ -207,7 +207,7 @@ DEFAULT_RAN_IMAGES: dict[RANImplementation, dict[RUType, dict[RANComponentType, 
 DEFAULT_UE_IMAGES: dict[UEImplementation, dict[UEType, ContainerImage]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: ContainerImage(
-            repository="docker.io/oaisoftwarealliance/oai-nr-ue", image_tag="2026.w31"),
+            repository="docker.io/oaisoftwarealliance/oai-nr-ue", image_tag="2026.w42"),
     },
     UEImplementation.UERANSIM: {
         UEType.CONTAINERIZED: ContainerImage(

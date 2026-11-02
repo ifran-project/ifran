@@ -21,11 +21,12 @@ class ReferenceNotFoundError(Exception):
     """Exception when a resource references an undefined resource."""
 
 
-def sync_dict_keys(
+def sync_dict_keys(  # noqa: PLR0917
         target_dict: dict,
         source_dict: dict,
         default_factory: Any,
         populate_type: bool = False,
+        populate_name: bool = False,
         remove_extra: bool = True,
     ) -> None:
     """Synchronize 'target_dict' keys with 'source_dict' keys."""
@@ -35,11 +36,16 @@ def sync_dict_keys(
 
     # add missing keys
     for key in missing_keys:
+        args = {}
         if populate_type:
             # ran, core, and ric components need the type field
-            target_dict[key] = default_factory(type=source_dict[key].type)
-        else:
-            target_dict[key] = default_factory()
+            args["type"] = source_dict[key].type
+
+        if populate_name:
+            # provisionable resources (RUs et UEs) need the name field
+            args["name"] = key
+
+        target_dict[key] = default_factory(**args)
 
     # remove extra keys
     if remove_extra:
@@ -196,7 +202,7 @@ def resolve_path(value: Any) -> Any:
     """Ensure string relative paths are resolevd."""
 
     if isinstance(value, str):
-        path = Path(value)
+        path = Path(value).expanduser() # expand user home (~) to avoid it being treated as relative path
         return str(path) if path.is_absolute() else str(path.resolve())
     return value
 

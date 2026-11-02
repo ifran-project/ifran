@@ -7,7 +7,7 @@ from orchestrator.utils.ansible import run_ansible_playbook
 from orchestrator.utils.utils import deep_merge
 
 
-class Miscellaneous(BaseManagement):
+class MiscellaneousManagement(BaseManagement):
     """Miscellaneous executions management class."""
 
     async def run_playbook(  # noqa: PLR0917

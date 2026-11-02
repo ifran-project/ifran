@@ -1,6 +1,7 @@
 """Ansible utilities and helpers."""
 
 import asyncio
+import shlex
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -22,23 +23,23 @@ def get_ansible_inventory_line(
     ssh_info = resource_data.ssh_info
 
     vars = [
-        f"ansible_host={ssh_info.hostname or resource_name}",
+        f"ansible_host={ssh_info.hostname or resource_data.name}",
         f"ansible_port={ssh_info.port}",
         f"ansible_user={ssh_info.user}",
     ]
     if ssh_info.private_key_file:
-        vars.append(f"ansible_ssh_private_key_file={ssh_info.private_key_file}")
+        vars.append(f"ansible_ssh_private_key_file={shlex.quote(ssh_info.private_key_file)}")
     if ssh_info.password:
-        vars.append(f"ansible_password={ssh_info.password}")
+        vars.append(f"ansible_password={shlex.quote(ssh_info.password)}")
     if ssh_info.sudo_password:
-        vars.append(f"ansible_become_password={ssh_info.sudo_password}")
+        vars.append(f"ansible_become_password={shlex.quote(ssh_info.sudo_password)}")
     for key, value in resource_data.provisioning_params.items():
         if key.startswith("ansible_"):
             vars.append(f"{key}={value}")
 
     args = ssh_info.common_args
     if args:
-        vars.append(f"ansible_ssh_common_args={args!r}")
+        vars.append(f"ansible_ssh_common_args={shlex.quote(args)}")
 
     return f"{resource_name} " + " ".join(vars)
 

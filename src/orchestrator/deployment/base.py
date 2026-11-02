@@ -184,18 +184,20 @@ class BaseManagement:
         sync_dict_keys(
             target_dict=self.deployment_model.rus,
             source_dict={k: ru for k, ru in self.metamodel.rus.items() if ru.type is not RUType.SIMULATED},
-            default_factory=lambda: ProvisionableRU(category=ProvisioningCategory.RU),
+            default_factory=lambda name: ProvisionableRU(name=name, category=ProvisioningCategory.RU),
+            populate_name=True,
         )
         # ues (only cots ues are provisionable, others are deployed)
         sync_dict_keys(
             target_dict=self.deployment_model.ues,
             source_dict=self.metamodel.ues,
             default_factory=(
-                lambda type:
-                    ProvisionableUE(category=ProvisioningCategory.UE, type=type) if type is UEType.COTS
+                lambda name, type:
+                    ProvisionableUE(name=name, category=ProvisioningCategory.UE, type=type) if type is UEType.COTS
                     else DeployedUE(type=type)
             ),
             populate_type=True,
+            populate_name=True,
         )
         # ric components
         sync_dict_keys(
