@@ -12,14 +12,8 @@ rx_gain = {{ component.config.ru.rxGainDB }}
 srate = {{ component.advanced_config.srate | default("61.44e6", true) }}
 nof_antennas = {{ component.config.ru.numberOfTxPorts }}
 device_name = {{ component.derived_radio_config.device_driver }}
-{% if component.advanced_config and component.advanced_config.device_args %}
-device_args = {{ component.advanced_config.device_args }}
-{% else %}
-{% if component.config.ru.type == "usrp" %}
-device_args = addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}
-{% elif component.config.ru.type == "simulated" %}
-device_args = tx_port=tcp://{{ component.static_pod_ip }}:2001,rx_port=tcp://{{ component.config.gnbs[0].gnb_ip }}:2000,base_srate={{ component.advanced_config.srate | default("23.04e6", true) }}
-{% endif %}
+{% if component.derived_radio_config.device_args %}
+device_args = {{ component.derived_radio_config.device_args }}
 {% endif %}
 {% endif %}
 

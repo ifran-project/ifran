@@ -215,17 +215,18 @@ def resolve_ru_reference(
     """Resolve RU name reference in a 5G component."""
 
     # merge rus (we need the meta for ran config parameters and provisioning for readiness state and IPs)
-    rus: dict[str, MergedRU] = {}
+    rus: dict[str, RU | MergedRU] = {}
     for ru_name, ru_meta in rus_meta.items():
         if ru_meta.type is RUType.SIMULATED:
-            # simulated rus are not part of deployment model, so we just consider them as "provisioned"
-            ru_prov = {"is_provisioned": True}
+            # simulated rus are not part of deployment model
+            rus[ru_name] = ru_meta
+            check_is_porvisioned = False # simulated rus are not provisionable
         else:
             # ru_meta and rus_provisioning are supposed to be synchronized by this point
             ru_prov = rus_provisioning[ru_name].model_dump(mode="json")
-        rus[ru_name] = MergedRU.model_validate({
-            **ru_prov, **ru_meta.model_dump(mode="json")
-            })
+            rus[ru_name] = MergedRU.model_validate({
+                **ru_prov, **ru_meta.model_dump(mode="json")
+                })
 
     resolve_component_reference(
         component_name=component_name,
@@ -248,14 +249,11 @@ def populate_default_images(
     if component_deployment.image is None:
         if component_meta.category is Category5G.RAN:
             # for RAN components, RU is supposed to be resolved before this
-            config = component_meta.config
-
-            # NOTE CUs, CU-CPs and CU-UPs dont have and ru field, so give them simulated one for simplicity
-            ru_type = config.ru.type if hasattr(config, "ru") and isinstance(config.ru, RU) else RUType.SIMULATED # type: ignore
+            ru_vendor = getattr(getattr(component_meta.config.model_dump, "ru", {}), "vendor", None) # type: ignore
 
             component_deployment.image = DEFAULT_POD_IMAGES.get(component_meta.category, {}
                                                             ).get(component_deployment.implementation, {}
-                                                                ).get(ru_type, {}
+                                                                ).get(ru_vendor, {}
                                                                         ).get(component_meta.type)
         else:
             component_deployment.image = DEFAULT_POD_IMAGES.get(component_meta.category, {}

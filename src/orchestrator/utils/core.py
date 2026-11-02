@@ -226,11 +226,14 @@ async def run_core_database_helm_action(  # noqa: PLR0917
     ) -> None:
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
-    if not force and (
-        (core_deployment.database_params.is_installed and action == "install") or
-        (not core_deployment.database_params.is_installed and action == "uninstall")
-        ):
-        raise InvalidResourceStateError(f"5G core database is already {action}ed.")
+    if not force:
+        is_installed = core_deployment.database_params.is_installed
+
+        if is_installed and action == "install" or not is_installed and action == "uninstall":
+            raise InvalidResourceStateError(f"5G core database is already {action}ed.")
+
+        if is_installed and action == "prepare":
+            return
 
     helm_params = HelmParams(
         chart_name=f"{core_deployment.implementation.value}-database",

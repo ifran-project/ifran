@@ -101,6 +101,7 @@ class SRSUEAdvancedUEConfig(GenericAdvancedUEConfig):
     cfr: SerializableINIConfigDict | None = Field(default=None)
     sim: SerializableINIConfigDict | None = Field(default=None)
     general: SerializableINIConfigDict | None = Field(default=None)
+    master_clock_rate: str | float | None = Field(default=None)
 
 
 ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {

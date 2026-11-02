@@ -26,7 +26,7 @@ class Deployed5GComponent(K8SComponent):
     """Component configuration specific to the implementation."""
 
     plain_text_config: str | None = Field(default=None)
-    """Raw configuration file content."""
+    """Raw configuration file path or text content."""
 
 
     def validate_advanced_config(self, mapping: dict, default_model: BaseModel) -> Self:

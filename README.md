@@ -115,7 +115,7 @@ Each lifecycle stage is handled by a manager class. All of them inherit from `Ba
 | `RANManagement` | Deploy, update or remove RAN functions (e.g., gNB, CU, CU-CP, CU-UP, DU); run commands in RAN functions |
 | `RICManagement` | Deploy, update, remove and manage the RIC |
 | `UEManagement` | Deploy, connect and disconnect UEs; run commands on UEs |
-| `Miscellaneous` | Run custom Ansible playbooks on the nodes, typically to tune machines |
+| `MiscellaneousManagement` | Run custom Ansible playbooks on the nodes, typically to tune machines |
 
 ### 4. Kubernetes
 

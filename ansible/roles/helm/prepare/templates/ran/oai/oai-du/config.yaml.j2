@@ -182,8 +182,8 @@ RUs:
     max_rxgain: {{ component.config.ru.rxGainDB }}
     eNB_instances: {{ component.config.ru.eNB_instances | default([0], true) }}
     sf_extension: {{ component.config.ru.sf_extension | default(0, true) }}
-{% if component.config.ru.ips and component.config.ru.type != "aw2s" %}
-    sdr_addrs: "addr={{ component.config.ru.ips[0] }},clock_source={{ component.config.ru.clockSource }},time_source={{ component.config.ru.timeSource }}"
+{% if component.derived_radio_config.sdr_addrs %}
+    sdr_addrs: {{ component.derived_radio_config.sdr_addrs }}
 {% endif %}
 {% if component.advanced_config and component.advanced_config.tr_preference %}
     tr_preference: {{ component.advanced_config.tr_preference }}

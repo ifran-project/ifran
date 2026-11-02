@@ -81,8 +81,8 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
         "role": f"k8s/{action}",
         "inputs": {
             "node": {
-                "name": node_name,
                 **node_data.model_dump(mode="json"),
+                "name": node_name, # NOTE display node's key in the nodes dict instead of its actual name
             },
             **merged_params.model_dump(mode="json"),
         },
