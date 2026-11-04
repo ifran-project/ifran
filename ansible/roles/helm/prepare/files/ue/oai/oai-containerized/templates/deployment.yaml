@@ -95,11 +95,11 @@ spec:
         command: [ "/bin/bash", "-c" ]
         args:
           - {{- if eq .Values.config.radio "b2xx"}}
-              /opt/oai-gnb/bin/uhd_images_downloader.py -t b2xx;
+              /opt/oai-nr-ue/bin/uhd_images_downloader.py -t b2xx;
             {{- else if eq .Values.config.radio "n3xx" }}
-              /opt/oai-gnb/bin/uhd_images_downloader.py -t n3xx;
+              /opt/oai-nr-ue/bin/uhd_images_downloader.py -t n3xx;
             {{- else if eq .Values.config.radio "x3xx" }}
-              /opt/oai-gnb/bin/uhd_images_downloader.py -t x3xx;
+              /opt/oai-nr-ue/bin/uhd_images_downloader.py -t x3xx;
             {{- end }}
               exec  /opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf $USE_ADDITIONAL_OPTIONS;
         {{- else}}
@@ -112,27 +112,23 @@ spec:
             value: {{ .Values.config.timeZone | quote }}
           - name: USE_ADDITIONAL_OPTIONS
             value: {{ .Values.config.useAdditionalOptions | quote }}
-          {{- if eq .Values.config.radio "b2xx" }}
-          - name: USE_B2XX
-            value: true
-          {{- end }}
           - name: OAI_GDBSTACKS
             value: "{{ .Values.config.gdbstack }}"
           {{- if eq .Values.config.radio "b2xx" }}
-            - name: USE_B2XX
-              value: true
+          - name: USE_B2XX
+            value: "yes"
           {{- end }}
           {{- if eq .Values.config.radio "x3xx" }}
-            - name: USE_X3XX
-              value: true
+          - name: USE_X3XX
+            value: "yes"
           {{- end }}
           {{- if eq .Values.config.radio "n3xx" }}
-            - name: USE_N3XX
-              value: true
+          - name: USE_N3XX
+            value: "yes"
           {{- end }}
           {{- range $key, $value := .Values.extraEnvVars }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
           {{- end }}
       {{- if .Values.includeTcpDumpContainer }}
       - name: tcpdump

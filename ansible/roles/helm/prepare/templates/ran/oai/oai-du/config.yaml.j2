@@ -34,9 +34,7 @@ gNBs:
       - physCellId: {{ component.config.physicalCellId }}
         #  downlinkConfigCommon
         #frequencyInfoDL
-        # this is 3300.60 MHz + 53*12*30e-3 MHz = 3319.68
         absoluteFrequencySSB: {{ component.config.radioConfiguration.ssbArfcn }}
-        # this is 3300.60 MHz
         dl_absoluteFrequencyPointA: {{ component.config.radioConfiguration.pointAFrequencyArfcn }}
         #scs-SpecificCarrierList
         dl_offstToCarrier: {{ component.advanced_config.dl_offstToCarrier | default(0, true) }}
@@ -46,8 +44,7 @@ gNBs:
         dl_carrierBandwidth: {{ component.derived_radio_config.bandwidth_rb }}
         #initialDownlinkBWP
         #genericParameters
-        # this is RBstart=0,L=106 (275*(L-1))+RBstart
-        initialDLBWPlocationAndBandwidth: {{ component.advanced_config.initialDLBWPlocationAndBandwidth | default(28875, true) }}
+        initialDLBWPlocationAndBandwidth: {{ component.advanced_config.initialDLBWPlocationAndBandwidth | default(component.derived_radio_config.bwp_location_and_bandwidth, true) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         initialDLBWPsubcarrierSpacing: {{ component.advanced_config.initialDLBWPsubcarrierSpacing | default(1, true) }}
@@ -69,7 +66,7 @@ gNBs:
         pMax: {{ component.advanced_config.pMax | default(20, true) }}
         #initialUplinkBWP
         #genericParameters
-        initialULBWPlocationAndBandwidth: {{ component.advanced_config.initialULBWPlocationAndBandwidth | default(28875, true) }}
+        initialULBWPlocationAndBandwidth: {{ component.advanced_config.initialULBWPlocationAndBandwidth | default(component.derived_radio_config.bwp_location_and_bandwidth, true) }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         initialULBWPsubcarrierSpacing: {{ component.derived_radio_config.numerology }}

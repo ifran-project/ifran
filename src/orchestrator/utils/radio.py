@@ -144,6 +144,26 @@ def get_rbs(subcarrierSpacingKhz: SubcarrierSpacing, channelBandwidthMhz: int):
     return bandwidth_rb
 
 
+def get_oai_bwp_location_and_bandwidth(bandwidth_rb: int) -> int:
+    """
+    Calculate OAI initial BWP locationAndBandwidth.
+
+    Assumes the initial BWP spans the entire carrier, starting at CRB 0.
+    """
+
+    n_rb = 275
+    bwp_start = 0
+    bwp_size = bandwidth_rb
+
+    if bwp_size <= 0 or bwp_size > n_rb:
+        raise ValueError(f"Cannot derive initial BWP locationAndBandwidth from BWP size: {bwp_size}")
+
+    if bwp_size - 1 <= n_rb // 2:
+        return n_rb * (bwp_size - 1) + bwp_start
+
+    return n_rb * (n_rb - bwp_size + 1) + (n_rb - 1 - bwp_start)
+
+
 ## RAN radio parameter derivation
 
 def derive_oai_ran_config(  # noqa: C901, PLR0912
@@ -209,8 +229,10 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
                 adv_conf.local_if_name = adv_conf.local_if_name or ru_iface.name
                 adv_conf.local_address = adv_conf.local_address or ru_iface.ip_address
 
+    bandwidth_rb = get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz)
+
     return {
-        "bandwidth_rb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
+        "bandwidth_rb": bandwidth_rb,
         "ul_point_a_arfcn": ul_point_a_arfcn,
         "numerology": NUMEROLOGY[radio_config.subcarrierSpacingKhz],
         "ssb_numerology": NUMEROLOGY[radio_config.ssbSubcarrierSpacing],
@@ -222,9 +244,9 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
             f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
             if ru.type is RUType.REAL and ru.ips and ru.vendor is not RUVendor.AW2S # type: ignore
             else None
-        )
+        ),
+        "bwp_location_and_bandwidth": get_oai_bwp_location_and_bandwidth(bandwidth_rb),
     }
-
 
 
 def derive_ocudu_ran_config(
@@ -305,7 +327,7 @@ def derive_ran_radio_config(
 
 ## UE radio parameter derivation
 
-def derive_oai_ue_config(
+def derive_oai_ue_config(  # noqa: C901, PLR0912
         ue_meta: UE,
         ue_deployment: DeployedUE,
     ) -> dict[str, Any]:
@@ -366,7 +388,7 @@ def derive_oai_ue_config(
 
         ssb_start = int(ssb_offset_hz // scs_ssb_hz)
 
-        # additional flags for rfsim
+        # additional flags
         if ue_deployment.advanced_config and ue_deployment.advanced_config.useAdditionalOptions:
             additional_flags = ue_deployment.advanced_config.useAdditionalOptions
 
@@ -378,8 +400,20 @@ def derive_oai_ue_config(
                     "-E --ue-scan-carrier --thread-pool -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 "
                     "--uecap_file /opt/oai-nr-ue/etc/uecap_ports1.xml"
                     )
+
+        elif ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+            additional_flags = "-E --ue-fo-compensation --ue-scan-carrier"
+
         else:
             additional_flags = ""
+
+        # sdr_addrs
+        sdr_addrs = None
+        if ru.type is RUType.REAL: # type: ignore
+            if ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+                sdr_addrs = "type=b200,num_recv_frames=64,num_send_frames=64"
+            elif ru.ips: # type: ignore
+                sdr_addrs = f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
 
         derived = {
             "dl_carrier_freq_hz": dl_carrier_freq_hz, # rf_freq
@@ -389,10 +423,7 @@ def derive_oai_ue_config(
             "ssb_start": ssb_start, # ssb_start
             "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""), # type: ignore
             "additional_flags": additional_flags,
-            "sdr_addrs": (
-                f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
-                if ru.type is RUType.REAL and ru.ips else None # type: ignore
-            )
+            "sdr_addrs": sdr_addrs,
         }
 
     return derived

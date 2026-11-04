@@ -150,7 +150,7 @@ config:
   useAdditionalOptions: "{{ component.advanced_config.useAdditionalOptions | default(component.derived_radio_config.additional_flags, true) }}"
   gdbstack: {{ component.advanced_config.gdbstack | default(1, true) }}     # 1 to see gdb traces 
   radio: {{ component.derived_radio_config.radio }}  # Options: rfsim, vrtsim, b2xx, n3xx, x3xx
-  ocudu: {{ (component.config.gnbs[0].implementation == "ocudu") | default(false, true) }}
+  ocudu: {{ (component.config.gnbs[0].implementation == "ocudu") | lower | default(false, true) }}
 
 
 start:
