@@ -10,7 +10,7 @@ Every contribution should be designed with the long-term health of the project i
 
 - **Respect the existing structure.** Follow the project's architecture, conventions, coding style, and established patterns. Reuse existing functionality, and avoid unnecessary restructuring or introducing alternative approaches without a strong justification.
 - **Focus on meaningful improvements.** Contributions must address a real problem or provide clear value to the community.
-- **Prioritize maintainability.** Code should be easy to understand, review, test, and maintain over time. Prefer simple and explicit solutions over unnecessary complexity, external dependencies, or premature abstractions.  Update documentation when behavior, configuration, or usage changes.
+- **Prioritize maintainability.** Code should be easy to understand, review, test, and maintain over time. Prefer simple and explicit solutions over unnecessary complexity, external dependencies, or premature abstractions. Update documentation when behavior, configuration, or usage changes.
 - **Write robust code.** Handle relevant edge cases and failure scenarios. Include or update tests when appropriate.
 - **Keep changes focused.** Each contribution should address a specific problem or introduce a well-defined feature. Avoid unrelated changes that make reviews more difficult.
 
@@ -40,6 +40,10 @@ Before opening a merge request:
 
 ## Merge Request Guidelines
 
+All merge requests from contributors **must target the****`develop`****branch**, not `main`.
+
+The `develop` branch is the primary integration branch for ongoing development. It is where contributions are reviewed, discussed, tested, and integrated into the project.
+
 A good merge request should:
 
 - Clearly explain the problem being solved or the value of the proposed feature.
@@ -47,6 +51,15 @@ A good merge request should:
 - Include relevant tests or a clear explanation of how the change was verified.
 - Avoid unrelated modifications and unnecessary formatting changes.
 - Be small and focused enough to review effectively, whenever possible.
+- Target the `develop` branch.
+
+Please double-check the target branch before submitting your merge request. Merge requests targeting `main` directly will not be considered for normal contributions.
+
+### Branch Integration and Releases
+
+The `main` branch is reserved for stable, consolidated project versions. Merging changes from `develop` into `main` is an internal project responsibility, handled by the maintainers.
+
+Unlike the continuous integration of contributions into `develop`, merges into `main` happen less frequently, at selected project milestones or when a stable version is ready.
 
 Please be open to feedback and prepared to revise your contribution if necessary.
 
