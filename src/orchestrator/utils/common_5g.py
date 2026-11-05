@@ -249,7 +249,7 @@ def populate_default_images(
     if component_deployment.image is None:
         if component_meta.category is Category5G.RAN:
             # for RAN components, RU is supposed to be resolved before this
-            ru_vendor = component_meta.config.model_dump().get("ru", {}).get("vendor") # type: ignore
+            ru_vendor = component_meta.config.model_dump(serialize_as_any=True).get("ru", {}).get("vendor") # type: ignore
 
             component_deployment.image = DEFAULT_POD_IMAGES.get(component_meta.category, {}
                                                             ).get(component_deployment.implementation, {}
