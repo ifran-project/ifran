@@ -176,7 +176,7 @@
     mode: "0644"
   notify: Restart containerd
 
-- name: Flush handlers on '{{ node.name }}'
+- name: Flush handlers
   ansible.builtin.meta: flush_handlers
 
 - name: Enable containerd on '{{ node.name }}'
