@@ -266,7 +266,7 @@ def derive_ocudu_ran_config(
             f"tx_port=tcp://{component_deployment.static_pod_ip}:2000,"
             f"rx_port=tcp://{component_deployment.advanced_config.ue_ip}:2001"
         )
-        if component_deployment.advanced_config.base_srate:
+        if component_deployment.advanced_config and component_deployment.advanced_config.base_srate:
             device_args += f",base_srate={component_deployment.advanced_config.base_srate}"
 
     elif ru.vendor is RUVendor.USRP:  # type: ignore
@@ -278,7 +278,7 @@ def derive_ocudu_ran_config(
                 f"addr={ru.ips[0]},"  # type: ignore
                 f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
             )
-            if component_deployment.advanced_config.master_clock_rate:
+            if component_deployment.advanced_config and component_deployment.advanced_config.master_clock_rate:
                 device_args += f",master_clock_rate={component_deployment.advanced_config.master_clock_rate}"
     else:
         device_driver = None
@@ -286,7 +286,7 @@ def derive_ocudu_ran_config(
 
     derived = {
         "device_driver": device_driver,
-        "device_args": device_args,
+        "device_args": component_deployment.advanced_config.device_args or device_args,
         "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""),  # type: ignore
     }
     if radio_config.duplexMode is DuplexMode.TDD:
@@ -457,7 +457,7 @@ def derive_srsue_ue_config(
                 f"tx_port=tcp://{ue_deployment.static_pod_ip}:2001,"
                 f"rx_port=tcp://{ue_meta.config.gnbs[0].gnb_ip}:2000"  # type: ignore
             )
-            if ue_deployment.advanced_config.srate:
+            if ue_deployment.advanced_config and ue_deployment.advanced_config.srate:
                 device_args += f",base_srate={ue_deployment.advanced_config.srate}"
 
         elif ru.vendor is RUVendor.USRP:  # type: ignore
@@ -469,7 +469,7 @@ def derive_srsue_ue_config(
                     f"addr={ru.ips[0]},"  # type: ignore
                     f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
                 )
-                if ue_deployment.advanced_config.master_clock_rate:
+                if ue_deployment.advanced_config and ue_deployment.advanced_config.master_clock_rate:
                     device_args += f",master_clock_rate={ue_deployment.advanced_config.master_clock_rate}"
         else:
             device_driver = None

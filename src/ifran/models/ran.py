@@ -212,6 +212,7 @@ class OCUDUAdvancedCommonGNBConfig(GenericOCUDUAdvancedRANConfig):
     custom_freq_bands: dict[str, Any] | None = Field(default=None)
     ru_ofh: dict[str, Any] | None = Field(default=None)
     ru_sdr: dict[str, Any] | None = Field(default=None)
+    device_args: str | None = Field(default=None)
     ue_ip: IPvAnyAddress | None = Field(default=None)
     srate: float | None = Field(default=None)
     base_srate: str | float | None = Field(default=None)
