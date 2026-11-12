@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-11-13
+
 ### Changed
 - Migrated the codebase to GitHub as `ifran`.
+
+### Fixed
+- OCUDU and srsUE deployments failing when `advanced_config` is not set.
+- String `plain_text_config` values failing with a "OSError: filename too long" error.
 
 ## [0.0.5] - 2026-11-04
 
@@ -66,7 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for multiple RAN and core implementations.
 - Component lifecycle management and deployment reconciliation.
 
-[Unreleased]: https://github.com/ifran-project/ifran/compare/v0.0.5...HEAD
+[Unreleased]: https://github.com/ifran-project/ifran/compare/v0.0.6...HEAD
+[0.0.6]: https://github.com/ifran-project/ifran/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/ifran-project/ifran/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/ifran-project/ifran/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/ifran-project/ifran/compare/v0.0.2...v0.0.3

@@ -1,6 +1,6 @@
 [project]
 name = "ifran"
-version = "0.0.5"
+version = "0.0.6"
 description = "Orchestrator for deploying and managing 5G/6G mobile networks."
 authors = [
     {name = "Ziyad Mabrouk", email = "ziyad.mabrouk@inria.fr"},
