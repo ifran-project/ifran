@@ -1,6 +1,27 @@
-# Post-5G Orchestrator
+# IFRAN: Interoperable Framework for Reproducible Automation of Networks
 
-The Post-5G Orchestrator is a Python library that deploys and manages a complete 5G network on real or virtual infrastructure, driven by declarative models. With the orchestrator you can deploy a new 5G network but also modify it on-the-fly, for example to change a UPF, add a gNB, register new subscribers without interruptions.
+<p align="center">
+  <a href="(https://pypi.python.org/pypi/ifran">
+    <img src="https://img.shields.io/pypi/v/ifran.svg" alt="Latest PyPi version" />
+  </a>
+  <a href="https://ifran.readthedocs.io/">
+    <img src="https://img.shields.io/readthedocs/ifran?logo=read-the-docs" alt="Documentation Status" />
+  </a>
+  <a href="https://github.com/ifran-project/ifran/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/License-BSD--3--Clause--Clear-blue.svg" alt="BSD 3-Clause Clear license" />
+  </a>
+  <a href="https://sonarcloud.io/summary/new_code?id=ifran-project_ifran">
+    <img src="https://sonarcloud.io/api/project_badges/measure?project=ifran-project_ifran&metric=alert_status" alt="Quality gate status" />
+  </a>
+  <a href="https://github.com/ifran-project/ifran/releases">
+    <img src="https://img.shields.io/github/v/release/ifran-project/ifran?color=orange" alt="Latest release" />
+  </a>
+  <a href="https://github.com/ifran-project/ifran/pulls">
+    <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="Pull requests welcome" />
+  </a>
+</p>
+
+The `ifran` orchestrator is a Python library that deploys and manages a complete 5G network on real or virtual infrastructure, driven by declarative models. With the `ifran` orchestrator you can deploy a new 5G network but also modify it on-the-fly, for example to change a UPF, add a gNB, register new subscribers without interruptions.
 
 You describe **the 5G network you want** and **the machines you want to run it on**. The library then:
 
@@ -11,7 +32,7 @@ You describe **the 5G network you want** and **the machines you want to run it o
 
 It automates the whole stack, including the IP wiring between functions (for example, the gNB's AMF address). Internally it runs [Ansible](https://www.ansible.com/) (through `ansible-runner`) over SSH, and the Kubernetes and Helm operations are executed from the cluster's master node.
 
-The figure below shows an example of complex hybrid deployment made possible by the orchestrator.
+The figure below shows an example of complex hybrid deployment made possible by the `ifran` orchestrator.
 
 ```mermaid
 flowchart TD
@@ -76,9 +97,9 @@ flowchart TD
 
 ## Where can it run?
 
-The orchestrator is not tied to a specific testbed. There are two ways to use it:
+The `ifran` orchestrator is not tied to a specific testbed. There are two ways to use it:
 
-- **On SLICES-RI infrastructure.** The built-in provisioners (e.g., `bi`, `pos`, `r2lab`) reserve and set up VMs, bare-metal nodes, radio units and phones for you, so a complete network, including real radio equipment, can be deployed from a single description.
+- **On [SLICES-RI](https://doc.slices-ri.eu) infrastructure.** The built-in provisioners (e.g., `bi`, `pos`, `r2lab`) reserve and set up VMs, bare-metal nodes, radio units and phones for you, so a complete network, including real radio equipment, can be deployed from a single description.
 
 - **On any other infrastructure.** Your own servers, a lab cluster, VMs from a public or private cloud, or a local virtualization setup all work, as long as the machines:
   - run **Linux**,
@@ -87,13 +108,13 @@ The orchestrator is not tied to a specific testbed. There are two ways to use it
 
   In that case, declare the machines with `provisioner: null`, mark them `is_provisioned: true` and give their `ssh_info`. The orchestrator then skips provisioning and goes straight to building the Kubernetes cluster and deploying the network. If you already have a Kubernetes cluster, you can also use it directly, as long as its nodes carry the expected role labels.
 
-Both approaches can be mixed in the same deployment, for example a core on your own servers and a RAN with radio units provisioned through SLICES-RI.
+Both approaches can be mixed in the same deployment, for example a core on your own servers and a RAN with radio units provisioned through [SLICES-RI](https://doc.slices-ri.eu).
 
 ## Fundamental concepts
 
 ### 1. Metamodel
 
-The metamodel is the abstract, implementation-agnostic description of the 5G network, based on 3GPP concepts: core, gNBs, UEs (SUPI, S-NSSAI, DNN), RUs, RIC and so on. It comes with full defaults, so you only write what deviates from them. It says **what the network is**, not how it is deployed, so you can reuse it across environments. The orchestrator transparently translates the metamodel into implementation configurations.
+The [metamodel](https://metamodel-3gpp.readthedocs.io/en/latest/) is the abstract, implementation-agnostic description of the 5G network, based on 3GPP concepts: core, gNBs, UEs (SUPI, S-NSSAI, DNN), RUs, RIC and so on. It comes with full defaults, so you only write what deviates from them. It says **what the network is**, not how it is deployed, so you can reuse it across environments. The orchestrator transparently translates the metamodel into implementation configurations.
 
 ### 2. Deployment model
 
@@ -206,19 +227,19 @@ flowchart TD
 ```
 
 ```python
-from metamodel.models.metamodel import MetaModel
-from orchestrator.deployment import (
+from ifran import (
+    MetaModel
+    DeploymentModel
     CoreManagement,
     K8SManagement,
     ProvisioningManagement,
     RANManagement,
     UEManagement,
 )
-from orchestrator.models.deployment import DeploymentModel
 
 # WHAT: the abstract network (the core uses the defaults)
 metamodel = MetaModel.from_yaml(
-    """
+"""
 ran:
   components:
     gnb:
@@ -245,7 +266,7 @@ ues:
 
 # HOW and WHERE: implementations, machines and provisioner
 deployment_model = DeploymentModel.from_yaml(
-    """
+"""
 ran:
   components:
     gnb:
@@ -317,10 +338,49 @@ ues.deployment_model.to_yaml_file("state/deployment_model.yaml")
 
 If you already have machines, replace the provisioner with `provisioner: null` on each node, set `is_provisioned: true` and give its `ssh_info`.
 
-## Going further
+# Tutorials
 
-The `tutorials` folder provides step-by-step tutorials.
+We provide a vast collection of learn-by-doing tutorials.
 
-The `Environment Preparation` tutorial covers the complete setup and installation instructions.
+## Setup
 
-The `examples` folder contains ready-to-use examples with various scenarios (FlexRIC, O-RAN SC, USRP B210, R2LAB...).
+Information to setup the experimenter's environment.
+
+* [Preparation](./docs/tutorials/00_preparation.ipynb)
+
+## Infrastructure
+
+How to manage the infrastructure where experiments are deployed.
+
+* [Provisioning Resources](./docs/tutorials/01_provision.ipynb)
+* [Kubernetes Cluster](./docs/tutorials/02_k8s.ipynb)
+* [Cleanup deployments](./docs/tutorials/03_clean.ipynb)
+
+## 5G network deployments and configuration
+
+Main concepts of 5G networking.
+
+* [Simple Scenario](./docs/tutorials/10_simple.ipynb)
+* [Add 5G components to a running network](./docs/tutorials/11_add_components.ipynb)
+* [TDD Patterns](./docs/tutorials/20_tdd.ipynb)
+* [Network Slicing](./docs/tutorials/21_slicing.ipynb)
+* [RAN Split](./docs/tutorials/22_split.ipynb)
+
+## Radio Units (RU) and Software Defined Radios (SDR)
+
+Using real Radio Units and User Equipment.
+
+* [OAI with Physical Radio Unit in R2LAB](./docs/tutorials/30_ru.ipynb)
+* [OCUDU and OAI with Physical Radio Units in R2LAB](./docs/tutorials/31_ru_full.ipynb)
+
+# Examples
+
+Find a large collection of examples in the [`examples`](../examples) directory.
+
+## Contributing
+
+Contributions are welcome. Please refer to our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## License
+
+Distributed under the **BSD 3-Clause Clear** license. See [LICENSE](LICENSE) for details.

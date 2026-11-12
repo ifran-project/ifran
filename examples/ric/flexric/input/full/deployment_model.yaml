@@ -1,6 +1,6 @@
 params:
   ansible:
-    runner_path: /Users/zimabrou/post-5g/ansible-runner
+    runner_path: /Users/zimabrou/ifran/ansible-runner
     roles_paths:
     - /Users/zimabrou/Projects/5g_blueprint/venv/lib/python3.14/site-packages/ansible/roles
   k8s:
@@ -10,7 +10,7 @@ params:
       minor: 36
       patch: 2
       extension: '2.1'
-    cluster_name: 5gbp
+    cluster_name: ifran
     master_node: null
     join_command: null
     pod_network_cidr: 10.244.0.0/16
@@ -28,7 +28,7 @@ params:
     label_selection_base: node-type.5g.blueprint
     used_ips: []
   provisioning:
-    experiment: 5gbp_exp3
+    experiment: ifran3
     extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:
@@ -41,7 +41,7 @@ provisioners:
       image: Ubuntu 24.04.3
       flavor: large
       project: post5g-beta
-      experiment: 5gbp_exp
+      experiment: ifran
       create_experiment: false
       experiment_duration: 24h
       node_duration: 3h

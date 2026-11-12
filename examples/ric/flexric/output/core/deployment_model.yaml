@@ -6,7 +6,7 @@ params:
     used_ips:
     - 10.244.121.16
   provisioning:
-    experiment: 5gbp_exp3
+    experiment: ifran3
     extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:

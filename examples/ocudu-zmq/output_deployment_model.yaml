@@ -11,7 +11,7 @@ params:
     - 10.244.200.10
   provisioning:
     project: post5g-beta
-    experiment: 5gbp_exp
+    experiment: ifran
     flavor: xlarge
     extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:

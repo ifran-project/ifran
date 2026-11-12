@@ -2,11 +2,8 @@ import sys
 from pathlib import Path
 import re
 from datetime import date
+import tomllib
 
-try:
-    import tomllib            # Python 3.11+
-except ModuleNotFoundError:
-    import tomli as tomllib   # pip install tomli
 
 DOCS = Path(__file__).resolve().parent
 ROOT = DOCS.parent
@@ -52,7 +49,7 @@ for info in PROJECTS:
     sys.path.insert(0, str(info["src"]))
 
 # -- Project information -----------------------------------------------------
-project = "Post5G Blueprint API Reference"
+project = "IFRAN: Interoperable Framework for Reproducible Automation of Networks"
 release = " / ".join(f'{p["name"]} {p["version"]}' for p in PROJECTS)
 version = release
 
@@ -62,7 +59,8 @@ author = ", ".join(ALL_AUTHORS)
 copyright = f"{date.today().year}, {author}" if author else str(date.today().year)
 
 
-# -- General configuration ---------------------------------------------------
+# General configuration
+root_doc = "index"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",   # Google / NumPy style docstrings
@@ -74,6 +72,7 @@ autodoc_default_options = {
     "members": True,
     "undoc-members": True,
     "show-inheritance": True,
+    "no-index": True,
 }
 autodoc_member_order = "bysource"
 # autodoc_mock_imports = ["some_heavy_dependency"]  # if deps aren't installed
@@ -84,69 +83,62 @@ source_suffix = {
 }
 
 myst_fence_as_directive = ["mermaid"]
+suppress_warnings = ["myst.xref_missing"]
 
 exclude_patterns = ["_build"]
 
-# -- HTML output -------------------------------------------------------------
-html_theme = "sphinx_rtd_theme"
-html_theme_options = {
-    "collapse_navigation": False,   # keep sub-trees expanded
-    "navigation_depth": 4,
-    "titles_only": False,
-}
+# HTML output
+html_title = "IFRAN: Interoperable Framework for Reproducible Automation of Networks"
+html_short_title = "IFRAN"
+html_theme = "furo"
+html_theme_options = {}
 
-# -- Generate the API pages before each build --------------------------------
-def _generate_api(app):
+
+def generate_reference(app):
     from sphinx.ext.apidoc import main as apidoc
+    import shutil
 
-    api_dir = DOCS / "api"
-    api_dir.mkdir(parents=True, exist_ok=True)
-    toc = []
+    reference_dir = DOCS / "reference"
+    reference_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove the old intermediate Python reference directory
+    python_dir = reference_dir / "python"
+    if python_dir.exists():
+        shutil.rmtree(python_dir)
+
+    # Build the API Reference index directly
+    packages_index = [
+        "API Reference",
+        "===============",
+        "",
+        "Automatically generated documentation of Python models "
+        "and supporting modules.",
+        "",
+        ".. toctree::",
+        "   :maxdepth: 3",
+        "",
+    ]
 
     for info in PROJECTS:
-        title = f'{info["name"]} {info["version"]}'
-        toc += [title, "-" * len(title), "",
-                ".. toctree::",
-                "   :maxdepth: 3",
-                "   :titlesonly:",
-                ""]
         for pkg in info["packages"]:
             apidoc([
-                "--force", "--separate", "--module-first", "--no-toc",
+                "--force",
+                "--separate",
+                "--module-first",
                 "--implicit-namespaces",
-                "-o", str(api_dir / pkg.name), str(pkg),
-            ])
-            toc.append(f"   api/{pkg.name}/{pkg.name}")
-        toc.append("")
-
-    # .inc is not a Sphinx source suffix, so it is not built as a page itself
-    (api_dir / "toc.inc").write_text("\n".join(toc), encoding="utf-8")
-def generate_api(app):
-    from sphinx.ext.apidoc import main as apidoc
-
-    api_dir = DOCS / "api"
-    index_lines = ["API", "===", ""]
-
-    for info in PROJECTS:
-        for pkg in info["packages"]:
-            # one .rst per package/submodule, with automodule for each
-            apidoc([
-                "--force", "--separate", "--module-first", "--no-toc",
-                "-o", str(api_dir / pkg.name),
+                "--tocfile", "index",
+                "-o", str(reference_dir / pkg.name),
                 str(pkg),
             ])
-            title = f'{info["name"]} {info["version"]}'
-            index_lines += [
-                title, "-" * len(title), "",
-                ".. toctree::",
-                "   :maxdepth: 2",
-                "",
-                f"   {pkg.name}/{pkg.name}",
-                "",
-            ]
 
-    (api_dir / "index.rst").write_text("\n".join(index_lines), encoding="utf-8")
+            packages_index.append(f"   {pkg.name}/index")
+
+    (reference_dir / "index.rst").write_text(
+        "\n".join(packages_index) + "\n",
+        encoding="utf-8",
+    )
 
 
 def setup(app):
-    app.connect("builder-inited", generate_api)
+    app.connect("builder-inited", generate_reference)
+

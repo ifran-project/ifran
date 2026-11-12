@@ -1,5 +1,0 @@
-ues:
-  sim_ue1: {}
-  sim_ue2:
-    config:
-      supi: '001010000000101'

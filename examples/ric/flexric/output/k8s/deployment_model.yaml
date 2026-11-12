@@ -4,7 +4,7 @@ params:
     join_command: 'kubeadm join 10.123.140.53:6443 --token nfxlfu.afg7jjo6e7glclic
       --discovery-token-ca-cert-hash sha256:c88338f50e8345333fc99874b3fd4a319ae1179d3b2dafafbd6e48c027f0c4ed '
   provisioning:
-    experiment: 5gbp_exp3
+    experiment: ifran3
     extra_path: /Users/zimabrou/Projects/5g_blueprint/venv/bin
 provisioners:
   bi:
