@@ -78,7 +78,6 @@ class SSHInfo(StrictBaseModel):
     common_args: str | None = Field(default=None)
     """Auto-generated SSH flags."""
 
-
     def _build_proxy_command(self) -> str | None:
         """Recursively build nested SSH ProxyCommand string for jump hosts."""
 
@@ -100,10 +99,9 @@ class SSHInfo(StrictBaseModel):
         # if jump host itself has a jump host, nest the proxy command
         if jump.jumphost:
             nested_proxy = jump._build_proxy_command()
-            proxy_cmd += f" -o ProxyCommand={shlex.quote(nested_proxy)}" # type: ignore
+            proxy_cmd += f" -o ProxyCommand={shlex.quote(nested_proxy)}"  # type: ignore
 
         return proxy_cmd
-
 
     @model_validator(mode="after")
     def compute_common_args(self) -> Self:
@@ -114,7 +112,7 @@ class SSHInfo(StrictBaseModel):
             args.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
         if self.ssh_pipelining:
             args.append("-o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto")
-            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C") # 2 hours
+            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C")  # 2 hours
         if self.extra_args:
             args.append(self.extra_args)
 
@@ -195,8 +193,7 @@ class ReservableProvisionerParams(GenericProvisionerParams):
 
         if self.reservation_period is None:
             return self.start_time
-        return self.start_time + timedelta(minutes=self.reservation_period) # type: ignore
-
+        return self.start_time + timedelta(minutes=self.reservation_period)  # type: ignore
 
     @field_validator("reservation_period", mode="before")
     @classmethod
@@ -213,33 +210,32 @@ class ReservableProvisionerParams(GenericProvisionerParams):
         match = re.match(r"^(\d+)([smhdyw])$", v_str)
 
         if not match:
-            raise ValueError(f"Invalid duration format: {value!r}. "
-                             "Use formats like: '120s', '30m', '3h', '2d', '1w', '1y'.")
+            raise ValueError(
+                f"Invalid duration format: {value!r}. Use formats like: '120s', '30m', '3h', '2d', '1w', '1y'."
+            )
 
         amount = int(match.group(1))
         unit = match.group(2)
         multipliers = {
-            's': 1 / 60,          # seconds to minutes
-            'm': 1,               # minutes
-            'h': 60,              # hours to minutes
-            'd': 24 * 60,         # days to minutes
-            'w': 7 * 24 * 60,     # weeks to minutes
-            'y': 365 * 24 * 60,   # years to minutes
+            "s": 1 / 60,  # seconds to minutes
+            "m": 1,  # minutes
+            "h": 60,  # hours to minutes
+            "d": 24 * 60,  # days to minutes
+            "w": 7 * 24 * 60,  # weeks to minutes
+            "y": 365 * 24 * 60,  # years to minutes
         }
         return amount * multipliers[unit]
 
-
-    def _populate_reservation(self, default_params_model = GenericReservationParams) -> None:
+    def _populate_reservation(self, default_params_model=GenericReservationParams) -> None:
         """Ensures reservation fields are present when 'attempt_reservation' is True."""
 
         if self.reservation_period is None:
-            self.reservation_period = 120 # default to 2 hours
+            self.reservation_period = 120  # default to 2 hours
 
         if self.reservation_params is None:
             if default_params_model is None:
                 raise ValueError("Required reservation parameters are missing.")
             self.reservation_params = default_params_model()
-
 
     def _populate_start_time(self) -> Self:
         """Set 'start_time' if not provided using given timezone."""
@@ -253,7 +249,6 @@ class ReservableProvisionerParams(GenericProvisionerParams):
             self.start_time = self.start_time.replace(tzinfo=tzinfo)
 
         return self
-
 
     @model_validator(mode="after")
     def validate_reservation(self) -> Self:
@@ -294,10 +289,12 @@ class POSParams(CommonPOSParams):
 class LegacyPOSParams(CommonPOSParams):
     """Legacy POS provisioner parameters."""
 
-    central_pos_ssh_info: SSHInfo = Field(default_factory=lambda: SSHInfo(
-        hostname="duckburg.net.cit.tum.de",
-        port=10022,
-    ))
+    central_pos_ssh_info: SSHInfo = Field(
+        default_factory=lambda: SSHInfo(
+            hostname="duckburg.net.cit.tum.de",
+            port=10022,
+        )
+    )
     """SSH information to access the central POS server."""
 
     public_key_files: list[ResolvedPath] = Field(default=_get_default_ssh_keys())
@@ -360,7 +357,6 @@ class UnifiedRadioParams(GenericProvisionerParams):
     token_params: UnifiedRadioTokenParams | None = Field(default_factory=UnifiedRadioTokenParams)
     """Parameters used to generate a token when None is given."""
 
-
     @model_validator(mode="after")
     def validate_token(self) -> Self:
         """Ensure that 'token' and 'token_params' are not both None."""
@@ -399,16 +395,15 @@ class R2LabParams(UnifiedRadioParams, ReservableProvisionerParams):
         if self.attempt_reservation and self.token is None and self.reservation_params is None and self.token_params:
             try:
                 self.reservation_params = R2LabReservationParams(
-                    email=self.token_params.input_body.get("email"), # type: ignore
-                    password=self.token_params.input_body.get("password"), # type: ignore
+                    email=self.token_params.input_body.get("email"),  # type: ignore
+                    password=self.token_params.input_body.get("password"),  # type: ignore
                 )
             except Exception as e:
                 raise ValueError(
                     "Failed to populate required 'reservation_params' from given 'token_params.input_body'."
-                    ) from e
+                ) from e
 
-        super()._populate_reservation(default_params_model=None) # type: ignore
-
+        super()._populate_reservation(default_params_model=None)  # type: ignore
 
     @model_validator(mode="after")
     def populate_token_params(self) -> Self:
@@ -451,7 +446,8 @@ class POSProvisioner(GenericProvisioner):
     """POS provisioner."""
 
     supported_categories: set[Literal[ProvisioningCategory.NODE]] = Field(
-        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True)
+        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True
+    )
 
     type: Literal[ProvisioningType.POS] = Field(frozen=True)
     """Provisioning type for POS provisioner."""
@@ -464,7 +460,8 @@ class LegacyPOSProvisioner(GenericProvisioner):
     """Legacy POS provisioner."""
 
     supported_categories: set[Literal[ProvisioningCategory.NODE]] = Field(
-        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True)
+        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True
+    )
 
     type: Literal[ProvisioningType.LEGACY_POS] = Field(frozen=True)
     """Provisioning type for Legacy POS provisioner."""
@@ -477,7 +474,8 @@ class BIProvisioner(GenericProvisioner):
     """BI provisioner."""
 
     supported_categories: set[Literal[ProvisioningCategory.NODE]] = Field(
-        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True)
+        default_factory=lambda: {ProvisioningCategory.NODE}, frozen=True
+    )
 
     type: Literal[ProvisioningType.BI] = Field(frozen=True)
     """Provisioning type for BI provisioner."""
@@ -490,7 +488,8 @@ class UnifiedRadioProvisioner(GenericProvisioner):
     """Unified radio management API provisioner."""
 
     supported_categories: set[Literal[ProvisioningCategory.RU, ProvisioningCategory.UE]] = Field(
-        default_factory=lambda: {ProvisioningCategory.RU, ProvisioningCategory.UE}, frozen=True)
+        default_factory=lambda: {ProvisioningCategory.RU, ProvisioningCategory.UE}, frozen=True
+    )
 
     type: Literal[ProvisioningType.UNIFIED_RADIO] = Field(frozen=True)
     """Provisioning type for Unified Radio API RU provisioner."""
@@ -503,7 +502,8 @@ class R2LabProvisioner(GenericProvisioner):
     """R2lab provisioner."""
 
     supported_categories: set[Literal[ProvisioningCategory.RU, ProvisioningCategory.UE]] = Field(
-        default_factory=lambda: {ProvisioningCategory.RU, ProvisioningCategory.UE}, frozen=True)
+        default_factory=lambda: {ProvisioningCategory.RU, ProvisioningCategory.UE}, frozen=True
+    )
 
     type: Literal[ProvisioningType.R2LAB] = Field(frozen=True)
     """Provisioning type for R2lab provisioner."""
@@ -514,12 +514,9 @@ class R2LabProvisioner(GenericProvisioner):
 
 # type used to tell pydantic to validate the correct provisioner model based on the type
 type Provisioner = Annotated[
-    POSProvisioner |
-    LegacyPOSProvisioner |
-    BIProvisioner |
-    UnifiedRadioProvisioner |
-    R2LabProvisioner,
-    Field(discriminator="type")]
+    POSProvisioner | LegacyPOSProvisioner | BIProvisioner | UnifiedRadioProvisioner | R2LabProvisioner,
+    Field(discriminator="type"),
+]
 
 
 class GenericProvisionableResource(StrictBaseModel):
@@ -539,7 +536,6 @@ class GenericProvisionableResource(StrictBaseModel):
 
     provisioning_params: dict[str, Any] = Field(default_factory=dict)
     """Provisioner parameter overrides."""
-
 
     @model_validator(mode="after")
     def validate_provisioning(self):
@@ -563,8 +559,10 @@ class DatabaseRole(StrEnum):
 
     DATABASE = auto()
 
+
 # union type
 type NodeRole = Category5G | CoreComponentType | RANComponentType | RICComponentType | DatabaseRole
+
 
 class ProvisionableNode(SSHableResource):
     """Node provisioning."""
@@ -687,11 +685,9 @@ class ProvisionableRU(GenericProvisionableResource):
 
 # type used to tell pydantic to validate the correct provisionable resource model based on the category
 type ProvisionableResource = Annotated[
-    ProvisionableNode |
-    ProvisionableRU |
-    ProvisionableUE,
-    Field(discriminator="category")
+    ProvisionableNode | ProvisionableRU | ProvisionableUE, Field(discriminator="category")
 ]
+
 
 # model used to resolve ru references in gnb/du/ue components
 class MergedRU(RU, ProvisionableRU):

@@ -28,7 +28,6 @@ class Deployed5GComponent(K8SComponent):
     plain_text_config: str | None = Field(default=None)
     """Raw configuration file path or text content."""
 
-
     def validate_advanced_config(self, mapping: dict, default_model: BaseModel) -> Self:
         """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
 
@@ -58,7 +57,6 @@ class Deployed5GNetwork(StrictBaseModel):
 
     components: dict[str, Deployed5GComponent] = Field(default_factory=dict)
     """5G network components."""
-
 
     @model_validator(mode="before")
     @classmethod
@@ -92,9 +90,7 @@ class Deployed5GNetwork(StrictBaseModel):
                 # NOTE the populated implementation takes precedence
                 # over the previous one in the component and overwrites it
                 "implementation": (
-                    component.get("implementation")
-                    if component.get("implementation") is not None
-                    else implementation
+                    component.get("implementation") if component.get("implementation") is not None else implementation
                 ),
             }
             for name, component in components.items()
@@ -102,14 +98,15 @@ class Deployed5GNetwork(StrictBaseModel):
 
         return data
 
-
     def validate_supported_component_types(self, supported: dict) -> Self:
         """Validate if requested 5G network component types are available for given implementation."""
 
         for name, component in self.components.items():
             if component.type not in supported[self.implementation]:
-                raise ValueError(f"Requested component {name!r} of type {component.type!r} "
-                                 f"is not supported in {self.implementation!r} implementation.")
+                raise ValueError(
+                    f"Requested component {name!r} of type {component.type!r} "
+                    f"is not supported in {self.implementation!r} implementation."
+                )
         return self
 
 

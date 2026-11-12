@@ -68,6 +68,7 @@ SUPPORTED_CORE_COMPONENTS: dict[CoreImplementation, list[CoreComponentType]] = {
     ],
 }
 
+
 class GenericAdvancedCoreConfig(StrictBaseModel):
     """Generic 5G core advanced configuration (implementation-specific)."""
 
@@ -402,7 +403,7 @@ class DeployedCoreComponent(Deployed5GComponent):
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
             mapping=ADVANCED_CORE_CONFIG_MAPPING,
-            default_model=GenericAdvancedCoreConfig, # type: ignore
+            default_model=GenericAdvancedCoreConfig,  # type: ignore
         )
 
 

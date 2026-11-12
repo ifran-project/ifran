@@ -31,48 +31,45 @@ from ifran.utils.utils import InvalidResourceStateError, resolve_path
 
 
 def update_exposed_endpoints(
-        component_meta: Component5G,
-        component_deployment: Deployed5GComponent,
-    ) -> None:
+    component_meta: Component5G,
+    component_deployment: Deployed5GComponent,
+) -> None:
     """Update the 5G components's exposed interface endpoints with relevant IPs from network info after deployment."""
 
     for iface_name in EXPOSED_COMPONENT_INTERFACES.get(component_meta.category, []):
-
         # some interfaces can be None
         if hasattr(component_meta.config, iface_name) and getattr(component_meta.config, iface_name) is not None:
             iface_meta: TransportEndpoint = getattr(component_meta.config, iface_name)
 
             # populate interface ip if not explicitly set
             if iface_meta.ipv4EndPointAddress == IPv4Address("0.0.0.0"):
-
                 # multus case
                 if component_deployment.multus.enabled:
                     # look for interface ip with same name
-                    for multus_iface in component_deployment.network_info: # type: ignore
+                    for multus_iface in component_deployment.network_info:  # type: ignore
                         if multus_iface.interface == iface_name:
-                            iface_meta.ipv4EndPointAddress =(
-                                multus_iface.ips[0] if multus_iface.ips
-                                else iface_meta.ipv4EndPointAddress
+                            iface_meta.ipv4EndPointAddress = (
+                                multus_iface.ips[0] if multus_iface.ips else iface_meta.ipv4EndPointAddress
                             )
                             break
 
                 # non-multus case => pod ip
                 else:
-                    iface_meta.ipv4EndPointAddress = component_deployment.network_info # type: ignore
+                    iface_meta.ipv4EndPointAddress = component_deployment.network_info  # type: ignore
 
 
 async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
-        component_name: str,
-        component_meta: Component5G,
-        component_deployment: Deployed5GComponent,
-        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"],
-        node_name: str,
-        node_data: ProvisionableNode,
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        quiet: bool = False,
-        **kwargs,
-    ) -> None | str | dict[str, str]:
+    component_name: str,
+    component_meta: Component5G,
+    component_deployment: Deployed5GComponent,
+    action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"],
+    node_name: str,
+    node_data: ProvisionableNode,
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    quiet: bool = False,
+    **kwargs,
+) -> None | str | dict[str, str]:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
 
     chart_name = build_k8s_safe(f"{component_deployment.implementation}-{component_name}")
@@ -87,9 +84,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
         # cannot install if already installed
         if is_installed and action == "install":
-            raise InvalidResourceStateError(
-                f"{category} component {component_name!r} is already installed."
-            )
+            raise InvalidResourceStateError(f"{category} component {component_name!r} is already installed.")
 
         # cannot uninstall or get logs if not installed
         if not is_installed and action in ["uninstall", "get_logs", "run_cmd"]:
@@ -108,10 +103,9 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         output_with_multus=component_deployment.multus.enabled,
     )
 
-    component_data = (
-        component_meta.model_dump(mode="json", serialize_as_any=True) |
-        component_deployment.model_dump(mode="json")
-        )
+    component_data = component_meta.model_dump(mode="json", serialize_as_any=True) | component_deployment.model_dump(
+        mode="json"
+    )
 
     # handle plain_text_config as a path or a text string
     plain_text_config = component_deployment.plain_text_config
@@ -128,7 +122,6 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
                     f"Could not read 'plain_text_config' {str(path)!r} file content"
                     f"for {category} component {component_name!r}."
                 ) from e
-
 
     args = {
         "role": f"helm/{action}",
@@ -165,24 +158,24 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
         since_seconds = kwargs.get("since_seconds")
         if not since_seconds:
-            since_seconds = 3600 # 1 hour
+            since_seconds = 3600  # 1 hour
 
         if not isinstance(since_seconds, int):
             raise ValueError(
                 f"Invalid since_seconds value {since_seconds!r} for {category} component {component_name!r}"
-                )
+            )
 
         args["inputs"]["containers"] = containers
         args["inputs"]["since_seconds"] = since_seconds
-        args["output_keys"] = ["logs"] # output is always a dict indexed by container name
+        args["output_keys"] = ["logs"]  # output is always a dict indexed by container name
 
     # give command as input for run_cmd action
     elif action == "run_cmd":
         command = kwargs.get("command")
-        if not isinstance(command, list) and all(isinstance(item, str) for item in command): # type: ignore
+        if not isinstance(command, list) and all(isinstance(item, str) for item in command):  # type: ignore
             raise ValueError(
                 f"Invalid command {command!r} for {category} component {component_name!r}. Should be a list of strings."
-                )
+            )
 
         args["inputs"]["command"] = command
         args["output_keys"] = ["command_output"]
@@ -202,8 +195,8 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         if not isinstance(direction, str) and direction in ["to_pod", "from_pod"]:
             raise ValueError(f"Invalid remote path for {category} component {component_name!r}")
 
-        args["inputs"]["local_path"] = resolve_path(local_path) # resolve relative local path
-        args["inputs"]["remote_path"] = remote_path # do not resolve remote path
+        args["inputs"]["local_path"] = resolve_path(local_path)  # resolve relative local path
+        args["inputs"]["remote_path"] = remote_path  # do not resolve remote path
         args["inputs"]["direction"] = direction
 
     try:
@@ -222,18 +215,18 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
             # if multus is used, output list of multus network status
             component_deployment.network_info = [
                 MultusNetworkStatus.model_validate(item)
-                for item in result["network_info"] # type: ignore
+                for item in result["network_info"]  # type: ignore
             ]
 
         else:
             # if multus is not used, output pod ip address directly
-            component_deployment.network_info = IPv4Address(result["network_info"]) # type: ignore
+            component_deployment.network_info = IPv4Address(result["network_info"])  # type: ignore
 
     elif action == "get_logs":
-        return result["logs"] # type: ignore
+        return result["logs"]  # type: ignore
 
     elif action == "run_cmd":
-        return result["command_output"] # type: ignore
+        return result["command_output"]  # type: ignore
 
     elif action == "uninstall":
         component_deployment.is_installed = False
@@ -244,19 +237,19 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
 
 
 async def run_parallel_helm_action(  # noqa: PLR0917
-        components_meta: dict[str, Component5G],
-        components_deployment: dict[str, Deployed5GComponent],
-        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"],
-        node_name: str,
-        node_data: ProvisionableNode,
-        ansible_params: AnsibleParams,
-        order: ComponentDependencyGraph | None = None,
-        force: bool = False,
-        ignore_invalid_states: bool = True,
-        ignore_failures: bool = False,
-        quiet: bool = False,
-        **kwargs,
-    ) -> dict[str, str | dict[str, str]] | None:
+    components_meta: dict[str, Component5G],
+    components_deployment: dict[str, Deployed5GComponent],
+    action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"],
+    node_name: str,
+    node_data: ProvisionableNode,
+    ansible_params: AnsibleParams,
+    order: ComponentDependencyGraph | None = None,
+    force: bool = False,
+    ignore_invalid_states: bool = True,
+    ignore_failures: bool = False,
+    quiet: bool = False,
+    **kwargs,
+) -> dict[str, str | dict[str, str]] | None:
     """Run Helm action in parallel on provided 5G components."""
 
     levels = resolve_component_dependency_levels(
@@ -267,7 +260,6 @@ async def run_parallel_helm_action(  # noqa: PLR0917
     outputs: dict[str, str | dict[str, str]] = {}
 
     for level in levels:
-
         level_components = [
             (name, components_meta[name], components_deployment[name])
             for name in level

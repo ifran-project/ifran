@@ -15,9 +15,9 @@ from ifran.utils.utils import InvalidResourceStateError, resolve_path
 
 
 def get_ansible_inventory_line(
-        resource_name: str,
-        resource_data: SSHableResource,
-    ) -> str:
+    resource_name: str,
+    resource_data: SSHableResource,
+) -> str:
     """Return Ansible .ini inventory line to SSH access a provisionable resource."""
 
     ssh_info = resource_data.ssh_info
@@ -57,14 +57,14 @@ def get_ansible_output(runner, output_keys: list[str]) -> dict[str, Any]:
 
 
 async def run_ansible_playbook(  # noqa: PLR0917
-        playbook: list | dict[str, Any] | str,
-        runner_path: str,
-        inputs: dict[str, Any] | None = None,
-        output_keys: list[str] | None = None,
-        roles_paths: list[str] | None = None,
-        inventory: str | dict[str, Any] | list | None = None,
-        quiet: bool = False,
-    ) -> dict[str, Any] | None:
+    playbook: list | dict[str, Any] | str,
+    runner_path: str,
+    inputs: dict[str, Any] | None = None,
+    output_keys: list[str] | None = None,
+    roles_paths: list[str] | None = None,
+    inventory: str | dict[str, Any] | list | None = None,
+    quiet: bool = False,
+) -> dict[str, Any] | None:
     """Run an Ansible playbook."""
 
     # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overridden by other ansible runs
@@ -113,17 +113,17 @@ async def run_ansible_playbook(  # noqa: PLR0917
 
 
 async def run_ansible_role(  # noqa: PLR0917
-        role: str,
-        runner_path: str,
-        inputs: dict[str, Any] | None = None,
-        extra_params: dict[str, Any] | None = None,
-        output_keys: list[str] | None = None,
-        roles_paths: list[str] | None = None,
-        hosts: str = "localhost",
-        inventory: str | dict[str, Any] | list | None = None,
-        become: bool = False,
-        quiet: bool = False,
-    ) -> dict[str, Any] | None:
+    role: str,
+    runner_path: str,
+    inputs: dict[str, Any] | None = None,
+    extra_params: dict[str, Any] | None = None,
+    output_keys: list[str] | None = None,
+    roles_paths: list[str] | None = None,
+    hosts: str = "localhost",
+    inventory: str | dict[str, Any] | list | None = None,
+    become: bool = False,
+    quiet: bool = False,
+) -> dict[str, Any] | None:
     """Run an Ansible role."""
 
     playbook = [
@@ -145,17 +145,17 @@ async def run_ansible_role(  # noqa: PLR0917
         roles_paths=roles_paths,
         inventory=inventory,
         quiet=quiet,
-        )
+    )
 
 
 async def run_ansible_command(  # noqa: PLR0917
-        command: list[str],
-        runner_path: str,
-        hosts: str,
-        inventory: str | dict[str, Any] | list,
-        become: bool = False,
-        quiet: bool = False,
-    ) -> str:
+    command: list[str],
+    runner_path: str,
+    hosts: str,
+    inventory: str | dict[str, Any] | list,
+    become: bool = False,
+    quiet: bool = False,
+) -> str:
     """Run a command on an Ansible inventory."""
 
     playbook = [
@@ -165,7 +165,7 @@ async def run_ansible_command(  # noqa: PLR0917
             "become": become,
             "tasks": [
                 {
-                    "name": f"Run command {" ".join(command)!r} on '{{{{ inventory_hostname }}}}'",
+                    "name": f"Run command {' '.join(command)!r} on '{{{{ inventory_hostname }}}}'",
                     "ansible.builtin.command": {
                         "argv": command,
                     },
@@ -173,15 +173,14 @@ async def run_ansible_command(  # noqa: PLR0917
                     "changed_when": False,
                 },
                 {
-                    "name": f"Display command output for {" ".join(command)!r} on '{{{{ inventory_hostname }}}}'",
+                    "name": f"Display command output for {' '.join(command)!r} on '{{{{ inventory_hostname }}}}'",
                     "ansible.builtin.debug": {
                         "var": "command_result.stdout",
                     },
                 },
                 {
-                    "name": f"Return command output for {" ".join(command)!r} on '{{{{ inventory_hostname }}}}'",
-                    "ansible.builtin.set_stats":
-                    {
+                    "name": f"Return command output for {' '.join(command)!r} on '{{{{ inventory_hostname }}}}'",
+                    "ansible.builtin.set_stats": {
                         "data": {
                             "command_output": "{{ command_result.stdout }}",
                         },
@@ -199,7 +198,7 @@ async def run_ansible_command(  # noqa: PLR0917
         quiet=quiet,
     )
 
-    return result["command_output"] # type: ignore
+    return result["command_output"]  # type: ignore
 
 
 async def run_ansible_copy(  # noqa: PLR0917
@@ -211,7 +210,7 @@ async def run_ansible_copy(  # noqa: PLR0917
     inventory: str | dict[str, Any] | list,
     become: bool = False,
     quiet: bool = False,
-    ) -> None:
+) -> None:
     """Copy a file/directory to or from an Ansible inventory host."""
 
     if direction == "to_resource":
@@ -250,10 +249,10 @@ async def run_ansible_copy(  # noqa: PLR0917
 
 
 def handle_ansible_result_exception(
-        result: Exception,
-        ignore_invalid_states: bool,
-        ignore_failures: bool,
-    ) -> Exception | None:
+    result: Exception,
+    ignore_invalid_states: bool,
+    ignore_failures: bool,
+) -> Exception | None:
     """Handle Ansible run exception based on its type and provided options."""
 
     if isinstance(result, InvalidResourceStateError):

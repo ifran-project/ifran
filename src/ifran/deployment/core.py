@@ -19,39 +19,61 @@ from ifran.utils.core import (
 )
 
 CORE_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
-    CoreComponentType.BSF: frozenset({
-        CoreComponentType.NSSF,
-    }),
-    CoreComponentType.NSSF: frozenset({
-        CoreComponentType.UDR,
-    }),
-    CoreComponentType.UDR: frozenset({
-        CoreComponentType.UDM,
-    }),
-    CoreComponentType.UDM: frozenset({
-        CoreComponentType.PCF,
-    }),
-    CoreComponentType.PCF: frozenset({
-        CoreComponentType.SMF,
-    }),
-    CoreComponentType.UPF: frozenset({
-        CoreComponentType.SMF,
-    }),
-    CoreComponentType.SMF: frozenset({
-        CoreComponentType.AUSF,
-    }),
-    CoreComponentType.AUSF: frozenset({
-        CoreComponentType.AMF,
-    }),
-    CoreComponentType.AMF: frozenset({
-        CoreComponentType.NRF,
-    }),
-    CoreComponentType.CHF: frozenset({
-        CoreComponentType.NRF,
-    }),
-    CoreComponentType.NEF: frozenset({
-        CoreComponentType.NRF,
-    }),
+    CoreComponentType.BSF: frozenset(
+        {
+            CoreComponentType.NSSF,
+        }
+    ),
+    CoreComponentType.NSSF: frozenset(
+        {
+            CoreComponentType.UDR,
+        }
+    ),
+    CoreComponentType.UDR: frozenset(
+        {
+            CoreComponentType.UDM,
+        }
+    ),
+    CoreComponentType.UDM: frozenset(
+        {
+            CoreComponentType.PCF,
+        }
+    ),
+    CoreComponentType.PCF: frozenset(
+        {
+            CoreComponentType.SMF,
+        }
+    ),
+    CoreComponentType.UPF: frozenset(
+        {
+            CoreComponentType.SMF,
+        }
+    ),
+    CoreComponentType.SMF: frozenset(
+        {
+            CoreComponentType.AUSF,
+        }
+    ),
+    CoreComponentType.AUSF: frozenset(
+        {
+            CoreComponentType.AMF,
+        }
+    ),
+    CoreComponentType.AMF: frozenset(
+        {
+            CoreComponentType.NRF,
+        }
+    ),
+    CoreComponentType.CHF: frozenset(
+        {
+            CoreComponentType.NRF,
+        }
+    ),
+    CoreComponentType.NEF: frozenset(
+        {
+            CoreComponentType.NRF,
+        }
+    ),
 }
 
 
@@ -69,13 +91,11 @@ class CoreManagement(HelmManagement):
             deployment_model=self.deployment_model,
         )
 
-
     # override category
     @override
     async def run_action(self, **kwargs) -> dict[str, str] | None:
         """Run Helm action on 5G core components."""
         return await super().run_action(category=Category5G.CORE, **kwargs)
-
 
     # NOTE don't use kwargs to expose the function signature
     @override
@@ -85,7 +105,7 @@ class CoreManagement(HelmManagement):
         component_meta: CoreComponent | None = None,
         component_deployment: DeployedCoreComponent | None = None,
         merged: dict[str, Any] | None = None,
-        ) -> None:
+    ) -> None:
         """Add or update a 5G core component if it exists."""
         super().add_component(
             name=name,
@@ -100,16 +120,15 @@ class CoreManagement(HelmManagement):
         """Remove a 5G core component."""
         super().remove_component(category=Category5G.CORE, name=name)
 
-
     async def run_database_action(  # noqa: PLR0917
-            self,
-            action: Literal["prepare", "install", "uninstall"],
-            node: str | None = None,
-            force: bool = False,
-            ignore_invalid_states: bool = True,
-            ignore_failures: bool = False,
-            quiet: bool = False,
-        ) -> None:
+        self,
+        action: Literal["prepare", "install", "uninstall"],
+        node: str | None = None,
+        force: bool = False,
+        ignore_invalid_states: bool = True,
+        ignore_failures: bool = False,
+        quiet: bool = False,
+    ) -> None:
         """Run 5G core database Helm action."""
 
         node_name, node_data = self._get_deployment_node(node)
@@ -123,7 +142,7 @@ class CoreManagement(HelmManagement):
                 ansible_params=self.deployment_model.params.ansible,
                 force=force,
                 quiet=quiet,
-                )
+            )
         except Exception as e:
             handle_ansible_result_exception(
                 result=e,
@@ -131,14 +150,13 @@ class CoreManagement(HelmManagement):
                 ignore_failures=ignore_failures,
             )
 
-
     async def run_database_subscriber_action(
-            self,
-            action: Literal["add", "remove"],
-            ues: list[str] | None = None,
-            node: str | None = None,
-            **kwargs,
-        ) -> None:
+        self,
+        action: Literal["add", "remove"],
+        ues: list[str] | None = None,
+        node: str | None = None,
+        **kwargs,
+    ) -> None:
         """Add/remove UEs/subscribers on the 5G core database."""
 
         node_name, node_data = self._get_deployment_node(node)
@@ -157,37 +175,33 @@ class CoreManagement(HelmManagement):
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
             **kwargs,
-            )
-
+        )
 
     async def register_ues(self, ues: list[str] | None = None, node: str | None = None, **kwargs) -> None:
         """Add UEs/subscribers to the 5G core database."""
         await self.run_database_subscriber_action("add", ues, node, **kwargs)
 
-
     async def unregister_ues(self, ues: list[str] | None = None, node: str | None = None, **kwargs) -> None:
         """Remove UEs/subscribers from the 5G core database."""
         await self.run_database_subscriber_action("remove", ues, node, **kwargs)
 
-
     # override dependency graph
     @override
     async def install(
-            self,
-            order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
-            **kwargs,
-        ) -> None:
+        self,
+        order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
+        **kwargs,
+    ) -> None:
         """Install 5G core components."""
         await super().install(order=order, **kwargs)
 
-
     @override
     async def deploy(
-            self,
-            node: str | None = None,
-            order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
-            **kwargs,
-        ) -> None:
+        self,
+        node: str | None = None,
+        order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
+        **kwargs,
+    ) -> None:
         """
         Orchestrate full 5G core deployment.
 
@@ -211,13 +225,12 @@ class CoreManagement(HelmManagement):
         # add subscribers
         await self.register_ues(node=node, **kwargs)
 
-
     @override
     async def remove(
-            self,
-            components: list[str] | None = None,
-            **kwargs,
-        ) -> None:
+        self,
+        components: list[str] | None = None,
+        **kwargs,
+    ) -> None:
         """Remove/tear down 5G core deployment."""
 
         await asyncio.gather(

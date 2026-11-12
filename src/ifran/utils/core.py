@@ -41,10 +41,10 @@ from ifran.utils.utils import InvalidResourceStateError, ReferenceNotFoundError
 
 
 def resolve_smf_refs(
-        component_name: str,
-        component_meta: SMFComponent,
-        upfs: dict[str, UPFComponent],
-    ) -> None:
+    component_name: str,
+    component_meta: SMFComponent,
+    upfs: dict[str, UPFComponent],
+) -> None:
     """Resolve list of UPF references in an SMF component configuration."""
 
     # resolve upf references one by one
@@ -55,14 +55,14 @@ def resolve_smf_refs(
         if upf_meta is None:
             raise ReferenceNotFoundError(f"SMF component {component_name!r} reference undefined UPF {upf_reference!r}.")
 
-        component_meta.config.upfs[i] = upf_meta # type: ignore
+        component_meta.config.upfs[i] = upf_meta  # type: ignore
 
 
 def resolve_nssf_refs(
-        component_name: str,
-        component_meta: NSSFComponent,
-        slices: dict[str, Slice],
-    ) -> None:
+    component_name: str,
+    component_meta: NSSFComponent,
+    slices: dict[str, Slice],
+) -> None:
     """Resolve slice references in an NSSF component configuration."""
 
     config = component_meta.config
@@ -75,7 +75,7 @@ def resolve_nssf_refs(
             reference=nsi_info.snssai,
             slices=slices,
             field_name="nsiInfoList.snssai",
-        ) # type: ignore
+        )  # type: ignore
 
     # taInfoList[*]
     for ta_info in config.taInfoList:
@@ -110,17 +110,17 @@ def populate_core_database_image(core_deployment: CoreDeployment) -> None:
     if core_deployment.database_params.image is None:
         database_image = DEFAULT_CORE_DATABASE_IMAGES.get(core_deployment.implementation)
 
-         # if no default database image is available raise an error
+        # if no default database image is available raise an error
         if database_image is None:
-             raise ValueError(f"{core_deployment.implementation.upper} database has no container image.")
+            raise ValueError(f"{core_deployment.implementation.upper} database has no container image.")
 
         core_deployment.database_params.image = DEFAULT_CORE_DATABASE_IMAGES.get(core_deployment.implementation)
 
 
 def reconcile_core(  # noqa: C901
-        metamodel: MetaModel,
-        deployment_model: DeploymentModel,
-    ) -> None:
+    metamodel: MetaModel,
+    deployment_model: DeploymentModel,
+) -> None:
     """
     Ensure 5G core is ready for deployment.
 
@@ -140,10 +140,10 @@ def reconcile_core(  # noqa: C901
     slices = metamodel.slices
     k8s_params = deployment_model.params.k8s
 
-    upfs = get_5g_components_by_type(core_meta.components, [CoreComponentType.UPF]) # type: ignore
+    upfs = get_5g_components_by_type(core_meta.components, [CoreComponentType.UPF])  # type: ignore
 
-    gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU]) # type: ignore
-    gnbs_deployment = get_5g_components_by_type(ran_deployment.components, [RANComponentType.GNB, RANComponentType.DU]) # type: ignore
+    gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU])  # type: ignore
+    gnbs_deployment = get_5g_components_by_type(ran_deployment.components, [RANComponentType.GNB, RANComponentType.DU])  # type: ignore
 
     nrf_uri = None
 
@@ -153,8 +153,8 @@ def reconcile_core(  # noqa: C901
     # run standard component reconciliation on ALL components first
     # because upf's n4 interface need to be assigned a static ip smf ref resolution
     reconcile_5g_components(
-        components_meta=core_meta.components, # type: ignore
-        components_deployment=core_deployment.components, # type: ignore
+        components_meta=core_meta.components,  # type: ignore
+        components_deployment=core_deployment.components,  # type: ignore
         k8s_params=k8s_params,
     )
 
@@ -180,7 +180,6 @@ def reconcile_core(  # noqa: C901
             service_name = f"{component_deployment.implementation}-{component_name}"
             nrf_uri = TypeAdapter(URL).validate_python(f"{scheme}://{service_name}:{component_meta.config.sbi.port}")
 
-
     # second loop: populate NRF URI and resolve SMF's UPF references
     # NOTE UPF's 'snssaiList' needs to be resolved before the SMF's 'upfs' list is resolved with actual UPF components
 
@@ -189,12 +188,11 @@ def reconcile_core(  # noqa: C901
         raise RuntimeError("Couldn't find any NRF component in the 5G core components.")
 
     for component_name, component_meta in core_meta.components.items():
-
         if component_meta.config.nrfUri is None:
             component_meta.config.nrfUri = nrf_uri
 
         if component_meta.type is CoreComponentType.SMF:
-            resolve_smf_refs(component_name=component_name, component_meta=component_meta, upfs=upfs) # type: ignore
+            resolve_smf_refs(component_name=component_name, component_meta=component_meta, upfs=upfs)  # type: ignore
 
     # resolve ues references to prepare them for database registration
     for ue_name, ue_meta in metamodel.ues.items():
@@ -209,21 +207,21 @@ def reconcile_core(  # noqa: C901
         resolve_gnb_ref(
             component_name=ue_name,
             component_meta=ue_meta,
-            gnbs_meta=gnbs_meta, # type: ignore
-            gnbs_deployment=gnbs_deployment, # type: ignore
-            populate_address=False, # don't populate ue's gnb ip (not needed)
+            gnbs_meta=gnbs_meta,  # type: ignore
+            gnbs_deployment=gnbs_deployment,  # type: ignore
+            populate_address=False,  # don't populate ue's gnb ip (not needed)
         )
 
 
 async def run_core_database_helm_action(  # noqa: PLR0917
-        core_deployment: CoreDeployment,
-        action: Literal["prepare", "install", "uninstall"],
-        node_name: str,
-        node_data: ProvisionableNode,
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    core_deployment: CoreDeployment,
+    action: Literal["prepare", "install", "uninstall"],
+    node_name: str,
+    node_data: ProvisionableNode,
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    quiet: bool = False,
+) -> None:
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
     if not force:
@@ -241,18 +239,18 @@ async def run_core_database_helm_action(  # noqa: PLR0917
     ).model_dump(mode="json")
 
     component = {
-            "category": Category5G.CORE.value,
-            "implementation": core_deployment.implementation.value,
-            "namespace": f"{core_deployment.implementation.value}-{Category5G.CORE.value}",
-            "type": "database",
-            "rendered_files": ["values.yaml"],
-            **core_deployment.database_params.model_dump(mode="json"),
-            }
+        "category": Category5G.CORE.value,
+        "implementation": core_deployment.implementation.value,
+        "namespace": f"{core_deployment.implementation.value}-{Category5G.CORE.value}",
+        "type": "database",
+        "rendered_files": ["values.yaml"],
+        **core_deployment.database_params.model_dump(mode="json"),
+    }
 
     args = {
         "role": f"helm/{action}",
         "inputs": {"component": component, **helm_params},
-        "runner_path": f"{ansible_params.runner_path}/{component["category"]}/database/helm/{action}",
+        "runner_path": f"{ansible_params.runner_path}/{component['category']}/database/helm/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
@@ -273,23 +271,23 @@ async def run_core_database_helm_action(  # noqa: PLR0917
     if action == "install":
         core_deployment.database_params.is_installed = True
         # retrieve database pod ip
-        core_deployment.database_params.ip = IPv4Address(result["network_info"]) # type: ignore
+        core_deployment.database_params.ip = IPv4Address(result["network_info"])  # type: ignore
     elif action == "uninstall":
         core_deployment.database_params.is_installed = False
 
 
 async def run_single_database_subscriber_action(  # noqa: PLR0917
-        ue_name: str,
-        ue_config: UEConfiguration,
-        core_implementation: CoreImplementation,
-        action: Literal["add", "remove"],
-        database_ip: IPvAnyAddress | None,
-        node_name: str,
-        node_data: ProvisionableNode,
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    ue_name: str,
+    ue_config: UEConfiguration,
+    core_implementation: CoreImplementation,
+    action: Literal["add", "remove"],
+    database_ip: IPvAnyAddress | None,
+    node_name: str,
+    node_data: ProvisionableNode,
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    quiet: bool = False,
+) -> None:
     """Add/remove a single UE/subscriber on the 5G core database."""
 
     if not force and database_ip is None:
@@ -304,7 +302,7 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
             # NOTE use serialize_as_any=True to prevent pydantic from replacing models
             # because of type mismatch after reference resolution (e.g. slice: str -> Slice, gnb: str -> GNBComponent)
             "ue_config": ue_config.model_dump(mode="json", serialize_as_any=True),
-            "database_ip": str(database_ip)
+            "database_ip": str(database_ip),
         },
         "runner_path": f"{ansible_params.runner_path}/core/database/subscriber/{action}",
         "roles_paths": ansible_params.roles_paths,
@@ -322,18 +320,18 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
 
 
 async def run_parallel_database_subscriber_action(  # noqa: PLR0917
-        ues: dict[str, UE],
-        core_implementation: CoreImplementation,
-        action: Literal["add", "remove"],
-        database_ip: IPvAnyAddress | None,
-        node_name: str,
-        node_data: ProvisionableNode,
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        ignore_invalid_states: bool = False,
-        ignore_failures: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    ues: dict[str, UE],
+    core_implementation: CoreImplementation,
+    action: Literal["add", "remove"],
+    database_ip: IPvAnyAddress | None,
+    node_name: str,
+    node_data: ProvisionableNode,
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    ignore_invalid_states: bool = False,
+    ignore_failures: bool = False,
+    quiet: bool = False,
+) -> None:
     """Add/remove multiple UEs in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}
@@ -350,7 +348,8 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
-        ))
+            )
+        )
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 

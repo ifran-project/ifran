@@ -33,6 +33,7 @@ class K8SStatus(StrEnum):
 
 SEM_VER_PATTERN = r"^(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?(?:-(?P<extension>.+))?$"
 
+
 class Version(StrictBaseModel):
     """Conventional semantic version."""
 
@@ -47,7 +48,6 @@ class Version(StrictBaseModel):
 
     extension: str | None = Field(default=None)
     """Version extension (anything after -)."""
-
 
     @model_validator(mode="before")
     @classmethod
@@ -132,7 +132,6 @@ class K8SParams(StrictBaseModel):
 
     used_ips: set[IPvAnyAddress] = Field(default_factory=set)
     """Set of IPs explicitly assigned to pods."""
-
 
     @model_validator(mode="after")
     def validate_k8s_version(self) -> Self:
@@ -416,10 +415,12 @@ class K8SComponent(StrictBaseModel):
     include_tcp_dump_container: bool = Field(default=False)
     """Add a tcpdump sidecar container."""
 
-    tcp_dump_image: ContainerImage | None = Field(default_factory=lambda: ContainerImage(
-        repository="docker.io/oaisoftwarealliance/oai-tcpdump-init",
-        image_tag="alpine-3.20",
-        ))
+    tcp_dump_image: ContainerImage | None = Field(
+        default_factory=lambda: ContainerImage(
+            repository="docker.io/oaisoftwarealliance/oai-tcpdump-init",
+            image_tag="alpine-3.20",
+        )
+    )
     """TCP dump sidecar image."""
 
     tcp_dump_share_volume: bool = Field(default=False)
@@ -447,7 +448,6 @@ class K8SComponent(StrictBaseModel):
         if self.is_installed and self.network_info is None:
             raise ValueError("Component is installed but has no 'network_info'.")
         return self
-
 
     # NOTE pydantic fails to serizalize network_info when it is a list and fallbacks to a string instead
     @field_serializer("network_info")

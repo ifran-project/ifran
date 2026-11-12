@@ -49,31 +49,31 @@ class GenericAdvancedRANConfig(StrictBaseModel):
 
 
 class GenericOAIAdvancedRANConfig(GenericAdvancedRANConfig):
-   """Generic advanced configuration for OAI RAN."""
+    """Generic advanced configuration for OAI RAN."""
 
-   useAdditionalOptions: str | None = Field(default=None)
-   gdbstack: int | None = Field(default=None)
-   Asn1_verbosity: Literal["none", "info", "annoying"] | None = Field(default=None)
-   log_config: dict[str, str] | None = Field(default=None)
+    useAdditionalOptions: str | None = Field(default=None)
+    gdbstack: int | None = Field(default=None)
+    Asn1_verbosity: Literal["none", "info", "annoying"] | None = Field(default=None)
+    log_config: dict[str, str] | None = Field(default=None)
 
 
 class GenericOCUDUAdvancedRANConfig(GenericAdvancedRANConfig):
-   """Generic advanced configuration for OCUDU RAN."""
+    """Generic advanced configuration for OCUDU RAN."""
 
-   gnb_id_bit_length: int | None = Field(default=None)
-   dryrun: bool | None = Field(default=None)
-   e2: dict[str, Any] | None = Field(default=None)
-   remote_control: dict[str, Any] | None = Field(default=None)
-   log: dict[str, Any] | None = Field(default=None)
-   pcap: dict[str, Any] | None = Field(default=None)
-   metrics: dict[str, Any] | None = Field(default=None)
+    gnb_id_bit_length: int | None = Field(default=None)
+    dryrun: bool | None = Field(default=None)
+    e2: dict[str, Any] | None = Field(default=None)
+    remote_control: dict[str, Any] | None = Field(default=None)
+    log: dict[str, Any] | None = Field(default=None)
+    pcap: dict[str, Any] | None = Field(default=None)
+    metrics: dict[str, Any] | None = Field(default=None)
 
 
 class GenericUERANSIMAdvancedRANConfig(GenericAdvancedRANConfig):
-   """Generic advanced configuration for UERANSIM RAN."""
+    """Generic advanced configuration for UERANSIM RAN."""
 
-   ignoreStreamIds: bool | None = Field(default=None)
-   cellAccessType: str | None = Field(default=None)
+    ignoreStreamIds: bool | None = Field(default=None)
+    cellAccessType: str | None = Field(default=None)
 
 
 class OAIAdvancedCUCPConfig(GenericOAIAdvancedRANConfig):
@@ -103,62 +103,62 @@ class OAIAdvancedCUConfig(GenericOAIAdvancedRANConfig):
 
 
 class OAIAdvancedCommonGNBConfig(GenericOAIAdvancedRANConfig):
-   """OAI advanced configuration common for gNB and DU."""
+    """OAI advanced configuration common for gNB and DU."""
 
-   min_rxtxtime: int | None = Field(default=None)
-   dl_offstToCarrier: int | None = Field(default=None)
-   initialDLBWPlocationAndBandwidth: int | None = Field(default=None)
-   initialDLBWPcontrolResourceSetZero: int | None = Field(default=None)
-   initialDLBWPsearchSpaceZero: int | None = Field(default=None)
-   ul_offstToCarrier: int | None = Field(default=None)
-   pMax: int | None = Field(default=None)
-   initialULBWPlocationAndBandwidth: int | None = Field(default=None)
-   prach_msg1_FDM: int | None = Field(default=None)
-   zeroCorrelationZoneConfig: int | None = Field(default=None)
-   preambleReceivedTargetPower: int | None = Field(default=None)
-   preambleTransMax: int | None = Field(default=None)
-   powerRampingStep: int | None = Field(default=None)
-   ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR: int | None = Field(default=None)
-   ssb_perRACH_OccasionAndCB_PreamblesPerSSB: int | None = Field(default=None)
-   ra_ContentionResolutionTimer: int | None = Field(default=None)
-   rsrp_ThresholdSSB: int | None = Field(default=None)
-   prach_RootSequenceIndex_PR: int | None = Field(default=None)
-   prach_RootSequenceIndex: int | None = Field(default=None)
-   restrictedSetConfig: int | None = Field(default=None)
-   msg3_DeltaPreamble: int | None = Field(default=None)
-   p0_NominalWithGrant: int | None = Field(default=None)
-   pucchGroupHopping: int | None = Field(default=None)
-   hoppingId: int | None = Field(default=None)
-   p0_nominal: int | None = Field(default=None)
-   ssb_PositionsInBurst_Bitmap: int | None = Field(default=None)
-   dmrs_TypeA_Position: int | None = Field(default=None)
-   pusch_TargetSNRx10: int | None = Field(default=None)
-   pucch_TargetSNRx10: int | None = Field(default=None)
-   prach_dtx_threshold: int | None = Field(default=None)
-   pucch0_dtx_threshold: int | None = Field(default=None)
-   ofdm_offset_divisor: int | None = Field(default=None)
-   local_rf: str | None = Field(default=None)
-   max_pdschReferenceSignalPower: int | None = Field(default=None)
-   eNB_instances: list[int] | None = Field(default=None)
-   sf_extension: int | None = Field(default=None)
-   tr_preference: str | None = Field(default=None)
-   num_tp_cores: int | None = Field(default=None)
-   rxfh_core_id: int | None = Field(default=None)
-   txfh_core_id: int | None = Field(default=None)
-   tp_cores: list[int] | None = Field(default=None)
-   nr_flag: int | None = Field(default=None)
-   sl_ahead: int | None = Field(default=None)
-   local_if_name: str | None = Field(default=None)
-   remote_address: IPvAnyAddress | None = Field(default=None)
-   local_address: IPvAnyAddress | None = Field(default=None)
-   local_portc: int | None = Field(default=None)
-   remote_portc: int | None = Field(default=None)
-   local_portd: int | None = Field(default=None)
-   remote_portd: int | None = Field(default=None)
-   rfsimulator: dict[str, Any] | None = Field(default=None)
-   fhi_72: dict[str, Any] | None = Field(default=None)
-   thread_pool: str | None = Field(default=None)
-   channelmod: dict[str, Any] | None = Field(default=None)
+    min_rxtxtime: int | None = Field(default=None)
+    dl_offstToCarrier: int | None = Field(default=None)
+    initialDLBWPlocationAndBandwidth: int | None = Field(default=None)
+    initialDLBWPcontrolResourceSetZero: int | None = Field(default=None)
+    initialDLBWPsearchSpaceZero: int | None = Field(default=None)
+    ul_offstToCarrier: int | None = Field(default=None)
+    pMax: int | None = Field(default=None)
+    initialULBWPlocationAndBandwidth: int | None = Field(default=None)
+    prach_msg1_FDM: int | None = Field(default=None)
+    zeroCorrelationZoneConfig: int | None = Field(default=None)
+    preambleReceivedTargetPower: int | None = Field(default=None)
+    preambleTransMax: int | None = Field(default=None)
+    powerRampingStep: int | None = Field(default=None)
+    ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR: int | None = Field(default=None)
+    ssb_perRACH_OccasionAndCB_PreamblesPerSSB: int | None = Field(default=None)
+    ra_ContentionResolutionTimer: int | None = Field(default=None)
+    rsrp_ThresholdSSB: int | None = Field(default=None)
+    prach_RootSequenceIndex_PR: int | None = Field(default=None)
+    prach_RootSequenceIndex: int | None = Field(default=None)
+    restrictedSetConfig: int | None = Field(default=None)
+    msg3_DeltaPreamble: int | None = Field(default=None)
+    p0_NominalWithGrant: int | None = Field(default=None)
+    pucchGroupHopping: int | None = Field(default=None)
+    hoppingId: int | None = Field(default=None)
+    p0_nominal: int | None = Field(default=None)
+    ssb_PositionsInBurst_Bitmap: int | None = Field(default=None)
+    dmrs_TypeA_Position: int | None = Field(default=None)
+    pusch_TargetSNRx10: int | None = Field(default=None)
+    pucch_TargetSNRx10: int | None = Field(default=None)
+    prach_dtx_threshold: int | None = Field(default=None)
+    pucch0_dtx_threshold: int | None = Field(default=None)
+    ofdm_offset_divisor: int | None = Field(default=None)
+    local_rf: str | None = Field(default=None)
+    max_pdschReferenceSignalPower: int | None = Field(default=None)
+    eNB_instances: list[int] | None = Field(default=None)
+    sf_extension: int | None = Field(default=None)
+    tr_preference: str | None = Field(default=None)
+    num_tp_cores: int | None = Field(default=None)
+    rxfh_core_id: int | None = Field(default=None)
+    txfh_core_id: int | None = Field(default=None)
+    tp_cores: list[int] | None = Field(default=None)
+    nr_flag: int | None = Field(default=None)
+    sl_ahead: int | None = Field(default=None)
+    local_if_name: str | None = Field(default=None)
+    remote_address: IPvAnyAddress | None = Field(default=None)
+    local_address: IPvAnyAddress | None = Field(default=None)
+    local_portc: int | None = Field(default=None)
+    remote_portc: int | None = Field(default=None)
+    local_portd: int | None = Field(default=None)
+    remote_portd: int | None = Field(default=None)
+    rfsimulator: dict[str, Any] | None = Field(default=None)
+    fhi_72: dict[str, Any] | None = Field(default=None)
+    thread_pool: str | None = Field(default=None)
+    channelmod: dict[str, Any] | None = Field(default=None)
 
 
 class OAIAdvancedDUConfig(OAIAdvancedCommonGNBConfig):
@@ -195,34 +195,34 @@ class OCUDUAdvancedCUConfig(GenericOCUDUAdvancedRANConfig):
 
 
 class OCUDUAdvancedCommonGNBConfig(GenericOCUDUAdvancedRANConfig):
-   """OCUDU advanced configuration common for gNB and DU."""
+    """OCUDU advanced configuration common for gNB and DU."""
 
-   cells: dict[str, Any] | None = Field(default=None)
-   qos: dict[str, Any] | None = Field(default=None)
-   srbs: dict[str, Any] | None = Field(default=None)
-   du: dict[str, Any] | None = Field(default=None)
-   cell_cfg: dict[str, Any] | None = Field(default=None)
-   pdcch: dict[str, Any] | None = Field(default=None)
-   pdsch: dict[str, Any] | None = Field(default=None)
-   pusch: dict[str, Any] | None = Field(default=None)
-   pucch: dict[str, Any] | None = Field(default=None)
-   prach: dict[str, Any] | None = Field(default=None)
-   csi: dict[str, Any] | None = Field(default=None)
-   ntn: dict[str, Any] | None = Field(default=None)
-   custom_freq_bands: dict[str, Any] | None = Field(default=None)
-   ru_ofh: dict[str, Any] | None = Field(default=None)
-   ru_sdr: dict[str, Any] | None = Field(default=None)
-   ue_ip: IPvAnyAddress | None = Field(default=None)
-   srate: float | None = Field(default=None)
-   base_srate: str | float | None = Field(default=None)
-   master_clock_rate: str | float | None = Field(default=None)
-   ru_dummy: dict[str, Any] | None = Field(default=None)
-   hal: dict[str, Any] | None = Field(default=None)
-   buffer_pool: dict[str, Any] | None = Field(default=None)
-   expert_phy: dict[str, Any] | None = Field(default=None)
-   expert_execution: dict[str, Any] | None = Field(default=None)
-   test_mode: dict[str, Any] | None = Field(default=None)
-   trace: dict[str, Any] | None = Field(default=None)
+    cells: dict[str, Any] | None = Field(default=None)
+    qos: dict[str, Any] | None = Field(default=None)
+    srbs: dict[str, Any] | None = Field(default=None)
+    du: dict[str, Any] | None = Field(default=None)
+    cell_cfg: dict[str, Any] | None = Field(default=None)
+    pdcch: dict[str, Any] | None = Field(default=None)
+    pdsch: dict[str, Any] | None = Field(default=None)
+    pusch: dict[str, Any] | None = Field(default=None)
+    pucch: dict[str, Any] | None = Field(default=None)
+    prach: dict[str, Any] | None = Field(default=None)
+    csi: dict[str, Any] | None = Field(default=None)
+    ntn: dict[str, Any] | None = Field(default=None)
+    custom_freq_bands: dict[str, Any] | None = Field(default=None)
+    ru_ofh: dict[str, Any] | None = Field(default=None)
+    ru_sdr: dict[str, Any] | None = Field(default=None)
+    ue_ip: IPvAnyAddress | None = Field(default=None)
+    srate: float | None = Field(default=None)
+    base_srate: str | float | None = Field(default=None)
+    master_clock_rate: str | float | None = Field(default=None)
+    ru_dummy: dict[str, Any] | None = Field(default=None)
+    hal: dict[str, Any] | None = Field(default=None)
+    buffer_pool: dict[str, Any] | None = Field(default=None)
+    expert_phy: dict[str, Any] | None = Field(default=None)
+    expert_execution: dict[str, Any] | None = Field(default=None)
+    test_mode: dict[str, Any] | None = Field(default=None)
+    trace: dict[str, Any] | None = Field(default=None)
 
 
 class OCUDUAdvancedDUConfig(OCUDUAdvancedCommonGNBConfig):
@@ -273,13 +273,12 @@ class DeployedRANComponent(Deployed5GComponent):
     derived_radio_config: dict[str, Any] | None = Field(default=None)
     """Automatically derived implementation-specific radio parameters."""
 
-
     @model_validator(mode="after")
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
             mapping=ADVANCED_RAN_CONFIG_MAPPING,
-            default_model=GenericAdvancedRANConfig, # type: ignore
+            default_model=GenericAdvancedRANConfig,  # type: ignore
         )
 
 

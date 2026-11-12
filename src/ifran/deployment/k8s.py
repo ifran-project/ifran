@@ -11,14 +11,14 @@ class K8SManagement(BaseManagement):
     """Kubernetes setup lifecycle management class."""
 
     async def run_action(  # noqa: PLR0917
-            self,
-            action: Literal["prepare", "create", "join", "remove"],
-            nodes: list[str] | None = None,
-            force: bool = False,
-            ignore_invalid_states: bool = True,
-            ignore_failures: bool = False,
-            quiet: bool = False,
-        ) -> None:
+        self,
+        action: Literal["prepare", "create", "join", "remove"],
+        nodes: list[str] | None = None,
+        force: bool = False,
+        ignore_invalid_states: bool = True,
+        ignore_failures: bool = False,
+        quiet: bool = False,
+    ) -> None:
         """Run Kubernetes setup action on all nodes or a given subset."""
 
         target_nodes = (
@@ -38,11 +38,9 @@ class K8SManagement(BaseManagement):
             quiet=quiet,
         )
 
-
     async def prepare(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Prepare nodes for Kubernetes setup."""
         await self.run_action(action="prepare", nodes=nodes, **kwargs)
-
 
     async def create(self, master_node: str | None = None, **kwargs) -> None:
         """
@@ -65,17 +63,11 @@ class K8SManagement(BaseManagement):
         # NOTE 'run_single_k8s_setup_action' takes care of updating 'k8s_params.join_command' on success
         await self.run_action(action="create", nodes=[master_node], **kwargs)
 
-
     async def join(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Join worker nodes to the Kubernetes cluster."""
         await self.run_action(action="join", nodes=nodes, **kwargs)
 
-
-    async def deploy(
-            self,
-            nodes: list[str] | None = None,
-            **kwargs
-        ) -> None:
+    async def deploy(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Orchestrate full Kubernetes cluster setup on target nodes (prepare + create + join)."""
 
         # run prepare in parallel on target nodes
@@ -126,7 +118,6 @@ class K8SManagement(BaseManagement):
             force=kwargs.get("force", False),
             quiet=kwargs.get("quiet", False),
         )
-
 
     async def remove(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Tear down/remove Kubernetes setup from nodes."""

@@ -30,27 +30,24 @@ class HelmManagement(BaseManagement):
             master_node = self.deployment_model.params.k8s.master_node
             if master_node is None:
                 raise RuntimeError(
-                    "Target node for Helm action was not provided "
-                    "and Kubernetes master node does not exist."
+                    "Target node for Helm action was not provided and Kubernetes master node does not exist."
                 )
             node = master_node
 
         return node, self.deployment_model.nodes[node]
 
-
     def add_component(
-            self,
-            name: str,
-            category: Category5G,
-            component_meta: Component5G | None = None,
-            component_deployment: Deployed5GComponent | None = None,
-            merged: dict[str, Any] | None = None,
-        ) -> None:
+        self,
+        name: str,
+        category: Category5G,
+        component_meta: Component5G | None = None,
+        component_deployment: Deployed5GComponent | None = None,
+        merged: dict[str, Any] | None = None,
+    ) -> None:
         """Add or update a 5G component if it exists."""
 
         # NOTE merged always takes precedence
         if merged:
-
             # if merged dict is provided, let metamodel and deployment model chose
             # the right pydantic model to validate the added component's meta and deployment
             metamodel = self.metamodel.model_dump(mode="json")
@@ -68,21 +65,18 @@ class HelmManagement(BaseManagement):
             self.deployment_model = DeploymentModel.model_validate(deployment_model, extra="allow")
 
         elif component_meta:
-
             if category is Category5G.UE:
-                self.metamodel.ues[name] = component_meta.model_copy(deep=True) # type: ignore
+                self.metamodel.ues[name] = component_meta.model_copy(deep=True)  # type: ignore
 
                 if component_deployment:
-                    self.deployment_model.ues[name] = component_deployment.model_copy(deep=True) # type: ignore
+                    self.deployment_model.ues[name] = component_deployment.model_copy(deep=True)  # type: ignore
             else:
-                getattr(
-                    self.metamodel, category.value
-                ).components[name] = component_meta.model_copy(deep=True)
+                getattr(self.metamodel, category.value).components[name] = component_meta.model_copy(deep=True)
 
                 if component_deployment:
-                    getattr(
-                        self.deployment_model, category.value
-                    ).components[name] = component_deployment.model_copy(deep=True)
+                    getattr(self.deployment_model, category.value).components[name] = component_deployment.model_copy(
+                        deep=True
+                    )
 
         else:
             raise ValueError("No valid input was given.")
@@ -91,7 +85,6 @@ class HelmManagement(BaseManagement):
         # so the reconciliation can redo it again
         self.mutable_metamodel = self.metamodel.model_copy(deep=True)
         self.reconcile()
-
 
     def remove_component(self, name: str, category: Category5G) -> None:
         """Remove a 5G component."""
@@ -111,7 +104,6 @@ class HelmManagement(BaseManagement):
                 self.mutable_metamodel.ues.pop(name, None)
 
         self.synchronize()
-
 
     # NOTE child classes need to override this method with their 5G category
     async def run_action(  # noqa: PLR0917
@@ -169,8 +161,8 @@ class HelmManagement(BaseManagement):
             target_deployment = {k: v for k, v in all_deployment.items() if k in components}
 
         return await run_parallel_helm_action(
-            components_meta=target_meta, # type: ignore
-            components_deployment=target_deployment, # type: ignore
+            components_meta=target_meta,  # type: ignore
+            components_deployment=target_deployment,  # type: ignore
             action=action,
             node_name=node_name,
             node_data=node_data,
@@ -183,31 +175,27 @@ class HelmManagement(BaseManagement):
             **kwargs,
         )
 
-
     # wrapper functions for usage convenience
     async def prepare(self, components: list[str] | None = None, **kwargs) -> None:
         """Prepare components Helm charts."""
         await self.run_action(action="prepare", components=components, **kwargs)
 
-
     async def install(self, components: list[str] | None = None, **kwargs) -> None:
         """Install components via Helm."""
         await self.run_action(action="install", components=components, **kwargs)
-
 
     async def uninstall(self, components: list[str] | None = None, **kwargs) -> None:
         """Uninstall components via Helm."""
         await self.run_action(action="uninstall", components=components, **kwargs)
 
-
     async def get_logs(
-            self,
-            components: list[str] | None = None,
-            containers: list[str] | None = None,
-            since_seconds: int = 3600, # 1 hour
-            flatten: bool = True,
-            **kwargs,
-        ) -> str | dict[str, dict[str, str]]:
+        self,
+        components: list[str] | None = None,
+        containers: list[str] | None = None,
+        since_seconds: int = 3600,  # 1 hour
+        flatten: bool = True,
+        **kwargs,
+    ) -> str | dict[str, dict[str, str]]:
         """
         Fetch components' logs from all containers, or a given set of containers.
 
@@ -215,52 +203,54 @@ class HelmManagement(BaseManagement):
         """
         logs = await self.run_action(
             action="get_logs", components=components, containers=containers, since_seconds=since_seconds, **kwargs
-            )
+        )
 
         if flatten:
-            return flatten_dict(logs) # type: ignore
+            return flatten_dict(logs)  # type: ignore
 
-        return logs # type: ignore
-
+        return logs  # type: ignore
 
     async def run_command(
-            self,
-            command: list[str],
-            components: list[str] | None = None,
-            flatten: bool = True,
-            **kwargs,
-        ) -> str | dict[str, str]:
+        self,
+        command: list[str],
+        components: list[str] | None = None,
+        flatten: bool = True,
+        **kwargs,
+    ) -> str | dict[str, str]:
         """
         Run command on components.
 
         Return a dictionary keyed by component, or a single concatenated text if flatten is True.
         """
-        cmd_outputs = await self.run_action(action="run_cmd", command=command, components=components, **kwargs) # type: ignore
+        cmd_outputs = await self.run_action(action="run_cmd", command=command, components=components, **kwargs)  # type: ignore
 
         if flatten:
-            return flatten_dict(cmd_outputs) # type: ignore
+            return flatten_dict(cmd_outputs)  # type: ignore
 
-        return cmd_outputs # type: ignore
-
+        return cmd_outputs  # type: ignore
 
     async def copy(
-            self,
-            local_path: str,
-            remote_path: str,
-            direction: Literal["to_pod", "from_pod"] = "to_pod",
-            components: list[str] | None = None,
-            **kwargs,
-        ) -> None:
+        self,
+        local_path: str,
+        remote_path: str,
+        direction: Literal["to_pod", "from_pod"] = "to_pod",
+        components: list[str] | None = None,
+        **kwargs,
+    ) -> None:
         """Copy a file/directory to components or fetch a file from them."""
-        await self.run_action(action="copy", local_path=local_path, remote_path=remote_path,
-                              direction=direction, components=components, **kwargs)
-
+        await self.run_action(
+            action="copy",
+            local_path=local_path,
+            remote_path=remote_path,
+            direction=direction,
+            components=components,
+            **kwargs,
+        )
 
     async def deploy(self, order: ComponentDependencyGraph | None = None, **kwargs) -> None:
         """Prepare and install components via Helm."""
         await self.prepare(**kwargs)
         await self.install(order=order, **kwargs)
-
 
     # only for naming consistency with deploy function
     async def remove(self, **kwargs) -> None:

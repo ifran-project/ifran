@@ -73,7 +73,7 @@ NRB: dict[SubcarrierSpacing, dict[int, int]] = {
         80: 107,
         90: 121,
         100: 135,
-    }
+    },
 }
 
 
@@ -100,7 +100,7 @@ OAI_SSB_PERIODICITY: dict[SSBPeriodicity, int] = {
 
 
 RADIO_TYPE_BY_RU: dict[RUVendor | None, dict[RUModel | None, str]] = {
-    None : {
+    None: {
         None: "simulated",
     },
     RUVendor.USRP: {
@@ -166,10 +166,11 @@ def get_oai_bwp_location_and_bandwidth(bandwidth_rb: int) -> int:
 
 ## RAN radio parameter derivation
 
+
 def derive_oai_ran_config(  # noqa: C901, PLR0912
-        component_meta: GNBComponent | DUComponent,
-        component_deployment: DeployedRANComponent,
-    ) -> dict[str, Any]:
+    component_meta: GNBComponent | DUComponent,
+    component_deployment: DeployedRANComponent,
+) -> dict[str, Any]:
     """Derive radio parameters specific to OAI RAN to put in derived configuration."""
 
     ru = component_meta.config.ru
@@ -177,14 +178,14 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
 
     if radio_config.duplexMode == DuplexMode.FDD:
         # compute uplink point a based on the shift between dl and ul arfcn
-        arfcn_shift = radio_config.uplinkArfcn - radio_config.downlinkArfcn # type: ignore
+        arfcn_shift = radio_config.uplinkArfcn - radio_config.downlinkArfcn  # type: ignore
         ul_point_a_arfcn = radio_config.pointAFrequencyArfcn + arfcn_shift
 
         oai_tdd_periodicity = None
 
     elif radio_config.duplexMode == DuplexMode.TDD:
         ul_point_a_arfcn = None
-        oai_tdd_periodicity = OAI_TDD_PERIODICITY.get(radio_config.tddConfiguration.periodicityMilliseconds) # type: ignore
+        oai_tdd_periodicity = OAI_TDD_PERIODICITY.get(radio_config.tddConfiguration.periodicityMilliseconds)  # type: ignore
 
     # additional flags for rfsim
     # -E enables continuous synchronization/transmission optimizations
@@ -192,18 +193,19 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
     # for some reason the gNB can't see radio signals anymore (tested on N300 and N320)
     if component_deployment.advanced_config and component_deployment.advanced_config.useAdditionalOptions:
         additional_flags = component_deployment.advanced_config.useAdditionalOptions
-    elif ru.type is RUType.SIMULATED: # type: ignore
+    elif ru.type is RUType.SIMULATED:  # type: ignore
         additional_flags = "-E --rfsim"
-    elif ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+    elif ru.model in [USRPModel.B210, USRPModel.B205]:  # type: ignore
         additional_flags = "-E --continuous-tx"
     else:
         additional_flags = ""
 
     # aw2s specific configuration
-    if ru.type is RUType.REAL and ru.vendor is RUVendor.AW2S: # type: ignore
+    if ru.type is RUType.REAL and ru.vendor is RUVendor.AW2S:  # type: ignore
         if not component_deployment.advanced_config:
-            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[
-                RANImplementation.OAI][component_meta.type]()
+            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[RANImplementation.OAI][
+                component_meta.type
+            ]()
 
         adv_conf = component_deployment.advanced_config
 
@@ -216,8 +218,8 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
         adv_conf.nr_flag = adv_conf.nr_flag or 1
         adv_conf.sl_ahead = adv_conf.sl_ahead or 5
 
-        if ru.ips: # type: ignore
-            adv_conf.remote_address = adv_conf.remote_address or ru.ips[0] # type: ignore
+        if ru.ips:  # type: ignore
+            adv_conf.remote_address = adv_conf.remote_address or ru.ips[0]  # type: ignore
 
         if component_deployment.multus.enabled:
             ru_iface = None
@@ -238,11 +240,11 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
         "ssb_numerology": NUMEROLOGY[radio_config.ssbSubcarrierSpacing],
         "oai_tdd_periodicity": oai_tdd_periodicity,
         "oai_ssb_periodicity": OAI_SSB_PERIODICITY.get(radio_config.ssbPeriodicityMs, 2),
-        "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""), # type: ignore
+        "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""),  # type: ignore
         "additional_flags": additional_flags,
         "sdr_addrs": (
-            f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
-            if ru.type is RUType.REAL and ru.ips and ru.vendor is not RUVendor.AW2S # type: ignore
+            f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
+            if ru.type is RUType.REAL and ru.ips and ru.vendor is not RUVendor.AW2S  # type: ignore
             else None
         ),
         "bwp_location_and_bandwidth": get_oai_bwp_location_and_bandwidth(bandwidth_rb),
@@ -250,15 +252,15 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
 
 
 def derive_ocudu_ran_config(
-        component_meta: GNBComponent | DUComponent,
-        component_deployment: DeployedRANComponent,  # noqa: ARG001
-    ) -> dict[str, Any]:
+    component_meta: GNBComponent | DUComponent,
+    component_deployment: DeployedRANComponent,  # noqa: ARG001
+) -> dict[str, Any]:
     """Derive radio parameters specific to OCUDU RAN to put in derived configuration."""
 
     ru = component_meta.config.ru
     radio_config: RadioConfiguration = component_meta.config.radioConfiguration
 
-    if ru.type is RUType.SIMULATED: # type: ignore
+    if ru.type is RUType.SIMULATED:  # type: ignore
         device_driver = "zmq"
         device_args = (
             f"tx_port=tcp://{component_deployment.static_pod_ip}:2000,"
@@ -267,14 +269,14 @@ def derive_ocudu_ran_config(
         if component_deployment.advanced_config.base_srate:
             device_args += f",base_srate={component_deployment.advanced_config.base_srate}"
 
-    elif ru.vendor is RUVendor.USRP: # type: ignore
+    elif ru.vendor is RUVendor.USRP:  # type: ignore
         device_driver = "uhd"
-        if ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+        if ru.model in [USRPModel.B210, USRPModel.B205]:  # type: ignore
             device_args = "type=b200,num_recv_frames=64,num_send_frames=64"
-        elif ru.ips: # type: ignore
+        elif ru.ips:  # type: ignore
             device_args = (
-                f"addr={ru.ips[0]}," # type: ignore
-                f"clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
+                f"addr={ru.ips[0]},"  # type: ignore
+                f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
             )
             if component_deployment.advanced_config.master_clock_rate:
                 device_args += f",master_clock_rate={component_deployment.advanced_config.master_clock_rate}"
@@ -282,15 +284,14 @@ def derive_ocudu_ran_config(
         device_driver = None
         device_args = None
 
-
     derived = {
         "device_driver": device_driver,
         "device_args": device_args,
-        "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""), # type: ignore
+        "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""),  # type: ignore
     }
     if radio_config.duplexMode is DuplexMode.TDD:
         tdd = radio_config.tddConfiguration
-        period = tdd.periodicityMilliseconds.value # type: ignore
+        period = tdd.periodicityMilliseconds.value  # type: ignore
         period_slots = round(period / (15.0 / radio_config.subcarrierSpacingKhz.value))
         derived["tdd_period_slots"] = period_slots
 
@@ -298,9 +299,9 @@ def derive_ocudu_ran_config(
 
 
 def derive_ueransim_config(
-        component_meta: GNBComponent | DUComponent,  # noqa: ARG001
-        component_deployment: DeployedRANComponent,  # noqa: ARG001
-    ) -> dict[str, Any]:
+    component_meta: GNBComponent | DUComponent,  # noqa: ARG001
+    component_deployment: DeployedRANComponent,  # noqa: ARG001
+) -> dict[str, Any]:
     """Derive radio parameters specific to UERANSIM to put in derived configuration."""
     return {}
 
@@ -314,23 +315,24 @@ RAN_CONFIG_DERIVATOR: dict[RANImplementation, Callable] = {
 
 
 def derive_ran_radio_config(
-        component_meta: GNBComponent | DUComponent,
-        component_deployment: DeployedRANComponent,
-    ) -> dict[str, Any]: # type: ignore
+    component_meta: GNBComponent | DUComponent,
+    component_deployment: DeployedRANComponent,
+) -> dict[str, Any]:  # type: ignore
     """Derive gNB or DU's component's implementation-specific radio parameters."""
 
-    component_deployment.derived_radio_config = RAN_CONFIG_DERIVATOR[component_deployment.implementation]( # type: ignore
+    component_deployment.derived_radio_config = RAN_CONFIG_DERIVATOR[component_deployment.implementation](  # type: ignore
         component_meta=component_meta,
         component_deployment=component_deployment,
-        )
+    )
 
 
 ## UE radio parameter derivation
 
+
 def derive_oai_ue_config(  # noqa: C901, PLR0912
-        ue_meta: UE,
-        ue_deployment: DeployedUE,
-    ) -> dict[str, Any]:
+    ue_meta: UE,
+    ue_deployment: DeployedUE,
+) -> dict[str, Any]:
     """Derive radio parameters specific to OAI NR UE to put in derived configuration."""
 
     derived = {}
@@ -338,7 +340,7 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
     if ue_meta.type is UEType.CONTAINERIZED:
         ru = ue_meta.config.ru
         gnb = ue_meta.config.gnbs[0]
-        radio_config: RadioConfiguration = gnb.config.radioConfiguration # type: ignore
+        radio_config: RadioConfiguration = gnb.config.radioConfiguration  # type: ignore
 
         # calculate the ue parameters
         # https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/doc/runmodem-nrue.md
@@ -352,7 +354,7 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
         scs_hz = int(radio_config.subcarrierSpacingKhz.value) * 1000
         dl_point_a_hz = nr_arfcn_to_frequency_hz(radio_config.pointAFrequencyArfcn)
 
-        if gnb.implementation is RANImplementation.OCUDU: # type: ignore
+        if gnb.implementation is RANImplementation.OCUDU:  # type: ignore
             # Point A is at the lowest subcarrier of the resource grid.
             # The carrier center is halfway across the occupied RB grid.
             occupied_bandwidth_hz = bandwidth_rb * 12 * scs_hz
@@ -363,7 +365,7 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
 
         # --CO : uplink frequency offset for FDD in Hz
         if radio_config.duplexMode == DuplexMode.FDD:
-            ul_carrier_freq_hz = nr_arfcn_to_frequency_hz(radio_config.uplinkArfcn) # type: ignore
+            ul_carrier_freq_hz = nr_arfcn_to_frequency_hz(radio_config.uplinkArfcn)  # type: ignore
             offset_hz = ul_carrier_freq_hz - dl_carrier_freq_hz
         else:
             # set to 0 for tdd
@@ -382,9 +384,7 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
         ssb_offset_hz = ssb_start_freq_hz - dl_point_a_hz
 
         if ssb_offset_hz < 0:
-            raise ValueError(
-                f"Invalid 'ssbArfcn' ({radio_config.ssbArfcn}): SSB start frequency lies below Point A."
-            )
+            raise ValueError(f"Invalid 'ssbArfcn' ({radio_config.ssbArfcn}): SSB start frequency lies below Point A.")
 
         ssb_start = int(ssb_offset_hz // scs_ssb_hz)
 
@@ -392,16 +392,16 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
         if ue_deployment.advanced_config and ue_deployment.advanced_config.useAdditionalOptions:
             additional_flags = ue_deployment.advanced_config.useAdditionalOptions
 
-        elif ru.type is RUType.SIMULATED: # type: ignore
-            if gnb.implementation is RANImplementation.OAI: # type: ignore
+        elif ru.type is RUType.SIMULATED:  # type: ignore
+            if gnb.implementation is RANImplementation.OAI:  # type: ignore
                 additional_flags = "-E --rfsim"
-            elif gnb.implementation is RANImplementation.OCUDU: # type: ignore
-                additional_flags =(
+            elif gnb.implementation is RANImplementation.OCUDU:  # type: ignore
+                additional_flags = (
                     "-E --ue-scan-carrier --thread-pool -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 "
                     "--uecap_file /opt/oai-nr-ue/etc/uecap_ports1.xml"
-                    )
+                )
 
-        elif ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+        elif ru.model in [USRPModel.B210, USRPModel.B205]:  # type: ignore
             additional_flags = "-E --ue-fo-compensation --ue-scan-carrier"
 
         else:
@@ -409,63 +409,65 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
 
         # sdr_addrs
         sdr_addrs = None
-        if ru.type is RUType.REAL: # type: ignore
-            if ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+        if ru.type is RUType.REAL:  # type: ignore
+            if ru.model in [USRPModel.B210, USRPModel.B205]:  # type: ignore
                 sdr_addrs = "type=b200,num_recv_frames=64,num_send_frames=64"
-            elif ru.ips: # type: ignore
-                sdr_addrs = f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
+            elif ru.ips:  # type: ignore
+                sdr_addrs = f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
 
         derived = {
-            "dl_carrier_freq_hz": dl_carrier_freq_hz, # rf_freq
-            "offset_hz": offset_hz, # rf_offset
-            "numerology": numerology, # numerology
-            "bandwidth_rb": bandwidth_rb, # N_RB_DL
-            "ssb_start": ssb_start, # ssb_start
-            "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""), # type: ignore
+            "dl_carrier_freq_hz": dl_carrier_freq_hz,  # rf_freq
+            "offset_hz": offset_hz,  # rf_offset
+            "numerology": numerology,  # numerology
+            "bandwidth_rb": bandwidth_rb,  # N_RB_DL
+            "ssb_start": ssb_start,  # ssb_start
+            "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""),  # type: ignore
             "additional_flags": additional_flags,
             "sdr_addrs": sdr_addrs,
         }
 
     return derived
 
+
 def derive_ueransim_ue_config(
-        ue_meta: UE,  # noqa: ARG001
-        ue_deployment: DeployedUE,  # noqa: ARG001
-    ) -> dict[str, Any]:
+    ue_meta: UE,  # noqa: ARG001
+    ue_deployment: DeployedUE,  # noqa: ARG001
+) -> dict[str, Any]:
     """Derive radio parameters specific to USERANSIM UE to put in derived configuration."""
     return {}
 
+
 def derive_srsue_ue_config(
-        ue_meta: UE,
-        ue_deployment: DeployedUE,  # noqa: ARG001
-    ) -> dict[str, Any]:
+    ue_meta: UE,
+    ue_deployment: DeployedUE,  # noqa: ARG001
+) -> dict[str, Any]:
     """Derive radio parameters specific to SRSRUE UE to put in derived configuration."""
 
     derived = {}
 
     if ue_meta.type is UEType.CONTAINERIZED:
         # gnb references must be resolved by now
-        radio_config: RadioConfiguration = ue_meta.config.gnbs[0].config.radioConfiguration # type: ignore
+        radio_config: RadioConfiguration = ue_meta.config.gnbs[0].config.radioConfiguration  # type: ignore
 
-        ru = ue_meta.config.ru # must be resolved by now
+        ru = ue_meta.config.ru  # must be resolved by now
 
-        if ru.type is RUType.SIMULATED: # type: ignore
+        if ru.type is RUType.SIMULATED:  # type: ignore
             device_driver = "zmq"
             device_args = (
                 f"tx_port=tcp://{ue_deployment.static_pod_ip}:2001,"
-                f"rx_port=tcp://{ue_meta.config.gnbs[0].gnb_ip}:2000" # type: ignore
+                f"rx_port=tcp://{ue_meta.config.gnbs[0].gnb_ip}:2000"  # type: ignore
             )
             if ue_deployment.advanced_config.srate:
                 device_args += f",base_srate={ue_deployment.advanced_config.srate}"
 
-        elif ru.vendor is RUVendor.USRP: # type: ignore
+        elif ru.vendor is RUVendor.USRP:  # type: ignore
             device_driver = "uhd"
-            if ru.model in [USRPModel.B210, USRPModel.B205]: # type: ignore
+            if ru.model in [USRPModel.B210, USRPModel.B205]:  # type: ignore
                 device_args = "type=b200,num_recv_frames=64,num_send_frames=64"
-            elif ru.ips: # type: ignore
+            elif ru.ips:  # type: ignore
                 device_args = (
-                    f"addr={ru.ips[0]}," # type: ignore
-                    f"clock_source={ru.clockSource},time_source={ru.timeSource}" # type: ignore
+                    f"addr={ru.ips[0]},"  # type: ignore
+                    f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
                 )
                 if ue_deployment.advanced_config.master_clock_rate:
                     device_args += f",master_clock_rate={ue_deployment.advanced_config.master_clock_rate}"
@@ -476,7 +478,7 @@ def derive_srsue_ue_config(
         derived = {
             "device_driver": device_driver,
             "device_args": ue_deployment.advanced_config.device_args or device_args,
-            "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""), # type: ignore
+            "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""),  # type: ignore
             "nof_prb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
         }
 
@@ -492,12 +494,12 @@ UE_CONFIG_DERIVATOR: dict[UEImplementation, Callable] = {
 
 
 def derive_ue_radio_config(
-        ue_meta: UE,
-        ue_deployment: DeployedUE,
-    ) -> dict[str, Any]: # type: ignore
+    ue_meta: UE,
+    ue_deployment: DeployedUE,
+) -> dict[str, Any]:  # type: ignore
     """Derive UE's implementation-specific radio parameters."""
 
     ue_deployment.derived_radio_config = UE_CONFIG_DERIVATOR[ue_deployment.implementation](
         ue_meta=ue_meta,
         ue_deployment=ue_deployment,
-        )
+    )

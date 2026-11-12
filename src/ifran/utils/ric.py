@@ -31,28 +31,32 @@ ORAN_SC_XAPP_NAMESPACE = "ricxapp"
 
 
 async def create_xapp_namespace(
-        node_name: str,
-        node_data: ProvisionableNode,
-        ansible_params: AnsibleParams,
-        quiet: bool = False,
-    ) -> None:
+    node_name: str,
+    node_data: ProvisionableNode,
+    ansible_params: AnsibleParams,
+    quiet: bool = False,
+) -> None:
     """Run playbook to create xApp namespace before OSC RIC installation."""
 
     await run_ansible_playbook(
-        playbook=[{
-            "hosts": node_name,
-            "gather_facts": False,
-            "become": True,
-            "tasks": [{
-                "name": "Create xApp namespace before OSC RIC installation",
-                "kubernetes.core.k8s": {
-                    "api_version": "v1",
-                    "kind": "Namespace",
-                    "name": ORAN_SC_XAPP_NAMESPACE,
-                    "state": "present",
-                },
-            }],
-        }],
+        playbook=[
+            {
+                "hosts": node_name,
+                "gather_facts": False,
+                "become": True,
+                "tasks": [
+                    {
+                        "name": "Create xApp namespace before OSC RIC installation",
+                        "kubernetes.core.k8s": {
+                            "api_version": "v1",
+                            "kind": "Namespace",
+                            "name": ORAN_SC_XAPP_NAMESPACE,
+                            "state": "present",
+                        },
+                    }
+                ],
+            }
+        ],
         runner_path=f"{ansible_params.runner_path}/ric/namespaces",
         inventory=get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         roles_paths=ansible_params.roles_paths,
@@ -61,9 +65,9 @@ async def create_xapp_namespace(
 
 
 def build_official_oran_sc_service_name(
-        component_type: RICComponentType,
-        namespace: str,
-    ) -> str:
+    component_type: RICComponentType,
+    namespace: str,
+) -> str:
     """Return the primary service exposed by an official M-release chart."""
 
     if component_type is RICComponentType.E2TERM:
@@ -74,9 +78,9 @@ def build_official_oran_sc_service_name(
 
 
 def reconcile_ric(
-        metamodel: MetaModel,
-        deployment_model: DeploymentModel,
-    ) -> None:
+    metamodel: MetaModel,
+    deployment_model: DeploymentModel,
+) -> None:
     """Ensure RIC is ready to be managed."""
 
     ric_meta = metamodel.ric
@@ -118,10 +122,7 @@ def reconcile_ric(
                 component_deployment.kind = "StatefulSet"
 
     type_counts = {
-        component_meta.type: sum(
-            sibling.type is component_meta.type
-            for sibling in ric_meta.components.values()
-        )
+        component_meta.type: sum(sibling.type is component_meta.type for sibling in ric_meta.components.values())
         for component_meta in ric_meta.components.values()
     }
 

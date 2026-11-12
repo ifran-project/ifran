@@ -27,12 +27,12 @@ from ifran.utils.radio import (
 
 
 def resolve_amf_ref(
-        component_name: str,
-        component_meta: RANComponent,
-        amfs_meta: dict[str, AMFComponent],
-        amfs_deployment: dict[str, Deployed5GComponent],
-        check_is_installed: bool = True,
-    ) -> None:
+    component_name: str,
+    component_meta: RANComponent,
+    amfs_meta: dict[str, AMFComponent],
+    amfs_deployment: dict[str, Deployed5GComponent],
+    check_is_installed: bool = True,
+) -> None:
     """Resolve name reference of AMF in a RAN component."""
 
     amfs: dict[str, MergedAMF] = {}
@@ -48,10 +48,12 @@ def resolve_amf_ref(
             component_deployment=amf_deployment,
         )
 
-        amfs[amf_name] = MergedAMF.model_validate({
-            **amf_meta.model_dump(mode="json"),
-            **amf_deployment.model_dump(mode="json"),
-        })
+        amfs[amf_name] = MergedAMF.model_validate(
+            {
+                **amf_meta.model_dump(mode="json"),
+                **amf_deployment.model_dump(mode="json"),
+            }
+        )
 
     # resolve amf reference with amf's n2 ip address
     resolve_component_reference(
@@ -65,12 +67,12 @@ def resolve_amf_ref(
 
 
 def resolve_ric_ref(
-        component_name: str,
-        component_meta: RANComponent,
-        rics_meta: dict[str, ValidatedRICComponent],
-        rics_deployment: dict[str, Deployed5GComponent],
-        check_is_installed: bool = True,
-    ) -> None:
+    component_name: str,
+    component_meta: RANComponent,
+    rics_meta: dict[str, ValidatedRICComponent],
+    rics_deployment: dict[str, Deployed5GComponent],
+    check_is_installed: bool = True,
+) -> None:
     """Resolve name reference of RIC in a RAN component."""
 
     rics: dict[str, MergedRIC] = {}
@@ -86,10 +88,12 @@ def resolve_ric_ref(
             component_deployment=ric_deployment,
         )
 
-        rics[ric_name] = MergedRIC.model_validate({
-            **ric_meta.model_dump(mode="json"),
-            **ric_deployment.model_dump(mode="json"),
-        })
+        rics[ric_name] = MergedRIC.model_validate(
+            {
+                **ric_meta.model_dump(mode="json"),
+                **ric_deployment.model_dump(mode="json"),
+            }
+        )
 
     # resolve ric reference with ric's e2 ip address
     resolve_component_reference(
@@ -103,32 +107,33 @@ def resolve_ric_ref(
 
 
 def resolve_ocudu_zmq_ran(
-        component_meta: RANComponent,
-        component_deployment: DeployedRANComponent,
-        k8s_params: K8SParams,
-    ) -> None:
+    component_meta: RANComponent,
+    component_deployment: DeployedRANComponent,
+    k8s_params: K8SParams,
+) -> None:
     """Resolve dependency between OCUDU simulated RAN and the UE."""
 
     if (
-        component_meta.config.ru.type is RUType.SIMULATED and # type: ignore
-        component_deployment.implementation is RANImplementation.OCUDU
-        ):
+        component_meta.config.ru.type is RUType.SIMULATED  # type: ignore
+        and component_deployment.implementation is RANImplementation.OCUDU
+    ):
         # simulated ocudu gnb/du (zmq) needs to know ue ip in advance
         ue_ip = generate_random_ip(k8s_params)
 
         # make sure advanced_config is populated
         if component_deployment.advanced_config is None:
-            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[
-                RANImplementation.OCUDU][component_meta.type]()
+            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[RANImplementation.OCUDU][
+                component_meta.type
+            ]()
 
         component_deployment.advanced_config.ue_ip = component_deployment.advanced_config.ue_ip or ue_ip
         # NOTE this ip will later be taken from here and given as static_pod_ip to the ue component
 
 
 def reconcile_ran(
-        metamodel: MetaModel,
-        deployment_model: DeploymentModel,
-    ) -> None:
+    metamodel: MetaModel,
+    deployment_model: DeploymentModel,
+) -> None:
     """
     Ensure RAN is ready for deployment.
 
@@ -152,30 +157,30 @@ def reconcile_ran(
     slices = metamodel.slices
     k8s_params = deployment_model.params.k8s
 
-    grouped_meta = get_5g_components_by_type(ran_meta.components) # type: ignore
+    grouped_meta = get_5g_components_by_type(ran_meta.components)  # type: ignore
     cu_cps_meta = grouped_meta.get(RANComponentType.CU_CP, {})
     cu_ups_meta = grouped_meta.get(RANComponentType.CU_UP, {})
     cus_meta = grouped_meta.get(RANComponentType.CU, {})
 
-    grouped_deployment = get_5g_components_by_type(ran_deployment.components) # type: ignore
+    grouped_deployment = get_5g_components_by_type(ran_deployment.components)  # type: ignore
     cu_cps_deployment = grouped_deployment.get(RANComponentType.CU_CP, {})
     cu_ups_deployment = grouped_deployment.get(RANComponentType.CU_UP, {})
     cus_deployment = grouped_deployment.get(RANComponentType.CU, {})
 
-    amfs_meta = get_5g_components_by_type(core_meta.components, [CoreComponentType.AMF]) # type: ignore
-    amfs_deployment = get_5g_components_by_type(core_deployment.components, [CoreComponentType.AMF]) # type: ignore
+    amfs_meta = get_5g_components_by_type(core_meta.components, [CoreComponentType.AMF])  # type: ignore
+    amfs_deployment = get_5g_components_by_type(core_deployment.components, [CoreComponentType.AMF])  # type: ignore
 
-    rics_meta = get_5g_components_by_type(
-        ric_meta.components, [RICComponentType.RIC, RICComponentType.E2TERM]) # type: ignore
+    rics_meta = get_5g_components_by_type(ric_meta.components, [RICComponentType.RIC, RICComponentType.E2TERM])  # type: ignore
     rics_deployment = get_5g_components_by_type(
-        ric_deployment.components, [RICComponentType.RIC, RICComponentType.E2TERM]) # type: ignore
+        ric_deployment.components, [RICComponentType.RIC, RICComponentType.E2TERM]
+    )  # type: ignore
 
     # run standard component reconciliation on cu/cu_cp/cu_cp components first
     # because cu_up and cu_cp's e1, cu/cu_cp's f1c, and cu/cu_up's f1u interfaces
     # need to assigned a static ip before resolving cross-references
     reconcile_5g_components(
         components_meta=cus_meta | cu_cps_meta | cu_ups_meta,
-        components_deployment=cus_deployment | cu_cps_deployment | cu_ups_deployment, # type: ignore
+        components_deployment=cus_deployment | cu_cps_deployment | cu_ups_deployment,  # type: ignore
         k8s_params=k8s_params,
     )
 
@@ -196,21 +201,21 @@ def reconcile_ran(
         if component_meta.type in [RANComponentType.GNB, RANComponentType.CU, RANComponentType.CU_CP]:
             resolve_amf_ref(
                 **args,
-                amfs_meta=amfs_meta, # type: ignore
-                amfs_deployment=amfs_deployment, # type: ignore
+                amfs_meta=amfs_meta,  # type: ignore
+                amfs_deployment=amfs_deployment,  # type: ignore
             )
 
         # resolve ric reference
         resolve_ric_ref(
             **args,
-            rics_meta=rics_meta, # type: ignore
-            rics_deployment=rics_deployment, # type: ignore
+            rics_meta=rics_meta,  # type: ignore
+            rics_deployment=rics_deployment,  # type: ignore
         )
 
         if component_meta.type in [RANComponentType.GNB, RANComponentType.DU]:
             # resolve ru reference for gnbs and dus
             resolve_ru_reference(
-                 **args,
+                **args,
                 rus_meta=rus_meta,
                 rus_provisioning=rus_provisioning,
             )
@@ -232,9 +237,9 @@ def reconcile_ran(
             # derive implementation-specific radio parameters for gnb and du
             # after ru name reference resolution and ocudu zmq specific case
             derive_ran_radio_config(
-                component_meta=component_meta, # type: ignore
+                component_meta=component_meta,  # type: ignore
                 component_deployment=component_deployment,
-                )
+            )
 
         # resolve references between split ran components
         # NOTE static ip assignment needs to be done before this

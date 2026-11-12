@@ -50,26 +50,28 @@ def generate_random_ip(k8s_params: K8SParams) -> IPvAnyAddress | None:
 
 
 async def run_single_k8s_setup_action(  # noqa: PLR0917
-        node_name: str,
-        node_data: ProvisionableNode,
-        action: Literal["prepare", "create", "join", "wait", "remove"],
-        k8s_params: K8SParams,
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    node_name: str,
+    node_data: ProvisionableNode,
+    action: Literal["prepare", "create", "join", "wait", "remove"],
+    k8s_params: K8SParams,
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    quiet: bool = False,
+) -> None:
     """Run Kubernetes setup Ansible role corresponding to the given action on a single provisioned node_data."""
 
     if not force:
         if not node_data.is_provisioned:
             raise InvalidResourceStateError(f"Node {node_name!r} is not provisioned")
 
-        if ((node_data.k8s_status.value in ["configured", "in_cluster"] and action == "prepare") or
-            (node_data.k8s_status.value == "in_cluster" and action in ["create", "join"]) or
-            (node_data.k8s_status.value == "not_configured" and action == "remove")):
-
+        if (
+            (node_data.k8s_status.value in ["configured", "in_cluster"] and action == "prepare")
+            or (node_data.k8s_status.value == "in_cluster" and action in ["create", "join"])
+            or (node_data.k8s_status.value == "not_configured" and action == "remove")
+        ):
             raise InvalidResourceStateError(
-                f"Node {node_name!r} Kubernetes status is already {node_data.k8s_status.value}.")
+                f"Node {node_name!r} Kubernetes status is already {node_data.k8s_status.value}."
+            )
 
     # merge k8s params with priority to node's k8s params
     merged_params = K8SParams.model_validate(k8s_params.model_dump(mode="json") | node_data.k8s_params)
@@ -82,11 +84,11 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
         "inputs": {
             "node": {
                 **node_data.model_dump(mode="json"),
-                "name": node_name, # NOTE display node's key in the nodes dict instead of its actual name
+                "name": node_name,  # NOTE display node's key in the nodes dict instead of its actual name
             },
             **merged_params.model_dump(mode="json"),
         },
-        "output_keys": ["join_command"] if action == "create" else None, # retrieve the join command
+        "output_keys": ["join_command"] if action == "create" else None,  # retrieve the join command
         "runner_path": f"{ansible_params.runner_path}/{node_data.category.value}/{node_name}/k8s/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
@@ -111,19 +113,19 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
         case "create":
             node_data.k8s_status = K8SStatus.IN_CLUSTER
             # update join command
-            k8s_params.join_command = result["join_command"] # type: ignore
+            k8s_params.join_command = result["join_command"]  # type: ignore
 
 
 async def run_parallel_k8s_setup_action(  # noqa: PLR0917
-        nodes: dict[str, ProvisionableNode],
-        action: Literal["prepare", "create", "join", "remove"],
-        k8s_params: K8SParams,
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        ignore_invalid_states: bool = True,
-        ignore_failures: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    nodes: dict[str, ProvisionableNode],
+    action: Literal["prepare", "create", "join", "remove"],
+    k8s_params: K8SParams,
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    ignore_invalid_states: bool = True,
+    ignore_failures: bool = False,
+    quiet: bool = False,
+) -> None:
     """Run Kubernetes setup action in parallel on provided nodes."""
 
     tasks: dict[str, asyncio.Task] = {}
@@ -137,7 +139,8 @@ async def run_parallel_k8s_setup_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
-        ))
+            )
+        )
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 

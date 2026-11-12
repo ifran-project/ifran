@@ -24,14 +24,13 @@ class UEManagement(HelmManagement):
             deployment_model=self.deployment_model,
         )
 
-
     @override
     async def run_action(  # noqa: PLR0917
-            self,
-            action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy", "connect", "disconnect"],
-            components: list[str] | None = None,
-            **kwargs,
-        ) -> dict[str, str] | None:
+        self,
+        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy", "connect", "disconnect"],
+        components: list[str] | None = None,
+        **kwargs,
+    ) -> dict[str, str] | None:
         """Run Helm action on containerized UEs."""
 
         containarized_actions = ["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"]
@@ -49,26 +48,25 @@ class UEManagement(HelmManagement):
 
         # validate action by ue type
         for ue_name, ue_meta in target_meta.items():
-            if (
-                (ue_meta.type is UEType.CONTAINERIZED and action not in containarized_actions) or
-                (ue_meta.type is UEType.COTS and action not in cots_actions)
-                ):
-                    raise RuntimeError(
-                        f"Unsupported action {action!r} for UE {ue_name!r} of type {ue_meta.type.value.upper()!r}."
-                    )
+            if (ue_meta.type is UEType.CONTAINERIZED and action not in containarized_actions) or (
+                ue_meta.type is UEType.COTS and action not in cots_actions
+            ):
+                raise RuntimeError(
+                    f"Unsupported action {action!r} for UE {ue_name!r} of type {ue_meta.type.value.upper()!r}."
+                )
 
         if action in containarized_actions:
             return await super().run_action(
                 category=Category5G.UE,
-                action=action, # type: ignore
+                action=action,  # type: ignore
                 components=components,
                 **kwargs,
-                )
+            )
         if action in cots_actions:
             await run_parallel_ue_action(
                 ues_meta=target_meta,
-                ues_prov={ue_name: self.deployment_model.ues[ue_name] for ue_name in target_meta}, # type: ignore
-                action=action, # type: ignore
+                ues_prov={ue_name: self.deployment_model.ues[ue_name] for ue_name in target_meta},  # type: ignore
+                action=action,  # type: ignore
                 provisioners=self.deployment_model.provisioners,
                 provisioning_params=self.deployment_model.params.provisioning,
                 ansible_params=self.deployment_model.params.ansible,
@@ -85,7 +83,7 @@ class UEManagement(HelmManagement):
         component_meta: UE | None = None,
         component_deployment: DeployedUE | None = None,
         merged: dict[str, Any] | None = None,
-        ) -> None:
+    ) -> None:
         """Add or update a UE if it exists."""
         super().add_component(
             name=name,
@@ -100,14 +98,12 @@ class UEManagement(HelmManagement):
         """Remove a containarized UE."""
         super().remove_component(category=Category5G.UE, name=name)
 
-
     # connect action wrapper
     async def connect(self, ues: list[str] | None = None, **kwargs) -> None:
         """Connect COTS UEs via provisioner."""
         await self.run_action(action="connect", components=ues, **kwargs)
 
-
-     # disconnect action wrapper
+    # disconnect action wrapper
     async def disconnect(self, ues: list[str] | None = None, **kwargs) -> None:
         """Disconnect COTS UEs via provisioner."""
         await self.run_action(action="disconnect", components=ues, **kwargs)

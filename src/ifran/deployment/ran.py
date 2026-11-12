@@ -13,11 +13,13 @@ from ifran.utils.common_5g import (
 from ifran.utils.ran import reconcile_ran
 
 RAN_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
-    RANComponentType.DU: frozenset({
-        RANComponentType.CU,
-        RANComponentType.CU_CP,
-        RANComponentType.CU_UP,
-    }),
+    RANComponentType.DU: frozenset(
+        {
+            RANComponentType.CU,
+            RANComponentType.CU_CP,
+            RANComponentType.CU_UP,
+        }
+    ),
     RANComponentType.CU_UP: frozenset({RANComponentType.CU_CP}),
 }
 
@@ -36,13 +38,11 @@ class RANManagement(HelmManagement):
             deployment_model=self.deployment_model,
         )
 
-
     # override category
     @override
     async def run_action(self, **kwargs) -> dict[str, str] | None:
         """Run Helm action on RAN components."""
         return await super().run_action(category=Category5G.RAN, **kwargs)
-
 
     # NOTE don't use kwargs to expose the function signature
     @override
@@ -52,7 +52,7 @@ class RANManagement(HelmManagement):
         component_meta: RANComponent | None = None,
         component_deployment: DeployedRANComponent | None = None,
         merged: dict[str, Any] | None = None,
-        ) -> None:
+    ) -> None:
         """Add or update a RAN component if it exists."""
         super().add_component(
             name=name,
@@ -67,24 +67,22 @@ class RANManagement(HelmManagement):
         """Remove a RAN component."""
         super().remove_component(category=Category5G.RAN, name=name)
 
-
     # override dependency graph
     @override
     async def install(
-            self,
-            order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
-            **kwargs,
-        ) -> None:
+        self,
+        order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
+        **kwargs,
+    ) -> None:
         """Install RAN components."""
         await super().install(order=order, **kwargs)
-
 
     # override dependency graph
     @override
     async def deploy(
-            self,
-            order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
-            **kwargs,
-        ) -> None:
+        self,
+        order: ComponentDependencyGraph | None = RAN_COMPONENT_DEPENDENCIES,
+        **kwargs,
+    ) -> None:
         """Orchestrate full RAN deployment."""
         await super().deploy(order=order, **kwargs)

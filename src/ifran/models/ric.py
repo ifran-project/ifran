@@ -21,9 +21,7 @@ class RICImplementation(StrEnum):
 
 
 SUPPORTED_RIC_COMPONENTS: dict[RICImplementation, set[RICComponentType]] = {
-    RICImplementation.OAI: {
-        RICComponentType.RIC
-    },
+    RICImplementation.OAI: {RICComponentType.RIC},
     RICImplementation.ORAN_SC: {
         RICComponentType.DBAAS,
         RICComponentType.E2MGR,
@@ -43,10 +41,10 @@ class GenericAdvancedRICConfig(StrictBaseModel):
 
 
 class OAIAdvancedRICConfig(GenericAdvancedRICConfig):
-   """Advanced configuration for OAI FLEXRIC."""
+    """Advanced configuration for OAI FLEXRIC."""
 
-   DB_DIR: str | None = Field(default=None)
-   DB_NAME: str | None = Field(default=None)
+    DB_DIR: str | None = Field(default=None)
+    DB_NAME: str | None = Field(default=None)
 
 
 class ORANSCAdvancedRICConfig(GenericAdvancedRICConfig):
@@ -91,7 +89,7 @@ class DeployedRICComponent(Deployed5GComponent):
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
             mapping=ADVANCED_RIC_CONFIG_MAPPING,
-            default_model=GenericAdvancedRICConfig, # type: ignore
+            default_model=GenericAdvancedRICConfig,  # type: ignore
         )
 
 

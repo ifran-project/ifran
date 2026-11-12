@@ -22,13 +22,13 @@ class ReferenceNotFoundError(Exception):
 
 
 def sync_dict_keys(  # noqa: PLR0917
-        target_dict: dict,
-        source_dict: dict,
-        default_factory: Any,
-        populate_type: bool = False,
-        populate_name: bool = False,
-        remove_extra: bool = True,
-    ) -> None:
+    target_dict: dict,
+    source_dict: dict,
+    default_factory: Any,
+    populate_type: bool = False,
+    populate_name: bool = False,
+    remove_extra: bool = True,
+) -> None:
     """Synchronize 'target_dict' keys with 'source_dict' keys."""
 
     missing_keys = source_dict.keys() - target_dict.keys()
@@ -83,9 +83,9 @@ def deep_merge(left: dict[str, Any] | BaseModel, right: dict[str, Any] | BaseMod
 
     result = dict(left)
 
-    for key, right_value in right.items(): # type: ignore
+    for key, right_value in right.items():  # type: ignore
         left_value = result.get(key)
-        if (isinstance(left_value, dict) and isinstance(right_value, dict)):
+        if isinstance(left_value, dict) and isinstance(right_value, dict):
             result[key] = deep_merge(left=left_value, right=right_value)
         else:
             result[key] = right_value
@@ -101,8 +101,7 @@ def serialize_libconfig_scalar(value: Any) -> str:
 
     if isinstance(value, str):
         escaped = (
-            value
-            .replace("\\", "\\\\")
+            value.replace("\\", "\\\\")
             .replace('"', '\\"')
             .replace("\n", "\\n")
             .replace("\r", "\\r")
@@ -120,10 +119,7 @@ def serialize_libconfig(value: Any) -> str:
     """Serialize Python data to libconfig syntax."""
 
     if isinstance(value, dict):
-        fields = "; ".join(
-            f"{key} = {serialize_libconfig(child)}"
-            for key, child in value.items()
-        )
+        fields = "; ".join(f"{key} = {serialize_libconfig(child)}" for key, child in value.items())
 
         return f"{{ {fields}; }}"
 
@@ -138,7 +134,7 @@ def serialize_libconfig(value: Any) -> str:
 type SerializableLibconfigDict = Annotated[
     dict[str, Any],
     PlainSerializer(serialize_libconfig, return_type=str),
-    WithJsonSchema({'type': 'string'}, mode='serialization'),
+    WithJsonSchema({"type": "string"}, mode="serialization"),
 ]
 """Python dictionary type for Pydantic that can be serialized into a libconfig block."""
 
@@ -153,7 +149,7 @@ def serialize_ini_section(value: Any) -> str:
 
     # By default, ConfigParser converts all keys to lowercase.
     # Setting optionxform to str prevents this and preserves original casing.
-    config.optionxform = str # type: ignore
+    config.optionxform = str  # type: ignore
 
     # configparser requires string values. We handle special types here.
     processed_dict = {}
@@ -183,7 +179,7 @@ def serialize_ini_section(value: Any) -> str:
 SerializableINIConfigDict = Annotated[
     dict[str, Any],
     PlainSerializer(serialize_ini_section, return_type=str),
-    WithJsonSchema({'type': 'string'}, mode='serialization'),
+    WithJsonSchema({"type": "string"}, mode="serialization"),
 ]
 """Python dictionary type for Pydantic that can be serialized into INI block fields."""
 
@@ -191,18 +187,14 @@ SerializableINIConfigDict = Annotated[
 def flatten_dict(d: dict[str, str] | dict[str, dict[str, str]]) -> str:
     """Concatenate dict values into one string."""
 
-    return "\n".join(
-        value if isinstance(value, str)
-        else "\n".join(value.values())
-        for value in d.values()
-    )
+    return "\n".join(value if isinstance(value, str) else "\n".join(value.values()) for value in d.values())
 
 
 def resolve_path(value: Any) -> Any:
     """Ensure string relative paths are resolevd."""
 
     if isinstance(value, str):
-        path = Path(value).expanduser() # expand user home (~) to avoid it being treated as relative path
+        path = Path(value).expanduser()  # expand user home (~) to avoid it being treated as relative path
         return str(path) if path.is_absolute() else str(path.resolve())
     return value
 

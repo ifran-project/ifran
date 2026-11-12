@@ -11,9 +11,9 @@ from ifran.utils.utils import ResolvedPath
 def _default_roles_paths() -> list[str]:
     """Look for and return built-in Ansible roles directory as default."""
 
-    builtin = (Path(__file__).resolve().parents[2] / "ansible" / "roles")
+    builtin = Path(__file__).resolve().parents[2] / "ansible" / "roles"
     if builtin.exists():
-        return([str(builtin)])
+        return [str(builtin)]
 
     return []
 

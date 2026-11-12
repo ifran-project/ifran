@@ -42,18 +42,22 @@ class DeploymentModel(StrictBaseModel):
     params: DeploymentParams = Field(default_factory=DeploymentParams)
     """Global deployment parameters."""
 
-    provisioners: dict[str, Provisioner] = Field(default_factory=lambda: {
-        "bi": BIProvisioner(type=ProvisioningType.BI),
-        "pos": POSProvisioner(type=ProvisioningType.POS),
-    })
+    provisioners: dict[str, Provisioner] = Field(
+        default_factory=lambda: {
+            "bi": BIProvisioner(type=ProvisioningType.BI),
+            "pos": POSProvisioner(type=ProvisioningType.POS),
+        }
+    )
     """Provisioners."""
 
-    nodes: dict[str, ProvisionableNode] = Field(default_factory=lambda: {
-        "node1": ProvisionableNode(name="node1", category=ProvisioningCategory.NODE),
-        "node2": ProvisionableNode(name="node2", category=ProvisioningCategory.NODE),
-        "node3": ProvisionableNode(name="node3", category=ProvisioningCategory.NODE),
-        "node4": ProvisionableNode(name="node4", category=ProvisioningCategory.NODE),
-    })
+    nodes: dict[str, ProvisionableNode] = Field(
+        default_factory=lambda: {
+            "node1": ProvisionableNode(name="node1", category=ProvisioningCategory.NODE),
+            "node2": ProvisionableNode(name="node2", category=ProvisioningCategory.NODE),
+            "node3": ProvisionableNode(name="node3", category=ProvisioningCategory.NODE),
+            "node4": ProvisionableNode(name="node4", category=ProvisioningCategory.NODE),
+        }
+    )
     """Deployment nodes."""
 
     core: CoreDeployment = Field(default_factory=CoreDeployment)
@@ -73,7 +77,6 @@ class DeploymentModel(StrictBaseModel):
 
     miscellaneous: dict[str, Any] | None = Field(default=None)
     """Miscellaneous data for pipelining purposes."""
-
 
     @model_validator(mode="before")
     @classmethod
@@ -97,8 +100,7 @@ class DeploymentModel(StrictBaseModel):
         rus = data.get("rus")
         if rus:
             data["rus"] = {
-                name: {**ru, "name": ru.get("name") if ru.get("name") is not None else name}
-                for name, ru in rus.items()
+                name: {**ru, "name": ru.get("name") if ru.get("name") is not None else name} for name, ru in rus.items()
             }
 
         # populate ues names

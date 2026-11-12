@@ -31,18 +31,18 @@ class BaseManagement:
     """Base class for all deployment lifecycle management classes."""
 
     def __init__(  # noqa: PLR0917
-            self,
-            preceding: BaseManagement | None = None,
-            metamodel: MetaModel | None = None,
-            deployment_model: DeploymentModel | None = None,
-            merged: dict[str, Any] | None = None,
-            metamodel_file: str | None = None,
-            metamodel_file_type: Literal["json", "yaml"] = "yaml",
-            deployment_model_file: str | None = None,
-            deployment_model_file_type: Literal["json", "yaml"] = "yaml",
-            merged_file: str | None = None,
-            merged_file_type: Literal["json", "yaml"] = "yaml",
-        ) -> None:
+        self,
+        preceding: BaseManagement | None = None,
+        metamodel: MetaModel | None = None,
+        deployment_model: DeploymentModel | None = None,
+        merged: dict[str, Any] | None = None,
+        metamodel_file: str | None = None,
+        metamodel_file_type: Literal["json", "yaml"] = "yaml",
+        deployment_model_file: str | None = None,
+        deployment_model_file_type: Literal["json", "yaml"] = "yaml",
+        merged_file: str | None = None,
+        merged_file_type: Literal["json", "yaml"] = "yaml",
+    ) -> None:
 
         if preceding:
             self.metamodel = preceding.metamodel.model_copy(deep=True)
@@ -51,7 +51,7 @@ class BaseManagement:
         elif metamodel and deployment_model:
             # original metamodel should not be mutated to maintain consistency
             self.metamodel = metamodel.model_copy(deep=True)
-             # deployment model is allowed to mutate to store deployment state
+            # deployment model is allowed to mutate to store deployment state
             self.deployment_model = deployment_model.model_copy(deep=True)
 
         elif metamodel_file and deployment_model_file:
@@ -83,7 +83,6 @@ class BaseManagement:
         # reconcile meta model and deployment model on init
         self.reconcile()
 
-
     def _from_merged(self, merged: dict[str, Any]) -> tuple[MetaModel, DeploymentModel]:
         """Return deployment model and meta model from single merged input."""
 
@@ -91,44 +90,37 @@ class BaseManagement:
         deployment_model = DeploymentModel.model_validate(merged, extra="allow")
         return metamodel, deployment_model
 
-
     def output(
-            self,
-            metamodel_file: str | None = None,
-            metamodel_file_type: Literal["json", "yaml"] = "yaml",
-            deployment_model_file: str | None = None,
-            deployment_model_file_type: Literal["json", "yaml"] = "yaml",
-        ) -> tuple[MetaModel, DeploymentModel]:
+        self,
+        metamodel_file: str | None = None,
+        metamodel_file_type: Literal["json", "yaml"] = "yaml",
+        deployment_model_file: str | None = None,
+        deployment_model_file_type: Literal["json", "yaml"] = "yaml",
+    ) -> tuple[MetaModel, DeploymentModel]:
         """Output metamodel and potentially modified deployment model."""
 
         if metamodel_file:
             with Path(metamodel_file).open("w", encoding="utf-8") as f:
-                f.write(
-                    self.metamodel.to_yaml() if metamodel_file_type == "yaml"
-                    else self.metamodel.model_dump_json()
-                )
+                f.write(self.metamodel.to_yaml() if metamodel_file_type == "yaml" else self.metamodel.model_dump_json())
 
         if deployment_model_file:
             with Path(deployment_model_file).open("w", encoding="utf-8") as f:
                 f.write(
-                    self.deployment_model.to_yaml() if deployment_model_file_type == "yaml"
+                    self.deployment_model.to_yaml()
+                    if deployment_model_file_type == "yaml"
                     else self.deployment_model.model_dump_json()
                 )
 
         return self.metamodel, self.deployment_model
 
-
     def output_merged(
-            self,
-            output: Literal["dict", "json", "yaml"] = "dict",
-            path: str | None = None,
-        ) -> dict[str, Any] | str | None:
+        self,
+        output: Literal["dict", "json", "yaml"] = "dict",
+        path: str | None = None,
+    ) -> dict[str, Any] | str | None:
         """Output merged dictionary from deployment and meta model."""
 
-        merged = self.deployment_model.model_dump(
-            mode="json",
-            include={"params", "nodes", "miscellaneous"}
-            ) | {
+        merged = self.deployment_model.model_dump(mode="json", include={"params", "nodes", "miscellaneous"}) | {
             "core": deep_merge(self.metamodel.core, self.deployment_model.core),
             "ran": deep_merge(self.metamodel.ran, self.deployment_model.ran),
             "rus": deep_merge(self.metamodel.rus, self.deployment_model.rus),
@@ -148,7 +140,6 @@ class BaseManagement:
             return merged
         return None
 
-
     def reconcile(self) -> None:
         """
         Reconcile the metamodel and deployment model before deployment.
@@ -157,7 +148,6 @@ class BaseManagement:
         reconciliation logic on top of the default synchronization.
         """
         self.synchronize()
-
 
     def synchronize(self) -> None:
         """
@@ -192,9 +182,11 @@ class BaseManagement:
             target_dict=self.deployment_model.ues,
             source_dict=self.metamodel.ues,
             default_factory=(
-                lambda name, type:
-                    ProvisionableUE(name=name, category=ProvisioningCategory.UE, type=type) if type is UEType.COTS
+                lambda name, type: (
+                    ProvisionableUE(name=name, category=ProvisioningCategory.UE, type=type)
+                    if type is UEType.COTS
                     else DeployedUE(type=type)
+                )
             ),
             populate_type=True,
             populate_name=True,
@@ -211,7 +203,6 @@ class BaseManagement:
         # this is mainly important to populate the implementation for the added core, ric and ran components
         self.deployment_model = DeploymentModel.model_validate(self.deployment_model.model_dump())
 
-
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
         """Generate an Ansible .ini inventory from nodes and ues."""
 
@@ -224,22 +215,22 @@ class BaseManagement:
 
         # add ues as their own group (only cots ues are provisionable)
         ues = {
-            ue_name: ue_data
-            for ue_name, ue_data in self.deployment_model.ues.items()
-            if ue_data.type is UEType.COTS
+            ue_name: ue_data for ue_name, ue_data in self.deployment_model.ues.items() if ue_data.type is UEType.COTS
         }
         if ues:
-            groups["ues"] = ues # type: ignore
+            groups["ues"] = ues  # type: ignore
 
         lines: list[str] = []
         for role, role_resources in groups.items():
             lines.append(f"[{role}]")
             for name, resource in role_resources.items():
-                lines.append(get_ansible_inventory_line(
-                    resource_name=name,
-                    resource_data=resource, # type: ignore
-                ))
-            lines.append("") # new line between sections
+                lines.append(
+                    get_ansible_inventory_line(
+                        resource_name=name,
+                        resource_data=resource,  # type: ignore
+                    )
+                )
+            lines.append("")  # new line between sections
 
         inventory = "\n".join(lines)
         if path:

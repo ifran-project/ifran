@@ -11,16 +11,16 @@ class MiscellaneousManagement(BaseManagement):
     """Miscellaneous executions management class."""
 
     async def run_playbook(  # noqa: PLR0917
-            self,
-            playbook: list | dict[str, Any] | str,
-            inputs: dict[str, Any] | None = None,
-            output_keys: list[str] | None = None,
-            runner_path: str | None = None,
-            roles_paths: list[str] | None = None,
-            inventory: str | dict[str, Any] | list | None = None,
-            store: bool = True,
-            quiet: bool = False,
-            ) -> dict[str, Any] | None:
+        self,
+        playbook: list | dict[str, Any] | str,
+        inputs: dict[str, Any] | None = None,
+        output_keys: list[str] | None = None,
+        runner_path: str | None = None,
+        roles_paths: list[str] | None = None,
+        inventory: str | dict[str, Any] | list | None = None,
+        store: bool = True,
+        quiet: bool = False,
+    ) -> dict[str, Any] | None:
         """
         Run a custom Ansible playbook on deployment model resources (nodes and UEs) or a custom inventory of resources.
 
@@ -41,19 +41,19 @@ class MiscellaneousManagement(BaseManagement):
 
         """
 
-        results =  await run_ansible_playbook(
+        results = await run_ansible_playbook(
             playbook=playbook,
-            inputs=self.output_merged() | inputs if inputs else self.output_merged(), # type: ignore
+            inputs=self.output_merged() | inputs if inputs else self.output_merged(),  # type: ignore
             output_keys=output_keys,
             runner_path=(
-                runner_path if runner_path
-                else f"{self.deployment_model.params.ansible.runner_path}/miscellaneous"),
+                runner_path if runner_path else f"{self.deployment_model.params.ansible.runner_path}/miscellaneous"
+            ),
             roles_paths=roles_paths if roles_paths else self.deployment_model.params.ansible.roles_paths,
             inventory=inventory if inventory else self.get_ansible_inventory(),
             quiet=quiet,
-            )
+        )
 
         if results and store:
-            self.deployment_model.miscellaneous = deep_merge(self.deployment_model.miscellaneous, results) # type: ignore
+            self.deployment_model.miscellaneous = deep_merge(self.deployment_model.miscellaneous, results)  # type: ignore
 
         return results

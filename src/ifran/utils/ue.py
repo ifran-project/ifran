@@ -33,10 +33,10 @@ from ifran.utils.utils import InvalidResourceStateError, ReferenceNotFoundError
 
 
 def resolve_ue_slices_dnns(
-        component_name: str,
-        component_meta: UE,
-        slices: dict[str, Slice],
-    ) -> None:
+    component_name: str,
+    component_meta: UE,
+    slices: dict[str, Slice],
+) -> None:
     """Resolve UE slice and DNN references."""
 
     ue_config = component_meta.config
@@ -45,15 +45,15 @@ def resolve_ue_slices_dnns(
     for subscription in ue_config.subscriptions:
         # resolve snssai/slice
         subscription.snssai = resolve_snssai_reference(
-            component_name=component_meta, # type: ignore
-            component_meta=component_name, # type: ignore
+            component_name=component_meta,  # type: ignore
+            component_meta=component_name,  # type: ignore
             reference=subscription.snssai,
             slices=slices,
             field_name="subscription.snssai",
         )
 
         # resolve dnn after resolving slice
-        subscription_dnn = subscription.snssai.dnns.get(subscription.dnn) # type: ignore
+        subscription_dnn = subscription.snssai.dnns.get(subscription.dnn)  # type: ignore
         if subscription_dnn is None:
             raise ReferenceNotFoundError(f"UE {component_name!r} references undefined DNN {subscription.dnn!r}.")
 
@@ -61,12 +61,12 @@ def resolve_ue_slices_dnns(
 
 
 def resolve_gnb_ref(
-        component_name: str,
-        component_meta: UE,
-        gnbs_meta: dict[str, GNBComponent | DUComponent],
-        gnbs_deployment: dict[str, Deployed5GComponent],
-        populate_address: bool = True,
-    ) -> None:
+    component_name: str,
+    component_meta: UE,
+    gnbs_meta: dict[str, GNBComponent | DUComponent],
+    gnbs_deployment: dict[str, Deployed5GComponent],
+    populate_address: bool = True,
+) -> None:
     """
     Resolve gNB/DU name reference in a containerized UE's 'gnbs' field.
 
@@ -89,10 +89,11 @@ def resolve_gnb_ref(
         merge_model = UEReferencedGNB if gnb_meta.type is RANComponentType.GNB else UEReferencedDU
 
         # NOTE if ue is containarized, ue's ru reference should be resolved before
-        if (populate_address and
-            component_meta.type is UEType.CONTAINERIZED and
-            component_meta.config.ru.type is RUType.SIMULATED # type: ignore
-            ):
+        if (
+            populate_address
+            and component_meta.type is UEType.CONTAINERIZED
+            and component_meta.config.ru.type is RUType.SIMULATED  # type: ignore
+        ):
             # if gnb/du has non-multus network info (one IP address), use it
             # else, use the static_pod_ip that is supposed to populated before RAN deployment
             if isinstance(gnb_deployment.network_info, (IPv4Address, IPv6Address)):
@@ -105,46 +106,46 @@ def resolve_gnb_ref(
                     f"Containarized UE {component_name!r} reference gNB/DU {gnb_reference!r} with unknown address."
                 )
 
-            component_meta.config.gnbs[i] = merge_model.model_validate({**merged_gnb, "gnb_ip": gnb_ip}) # type: ignore
+            component_meta.config.gnbs[i] = merge_model.model_validate({**merged_gnb, "gnb_ip": gnb_ip})  # type: ignore
         else:
             # gnb ip is not needed in non-simulated ue
-            component_meta.config.gnbs[i] = merge_model.model_validate(merged_gnb) # type: ignore
+            component_meta.config.gnbs[i] = merge_model.model_validate(merged_gnb)  # type: ignore
 
 
 def resolve_ocudu_zmq_ran(
-        component_name: str,
-        component_meta: UE,
-        component_deployment: DeployedUE,
-    ) -> None:
+    component_name: str,
+    component_meta: UE,
+    component_deployment: DeployedUE,
+) -> None:
     """Resolve dependency between OCUDU simulated RAN and the UE."""
 
     # NOTE ue's ru and gnb references should be resolved before
-    if component_meta.config.ru.type is not RUType.SIMULATED: # type: ignore
+    if component_meta.config.ru.type is not RUType.SIMULATED:  # type: ignore
         return
 
     # evaluate whether ue is zmq-based or not and find OCUDU gnb
     is_zmq_based = False
     for gnb in component_meta.config.gnbs:
-        if gnb.implementation is RANImplementation.OCUDU: # type: ignore
+        if gnb.implementation is RANImplementation.OCUDU:  # type: ignore
             is_zmq_based = True
             break
 
     if is_zmq_based:
         # zmq in ocudu gnb/du needs both gnb ip and ue ip
         # NOTE the gnb/du should have generated a ue_ip in their advanced_config by this point
-        if gnb.advanced_config is None or gnb.advanced_config.ue_ip is None: # type: ignore
+        if gnb.advanced_config is None or gnb.advanced_config.ue_ip is None:  # type: ignore
             raise ValueError(
                 f"UE {component_name} needs a static pod IP for ZMQ simulated RF with OCUDU RAN, "
                 "but none was found in gNB/DU's 'ue_ip' advanced config field."
             )
 
-        component_deployment.static_pod_ip = gnb.advanced_config.ue_ip # type: ignore
+        component_deployment.static_pod_ip = gnb.advanced_config.ue_ip  # type: ignore
 
 
 def reconcile_ues(
-        metamodel: MetaModel,
-        deployment_model: DeploymentModel,
-    ) -> None:
+    metamodel: MetaModel,
+    deployment_model: DeploymentModel,
+) -> None:
     """Ensure UEs are ready to be managed by resolving their configs."""
 
     ues_meta = metamodel.ues
@@ -159,8 +160,8 @@ def reconcile_ues(
     slices = metamodel.slices
     k8s_params = deployment_model.params.k8s
 
-    gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU]) # type: ignore
-    gnbs_deployment = get_5g_components_by_type(ran_deployment.components, [RANComponentType.GNB, RANComponentType.DU]) # type: ignore
+    gnbs_meta = get_5g_components_by_type(ran_meta.components, [RANComponentType.GNB, RANComponentType.DU])  # type: ignore
+    gnbs_deployment = get_5g_components_by_type(ran_deployment.components, [RANComponentType.GNB, RANComponentType.DU])  # type: ignore
 
     for ue_name, ue_meta in ues_meta.items():
         args = {"component_name": ue_name, "component_meta": ue_meta}
@@ -182,8 +183,8 @@ def reconcile_ues(
         # resolve gnb references after ru name reference resolution
         resolve_gnb_ref(
             **args,
-            gnbs_meta=gnbs_meta, # type: ignore
-            gnbs_deployment=gnbs_deployment, # type: ignore
+            gnbs_meta=gnbs_meta,  # type: ignore
+            gnbs_deployment=gnbs_deployment,  # type: ignore
             populate_address=True,
         )
 
@@ -192,42 +193,39 @@ def reconcile_ues(
 
             reconcile_5g_component(
                 **args,
-                component_deployment=ue_deployment, # type: ignore
+                component_deployment=ue_deployment,  # type: ignore
                 k8s_params=k8s_params,
             )
 
             # zmq-based ue specific case
             resolve_ocudu_zmq_ran(
                 **args,
-                component_deployment=ue_deployment, # type: ignore
+                component_deployment=ue_deployment,  # type: ignore
             )
 
             # derive implementation-specific radio parameters for ue
             # AFTER ru name reference resolution and zmq case
             derive_ue_radio_config(
                 ue_meta=ue_meta,
-                ue_deployment=ue_deployment # type: ignore
-                )
+                ue_deployment=ue_deployment,  # type: ignore
+            )
 
 
 async def run_single_ue_action(  # noqa: PLR0917
-        ue_name: str,
-        ue_meta: UE,
-        ue_prov: ProvisionableUE,
-        action: Literal["connect", "disconnect"],
-        provisioners: dict[str, Provisioner],
-        provisioning_params: dict[str, Any],
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    ue_name: str,
+    ue_meta: UE,
+    ue_prov: ProvisionableUE,
+    action: Literal["connect", "disconnect"],
+    provisioners: dict[str, Provisioner],
+    provisioning_params: dict[str, Any],
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    quiet: bool = False,
+) -> None:
     """Run the 'ue/connect' or 'ue/disconnect' Ansible role of the provisioner on a single provisionable UE."""
 
     if not force:
-        if (
-            (action == "connect" and ue_prov.is_connected) or
-            (action == "disconnect" and not ue_prov.is_connected)
-        ):
+        if (action == "connect" and ue_prov.is_connected) or (action == "disconnect" and not ue_prov.is_connected):
             raise InvalidResourceStateError(f"UE {ue_name!r} is already {action}ed.")
 
         if not ue_prov.is_provisioned:
@@ -240,14 +238,14 @@ async def run_single_ue_action(  # noqa: PLR0917
     )
 
     # merge provisioning params without mutating the provisioner
-    merged_prov_params = type(provisioner.params).model_validate( # type: ignore
-        provisioning_params |
-        provisioner.params.model_dump(mode="json") | # type: ignore
-        ue_prov.provisioning_params
+    merged_prov_params = type(provisioner.params).model_validate(  # type: ignore
+        provisioning_params
+        | provisioner.params.model_dump(mode="json")  # type: ignore
+        | ue_prov.provisioning_params
     )
 
     args = {
-        "role": f"provisioning/{provisioner.type.value}/ue/{action}", # type: ignore
+        "role": f"provisioning/{provisioner.type.value}/ue/{action}",  # type: ignore
         "inputs": {
             "ue_name": ue_name,
             # NOTE use serialize_as_any=True to prevent pydantic from replacing models
@@ -256,7 +254,8 @@ async def run_single_ue_action(  # noqa: PLR0917
             **merged_prov_params.model_dump(mode="json"),
         },
         "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}}
-                        if merged_prov_params.extra_path else None,
+        if merged_prov_params.extra_path
+        else None,
         "runner_path": f"{ansible_params.runner_path}/ue/{ue_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
         "quiet": quiet,
@@ -268,26 +267,26 @@ async def run_single_ue_action(  # noqa: PLR0917
         raise RuntimeError(f"UE {ue_name!r} {action} action failed.") from e
 
     # update ue connection state
-    ue_prov.is_connected = (action == "connect")
+    ue_prov.is_connected = action == "connect"
 
 
 async def run_parallel_ue_action(  # noqa: PLR0917
-        ues_meta: dict[str, UE],
-        ues_prov: dict[str, ProvisionableUE],
-        action: Literal["connect", "disconnect"],
-        provisioners: dict[str, Provisioner],
-        provisioning_params: dict[str, Any],
-        ansible_params: AnsibleParams,
-        force: bool = False,
-        ignore_invalid_states: bool = True,
-        ignore_failures: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    ues_meta: dict[str, UE],
+    ues_prov: dict[str, ProvisionableUE],
+    action: Literal["connect", "disconnect"],
+    provisioners: dict[str, Provisioner],
+    provisioning_params: dict[str, Any],
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    ignore_invalid_states: bool = True,
+    ignore_failures: bool = False,
+    quiet: bool = False,
+) -> None:
     """Connect or disconnect UEs in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}
     for ue_name, ue_meta in ues_meta.items():
-        ue_prov = ues_prov[ue_name] # dicts should be synced by now
+        ue_prov = ues_prov[ue_name]  # dicts should be synced by now
         tasks[ue_name] = asyncio.create_task(
             run_single_ue_action(
                 ue_name=ue_name,
@@ -299,7 +298,8 @@ async def run_parallel_ue_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
-        ))
+            )
+        )
 
     results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 

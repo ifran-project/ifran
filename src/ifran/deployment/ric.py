@@ -11,39 +11,53 @@ from ifran.utils.common_5g import ComponentDependencyGraph
 from ifran.utils.ric import create_xapp_namespace, reconcile_ric
 
 RIC_COMPONENT_DEPENDENCIES: ComponentDependencyGraph = {
-    RICComponentType.A1MEDIATOR: frozenset({
-        RICComponentType.DBAAS,
-    }),
-    RICComponentType.XAPP_ONBOARDER: frozenset({
-        RICComponentType.APPMGR,
-        RICComponentType.DBAAS,
-        RICComponentType.CHARTMUSEUM,
-    }),
-    RICComponentType.APPMGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.CHARTMUSEUM,
-    }),
-    RICComponentType.RTMGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-        RICComponentType.E2MGR,
-        RICComponentType.SUBMGR,
-    }),
-    RICComponentType.E2MGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-    }),
-    RICComponentType.E2TERM: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-        RICComponentType.RTMGR,
-        RICComponentType.E2MGR,
-    }),
-    RICComponentType.SUBMGR: frozenset({
-        RICComponentType.DBAAS,
-        RICComponentType.APPMGR,
-        RICComponentType.E2MGR,
-    }),
+    RICComponentType.A1MEDIATOR: frozenset(
+        {
+            RICComponentType.DBAAS,
+        }
+    ),
+    RICComponentType.XAPP_ONBOARDER: frozenset(
+        {
+            RICComponentType.APPMGR,
+            RICComponentType.DBAAS,
+            RICComponentType.CHARTMUSEUM,
+        }
+    ),
+    RICComponentType.APPMGR: frozenset(
+        {
+            RICComponentType.DBAAS,
+            RICComponentType.CHARTMUSEUM,
+        }
+    ),
+    RICComponentType.RTMGR: frozenset(
+        {
+            RICComponentType.DBAAS,
+            RICComponentType.APPMGR,
+            RICComponentType.E2MGR,
+            RICComponentType.SUBMGR,
+        }
+    ),
+    RICComponentType.E2MGR: frozenset(
+        {
+            RICComponentType.DBAAS,
+            RICComponentType.APPMGR,
+        }
+    ),
+    RICComponentType.E2TERM: frozenset(
+        {
+            RICComponentType.DBAAS,
+            RICComponentType.APPMGR,
+            RICComponentType.RTMGR,
+            RICComponentType.E2MGR,
+        }
+    ),
+    RICComponentType.SUBMGR: frozenset(
+        {
+            RICComponentType.DBAAS,
+            RICComponentType.APPMGR,
+            RICComponentType.E2MGR,
+        }
+    ),
 }
 
 
@@ -61,11 +75,9 @@ class RICManagement(HelmManagement):
             deployment_model=self.deployment_model,
         )
 
-
     async def run_action(self, **kwargs) -> dict[str, str] | None:
         """Run Helm action on 5G RIC components."""
         return await super().run_action(category=Category5G.RIC, **kwargs)
-
 
     # NOTE don't use kwargs to expose the function signature
     @override
@@ -75,7 +87,7 @@ class RICManagement(HelmManagement):
         component_meta: RICComponent | None = None,
         component_deployment: DeployedRICComponent | None = None,
         merged: dict[str, Any] | None = None,
-        ) -> None:
+    ) -> None:
         """Add or update a RIC component if it exists."""
         super().add_component(
             name=name,
@@ -90,16 +102,15 @@ class RICManagement(HelmManagement):
         """Remove a RIC component."""
         super().remove_component(category=Category5G.RIC, name=name)
 
-
     @override
     async def install(
-            self,
-            components: list[str] | None = None,
-            node: str | None = None,
-            order: ComponentDependencyGraph | None = RIC_COMPONENT_DEPENDENCIES,
-            quiet: bool = False,
-            **kwargs,
-        ) -> None:
+        self,
+        components: list[str] | None = None,
+        node: str | None = None,
+        order: ComponentDependencyGraph | None = RIC_COMPONENT_DEPENDENCIES,
+        quiet: bool = False,
+        **kwargs,
+    ) -> None:
         """Install RIC components."""
 
         node_name, node_data = self._get_deployment_node(node)
@@ -111,17 +122,16 @@ class RICManagement(HelmManagement):
                 node_data=node_data,
                 ansible_params=self.deployment_model.params.ansible,
                 quiet=quiet,
-                )
+            )
 
         await super().install(components=components, node=node, order=order, quiet=quiet, **kwargs)
-
 
     # override dependency graph
     @override
     async def deploy(
-            self,
-            order: ComponentDependencyGraph | None = RIC_COMPONENT_DEPENDENCIES,
-            **kwargs,
-        ) -> None:
+        self,
+        order: ComponentDependencyGraph | None = RIC_COMPONENT_DEPENDENCIES,
+        **kwargs,
+    ) -> None:
         """Orchestrate RIC component deployment."""
         await super().deploy(order=order, **kwargs)
