@@ -111,17 +111,22 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
     plain_text_config = component_deployment.plain_text_config
 
     if plain_text_config:
-        path = Path(resolve_path(plain_text_config))
+        try:
+            path = Path(resolve_path(plain_text_config))
 
-        if path.is_file():  # noqa: ASYNC240
-            # if plain_text_config is a path, overwrite it with file's text content
-            try:
-                component_data["plain_text_config"] = path.read_text(encoding="utf-8")  # noqa: ASYNC240
-            except Exception as e:
-                raise RuntimeError(
-                    f"Could not read 'plain_text_config' {str(path)!r} file content"
-                    f"for {category} component {component_name!r}."
-                ) from e
+            if path.is_file():  # noqa: ASYNC240
+                # if plain_text_config is a path, overwrite it with file's text content
+                try:
+                    component_data["plain_text_config"] = path.read_text(encoding="utf-8")  # noqa: ASYNC240
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Could not read 'plain_text_config' {str(path)!r} file content"
+                        f"for {category} component {component_name!r}."
+                    ) from e
+
+        except Exception:
+            # not a valid path => treat it as a text string
+            component_data["plain_text_config"] = plain_text_config
 
     args = {
         "role": f"helm/{action}",
