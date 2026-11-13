@@ -22,7 +22,7 @@
   </a>
 </p>
 
-The `ifran` orchestrator is a Python library that deploys and manages a complete 5G network on real or virtual infrastructure, driven by declarative models. With the `ifran` orchestrator you can deploy a new 5G network but also modify it on-the-fly, for example to change a UPF, add a gNB, register new subscribers without interruptions.
+**Interoperable Framework for Reproducible Automation of Networks** (`ifran`) is a Python orchestration library that deploys and manages a complete 5G network on real or virtual infrastructure, driven by declarative models. With the `ifran` orchestrator you can deploy a new 5G network but also modify it on-the-fly, for example to change a UPF, add a gNB, register new subscribers without interruptions.
 
 You describe **the 5G network you want** and **the machines you want to run it on**. The library then:
 
@@ -33,7 +33,7 @@ You describe **the 5G network you want** and **the machines you want to run it o
 
 It automates the whole stack, including the IP wiring between functions (for example, the gNB's AMF address). Internally it runs [Ansible](https://www.ansible.com/) (through `ansible-runner`) over SSH, and the Kubernetes and Helm operations are executed from the cluster's master node.
 
-The figure below shows an example of complex hybrid deployment made possible by the `ifran` orchestrator.
+The figure below shows an example of complex hybrid deployment made possible by `ifran`.
 
 ```mermaid
 flowchart TD
