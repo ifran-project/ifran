@@ -3,7 +3,7 @@
 
 <p align="center">
   <a href="https://pypi.python.org/pypi/ifran">
-    <img src="https://img.shields.io/pypi/v/ifran.svg" alt="Latest PyPi version" />
+    <img src="https://img.shields.io/pypi/v/ifran" alt="Latest PyPi version" />
   </a>
   <a href="https://ifran.readthedocs.io/">
     <img src="https://img.shields.io/readthedocs/ifran?logo=read-the-docs" alt="Documentation Status" />
