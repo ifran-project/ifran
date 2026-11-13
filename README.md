@@ -1,7 +1,8 @@
+<!-- docs-start -->
 # IFRAN: Interoperable Framework for Reproducible Automation of Networks
 
 <p align="center">
-  <a href="(https://pypi.python.org/pypi/ifran">
+  <a href="https://pypi.python.org/pypi/ifran">
     <img src="https://img.shields.io/pypi/v/ifran.svg" alt="Latest PyPi version" />
   </a>
   <a href="https://ifran.readthedocs.io/">
@@ -337,6 +338,8 @@ ues.deployment_model.to_yaml_file("state/deployment_model.yaml")
 ```
 
 If you already have machines, replace the provisioner with `provisioner: null` on each node, set `is_provisioned: true` and give its `ssh_info`.
+
+<!-- docs-end -->
 
 # Tutorials
 

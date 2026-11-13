@@ -3,3 +3,5 @@ furo>=2024.8.6
 sphinxcontrib-mermaid>=1.0.0
 myst-parser>=3.0.0
 pydantic==2.13.5
+jupyter>=1.1.1
+nbconvert>=7.16.6
