@@ -16,7 +16,7 @@ def parse_authors(meta: dict) -> list[str]:
         if isinstance(entry, dict):          # PEP 621: {name = "...", email = "..."}
             name = entry.get("name") or entry.get("email", "")
         else:                                # Poetry: "Name <email@example.com>"
-            name = re.sub(r"\s*<[^>]*>\s*$", "", str(entry))
+            name = re.sub(r"<[^>]*>\s*$", "", str(entry)).strip()
         if name:
             names.append(name.strip())
     return names
