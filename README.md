@@ -349,41 +349,41 @@ We provide a vast collection of learn-by-doing tutorials.
 
 Information to setup the experimenter's environment.
 
-* [Preparation](./docs/tutorials/00_preparation.ipynb)
+* [Preparation](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/00_preparation.ipynb)
 
 ## Infrastructure
 
 How to manage the infrastructure where experiments are deployed.
 
-* [Provisioning Resources](./docs/tutorials/01_provision.ipynb)
-* [Kubernetes Cluster](./docs/tutorials/02_k8s.ipynb)
-* [Cleanup deployments](./docs/tutorials/03_clean.ipynb)
+* [Provisioning Resources](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/01_provision.ipynb)
+* [Kubernetes Cluster](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/02_k8s.ipynb)
+* [Cleanup deployments](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/03_clean.ipynb)
 
 ## 5G network deployments and configuration
 
 Main concepts of 5G networking.
 
-* [Simple Scenario](./docs/tutorials/10_simple.ipynb)
-* [Add 5G components to a running network](./docs/tutorials/11_add_components.ipynb)
-* [TDD Patterns](./docs/tutorials/20_tdd.ipynb)
-* [Network Slicing](./docs/tutorials/21_slicing.ipynb)
-* [RAN Split](./docs/tutorials/22_split.ipynb)
+* [Simple Scenario](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/10_simple.ipynb)
+* [Add 5G components to a running network](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/11_add_components.ipynb)
+* [TDD Patterns](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/20_tdd.ipynb)
+* [Network Slicing](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/21_slicing.ipynb)
+* [RAN Split](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/22_split.ipynb)
 
 ## Radio Units (RU) and Software Defined Radios (SDR)
 
 Using real Radio Units and User Equipment.
 
-* [OAI with Physical Radio Unit in R2LAB](./docs/tutorials/30_ru.ipynb)
-* [OCUDU and OAI with Physical Radio Units in R2LAB](./docs/tutorials/31_ru_full.ipynb)
+* [OAI with Physical Radio Unit in R2LAB](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/30_ru.ipynb)
+* [OCUDU and OAI with Physical Radio Units in R2LAB](https://github.com/ifran-project/ifran/blob/main/docs/tutorials/31_ru_full.ipynb)
 
 # Examples
 
-Find a large collection of examples in the [`examples`](../examples) directory.
+Find a large collection of examples in the [`examples`](https://github.com/ifran-project/ifran/blob/main/examples) directory.
 
 ## Contributing
 
-Contributions are welcome. Please refer to our [Contributing Guidelines](CONTRIBUTING.md) for details.
+Contributions are welcome. Please refer to our [Contributing Guidelines](https://github.com/ifran-project/ifran/blob/main/CONTRIBUTING.md) for details.
 
 ## License
 
-Distributed under the **BSD 3-Clause Clear** license. See [LICENSE](LICENSE) for details.
+See [LICENSE](https://github.com/ifran-project/ifran/blob/main/LICENSE) for the licensing terms of this project.
