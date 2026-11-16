@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software and the reference paper below."
+title: "Demo: A Declarative Framework to Run, Share, and Reproduce 6G Experiments"
+abstract: >-
+  5G and 6G systems are increasingly modular and programmable, combining heterogeneous 
+  RAN, core, and AI components through standardized interfaces. With the emergence of 
+  Integrated Sensing and Communication (ISAC) and 6G AI-RAN, rApps and xApps have been 
+  augmented with real-time control loops managed by dApps co-located with the DU to 
+  operate at timescales below 10 ms.
+type: software
+repository-code: https://github.com/ifran-project/ifran
+license: BSD-3-Clause-Clear
+authors:
+  - family-names: Mabrouk
+    given-names: Ziyad
+  - family-names: Saucez
+    given-names: Damien
+  - family-names: Tavassoli Kejani
+    given-names: Mohammadbagher
+  - family-names: Mukute
+    given-names: Tariro
+preferred-citation:
+  type: conference-paper
+  title: "Demo: A Declarative Framework to Run, Share, and Reproduce 6G Experiments"
+  authors:
+    - family-names: Mabrouk
+      given-names: Ziyad
+    - family-names: Saucez
+      given-names: Damien
+    - family-names: Tavassoli Kejani
+      given-names: Mohammadbagher
+    - family-names: Mukute
+      given-names: Tariro
+  collection-title: "Proceedings of the 32nd Annual International Conference on Mobile Computing and Networking"
+  publisher:
+    name: "Association for Computing Machinery"
+  conference:
+    name: "MobiCom '26"
+    city: Austin
+    country: US
+  year: 2026
+  month: 10
+  pages: "1879-1881"
+  doi: "10.1145/3795866.3848451"
+  url: "https://doi.org/10.1145/3795866.3848451"
