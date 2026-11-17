@@ -35,6 +35,7 @@ async def create_xapp_namespace(
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run playbook to create xApp namespace before OSC RIC installation."""
 
@@ -61,6 +62,7 @@ async def create_xapp_namespace(
         inventory=get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         roles_paths=ansible_params.roles_paths,
         quiet=quiet,
+        retries=retries,
     )
 
 

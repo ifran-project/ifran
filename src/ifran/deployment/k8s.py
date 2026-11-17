@@ -18,6 +18,7 @@ class K8SManagement(BaseManagement):
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        retries: int = 5,
     ) -> None:
         """Run Kubernetes setup action on all nodes or a given subset."""
 
@@ -36,6 +37,7 @@ class K8SManagement(BaseManagement):
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
             quiet=quiet,
+            retries=retries,
         )
 
     async def prepare(self, nodes: list[str] | None = None, **kwargs) -> None:
@@ -117,6 +119,7 @@ class K8SManagement(BaseManagement):
             ansible_params=self.deployment_model.params.ansible,
             force=kwargs.get("force", False),
             quiet=kwargs.get("quiet", False),
+            retries=kwargs.get("retries", 5),
         )
 
     async def remove(self, nodes: list[str] | None = None, **kwargs) -> None:

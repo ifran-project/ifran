@@ -221,6 +221,7 @@ async def run_core_database_helm_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run Ansible Helm prepare/install/uninstall role on 5G core database."""
 
@@ -256,6 +257,7 @@ async def run_core_database_helm_action(  # noqa: PLR0917
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
         "quiet": quiet,
+        "retries": retries,
     }
 
     # expect database network info output after installation
@@ -287,6 +289,7 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Add/remove a single UE/subscriber on the 5G core database."""
 
@@ -310,6 +313,7 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
         "quiet": quiet,
+        "retries": retries,
     }
     try:
         await run_ansible_role(**args)
@@ -331,6 +335,7 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
     ignore_invalid_states: bool = False,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Add/remove multiple UEs in parallel."""
 
@@ -348,6 +353,7 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         )
 

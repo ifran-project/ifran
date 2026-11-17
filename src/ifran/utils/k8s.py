@@ -57,6 +57,7 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run Kubernetes setup Ansible role corresponding to the given action on a single provisioned node_data."""
 
@@ -95,6 +96,7 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
         "quiet": quiet,
+        "retries": retries,
     }
 
     try:
@@ -125,6 +127,7 @@ async def run_parallel_k8s_setup_action(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run Kubernetes setup action in parallel on provided nodes."""
 
@@ -139,6 +142,7 @@ async def run_parallel_k8s_setup_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         )
 

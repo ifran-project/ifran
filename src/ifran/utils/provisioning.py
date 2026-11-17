@@ -104,6 +104,7 @@ async def run_reservation_action(  # noqa: PLR0917
     force: bool = False,
     skip_unreservable: bool = True,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run the 'reserve' Ansible role of the given provisioner once for the given resources list."""
 
@@ -136,6 +137,7 @@ async def run_reservation_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/reserve/{provisioner_name}",
         "roles_paths": ansible_params.roles_paths,
         "quiet": quiet,
+        "retries": retries,
     }
     try:
         await run_ansible_role(**args)
@@ -156,6 +158,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5
 ) -> None:
     """Run the Ansible role of the provisioner corresponding to the given action on a single resource."""
 
@@ -206,6 +209,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
         "quiet": quiet,
+        "retries": retries,
     }
 
     try:
@@ -221,7 +225,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             # NOTE ssh_info is merged with precedence to the provisioning's ssh_info
             # NOTE deep_merge is used to also merge nested jumphost ssh info
             resource_data.ssh_info = SSHInfo.model_validate(  # type: ignore
-                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"])
+                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"]) # type: ignore
             )  # type: ignore
 
         elif resource_data.category is ProvisioningCategory.RU and not resource_data.ips:
@@ -246,6 +250,7 @@ async def run_parallel_provisioning_action(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Provision or unprovision action on provided provisionable resources in parallel."""
 
@@ -261,6 +266,7 @@ async def run_parallel_provisioning_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         )
 
@@ -283,6 +289,7 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
     ignore_failures: bool = False,
     skip_unreservable: bool = True,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Reserve provided reservable resources in parallel."""
 
@@ -303,6 +310,7 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
                 force=force,
                 skip_unreservable=skip_unreservable,
                 quiet=quiet,
+                retries=retries,
             )
         )
 
@@ -326,6 +334,7 @@ async def run_parallel_command(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> dict[str, str]:
     """Run a command on provided SSH-able resources in parallel."""
 
@@ -353,6 +362,7 @@ async def run_parallel_command(  # noqa: PLR0917
                 hosts=resource_name,
                 become=become,
                 quiet=quiet,
+                retries=retries,
             )
         )
 
@@ -384,6 +394,7 @@ async def run_parallel_copy(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Copy a file/directory from or to the provided SSH-able resources in parallel."""
 
@@ -410,6 +421,7 @@ async def run_parallel_copy(  # noqa: PLR0917
                 hosts=resource_name,
                 become=become,
                 quiet=quiet,
+                retries=retries,
             )
         )
 

@@ -25,6 +25,7 @@ class ProvisioningManagement(BaseManagement):
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        retries: int = 5,
     ) -> None:
         """Run provisioning/reservation action on all provisionable resources or a given subset."""
 
@@ -43,6 +44,7 @@ class ProvisioningManagement(BaseManagement):
                 ignore_failures=ignore_failures,
                 skip_unreservable=(action == "provision"),  # skip unreservable resources when main action is provision
                 quiet=quiet,
+                retries=retries,
             )
 
         if action in ["provision", "unprovision"]:
@@ -56,6 +58,7 @@ class ProvisioningManagement(BaseManagement):
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
                 quiet=quiet,
+                retries=retries,
             )
 
     async def provision(self, resources: list[str] | None = None, **kwargs) -> None:
@@ -79,6 +82,7 @@ class ProvisioningManagement(BaseManagement):
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        retries: int = 5,
         flatten: bool = True,
     ) -> str | dict[str, str]:
         """Run command on SSH-able resources (nodes and UEs)."""
@@ -101,6 +105,7 @@ class ProvisioningManagement(BaseManagement):
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
             quiet=quiet,
+            retries=retries,
         )
 
         if flatten:
@@ -149,6 +154,7 @@ class ProvisioningManagement(BaseManagement):
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        retries: int = 5,
     ) -> None:
         """Copy a file/directory to SSH-able resources (nodes and UEs) or fetch a file from them."""
 
@@ -172,6 +178,7 @@ class ProvisioningManagement(BaseManagement):
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
             quiet=quiet,
+            retries=retries,
         )
 
     async def node_copy(

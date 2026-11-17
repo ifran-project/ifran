@@ -128,6 +128,7 @@ class CoreManagement(HelmManagement):
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        retries: int = 5,
     ) -> None:
         """Run 5G core database Helm action."""
 
@@ -142,6 +143,7 @@ class CoreManagement(HelmManagement):
                 ansible_params=self.deployment_model.params.ansible,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         except Exception as e:
             handle_ansible_result_exception(

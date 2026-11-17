@@ -221,6 +221,7 @@ async def run_single_ue_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run the 'ue/connect' or 'ue/disconnect' Ansible role of the provisioner on a single provisionable UE."""
 
@@ -259,6 +260,7 @@ async def run_single_ue_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/ue/{ue_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
         "quiet": quiet,
+        "retries": retries,
     }
 
     try:
@@ -281,6 +283,7 @@ async def run_parallel_ue_action(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Connect or disconnect UEs in parallel."""
 
@@ -298,6 +301,7 @@ async def run_parallel_ue_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         )
 

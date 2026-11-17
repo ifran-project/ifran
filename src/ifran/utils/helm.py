@@ -68,6 +68,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
     **kwargs,
 ) -> None | str | dict[str, str]:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
@@ -144,6 +145,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
         "become": True,
         "quiet": quiet,
+        "retries": retries,
     }
 
     # expect network info output after installation
@@ -253,6 +255,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
     **kwargs,
 ) -> dict[str, str | dict[str, str]] | None:
     """Run Helm action in parallel on provided 5G components."""
@@ -283,6 +286,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
                     ansible_params=ansible_params,
                     force=force,
                     quiet=quiet,
+                    retries=retries,
                     **kwargs,
                 )
                 for name, component_meta, component_deployment in level_components

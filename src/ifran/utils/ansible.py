@@ -1,6 +1,7 @@
 """Ansible utilities and helpers."""
 
 import asyncio
+import logging
 import shlex
 from datetime import UTC, datetime
 from pathlib import Path
@@ -13,6 +14,7 @@ from ifran.models.provisioning import (
 )
 from ifran.utils.utils import InvalidResourceStateError, resolve_path
 
+logger = logging.getLogger(__name__)
 
 def get_ansible_inventory_line(
     resource_name: str,
@@ -44,7 +46,7 @@ def get_ansible_inventory_line(
     return f"{resource_name} " + " ".join(vars)
 
 
-def get_ansible_output(runner, output_keys: list[str]) -> dict[str, Any]:
+def get_ansible_output(runner: ansible_runner.Runner, output_keys: list[str]) -> dict[str, Any]:
     """Get the returned output of Ansible role returned with set_stats."""
 
     output = {}
@@ -56,6 +58,55 @@ def get_ansible_output(runner, output_keys: list[str]) -> dict[str, Any]:
     return output
 
 
+
+def get_ansible_error(runner: ansible_runner.Runner) -> str:
+    """Extract detailed errors from Ansible Runner."""
+
+    errors = []
+
+    failure_events = [
+        "runner_on_failed",
+        "runner_on_unreachable",
+        "runner_on_async_failed",
+    ]
+
+    for event in runner.events:
+        if event.get("event") not in failure_events:
+            continue
+
+        # event stdout contains the complete formatted failure
+        event_stdout = event.get("stdout", "").strip()
+        event_data = event.get("event_data", {})
+        task = event_data.get("task", "Unknown task")
+        host = event_data.get("host", "Unknown host")
+        res = event_data.get("res", {})
+
+        error = [f"Task: {task}", f"Host: {host}"]
+
+        if event_stdout:
+            error.append(f"Stdout: {event_stdout}")
+
+        # extract other useful information from task res
+        info_keys = ["msg", "cmd"]
+        for key in info_keys:
+            value = res.get(key)
+            if value:
+                error.append(f"{key.capitalize()}: {value}")
+
+        errors.append("\n".join(error))
+
+    if not errors:
+        # include normal ansible output if no specific error information was found
+        stdout = runner.stdout.read() if runner.stdout else ""
+        if stdout:
+            errors.append(f"Ansible output:\n{stdout}")
+        else:
+            return "No detailed Ansible error information available."
+
+    return "\n\n".join(errors)
+
+
+
 async def run_ansible_playbook(  # noqa: PLR0917
     playbook: list | dict[str, Any] | str,
     runner_path: str,
@@ -64,18 +115,9 @@ async def run_ansible_playbook(  # noqa: PLR0917
     roles_paths: list[str] | None = None,
     inventory: str | dict[str, Any] | list | None = None,
     quiet: bool = False,
+    retries: int = 5,
 ) -> dict[str, Any] | None:
     """Run an Ansible playbook."""
-
-    # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overridden by other ansible runs
-    # if using the same private_data_dir
-
-    # ensure runner path exists
-
-    # add timestamp for more meaningful log collection
-    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S.%fZ")
-    run_path = Path(runner_path) / timestamp
-    run_path.mkdir(parents=True, exist_ok=True)
 
     # resolve relative paths in roles_paths if it's a list or a single path string
     if isinstance(roles_paths, list):
@@ -83,33 +125,59 @@ async def run_ansible_playbook(  # noqa: PLR0917
     else:
         resolved_roles_paths = resolve_path(roles_paths)
 
-    run_args = {
-        "private_data_dir": run_path,
-        "roles_path": resolved_roles_paths,
-        "inventory": inventory,
-        # resolve playbook if it's a relative path
-        "playbook": resolve_path(playbook),
-        "extravars": inputs,
-        "quiet": quiet,
-    }
+    for i in range(retries):
+        try:
+            # NOTE private_data_dir should be unique per ansible run, as the crucial vars get overridden
+            # by other ansible runs if using the same private_data_dir
 
-    thread, runner = ansible_runner.run_async(**run_args)
+            # ensure runner path exists
 
-    # wait until running ansible thread terminates
-    await asyncio.to_thread(thread.join)
-    if runner.status != "successful" or runner.rc != 0:
-        raise RuntimeError(f"Playbook run not successful (status: {runner.status!r}, return code: {runner.rc!r})")
+            # add timestamp for more meaningful log collection
+            timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S.%fZ")
+            run_path = Path(runner_path) / timestamp
+            run_path.mkdir(parents=True, exist_ok=True)
 
-    if output_keys is None:
-        return None
+            run_args = {
+                "private_data_dir": run_path,
+                "roles_path": resolved_roles_paths,
+                "inventory": inventory,
+                # resolve playbook if it's a relative path
+                "playbook": resolve_path(playbook),
+                "extravars": inputs,
+                "quiet": quiet,
+            }
 
-    output = {}
-    for key in output_keys:
-        output[key] = get_ansible_output(runner=runner, output_keys=output_keys).get(key)
-        if output[key] is None:
-            raise RuntimeError(f"Playbook run completed but did not return expected output for {key!r}")
+            thread, runner = ansible_runner.run_async(**run_args)
 
-    return output
+            # wait until running ansible thread terminates
+            await asyncio.to_thread(thread.join)
+
+            if runner.status != "successful" or runner.rc != 0:
+                raise RuntimeError(  # noqa: TRY301
+                    f"Ansible playbook run not successful (status: {runner.status!r}, return code: {runner.rc!r})\n"
+                    f"{get_ansible_error(runner)}" # type: ignore
+                    )
+
+            if output_keys is None:
+                return None
+
+            output = {}
+            for key in output_keys:
+                output[key] = get_ansible_output(runner=runner, output_keys=output_keys).get(key) # type: ignore
+                if output[key] is None:
+                    raise RuntimeError(f"Ansible playbook run completed but did not return expected output for {key!r}")  # noqa: TRY301
+
+            return output  # noqa: TRY300
+
+        except Exception as e:
+            if i + 1 == retries:
+                raise RuntimeError(f"Ansible playbook failed after {retries} attempts. Last error:\n{e}") from e
+
+            logger.warning("Ansible playbook attempt %d/%d failed: %s\n\nRetrying...\n\n", i + 1, retries, e)
+
+            await asyncio.sleep(2)
+
+    return None
 
 
 async def run_ansible_role(  # noqa: PLR0917
@@ -123,6 +191,7 @@ async def run_ansible_role(  # noqa: PLR0917
     inventory: str | dict[str, Any] | list | None = None,
     become: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> dict[str, Any] | None:
     """Run an Ansible role."""
 
@@ -145,6 +214,7 @@ async def run_ansible_role(  # noqa: PLR0917
         roles_paths=roles_paths,
         inventory=inventory,
         quiet=quiet,
+        retries=retries,
     )
 
 
@@ -155,6 +225,7 @@ async def run_ansible_command(  # noqa: PLR0917
     inventory: str | dict[str, Any] | list,
     become: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> str:
     """Run a command on an Ansible inventory."""
 
@@ -196,6 +267,7 @@ async def run_ansible_command(  # noqa: PLR0917
         inventory=inventory,
         output_keys=["command_output"],
         quiet=quiet,
+        retries=retries,
     )
 
     return result["command_output"]  # type: ignore
@@ -210,6 +282,7 @@ async def run_ansible_copy(  # noqa: PLR0917
     inventory: str | dict[str, Any] | list,
     become: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Copy a file/directory to or from an Ansible inventory host."""
 
@@ -245,6 +318,7 @@ async def run_ansible_copy(  # noqa: PLR0917
         runner_path=runner_path,
         inventory=inventory,
         quiet=quiet,
+        retries=retries,
     )
 
 
