@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import shlex
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -56,7 +57,6 @@ def get_ansible_output(runner: ansible_runner.Runner, output_keys: list[str]) ->
                 output[name] = event.get("event_data", {}).get("artifact_data", {}).get(name)
             break
     return output
-
 
 
 def get_ansible_error(runner: ansible_runner.Runner) -> str:
@@ -137,6 +137,9 @@ async def run_ansible_playbook(  # noqa: PLR0917
             run_path = Path(runner_path) / timestamp
             run_path.mkdir(parents=True, exist_ok=True)
 
+            # handle user interruptions cleanly
+            stop_requested = threading.Event()
+
             run_args = {
                 "private_data_dir": run_path,
                 "roles_path": resolved_roles_paths,
@@ -145,12 +148,21 @@ async def run_ansible_playbook(  # noqa: PLR0917
                 "playbook": resolve_path(playbook),
                 "extravars": inputs,
                 "quiet": quiet,
+                "cancel_callback": stop_requested.is_set
             }
 
             thread, runner = ansible_runner.run_async(**run_args)
 
             # wait until running ansible thread terminates
-            await asyncio.to_thread(thread.join)
+            try:
+                await asyncio.to_thread(thread.join)
+            except asyncio.CancelledError as e:
+                stop_requested.set()
+
+                # wait for runner to shut down cleanly
+                await asyncio.shield(asyncio.to_thread(thread.join))
+
+                raise asyncio.CancelledError("Ansible execution canceled by user.") from e
 
             if runner.status != "successful" or runner.rc != 0:
                 raise RuntimeError(  # noqa: TRY301
