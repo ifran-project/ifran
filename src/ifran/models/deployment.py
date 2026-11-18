@@ -17,6 +17,7 @@ from ifran.models.provisioning import (
     Provisioner,
     ProvisioningCategory,
     ProvisioningType,
+    SSHInfo,
 )
 from ifran.models.ran import RANDeployment
 from ifran.models.ric import RICDeployment
@@ -27,13 +28,16 @@ class DeploymentParams(StrictBaseModel):
     """Global deployment parameters."""
 
     ansible: AnsibleParams = Field(default_factory=AnsibleParams)
-    """Ansible global parameters."""
+    """Global Ansible parameters."""
 
     k8s: K8SParams = Field(default_factory=K8SParams)
-    """Kubernetes global default parameters."""
+    """Global Kubernetes parameters."""
 
     provisioning: dict[str, Any] = Field(default_factory=dict)
     """Global default provisioning parameters."""
+
+    ssh: SSHInfo = Field(default_factory=SSHInfo)
+    """Global default SSH parameters."""
 
 
 class DeploymentModel(StrictBaseModel):

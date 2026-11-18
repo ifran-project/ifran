@@ -204,7 +204,7 @@ class BaseManagement:
         self.deployment_model = DeploymentModel.model_validate(self.deployment_model.model_dump())
 
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
-        """Generate an Ansible .ini inventory from nodes and ues."""
+        """Generate an Ansible INI inventory from nodes and ues."""
 
         # get groups based on node roles => {role: nodes with that role}
         groups: dict[str, dict[str, ProvisionableResource]] = defaultdict(dict)
@@ -228,6 +228,7 @@ class BaseManagement:
                     get_ansible_inventory_line(
                         resource_name=name,
                         resource_data=resource,  # type: ignore
+                        ssh_params=self.deployment_model.params.ssh,
                     )
                 )
             lines.append("")  # new line between sections

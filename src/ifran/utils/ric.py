@@ -4,7 +4,7 @@ from metamodel_3gpp.models.metamodel import MetaModel
 
 from ifran.models.ansible import AnsibleParams
 from ifran.models.deployment import DeploymentModel
-from ifran.models.provisioning import ProvisionableNode
+from ifran.models.provisioning import ProvisionableNode, SSHInfo
 from ifran.models.ric import (
     ORANSCAdvancedRICConfig,
     RICComponentType,
@@ -30,10 +30,11 @@ ORAN_SC_PLATFORM_NAMESPACE = "ricplt"
 ORAN_SC_XAPP_NAMESPACE = "ricxapp"
 
 
-async def create_xapp_namespace(
+async def create_xapp_namespace(  # noqa: PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     quiet: bool = False,
     retries: int = 5,
 ) -> None:
@@ -59,7 +60,11 @@ async def create_xapp_namespace(
             }
         ],
         runner_path=f"{ansible_params.runner_path}/ric/namespaces",
-        inventory=get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        inventory=get_ansible_inventory_line(
+            resource_name=node_name,
+            resource_data=node_data,
+            ssh_params=ssh_params,
+            ),
         roles_paths=ansible_params.roles_paths,
         quiet=quiet,
         retries=retries,

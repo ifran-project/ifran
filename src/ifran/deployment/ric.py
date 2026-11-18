@@ -122,6 +122,7 @@ class RICManagement(HelmManagement):
                 node_name=node_name,
                 node_data=node_data,
                 ansible_params=self.deployment_model.params.ansible,
+                ssh_params=self.deployment_model.params.ssh,
                 quiet=quiet,
                 retries=retries,
             )

@@ -22,7 +22,7 @@ from ifran.models.ansible import AnsibleParams
 from ifran.models.core import CoreDeployment, CoreImplementation
 from ifran.models.deployment import DeploymentModel
 from ifran.models.k8s import HelmParams
-from ifran.models.provisioning import ProvisionableNode
+from ifran.models.provisioning import ProvisionableNode, SSHInfo
 from ifran.utils.ansible import (
     get_ansible_inventory_line,
     handle_ansible_result_exception,
@@ -219,6 +219,7 @@ async def run_core_database_helm_action(  # noqa: PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     force: bool = False,
     quiet: bool = False,
     retries: int = 5,
@@ -254,7 +255,11 @@ async def run_core_database_helm_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/{component['category']}/database/helm/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
-        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        "inventory": get_ansible_inventory_line(
+            resource_name=node_name,
+            resource_data=node_data,
+            ssh_params=ssh_params,
+            ),
         "become": True,
         "quiet": quiet,
         "retries": retries,
@@ -287,6 +292,7 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     force: bool = False,
     quiet: bool = False,
     retries: int = 5,
@@ -310,7 +316,11 @@ async def run_single_database_subscriber_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/core/database/subscriber/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
-        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        "inventory": get_ansible_inventory_line(
+            resource_name=node_name,
+            resource_data=node_data,
+            ssh_params=ssh_params,
+            ),
         "become": True,
         "quiet": quiet,
         "retries": retries,
@@ -331,6 +341,7 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     force: bool = False,
     ignore_invalid_states: bool = False,
     ignore_failures: bool = False,
@@ -351,6 +362,7 @@ async def run_parallel_database_subscriber_action(  # noqa: PLR0917
                 node_name=node_name,
                 node_data=node_data,
                 ansible_params=ansible_params,
+                ssh_params=ssh_params,
                 force=force,
                 quiet=quiet,
                 retries=retries,

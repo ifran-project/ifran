@@ -141,6 +141,7 @@ class CoreManagement(HelmManagement):
                 node_name=node_name,
                 node_data=node_data,
                 ansible_params=self.deployment_model.params.ansible,
+                ssh_params=self.deployment_model.params.ssh,
                 force=force,
                 quiet=quiet,
                 retries=retries,
@@ -176,6 +177,7 @@ class CoreManagement(HelmManagement):
             node_name=node_name,
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
+            ssh_params=self.deployment_model.params.ssh,
             **kwargs,
         )
 

@@ -16,7 +16,7 @@ from ifran.models.k8s import (
     HelmParams,
     MultusNetworkStatus,
 )
-from ifran.models.provisioning import ProvisionableNode
+from ifran.models.provisioning import ProvisionableNode, SSHInfo
 from ifran.utils.ansible import (
     get_ansible_inventory_line,
     handle_ansible_result_exception,
@@ -66,6 +66,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     force: bool = False,
     quiet: bool = False,
     retries: int = 5,
@@ -142,7 +143,11 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
-        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        "inventory": get_ansible_inventory_line(
+            resource_name=node_name,
+            resource_data=node_data,
+            ssh_params=ssh_params,
+            ),
         "become": True,
         "quiet": quiet,
         "retries": retries,
@@ -250,6 +255,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     order: ComponentDependencyGraph | None = None,
     force: bool = False,
     ignore_invalid_states: bool = True,
@@ -284,6 +290,7 @@ async def run_parallel_helm_action(  # noqa: PLR0917
                     node_name=node_name,
                     node_data=node_data,
                     ansible_params=ansible_params,
+                    ssh_params=ssh_params,
                     force=force,
                     quiet=quiet,
                     retries=retries,

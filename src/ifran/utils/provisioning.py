@@ -186,6 +186,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     # lvl 1 : merge provisioner params with global provisioning_params with priority to non-default provisioner's params
     # lvl 2: merge provisioner params with resource provisioning params with priority to resource's provisioning params
     # NOTE provisioner params model needs to tolerate extra fields and ignore them for this to work with no problems
+    # because some provisioning params are only intended for some provisioners and not the others
     merged_prov_params = type(provisioner.params).model_validate(
         provisioning_params
         | provisioner.params.model_dump(mode="json", exclude_defaults=True)
@@ -329,6 +330,7 @@ async def run_parallel_command(  # noqa: PLR0917
     resources: dict[str, SSHableResource],
     command: list[str],
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     become: bool = False,
     force: bool = False,
     ignore_invalid_states: bool = True,
@@ -352,6 +354,7 @@ async def run_parallel_command(  # noqa: PLR0917
         inventory = get_ansible_inventory_line(
             resource_name=resource_name,
             resource_data=resource_data,
+            ssh_params=ssh_params,
         )
 
         tasks[resource_name] = asyncio.create_task(
@@ -389,6 +392,7 @@ async def run_parallel_copy(  # noqa: PLR0917
     remote_path: str,
     direction: Literal["to_resource", "from_resource"],
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     become: bool = False,
     force: bool = False,
     ignore_invalid_states: bool = True,
@@ -409,6 +413,7 @@ async def run_parallel_copy(  # noqa: PLR0917
         inventory = get_ansible_inventory_line(
             resource_name=resource_name,
             resource_data=resource_data,
+            ssh_params=ssh_params,
         )
 
         tasks[resource_name] = asyncio.create_task(

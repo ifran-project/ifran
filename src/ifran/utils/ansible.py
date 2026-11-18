@@ -12,39 +12,51 @@ import ansible_runner
 
 from ifran.models.provisioning import (
     SSHableResource,
+    SSHInfo,
 )
-from ifran.utils.utils import InvalidResourceStateError, resolve_path
+from ifran.utils.utils import InvalidResourceStateError, deep_merge, resolve_path
 
 logger = logging.getLogger(__name__)
 
 def get_ansible_inventory_line(
     resource_name: str,
     resource_data: SSHableResource,
+    ssh_params: SSHInfo,
 ) -> str:
-    """Return Ansible .ini inventory line to SSH access a provisionable resource."""
+    """Return Ansible INI inventory line to SSH access a provisionable resource."""
 
-    ssh_info = resource_data.ssh_info
+    # merge resource ssh info with global ssh defaults
+    # NOTE deep_merge is used to also merge nested jumphost ssh info
+    ssh_info = SSHInfo.model_validate(
+        deep_merge(
+            ssh_params.model_dump(mode="json", exclude_defaults=True),
+            resource_data.ssh_info.model_dump(mode="json", exclude_defaults=True),
+            ),
+        )
 
-    vars = [
-        f"ansible_host={ssh_info.hostname or resource_data.name}",
-        f"ansible_port={ssh_info.port}",
-        f"ansible_user={ssh_info.user}",
-    ]
+    vars: dict[str, str] = {
+        "ansible_host": ssh_info.hostname or resource_data.name,
+        "ansible_port": str(ssh_info.port),
+        "ansible_user": ssh_info.user,
+        "ansible_ssh_timeout": str(ssh_info.timeout),
+        "ansible_ssh_pipelining": 'true' if ssh_info.pipelining else 'false',
+    }
+
     if ssh_info.private_key_file:
-        vars.append(f"ansible_ssh_private_key_file={shlex.quote(ssh_info.private_key_file)}")
+        vars["ansible_ssh_private_key_file"] = shlex.quote(ssh_info.private_key_file)
     if ssh_info.password:
-        vars.append(f"ansible_password={shlex.quote(ssh_info.password)}")
+        vars["ansible_password"] = shlex.quote(ssh_info.password)
     if ssh_info.sudo_password:
-        vars.append(f"ansible_become_password={shlex.quote(ssh_info.sudo_password)}")
-    for key, value in resource_data.provisioning_params.items():
-        if key.startswith("ansible_"):
-            vars.append(f"{key}={value}")
+        vars["ansible_become_password"] = shlex.quote(ssh_info.sudo_password)
 
-    args = ssh_info.common_args
-    if args:
-        vars.append(f"ansible_ssh_common_args={shlex.quote(args)}")
+    common_args = ssh_info.compute_common_args()
+    if common_args:
+        vars["ansible_ssh_common_args"] = shlex.quote(common_args)
 
-    return f"{resource_name} " + " ".join(vars)
+    # NOTE extra_ansible_vars take precedence over computed ansible vars
+    vars |= resource_data.ssh_info.extra_ansible_vars
+
+    return " ".join([resource_name] + [f"{k}={v}" for k, v in vars.items()])
 
 
 def get_ansible_output(runner: ansible_runner.Runner, output_keys: list[str]) -> dict[str, Any]:

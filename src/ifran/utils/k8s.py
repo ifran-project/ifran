@@ -14,6 +14,7 @@ from ifran.models.k8s import (
 )
 from ifran.models.provisioning import (
     ProvisionableNode,
+    SSHInfo,
 )
 from ifran.utils.ansible import (
     get_ansible_inventory_line,
@@ -55,6 +56,7 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
     action: Literal["prepare", "create", "join", "wait", "remove"],
     k8s_params: K8SParams,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     force: bool = False,
     quiet: bool = False,
     retries: int = 5,
@@ -93,7 +95,11 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/{node_data.category.value}/{node_name}/k8s/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
-        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        "inventory": get_ansible_inventory_line(
+            resource_name=node_name,
+            resource_data=node_data,
+            ssh_params=ssh_params,
+            ),
         "become": True,
         "quiet": quiet,
         "retries": retries,
@@ -123,6 +129,7 @@ async def run_parallel_k8s_setup_action(  # noqa: PLR0917
     action: Literal["prepare", "create", "join", "remove"],
     k8s_params: K8SParams,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     force: bool = False,
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
@@ -140,6 +147,7 @@ async def run_parallel_k8s_setup_action(  # noqa: PLR0917
                 action=action,
                 k8s_params=k8s_params,
                 ansible_params=ansible_params,
+                ssh_params=ssh_params,
                 force=force,
                 quiet=quiet,
                 retries=retries,
