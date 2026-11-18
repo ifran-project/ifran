@@ -101,7 +101,7 @@ class RANManagement(HelmManagement):
 
         The RU /etc/ru_config.cfg is generated from the models and pushed from the gNB or DU node, which must reach
         the RU management IP (first RU 'ips' entry). The RU is only rebooted when its configuration changes, or
-        always with 'force'.
+        always with 'force'. It then waits for the radio initialization of each RU, and fails if it did not succeed.
         """
 
         configurations = []

@@ -783,7 +783,10 @@ class BenetelRUParams(StrictBaseModel):
     """
 
     tx_power_dbm: float = Field(default=24.0)
-    """RU Tx power, between the maximum output power - 20 and the maximum output power of the RU."""
+    """
+    RU Tx power in dBm. Valid range according to the Benetel profile: from the maximum output power of the RU - 20 to
+    that maximum ("Max Output Power" in /tmp/logs/ru_information on the RU: 24 dBm for the RAN550, hence 4 to 24).
+    """
 
     downlink_scaling: Literal[0, 6, 12, 18] = Field(default=0)
     """FPGA downlink scaling in dB, to be consistent with the OAI 'tx_amp_backoff_dB'."""
