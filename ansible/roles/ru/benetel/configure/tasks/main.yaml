@@ -97,8 +97,12 @@
 # The RU logs each radio initialization attempt in /tmp/logs/radio_boot_response (cleared by a reboot): a success
 # ends with "DPD configuration complete", a failure with "ERROR: : main:<line> has failed." and the RU retries
 # about every 90 seconds. Two failures are reported as an error, so that no DU is deployed on a mute RU.
+# The file also holds the RU EEPROM dump, whose empty fields are not valid UTF-8 (rejected by Ansible): only the
+# ASCII lines of the initialization results are read.
 - name: Wait for the radio initialization of RU '{{ ru_name }}'
-  ansible.builtin.command: ssh {{ configure_ssh_options }} root@{{ ru_ip }} cat /tmp/logs/radio_boot_response
+  ansible.builtin.command: >-
+    ssh {{ configure_ssh_options }} root@{{ ru_ip }}
+    "tr -cd '\012\040-\176' < /tmp/logs/radio_boot_response | grep -E 'has failed|DPD configuration complete'; true"
   register: configure_radio
   until: >-
     configure_radio.rc == 0
