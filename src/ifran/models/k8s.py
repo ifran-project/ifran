@@ -72,6 +72,42 @@ class Version(StrictBaseModel):
         return data
 
 
+class KubeletParams(StrictBaseModel):
+    """Kubelet global parameters."""
+
+    cpu_manager_policy: Literal["none", "static"] = Field(default="none")
+    """Kubelet CPU manager policy."""
+
+    cpu_manager_policy_options: dict[str, str] | None = Field(default=None)
+    """
+    Kubelet CPU manager policy options, e.g. {'full-pcpus-only': 'true'}. For more details, check:
+    https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/#cpu-policy-static--options
+    """
+
+    reserved_system_cpus: str | None = Field(default=None)
+    """Logical CPUs reserved for system and Kubernetes processes."""
+
+    topology_manager_policy: Literal["none", "best-effort", "restricted", "single-numa-node"] = Field(
+        default="none"
+    )
+    """
+    Kubelet topology manager policy. For more details, check:
+    https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/#topology-manager-policies
+    """
+
+    @model_validator(mode="after")
+    def validate_cpu_manager(self) -> Self:
+        """Validate CPU manager configuration."""
+
+        if self.cpu_manager_policy_options and self.cpu_manager_policy != "static":
+            raise ValueError("cpu_manager_policy_options requires cpu_manager_policy='static'")
+
+        if self.cpu_manager_policy == "static" and not self.reserved_system_cpus:
+            raise ValueError("reserved_system_cpus must be configured when cpu_manager_policy='static'")
+
+        return self
+
+
 class K8SParams(StrictBaseModel):
     """Kubernetes global parameters."""
 
@@ -104,6 +140,9 @@ class K8SParams(StrictBaseModel):
 
     multus_version: str = Field(default="4.3.0")
     """Multus CNI version to be deployed if 'install_multus' is True."""
+
+    kubelet_params: KubeletParams = Field(default_factory=KubeletParams)
+    """Kubelet parameters."""
 
     helm_version: str = Field(default="4.2.3", pattern=SEM_VER_PATTERN)
     """Helm version."""
