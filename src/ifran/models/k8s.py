@@ -7,10 +7,12 @@ from pathlib import Path
 from typing import Any, Literal, Self
 
 from metamodel_3gpp.models.base import StrictBaseModel
+from metamodel_3gpp.utils import URL
 from pydantic import (
     Field,
     IPvAnyAddress,
     IPvAnyNetwork,
+    TypeAdapter,
     field_serializer,
     model_validator,
 )
@@ -129,6 +131,16 @@ class K8SParams(StrictBaseModel):
 
     label_selection_base: str = Field(default="node-type.5g.blueprint")
     """Label base used to enforce scheduling on nodes based on their roles."""
+
+    # NOTE: by default, we use a mirror for docker.io to avoid rate limiting issues on public registries
+    registry_mirrors: dict[str, URL] | None = Field(
+        default_factory=lambda: {"docker.io": TypeAdapter(URL).validate_python("http://registry.theblueprintfactory.org")}
+        )
+    """
+    Container registry mirrors to use for container image pull.
+    Each key is the original registry and the value is the mirror to use instead.
+    Use "_default" as key to set a default mirror for all registries.
+    """
 
     used_ips: set[IPvAnyAddress] = Field(default_factory=set)
     """Set of IPs explicitly assigned to pods."""
