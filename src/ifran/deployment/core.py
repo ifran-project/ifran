@@ -191,7 +191,7 @@ class CoreManagement(HelmManagement):
     @override
     async def install(
         self,
-        order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
+        order: ComponentDependencyGraph | None = None,
         **kwargs,
     ) -> None:
         """Install 5G core components."""
@@ -201,7 +201,7 @@ class CoreManagement(HelmManagement):
     async def deploy(
         self,
         node: str | None = None,
-        order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
+        order: ComponentDependencyGraph | None = None,
         **kwargs,
     ) -> None:
         """
