@@ -1,0 +1,20 @@
+{# one device plugin pool per resource name, holding the indexes of its VFs on the fronthaul PF #}
+{% set pools = {} %}
+{% for vf in fhi72_params.vfs %}
+{% set _ = pools.setdefault(vf.resource_name, []).append(loop.index0 | string) %}
+{% endfor %}
+{
+  "resourceList": [
+{% for name, indexes in pools.items() %}
+    {
+      "resourcePrefix": "{{ fhi72_params.resource_prefix }}",
+      "resourceName": "{{ name }}",
+      "deviceType": "netDevice",
+      "selectors": {
+        "drivers": ["vfio-pci"],
+        "pfNames": ["{{ fhi72_params.fronthaul_interface }}#{{ indexes | join(',') }}"]
+      }
+    }{{ "," if not loop.last else "" }}
+{% endfor %}
+  ]
+}

@@ -159,6 +159,29 @@ class OAIAdvancedCommonGNBConfig(GenericOAIAdvancedRANConfig):
     fhi_72: dict[str, Any] | None = Field(default=None)
     thread_pool: str | None = Field(default=None)
     channelmod: dict[str, Any] | None = Field(default=None)
+    # gNBs section (e.g. 4T4R O-RAN 7.2 RUs)
+    pdsch_AntennaPorts_XP: int | None = Field(default=None)
+    pdsch_AntennaPorts_N1: int | None = Field(default=None)
+    pusch_AntennaPorts: int | None = Field(default=None)
+    do_CSIRS: int | None = Field(default=None)
+    do_SRS: int | str | None = Field(default=None)
+    # MACRLCs section
+    dl_bler_target_lower: float | None = Field(default=None)
+    dl_bler_target_upper: float | None = Field(default=None)
+    ul_bler_target_lower: float | None = Field(default=None)
+    ul_bler_target_upper: float | None = Field(default=None)
+    pusch_RSSI_Threshold: int | None = Field(default=None)
+    pucch_RSSI_Threshold: int | None = Field(default=None)
+    pusch_FailureThres: int | None = Field(default=None)
+    ul_max_mcs: int | None = Field(default=None)
+    stats_max_ue: int | None = Field(default=None)
+    # L1s section (tx_amp_backoff_dB and phase_compensation must match the O-RAN 7.2 RU configuration)
+    pusch_dtx_threshold: int | None = Field(default=None)
+    max_ldpc_iterations: int | None = Field(default=None)
+    tx_amp_backoff_dB: int | None = Field(default=None)
+    phase_compensation: int | None = Field(default=None)
+    # RUs section
+    do_precoding: int | None = Field(default=None)
 
 
 class OAIAdvancedDUConfig(OAIAdvancedCommonGNBConfig):

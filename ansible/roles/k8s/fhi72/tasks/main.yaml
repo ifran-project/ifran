@@ -1,0 +1,317 @@
+# Kubernetes fhi72 role
+
+# Sets up an O-RAN 7.2 fronthaul (fhi72) node that has joined the Kubernetes cluster, without the SR-IOV operator:
+# - checks the kernel boot parameters set at provisioning time (IOMMU, 1G hugepages)
+# - fronthaul PF tuning, SR-IOV VFs creation (MAC/VLAN/trust set from the PF) and vfio-pci binding
+# - NIC IRQs pinned on the kubelet reserved CPUs (irqbalance disabled), performance CPU governor,
+#   RCU kthreads above the RAN pollers (PREEMPT_RT): also applied at boot by a systemd unit
+# - RT sysctl settings, systemd services on the kubelet reserved CPUs (CPUAffinity and system slices cpuset)
+# - kubelet static CPU manager (Guaranteed DPDK pods get whole physical cores)
+# - SR-IOV network device plugin as a static pod, one resource pool per VF resource name
+# - PTP: linuxptp built from source, ptp4l slave on the PTP interface and phc2sys to the system clock
+
+# Input:
+# - node: Node (node.name and node.fhi72)
+
+# Output: None
+---
+- name: Set fhi72 parameters for '{{ node.name }}'
+  ansible.builtin.set_fact:
+    fhi72_params: "{{ node.fhi72 }}"
+
+- name: Check that 'fhi72' parameters are defined for '{{ node.name }}'
+  ansible.builtin.assert:
+    that: fhi72_params is not none
+    fail_msg: "Node '{{ node.name }}' has no 'fhi72' parameters."
+
+# ---------------------------------------------------------------------------
+# Kernel prerequisites (boot parameters)
+# ---------------------------------------------------------------------------
+
+- name: Check IOMMU groups on '{{ node.name }}'
+  ansible.builtin.find:
+    paths: /sys/kernel/iommu_groups
+    file_type: directory
+  register: fhi72_iommu_groups
+
+- name: Read the number of 1G hugepages before allocation on '{{ node.name }}'
+  ansible.builtin.slurp:
+    src: /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+  register: fhi72_hugepages_1g_before
+
+# kubelet reads the hugepages capacity at startup, it is restarted below when the allocation changes
+- name: Allocate 1G hugepages at runtime on '{{ node.name }}'
+  ansible.builtin.shell: |
+    echo {{ fhi72_params.hugepages_1g }} > /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+  changed_when: true
+  when:
+    - fhi72_params.hugepages_1g > 0
+    - (fhi72_hugepages_1g_before.content | b64decode | trim | int) != fhi72_params.hugepages_1g
+  register: fhi72_hugepages_allocated
+
+- name: Read the number of 1G hugepages on '{{ node.name }}'
+  ansible.builtin.slurp:
+    src: /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+  register: fhi72_hugepages_1g
+
+- name: Check kernel prerequisites on '{{ node.name }}'
+  ansible.builtin.assert:
+    that:
+      - fhi72_iommu_groups.matched > 0
+      - (fhi72_hugepages_1g.content | b64decode | trim | int) > 0
+      - fhi72_params.hugepages_1g == 0 or (fhi72_hugepages_1g.content | b64decode | trim | int) == fhi72_params.hugepages_1g
+    fail_msg: >-
+      '{{ node.name }}' needs IOMMU and 1G hugepages for DPDK
+      ({{ fhi72_iommu_groups.matched }} IOMMU groups, {{ fhi72_hugepages_1g.content | b64decode | trim }} 1G hugepages):
+      set IOMMU in the node boot parameters (e.g. intel_iommu=on iommu=pt) and the hugepages either in the boot
+      parameters or with 'hugepages_1g' (a runtime allocation can fall short when memory is fragmented).
+
+# ---------------------------------------------------------------------------
+# Fronthaul PF tuning and SR-IOV VFs
+# ---------------------------------------------------------------------------
+
+- name: Install the fronthaul VFs setup script on '{{ node.name }}'
+  ansible.builtin.template:
+    src: fhi72-vfs.sh.j2
+    dest: /usr/local/sbin/ifran-fhi72-vfs.sh
+    mode: "0755"
+
+- name: Install the fronthaul node tuning script on '{{ node.name }}'
+  ansible.builtin.template:
+    src: fhi72-tuning.sh.j2
+    dest: /usr/local/sbin/ifran-fhi72-tuning.sh
+    mode: "0755"
+  vars:
+    fhi72_irq_pattern: >-
+      {{ fhi72_params.irq_pattern if fhi72_params.irq_pattern is not none
+         else ([fhi72_params.fronthaul_interface] + ([fhi72_params.ptp.interface] if fhi72_params.ptp is not none else [])) | join('|') }}
+
+# VFs, ethtool settings and IRQ affinities are lost at reboot: the script also runs at boot, before kubelet
+- name: Install the fronthaul node tuning systemd unit on '{{ node.name }}'
+  ansible.builtin.template:
+    src: ifran-fhi72-tuning.service.j2
+    dest: /etc/systemd/system/ifran-fhi72-tuning.service
+    mode: "0644"
+
+- name: Enable the fronthaul node tuning at boot on '{{ node.name }}'
+  ansible.builtin.systemd_service:
+    name: ifran-fhi72-tuning
+    enabled: true
+    daemon_reload: true
+
+# PF tuning, VFs creation and vfio-pci binding, NIC IRQs pinning, performance governor, RCU kthreads priority
+- name: Apply the fronthaul node tuning on '{{ node.name }}'
+  ansible.builtin.command: /usr/local/sbin/ifran-fhi72-tuning.sh
+  register: fhi72_tuning
+  changed_when: true
+
+- name: Show the fronthaul node tuning of '{{ node.name }}'
+  ansible.builtin.debug:
+    var: fhi72_tuning.stdout_lines
+
+- name: Check whether irqbalance is installed on '{{ node.name }}'
+  ansible.builtin.service_facts:
+
+# irqbalance would move the pinned NIC IRQs
+- name: Stop and disable irqbalance on '{{ node.name }}'
+  ansible.builtin.systemd_service:
+    name: irqbalance
+    state: stopped
+    enabled: false
+  when: "'irqbalance.service' in ansible_facts.services"
+
+- name: Write the fronthaul sysctl settings of '{{ node.name }}'
+  ansible.builtin.template:
+    src: sysctl-fhi72.conf.j2
+    dest: /etc/sysctl.d/90-ifran-fhi72.conf
+    mode: "0644"
+  register: fhi72_sysctl
+
+- name: Apply the fronthaul sysctl settings of '{{ node.name }}'
+  ansible.builtin.command: sysctl --load /etc/sysctl.d/90-ifran-fhi72.conf
+  changed_when: true
+  when: fhi72_sysctl is changed
+
+# systemd services, kubelet and containerd included, run on the kubelet reserved CPUs (as reservedSystemCPUs)
+- name: Create the systemd manager drop-in directory on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /etc/systemd/system.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Set the systemd CPUAffinity of '{{ node.name }}'
+  ansible.builtin.template:
+    src: systemd-cpuaffinity.conf.j2
+    dest: /etc/systemd/system.conf.d/90-ifran-fhi72.conf
+    mode: "0644"
+  register: fhi72_cpuaffinity
+
+# CPUAffinity only applies to the processes started afterwards
+- name: Reexecute systemd on '{{ node.name }}'
+  ansible.builtin.systemd_service:
+    daemon_reexec: true
+  when: fhi72_cpuaffinity is changed
+
+# The processes already running (containerd, started at boot) keep all the CPUs: a containerd thread left on a CPU of
+# the gNB busy-poll threads (SCHED_FIFO) is starved and freezes containerd (kubelet DeadlineExceeded, pods stuck).
+# The cgroup cpuset of the system slices moves them now, and persists (kubelet keeps kubepods.slice for the pods).
+- name: Get the CPUs of the system slices of '{{ node.name }}'
+  ansible.builtin.command: systemctl show --property=AllowedCPUs --value {{ item }}  # noqa: command-instead-of-module
+  loop: [system.slice, user.slice, init.scope]
+  register: fhi72_slices_cpus
+  changed_when: false
+
+- name: Restrict the system slices to the reserved CPUs on '{{ node.name }}'
+  # no module for the slice properties
+  ansible.builtin.command: systemctl set-property {{ item.item }} AllowedCPUs={{ fhi72_params.reserved_cpus }}  # noqa: command-instead-of-module
+  loop: "{{ fhi72_slices_cpus.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.stdout != fhi72_params.reserved_cpus
+  changed_when: true
+
+# ---------------------------------------------------------------------------
+# Kubelet static CPU manager
+# ---------------------------------------------------------------------------
+
+- name: Read the kubelet configuration of '{{ node.name }}'
+  ansible.builtin.slurp:
+    src: /var/lib/kubelet/config.yaml
+  register: fhi72_kubelet_config_raw
+
+- name: Compute the patched kubelet configuration of '{{ node.name }}'
+  ansible.builtin.set_fact:
+    fhi72_kubelet_config: "{{ fhi72_kubelet_config_raw.content | b64decode | from_yaml }}"
+    fhi72_kubelet_config_patched: >-
+      {{ fhi72_kubelet_config_raw.content | b64decode | from_yaml | combine({
+           'cpuManagerPolicy': 'static',
+           'cpuManagerPolicyOptions': {'full-pcpus-only': 'true'},
+           'reservedSystemCPUs': fhi72_params.reserved_cpus,
+           'topologyManagerPolicy': fhi72_params.topology_manager_policy,
+         }, recursive=True) }}
+
+- name: Check that kubelet runs static pods on '{{ node.name }}'
+  ansible.builtin.assert:
+    that: fhi72_kubelet_config.staticPodPath is defined
+    fail_msg: "kubelet on '{{ node.name }}' has no staticPodPath, the SR-IOV device plugin cannot run as a static pod."
+
+- name: Write the patched kubelet configuration of '{{ node.name }}'
+  ansible.builtin.copy:
+    content: "{{ fhi72_kubelet_config_patched | to_nice_yaml(indent=2) }}"
+    dest: /var/lib/kubelet/config.yaml
+    mode: "0644"
+    backup: true
+  register: fhi72_kubelet_config_written
+  when: fhi72_kubelet_config_patched != fhi72_kubelet_config
+
+# the CPU manager checkpoint must be removed when the policy changes, otherwise kubelet refuses to start
+- name: Remove the kubelet CPU manager checkpoint of '{{ node.name }}'
+  ansible.builtin.file:
+    path: /var/lib/kubelet/cpu_manager_state
+    state: absent
+  when: fhi72_kubelet_config_written is changed
+
+- name: Restart kubelet on '{{ node.name }}'
+  ansible.builtin.systemd_service:
+    name: kubelet
+    state: restarted
+  when: fhi72_kubelet_config_written is changed or fhi72_hugepages_allocated is changed or fhi72_cpuaffinity is changed
+
+# ---------------------------------------------------------------------------
+# SR-IOV network device plugin (static pod)
+# ---------------------------------------------------------------------------
+
+- name: Create the SR-IOV device plugin configuration directory on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /etc/pcidp
+    state: directory
+    mode: "0755"
+
+- name: Write the SR-IOV device plugin configuration of '{{ node.name }}'
+  ansible.builtin.template:
+    src: sriovdp-config.json.j2
+    dest: /etc/pcidp/config.json
+    mode: "0644"
+  register: fhi72_sriovdp_config
+
+- name: Compute the SR-IOV device plugin configuration checksum of '{{ node.name }}'
+  ansible.builtin.stat:
+    path: /etc/pcidp/config.json
+    checksum_algorithm: sha256
+  register: fhi72_sriovdp_config_stat
+
+- name: Write the SR-IOV device plugin static pod manifest of '{{ node.name }}'
+  ansible.builtin.template:
+    src: sriov-device-plugin.yaml.j2
+    dest: "{{ fhi72_kubelet_config.staticPodPath }}/sriov-device-plugin.yaml"
+    mode: "0600"
+  vars:
+    sriovdp_config_checksum: "{{ fhi72_sriovdp_config_stat.stat.checksum }}"
+
+# ---------------------------------------------------------------------------
+# PTP
+# ---------------------------------------------------------------------------
+
+- name: Set up PTP on '{{ node.name }}'
+  when: fhi72_params.ptp is not none
+  block:
+    - name: Install linuxptp build dependencies on '{{ node.name }}'
+      ansible.builtin.apt:
+        name:
+          - gcc
+          - make
+          - git
+        state: present
+        update_cache: true
+
+    - name: Clone linuxptp on '{{ node.name }}'
+      ansible.builtin.git:
+        repo: https://github.com/richardcochran/linuxptp.git
+        dest: /usr/local/src/linuxptp
+        version: "{{ fhi72_params.ptp.linuxptp_version }}"
+        depth: 1
+        force: true
+      register: fhi72_linuxptp_clone
+
+    - name: Build and install linuxptp in /usr/local/sbin on '{{ node.name }}'
+      ansible.builtin.shell: |
+        make -j"$(nproc)"
+        make install
+      args:
+        chdir: /usr/local/src/linuxptp
+      changed_when: true
+      when: fhi72_linuxptp_clone is changed
+
+    # phc2sys drives the system clock, NTP must not fight it
+    - name: Disable NTP on '{{ node.name }}'
+      ansible.builtin.command: timedatectl set-ntp false
+      changed_when: false
+
+    - name: Write the ptp4l configuration of '{{ node.name }}'
+      ansible.builtin.template:
+        src: ptp4l.conf.j2
+        dest: /etc/ptp4l.conf
+        mode: "0644"
+      register: fhi72_ptp4l_conf
+
+    - name: Install the ptp4l and phc2sys systemd units on '{{ node.name }}'
+      ansible.builtin.template:
+        src: "{{ item }}.service.j2"
+        dest: "/etc/systemd/system/{{ item }}.service"
+        mode: "0644"
+      loop:
+        - ptp4l
+        - phc2sys
+      register: fhi72_ptp_units
+
+    - name: Enable and (re)start ptp4l and phc2sys on '{{ node.name }}'
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: true
+        daemon_reload: true
+        state: >-
+          {{ 'restarted' if (fhi72_linuxptp_clone is changed or fhi72_ptp4l_conf is changed
+                             or fhi72_ptp_units is changed) else 'started' }}
+      loop:
+        - ptp4l
+        - phc2sys

@@ -152,7 +152,7 @@ config:
   timeZone: {{ component.config.timeZone }}
   useAdditionalOptions: "{{ component.advanced_config.useAdditionalOptions | default(component.derived_radio_config.additional_flags, true) }}"
   gdbstack: {{ component.advanced_config.gdbstack | default(1, true) }}     # 1 to see gdb traces 
-  radio: {{ component.derived_radio_config.radio }}  # Options: rfsim, vrtsim, b2xx, n3xx, x3xx
+  radio: {{ component.derived_radio_config.radio }}  # Options: rfsim, vrtsim, b2xx, n3xx, x3xx, aw2s, fhi72
 
 start:
   {{ component.type }}: {{ component.start | lower }}      # If false → NF container sleeps (for manual debugging)
@@ -183,6 +183,9 @@ resources:
     nf:
       cpu: {{ component.resources.limits.nf.cpu }}
       memory: {{ component.resources.limits.nf.memory }}
+{% if component.resources.limits.nf.hugepages_1gi %}
+      hugepages1Gi: {{ component.resources.limits.nf.hugepages_1gi }}
+{% endif %}
 {% endif %}
 {% if component.resources.limits.tcpdump %}
     tcpdump:
@@ -197,12 +200,31 @@ resources:
     nf:
       cpu: {{ component.resources.requests.nf.cpu }}
       memory: {{ component.resources.requests.nf.memory }}
+{% if component.resources.requests.nf.hugepages_1gi %}
+      hugepages1Gi: {{ component.resources.requests.nf.hugepages_1gi }}
+{% endif %}
 {% endif %}
 {% if component.resources.requests.tcpdump %}
     tcpdump:
       cpu: {{ component.resources.requests.tcpdump.cpu }}
       memory: {{ component.resources.requests.tcpdump.memory }}
 {% endif %}
+{% endif %}
+
+# O-RAN 7.2 fronthaul (radio fhi72): SR-IOV VFs of the node, in 'fhi_72.dpdk_devices' order
+{% if component.derived_radio_config.fhi72 is defined %}
+fhi72:
+  sriovResources:
+{% for resource in component.derived_radio_config.fhi72.sriov_resources %}
+    - {{ resource }}
+{% endfor %}
+  pciDeviceEnvVars:
+{% for env_var in component.derived_radio_config.fhi72.pci_device_env_vars %}
+    - {{ env_var }}
+{% endfor %}
+  yqImage: docker.io/mikefarah/yq:4.47.2
+{% else %}
+fhi72: null
 {% endif %}
 
 readinessProbe: {{ component.readiness_probe | lower }}

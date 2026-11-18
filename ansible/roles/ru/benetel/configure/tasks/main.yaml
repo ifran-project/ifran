@@ -1,0 +1,91 @@
+# RU Benetel configure role
+
+# Loads the OAI configuration of a Benetel RU (/etc/ru_config.cfg) from the node of its gNB or DU, which reaches the
+# RU management IP, and reboots the RU when the configuration changed (or always with force_reboot), as the
+# 5g_ansible prepare-benetel<N>-for-oai.sh script does from faraday.
+
+# Input:
+# - ru_name: str
+# - ru_ip: str (RU management IP)
+# - ru_config: dict[str, str] (ru_config.cfg values)
+# - force_reboot: bool
+
+# Output: None
+---
+- name: Set SSH options to reach RU '{{ ru_name }}'
+  ansible.builtin.set_fact:
+    configure_ssh_options: >-
+      -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new
+      -o UserKnownHostsFile=/root/.ssh/known_hosts_ifran_rus
+
+- name: Wait for the RU management IP to answer from '{{ inventory_hostname }}'
+  ansible.builtin.command: ping -c 1 -W 2 {{ ru_ip }}
+  register: configure_ping
+  until: configure_ping.rc == 0
+  retries: 30
+  delay: 5
+  changed_when: false
+
+- name: Render the configuration of RU '{{ ru_name }}'
+  ansible.builtin.template:
+    src: ru_config.cfg.j2
+    dest: /tmp/ifran-{{ ru_name }}-ru_config.cfg
+    mode: "0644"
+
+- name: Read the configuration file of RU '{{ ru_name }}'
+  ansible.builtin.command: ssh {{ configure_ssh_options }} root@{{ ru_ip }} cat /etc/ru_config.cfg
+  register: configure_current_config
+  changed_when: false
+  failed_when: false
+
+- name: Read the rendered configuration of RU '{{ ru_name }}'
+  ansible.builtin.slurp:
+    src: /tmp/ifran-{{ ru_name }}-ru_config.cfg
+  register: configure_new_config
+
+- name: Load the configuration and reboot RU '{{ ru_name }}'
+  when: >-
+    force_reboot | bool
+    or configure_current_config.rc != 0
+    or (configure_current_config.stdout | trim) != (configure_new_config.content | b64decode | trim)
+  block:
+    # the RU has no sftp server: legacy scp protocol (-O)
+    - name: Copy the configuration to RU '{{ ru_name }}'
+      ansible.builtin.command: >-
+        scp -O {{ configure_ssh_options }} /tmp/ifran-{{ ru_name }}-ru_config.cfg root@{{ ru_ip }}:/etc/ru_config.cfg
+      changed_when: true
+
+    # the SSH connection is closed by the reboot
+    - name: Reboot RU '{{ ru_name }}'
+      ansible.builtin.command: ssh {{ configure_ssh_options }} root@{{ ru_ip }} /sbin/reboot
+      register: configure_reboot
+      changed_when: true
+      failed_when: configure_reboot.rc not in [0, 255]
+
+    - name: Wait for the RU to go down after the reboot of '{{ ru_name }}'
+      ansible.builtin.command: ping -c 1 -W 2 {{ ru_ip }}
+      register: configure_down
+      until: configure_down.rc != 0
+      retries: 30
+      delay: 2
+      changed_when: false
+      failed_when: false
+
+    - name: Wait for the RU to be back after the reboot of '{{ ru_name }}'
+      ansible.builtin.command: ping -c 1 -W 2 {{ ru_ip }}
+      register: configure_up
+      until: configure_up.rc == 0
+      retries: 60
+      delay: 5
+      changed_when: false
+
+    - name: Check the configuration loaded on RU '{{ ru_name }}'
+      ansible.builtin.command: ssh {{ configure_ssh_options }} root@{{ ru_ip }} cat /etc/ru_config.cfg
+      register: configure_loaded_config
+      until: configure_loaded_config.rc == 0
+      retries: 12
+      delay: 5
+      changed_when: false
+      failed_when: >-
+        configure_loaded_config.rc != 0
+        or (configure_loaded_config.stdout | trim) != (configure_new_config.content | b64decode | trim)
