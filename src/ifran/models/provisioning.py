@@ -594,6 +594,19 @@ class ProvisionableNode(SSHableResource):
     """Kubernetes parameter overrides."""
 
 
+class UEConnectionStatus(StrEnum):
+    """Supported UE connection status values."""
+
+    NOT_CONFIGURED = auto()
+    """UE is not configured and not ready to connect to the 5G network."""
+
+    CONFIGURED = auto()
+    """UE is configured and ready to connect to the 5G network."""
+
+    CONNECTED = auto()
+    """UE is actively connected to the 5G network."""
+
+
 class ProvisionableUE(SSHableResource):
     """User Equipment (UE) provisioning."""
 
@@ -606,8 +619,8 @@ class ProvisionableUE(SSHableResource):
     provisioner: str | None = Field(default="r2lab")
     """UE provisioner's name."""
 
-    is_connected: bool = Field(default=False)
-    """If this UE is connected or not."""
+    connection_status: UEConnectionStatus = Field(default=UEConnectionStatus.NOT_CONFIGURED)
+    """Current UE connection status."""
 
 
 class RUVendor(StrEnum):

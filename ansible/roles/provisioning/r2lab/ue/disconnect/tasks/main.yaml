@@ -11,4 +11,3 @@
 - name: Disconnect '{{ ue_name }}'
   ansible.builtin.include_role:
     name: provisioning/unified_radio/ue/disconnect
-    public: true # share role vars for next tasks (token)

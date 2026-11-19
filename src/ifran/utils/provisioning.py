@@ -17,6 +17,7 @@ from ifran.models.provisioning import (
     ProvisioningCategory,
     SSHableResource,
     SSHInfo,
+    UEConnectionStatus,
 )
 from ifran.utils.ansible import (
     get_ansible_inventory_line,
@@ -239,6 +240,9 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         if resource_data.category is ProvisioningCategory.NODE:
             # set k8s status to not_configured for nodes
             resource_data.k8s_status = K8SStatus.NOT_CONFIGURED
+        elif resource_data.category is ProvisioningCategory.UE:
+            # set connection status to not_configured for cots ues
+            resource_data.connection_status = UEConnectionStatus.NOT_CONFIGURED
 
 
 async def run_parallel_provisioning_action(  # noqa: PLR0917
