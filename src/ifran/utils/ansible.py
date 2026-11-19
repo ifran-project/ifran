@@ -40,6 +40,7 @@ def get_ansible_inventory_line(
         "ansible_user": ssh_info.user,
         "ansible_ssh_timeout": str(ssh_info.timeout),
         "ansible_ssh_pipelining": 'true' if ssh_info.pipelining else 'false',
+        "ansible_python_interpreter": "/usr/bin/python3",
     }
 
     if ssh_info.private_key_file:
