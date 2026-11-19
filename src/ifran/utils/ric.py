@@ -64,7 +64,7 @@ async def create_xapp_namespace(  # noqa: PLR0917
             resource_name=node_name,
             resource_data=node_data,
             ssh_params=ssh_params,
-            ),
+        ),
         roles_paths=ansible_params.roles_paths,
         quiet=quiet,
         retries=retries,

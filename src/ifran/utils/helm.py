@@ -147,7 +147,7 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
             resource_name=node_name,
             resource_data=node_data,
             ssh_params=ssh_params,
-            ),
+        ),
         "become": True,
         "quiet": quiet,
         "retries": retries,

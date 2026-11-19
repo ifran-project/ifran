@@ -30,7 +30,7 @@ class UEManagement(HelmManagement):
     @override
     async def run_action(  # noqa: PLR0917
         self,
-        action: Literal[*CONTAINERIZED_UE_ACTIONS, *COTS_UE_ACTIONS], # type: ignore
+        action: Literal[*CONTAINERIZED_UE_ACTIONS, *COTS_UE_ACTIONS],  # type: ignore
         components: list[str] | None = None,
         **kwargs,
     ) -> dict[str, str] | None:

@@ -159,7 +159,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
-    retries: int = 5
+    retries: int = 5,
 ) -> None:
     """Run the Ansible role of the provisioner corresponding to the given action on a single resource."""
 
@@ -227,7 +227,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             # NOTE ssh_info is merged with precedence to the provisioning's ssh_info
             # NOTE deep_merge is used to also merge nested jumphost ssh info
             resource_data.ssh_info = SSHInfo.model_validate(  # type: ignore
-                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"]) # type: ignore
+                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"])  # type: ignore
             )  # type: ignore
 
         elif resource_data.category is ProvisioningCategory.RU and not resource_data.ips:

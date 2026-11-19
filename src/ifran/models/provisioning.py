@@ -122,7 +122,7 @@ class SSHInfo(StrictBaseModel):
             args.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
         if self.multiplexing:
             args.append("-o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto")
-            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C") # persist for 2 hours
+            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C")  # persist for 2 hours
         if self.extra_args:
             args.append(self.extra_args)
 

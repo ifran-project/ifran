@@ -228,11 +228,11 @@ async def run_single_ue_action(  # noqa: PLR0917
 
     if not force:
         if (
-            (action == "configure" and ue_prov.connection_status.value in ["configured", "connected"]) or
-            (action == "connect" and ue_prov.connection_status is UEConnectionStatus.CONNECTED) or
-            (action == "disconnect" and ue_prov.connection_status is not UEConnectionStatus.CONNECTED)
-            ):
-            raise InvalidResourceStateError(f"UE {ue_name!r} is already {action.removesuffix("e")}ed.")
+            (action == "configure" and ue_prov.connection_status.value in ["configured", "connected"])
+            or (action == "connect" and ue_prov.connection_status is UEConnectionStatus.CONNECTED)
+            or (action == "disconnect" and ue_prov.connection_status is not UEConnectionStatus.CONNECTED)
+        ):
+            raise InvalidResourceStateError(f"UE {ue_name!r} is already {action.removesuffix('e')}ed.")
 
         if action == "connect" and ue_prov.connection_status is UEConnectionStatus.NOT_CONFIGURED:
             raise InvalidResourceStateError(f"UE {ue_name!r} is not configured.")

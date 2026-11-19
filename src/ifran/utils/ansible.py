@@ -18,6 +18,7 @@ from ifran.utils.utils import InvalidResourceStateError, deep_merge, resolve_pat
 
 logger = logging.getLogger(__name__)
 
+
 def get_ansible_inventory_line(
     resource_name: str,
     resource_data: SSHableResource,
@@ -31,15 +32,15 @@ def get_ansible_inventory_line(
         deep_merge(
             ssh_params.model_dump(mode="json", exclude_defaults=True),
             resource_data.ssh_info.model_dump(mode="json", exclude_defaults=True),
-            ),
-        )
+        ),
+    )
 
     vars: dict[str, str] = {
         "ansible_host": ssh_info.hostname or resource_data.name,
         "ansible_port": str(ssh_info.port),
         "ansible_user": ssh_info.user,
         "ansible_ssh_timeout": str(ssh_info.timeout),
-        "ansible_ssh_pipelining": 'true' if ssh_info.pipelining else 'false',
+        "ansible_ssh_pipelining": "true" if ssh_info.pipelining else "false",
         "ansible_python_interpreter": "/usr/bin/python3",
     }
 
@@ -119,7 +120,6 @@ def get_ansible_error(runner: ansible_runner.Runner) -> str:
     return "\n\n".join(errors)
 
 
-
 async def run_ansible_playbook(  # noqa: PLR0917
     playbook: list | dict[str, Any] | str,
     runner_path: str,
@@ -183,15 +183,15 @@ async def run_ansible_playbook(  # noqa: PLR0917
             if runner.status != "successful" or runner.rc != 0:
                 raise RuntimeError(  # noqa: TRY301
                     f"Ansible playbook run not successful (status: {runner.status!r}, return code: {runner.rc!r})\n"
-                    f"{get_ansible_error(runner)}" # type: ignore
-                    )
+                    f"{get_ansible_error(runner)}"  # type: ignore
+                )
 
             if output_keys is None:
                 return None
 
             output = {}
             for key in output_keys:
-                output[key] = get_ansible_output(runner=runner, output_keys=output_keys).get(key) # type: ignore
+                output[key] = get_ansible_output(runner=runner, output_keys=output_keys).get(key)  # type: ignore
                 if output[key] is None:
                     raise RuntimeError(f"Ansible playbook run completed but did not return expected output for {key!r}")  # noqa: TRY301
 
