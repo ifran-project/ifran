@@ -241,6 +241,9 @@ class ComputeResources(StrictBaseModel):
     memory: str | int | float | None = Field(default=None)
     """Memory resource value (e.g. 1Gi)."""
 
+    hugepages_1gi: str | None = Field(default=None)
+    """1Gi hugepages resource value (e.g. 8Gi), only used by DPDK-based components (OAI O-RAN 7.2 gNB)."""
+
 
 class ContainerResources(StrictBaseModel):
     """Resources assigned to a specific container."""

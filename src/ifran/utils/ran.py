@@ -9,6 +9,7 @@ from metamodel_3gpp.models.ru import RUType
 from ifran.models.common import Deployed5GComponent
 from ifran.models.core import MergedAMF
 from ifran.models.deployment import DeploymentModel
+from ifran.models.provisioning import ProvisionableNode
 from ifran.models.ran import ADVANCED_RAN_CONFIG_MAPPING, DeployedRANComponent, RANImplementation
 from ifran.models.ric import MergedRIC
 from ifran.utils.common_5g import (
@@ -130,6 +131,56 @@ def resolve_ocudu_zmq_ran(
         # NOTE this ip will later be taken from here and given as static_pod_ip to the ue component
 
 
+def resolve_fhi72_node(
+    component_name: str,
+    component_deployment: DeployedRANComponent,
+    nodes: dict[str, ProvisionableNode],
+) -> None:
+    """
+    Add the O-RAN 7.2 (fhi72) node resources to the derived radio configuration of a gNB using a 7.2 RU.
+
+    The VFs are requested from the SR-IOV device plugin of the node set up by K8SManagement.setup_fhi72, in the
+    'fhi_72.dpdk_devices' order of OAI: U-plane VF, then C-plane VF.
+    """
+
+    node_name = component_deployment.node_name
+    node = nodes.get(node_name) if node_name else None
+
+    if node is None or node.fhi72 is None:
+        raise ValueError(
+            f"RAN component {component_name!r} uses an O-RAN 7.2 RU: its 'node_name' must be a deployment model node "
+            f"with 'fhi72' parameters (got {node_name!r})."
+        )
+
+    limits = component_deployment.resources.limits
+    requests = component_deployment.resources.requests
+
+    # DPDK needs hugepages, and the static CPU manager only pins the CPUs of Guaranteed pods
+    if not (
+        component_deployment.resources.define
+        and limits
+        and limits.nf
+        and limits.nf.hugepages_1gi
+        and requests
+        and requests.nf
+        and requests.nf == limits.nf
+    ):
+        raise ValueError(
+            f"RAN component {component_name!r} uses an O-RAN 7.2 RU: define its 'resources' with equal 'nf' requests "
+            "and limits (Guaranteed pod, integer cpu) including 'hugepages_1gi'."
+        )
+
+    resources = [f"{node.fhi72.resource_prefix}/{node.fhi72.vf(plane).resource_name}" for plane in ("U", "C")]
+
+    component_deployment.derived_radio_config["fhi72"] = {  # type: ignore
+        "sriov_resources": resources,
+        # environment variables set by the SR-IOV device plugin with the PCI address of the allocated VF
+        "pci_device_env_vars": [
+            "PCIDEVICE_" + resource.upper().replace(".", "_").replace("/", "_") for resource in resources
+        ],
+    }
+
+
 def reconcile_ran(
     metamodel: MetaModel,
     deployment_model: DeploymentModel,
@@ -240,6 +291,13 @@ def reconcile_ran(
                 component_meta=component_meta,  # type: ignore
                 component_deployment=component_deployment,
             )
+
+            if component_deployment.derived_radio_config.get("radio") == "fhi72":  # type: ignore
+                resolve_fhi72_node(
+                    component_name=component_name,
+                    component_deployment=component_deployment,
+                    nodes=deployment_model.nodes,
+                )
 
         # resolve references between split ran components
         # NOTE static ip assignment needs to be done before this

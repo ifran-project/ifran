@@ -4,7 +4,7 @@ from typing import Literal
 
 from ifran.deployment.base import BaseManagement
 from ifran.models.k8s import K8SStatus
-from ifran.utils.k8s import run_parallel_k8s_setup_action, run_single_k8s_setup_action
+from ifran.utils.k8s import run_parallel_fhi72_setup, run_parallel_k8s_setup_action, run_single_k8s_setup_action
 
 
 class K8SManagement(BaseManagement):
@@ -143,3 +143,37 @@ class K8SManagement(BaseManagement):
     async def remove(self, nodes: list[str] | None = None, **kwargs) -> None:
         """Tear down/remove Kubernetes setup from nodes."""
         await self.run_action(action="remove", nodes=nodes, **kwargs)
+
+    async def setup_fhi72(  # noqa: PLR0917
+        self,
+        nodes: list[str] | None = None,
+        force: bool = False,
+        # a node outside the cluster is an error here, not a step already done as in the lifecycle actions
+        ignore_invalid_states: bool = False,
+        ignore_failures: bool = False,
+        quiet: bool = False,
+    ) -> None:
+        """
+        Set up O-RAN 7.2 fronthaul on the nodes that define 'fhi72' parameters (all of them or a given subset).
+
+        This is not a Kubernetes lifecycle action: the node Kubernetes status is left unchanged, but the nodes must
+        already be in the cluster (the kubelet configuration is patched).
+        """
+
+        target_nodes = {
+            name: node
+            for name, node in self.deployment_model.nodes.items()
+            if node.fhi72 is not None and (nodes is None or name in nodes)
+        }
+
+        if not target_nodes:
+            raise RuntimeError("No target node defines 'fhi72' parameters.")
+
+        await run_parallel_fhi72_setup(
+            nodes=target_nodes,
+            ansible_params=self.deployment_model.params.ansible,
+            force=force,
+            ignore_invalid_states=ignore_invalid_states,
+            ignore_failures=ignore_failures,
+            quiet=quiet,
+        )

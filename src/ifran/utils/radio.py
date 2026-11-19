@@ -15,7 +15,7 @@ from metamodel_3gpp.models.ran import (
 from metamodel_3gpp.models.ru import RUType
 from metamodel_3gpp.models.ue import UE, UEType
 
-from ifran.models.provisioning import AW2SModel, RUModel, RUVendor, USRPModel
+from ifran.models.provisioning import AW2SModel, BenetelModel, RUModel, RUVendor, USRPModel
 from ifran.models.ran import ADVANCED_RAN_CONFIG_MAPPING, DeployedRANComponent, RANImplementation
 from ifran.models.ue import DeployedUE, UEImplementation
 
@@ -112,6 +112,11 @@ RADIO_TYPE_BY_RU: dict[RUVendor | None, dict[RUModel | None, str]] = {
     RUVendor.AW2S: {
         AW2SModel.JAGUAR: "aw2s",
         AW2SModel.PANTHER: "aw2s",
+    },
+    # O-RAN 7.2 fronthaul (DPDK on SR-IOV VFs)
+    RUVendor.BENETEL: {
+        BenetelModel.RAN550: "fhi72",
+        BenetelModel.RAN650: "fhi72",
     },
 }
 
@@ -244,7 +249,8 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
         "additional_flags": additional_flags,
         "sdr_addrs": (
             f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
-            if ru.type is RUType.REAL and ru.ips and ru.vendor is not RUVendor.AW2S  # type: ignore
+            # USRP only: AW2S and Benetel RUs are not driven through UHD
+            if ru.type is RUType.REAL and ru.ips and ru.vendor not in [RUVendor.AW2S, RUVendor.BENETEL]  # type: ignore
             else None
         ),
         "bwp_location_and_bandwidth": get_oai_bwp_location_and_bandwidth(bandwidth_rb),

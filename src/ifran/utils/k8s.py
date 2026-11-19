@@ -163,3 +163,72 @@ async def run_parallel_k8s_setup_action(  # noqa: PLR0917
                 ignore_invalid_states=ignore_invalid_states,
                 ignore_failures=ignore_failures,
             )
+
+
+async def run_single_fhi72_setup(
+    node_name: str,
+    node_data: ProvisionableNode,
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    quiet: bool = False,
+) -> None:
+    """Run the O-RAN 7.2 fronthaul setup Ansible role on a single node of the Kubernetes cluster."""
+
+    if node_data.fhi72 is None:
+        raise RuntimeError(f"Node {node_name!r} has no 'fhi72' parameters.")
+
+    # the fhi72 setup patches the kubelet configuration, so the node must have joined the cluster
+    if not force and node_data.k8s_status != K8SStatus.IN_CLUSTER:
+        raise InvalidResourceStateError(
+            f"Node {node_name!r} must be in the Kubernetes cluster for the fhi72 setup "
+            f"(status: {node_data.k8s_status.value})."
+        )
+
+    args = {
+        "role": "k8s/fhi72",
+        "inputs": {
+            "node": {
+                **node_data.model_dump(mode="json"),
+                "name": node_name,  # NOTE display node's key in the nodes dict instead of its actual name
+            },
+        },
+        "runner_path": f"{ansible_params.runner_path}/{node_data.category.value}/{node_name}/k8s/fhi72",
+        "roles_paths": ansible_params.roles_paths,
+        "hosts": node_name,
+        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        "become": True,
+        "quiet": quiet,
+    }
+
+    try:
+        await run_ansible_role(**args)
+    except Exception as e:
+        raise RuntimeError(f"Node {node_name!r} fhi72 setup not successful.") from e
+
+
+async def run_parallel_fhi72_setup(  # noqa: PLR0917
+    nodes: dict[str, ProvisionableNode],
+    ansible_params: AnsibleParams,
+    force: bool = False,
+    ignore_invalid_states: bool = True,
+    ignore_failures: bool = False,
+    quiet: bool = False,
+) -> None:
+    """Run the O-RAN 7.2 fronthaul setup in parallel on provided nodes."""
+
+    tasks = [
+        asyncio.create_task(
+            run_single_fhi72_setup(
+                node_name=name, node_data=node, ansible_params=ansible_params, force=force, quiet=quiet
+            )
+        )
+        for name, node in nodes.items()
+    ]
+
+    for result in await asyncio.gather(*tasks, return_exceptions=True):
+        if isinstance(result, Exception):
+            handle_ansible_result_exception(
+                result=result,
+                ignore_invalid_states=ignore_invalid_states,
+                ignore_failures=ignore_failures,
+            )

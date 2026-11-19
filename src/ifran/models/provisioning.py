@@ -573,6 +573,112 @@ class DatabaseRole(StrEnum):
 type NodeRole = Category5G | CoreComponentType | RANComponentType | RICComponentType | DatabaseRole
 
 
+class Fhi72VF(StrictBaseModel):
+    """SR-IOV virtual function of the O-RAN 7.2 fronthaul interface (VF index = position in the list)."""
+
+    resource_name: str = Field(pattern=r"^[A-Za-z0-9_]+$")
+    """Device plugin pool the VF belongs to (e.g. 'ruvfioc' for C-plane, 'ruvfiou' for U-plane)."""
+
+    plane: Literal["U", "C"] = Field()
+    """O-RAN fronthaul plane carried by the VF: U-plane or C-plane."""
+
+    mac: str = Field(pattern=r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
+    """VF MAC address, i.e. the DU MAC address expected by the RU for this plane."""
+
+    vlan: int = Field(ge=1, le=4094)
+    """VLAN ID of the fronthaul traffic on this VF."""
+
+
+class Fhi72PTPParams(StrictBaseModel):
+    """PTP (linuxptp) parameters of an O-RAN 7.2 node: ptp4l slave on 'interface', phc2sys to the system clock."""
+
+    interface: str = Field()
+    """Interface connected to the PTP grandmaster (its PHC is used by phc2sys)."""
+
+    domain_number: int = Field(default=24, ge=0, le=255)
+    """PTP domain number."""
+
+    network_transport: Literal["L2", "UDPv4", "UDPv6"] = Field(default="L2")
+    """PTP network transport."""
+
+    log_announce_interval: int = Field(default=1)
+    """ptp4l logAnnounceInterval (log2 seconds)."""
+
+    log_sync_interval: int = Field(default=-4)
+    """ptp4l logSyncInterval (log2 seconds)."""
+
+    linuxptp_version: str = Field(default="v4.4")
+    """linuxptp git tag built from source."""
+
+
+class Fhi72NodeParams(StrictBaseModel):
+    """
+    O-RAN 7.2 fronthaul (fhi72) node setup.
+
+    SR-IOV VFs bound to vfio-pci, kubelet static CPU manager, NIC IRQ pinning, PTP and the SR-IOV network
+    device plugin (static pod). Kernel boot parameters (IOMMU, 1G hugepages, isolated CPUs) are expected
+    to be set at provisioning time.
+    """
+
+    fronthaul_interface: str = Field()
+    """Physical function (PF) used for the fronthaul, its VFs are created and bound to vfio-pci."""
+
+    mtu: int = Field(default=9216, ge=1500, le=9728)
+    """MTU of the fronthaul PF."""
+
+    vfs: list[Fhi72VF] = Field(min_length=2)
+    """VFs to create on the fronthaul PF, the list position is the VF index: one U-plane VF and one C-plane VF."""
+
+    resource_prefix: str = Field(default="openshift.io")
+    """Device plugin resource prefix (the fhi72 chart reads PCIDEVICE_<PREFIX>_<RESOURCE_NAME>)."""
+
+    hugepages_1g: int = Field(default=0, ge=0)
+    """
+    Number of 1G hugepages allocated at runtime (as the 5g_ansible hugepages role does).
+    0 keeps the hugepages set by the boot parameters.
+    """
+
+    ring_size: int | None = Field(default=8160, ge=64)
+    """If set, rx/tx ring size of the fronthaul PF (ethtool -G)."""
+
+    reserved_cpus: str = Field(default="0-5")
+    """Kubelet reservedSystemCPUs, also the CPUs of the systemd services (CPUAffinity) and of the NIC IRQs."""
+
+    topology_manager_policy: Literal["none", "best-effort", "restricted", "single-numa-node"] = Field(
+        default="best-effort",
+    )
+    """Kubelet topology manager policy."""
+
+    irq_pattern: str | None = Field(default=None)
+    """
+    Extended regex matched against /proc/interrupts lines to pin NIC IRQs on 'reserved_cpus'.
+    Defaults to the fronthaul and PTP interface names.
+    """
+
+    ptp: Fhi72PTPParams | None = Field(default=None)
+    """PTP parameters, no PTP setup if None."""
+
+    device_plugin_image: str = Field(default="ghcr.io/k8snetworkplumbingwg/sriov-network-device-plugin:v3.9.0")
+    """SR-IOV network device plugin container image."""
+
+    @model_validator(mode="after")
+    def validate_planes(self) -> Self:
+        """Ensure there is exactly one U-plane VF and one C-plane VF, on the same VLAN."""
+
+        planes = sorted(vf.plane for vf in self.vfs)
+        if planes != ["C", "U"]:
+            raise ValueError(f"'vfs' needs exactly one U-plane VF and one C-plane VF (got planes {planes}).")
+
+        if len({vf.vlan for vf in self.vfs}) != 1:
+            raise ValueError("The U-plane and C-plane VFs must be on the same VLAN.")
+
+        return self
+
+    def vf(self, plane: Literal["U", "C"]) -> Fhi72VF:
+        """Return the VF of the given plane."""
+        return next(vf for vf in self.vfs if vf.plane == plane)
+
+
 class ProvisionableNode(SSHableResource):
     """Node provisioning."""
 
@@ -592,6 +698,9 @@ class ProvisionableNode(SSHableResource):
 
     k8s_params: dict[str, Any] = Field(default_factory=dict)
     """Kubernetes parameter overrides."""
+
+    fhi72: Fhi72NodeParams | None = Field(default=None)
+    """O-RAN 7.2 fronthaul node setup, applied by K8SManagement.setup_fhi72() once the node is in the cluster."""
 
 
 class ProvisionableUE(SSHableResource):
@@ -674,6 +783,35 @@ type RUModel = USRPModel | AW2SModel | BenetelModel | LiteonModel
 
 
 # NOTE radio units are not ssh-able resources
+class BenetelRUParams(StrictBaseModel):
+    """
+    Benetel RU parameters of its /etc/ru_config.cfg that are not derived from the models.
+
+    The DU MAC addresses and VLAN come from the 'fhi72' parameters of the gNB or DU node, the centre frequency,
+    bandwidth, TDD pattern and MIMO mode from the gNB or DU radio configuration and the RU ports.
+    """
+
+    tx_power_dbm: float = Field(default=24.0)
+    """
+    RU Tx power in dBm. Valid range according to the Benetel profile: from the maximum output power of the RU - 20 to
+    that maximum ("Max Output Power" in /tmp/logs/ru_information on the RU: 24 dBm for the RAN550, hence 4 to 24).
+    """
+
+    downlink_scaling: Literal[0, 6, 12, 18] = Field(default=0)
+    """FPGA downlink scaling in dB, to be consistent with the OAI 'tx_amp_backoff_dB'."""
+
+    compression: Literal["static_uncompressed", "dynamic_uncompressed", "static_compressed", "dynamic_compressed"] = (
+        Field(default="static_compressed")
+    )
+    """O-RU compression (uncompressed modes are not supported in 4x2 and 4x4 MIMO modes)."""
+
+    prach_format: Literal["short", "long"] = Field(default="short")
+    """PRACH format."""
+
+    extra: dict[str, str] = Field(default_factory=dict)
+    """Other ru_config.cfg values (e.g. {'dpd_reset_timer': '43200'}), overriding the generated ones."""
+
+
 class ProvisionableRU(GenericProvisionableResource):
     """Radio Unit (RU) provisioning."""
 
@@ -690,6 +828,9 @@ class ProvisionableRU(GenericProvisionableResource):
 
     ips: list[IPvAnyAddress] = Field(default_factory=list)
     """List of RU IP addresses."""
+
+    benetel: BenetelRUParams | None = Field(default=None)
+    """Benetel RU configuration parameters (defaults are used for a Benetel RU if None)."""
 
 
 # type used to tell pydantic to validate the correct provisionable resource model based on the category
