@@ -160,7 +160,10 @@ async def run_ansible_playbook(  # noqa: PLR0917
                 "playbook": resolve_path(playbook),
                 "extravars": inputs,
                 "quiet": quiet,
-                "cancel_callback": stop_requested.is_set
+                "cancel_callback": stop_requested.is_set,
+                # only get event data when needed -> output_keys != None
+                # failed event data is always needed for error extraction
+                "only_failed_event_data": (output_keys is None),
             }
 
             thread, runner = ansible_runner.run_async(**run_args)
