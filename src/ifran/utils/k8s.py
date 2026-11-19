@@ -99,7 +99,7 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
             resource_name=node_name,
             resource_data=node_data,
             ssh_params=ssh_params,
-            ),
+        ),
         "become": True,
         "quiet": quiet,
         "retries": retries,

@@ -172,7 +172,8 @@ def reconcile_ran(
 
     rics_meta = get_5g_components_by_type(ric_meta.components, [RICComponentType.RIC, RICComponentType.E2TERM])  # type: ignore
     rics_deployment = get_5g_components_by_type(
-        ric_deployment.components, [RICComponentType.RIC, RICComponentType.E2TERM] # type: ignore
+        ric_deployment.components,
+        [RICComponentType.RIC, RICComponentType.E2TERM],  # type: ignore
     )  # type: ignore
 
     # run standard component reconciliation on cu/cu_cp/cu_cp components first

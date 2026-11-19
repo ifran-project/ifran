@@ -9,6 +9,9 @@ from ifran.deployment.helm import HelmManagement
 from ifran.models.ue import DeployedUE
 from ifran.utils.ue import reconcile_ues, run_parallel_ue_action
 
+CONTAINERIZED_UE_ACTIONS = ["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"]
+COTS_UE_ACTIONS = ["configure", "connect", "disconnect"]
+
 
 class UEManagement(HelmManagement):
     """UEs lifecycle management class."""
@@ -27,18 +30,15 @@ class UEManagement(HelmManagement):
     @override
     async def run_action(  # noqa: PLR0917
         self,
-        action: Literal["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy", "connect", "disconnect"],
+        action: Literal[*CONTAINERIZED_UE_ACTIONS, *COTS_UE_ACTIONS],  # type: ignore
         components: list[str] | None = None,
         **kwargs,
     ) -> dict[str, str] | None:
-        """Run Helm action on containerized UEs."""
-
-        containarized_actions = ["prepare", "install", "uninstall", "get_logs", "run_cmd", "copy"]
-        cots_actions = ["connect", "disconnect"]
+        """Run Helm action on UEs (containerized and COTS)."""
 
         all_ues = self.mutable_metamodel.ues
 
-        if action in containarized_actions:
+        if action in CONTAINERIZED_UE_ACTIONS:
             all_meta = {k: v for k, v in all_ues.items() if v.type is UEType.CONTAINERIZED}
         else:
             all_meta = {k: v for k, v in all_ues.items() if v.type is UEType.COTS}
@@ -48,25 +48,25 @@ class UEManagement(HelmManagement):
 
         # validate action by ue type
         for ue_name, ue_meta in target_meta.items():
-            if (ue_meta.type is UEType.CONTAINERIZED and action not in containarized_actions) or (
-                ue_meta.type is UEType.COTS and action not in cots_actions
+            if (ue_meta.type is UEType.CONTAINERIZED and action not in CONTAINERIZED_UE_ACTIONS) or (
+                ue_meta.type is UEType.COTS and action not in COTS_UE_ACTIONS
             ):
                 raise RuntimeError(
                     f"Unsupported action {action!r} for UE {ue_name!r} of type {ue_meta.type.value.upper()!r}."
                 )
 
-        if action in containarized_actions:
+        if action in CONTAINERIZED_UE_ACTIONS:
             return await super().run_action(
                 category=Category5G.UE,
-                action=action,  # type: ignore
+                action=action,
                 components=components,
                 **kwargs,
             )
-        if action in cots_actions:
+        if action in COTS_UE_ACTIONS:
             await run_parallel_ue_action(
                 ues_meta=target_meta,
                 ues_prov={ue_name: self.deployment_model.ues[ue_name] for ue_name in target_meta},  # type: ignore
-                action=action,  # type: ignore
+                action=action,
                 provisioners=self.deployment_model.provisioners,
                 provisioning_params=self.deployment_model.params.provisioning,
                 ansible_params=self.deployment_model.params.ansible,
@@ -97,6 +97,11 @@ class UEManagement(HelmManagement):
     def remove_component(self, name: str) -> None:
         """Remove a containarized UE."""
         super().remove_component(category=Category5G.UE, name=name)
+
+    # configure action wrapper
+    async def configure(self, ues: list[str] | None = None, **kwargs) -> None:
+        """Configure COTS UEs via provisioner."""
+        await self.run_action(action="configure", components=ues, **kwargs)
 
     # connect action wrapper
     async def connect(self, ues: list[str] | None = None, **kwargs) -> None:

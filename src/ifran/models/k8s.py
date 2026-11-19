@@ -87,9 +87,7 @@ class KubeletParams(StrictBaseModel):
     reserved_system_cpus: str | None = Field(default=None)
     """Logical CPUs reserved for system and Kubernetes processes."""
 
-    topology_manager_policy: Literal["none", "best-effort", "restricted", "single-numa-node"] = Field(
-        default="none"
-    )
+    topology_manager_policy: Literal["none", "best-effort", "restricted", "single-numa-node"] = Field(default="none")
     """
     Kubelet topology manager policy. For more details, check:
     https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/#topology-manager-policies
@@ -173,8 +171,10 @@ class K8SParams(StrictBaseModel):
 
     # NOTE: by default, we use a mirror for docker.io to avoid rate limiting issues on public registries
     registry_mirrors: dict[str, URL] | None = Field(
-        default_factory=lambda: {"docker.io": TypeAdapter(URL).validate_python("http://registry.theblueprintfactory.org")}
-        )
+        default_factory=lambda: {
+            "docker.io": TypeAdapter(URL).validate_python("http://registry.theblueprintfactory.org")
+        }
+    )
     """
     Container registry mirrors to use for container image pull.
     Each key is the original registry and the value is the mirror to use instead.

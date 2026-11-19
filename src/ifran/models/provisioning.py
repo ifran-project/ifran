@@ -122,7 +122,7 @@ class SSHInfo(StrictBaseModel):
             args.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
         if self.multiplexing:
             args.append("-o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto")
-            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C") # persist for 2 hours
+            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C")  # persist for 2 hours
         if self.extra_args:
             args.append(self.extra_args)
 
@@ -594,6 +594,19 @@ class ProvisionableNode(SSHableResource):
     """Kubernetes parameter overrides."""
 
 
+class UEConnectionStatus(StrEnum):
+    """Supported UE connection status values."""
+
+    NOT_CONFIGURED = auto()
+    """UE is not configured and not ready to connect to the 5G network."""
+
+    CONFIGURED = auto()
+    """UE is configured and ready to connect to the 5G network."""
+
+    CONNECTED = auto()
+    """UE is actively connected to the 5G network."""
+
+
 class ProvisionableUE(SSHableResource):
     """User Equipment (UE) provisioning."""
 
@@ -606,8 +619,8 @@ class ProvisionableUE(SSHableResource):
     provisioner: str | None = Field(default="r2lab")
     """UE provisioner's name."""
 
-    is_connected: bool = Field(default=False)
-    """If this UE is connected or not."""
+    connection_status: UEConnectionStatus = Field(default=UEConnectionStatus.NOT_CONFIGURED)
+    """Current UE connection status."""
 
 
 class RUVendor(StrEnum):

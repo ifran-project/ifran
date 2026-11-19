@@ -17,6 +17,7 @@ from ifran.models.provisioning import (
     ProvisioningCategory,
     SSHableResource,
     SSHInfo,
+    UEConnectionStatus,
 )
 from ifran.utils.ansible import (
     get_ansible_inventory_line,
@@ -158,7 +159,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
-    retries: int = 5
+    retries: int = 5,
 ) -> None:
     """Run the Ansible role of the provisioner corresponding to the given action on a single resource."""
 
@@ -226,7 +227,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             # NOTE ssh_info is merged with precedence to the provisioning's ssh_info
             # NOTE deep_merge is used to also merge nested jumphost ssh info
             resource_data.ssh_info = SSHInfo.model_validate(  # type: ignore
-                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"]) # type: ignore
+                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"])  # type: ignore
             )  # type: ignore
 
         elif resource_data.category is ProvisioningCategory.RU and not resource_data.ips:
@@ -239,6 +240,9 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         if resource_data.category is ProvisioningCategory.NODE:
             # set k8s status to not_configured for nodes
             resource_data.k8s_status = K8SStatus.NOT_CONFIGURED
+        elif resource_data.category is ProvisioningCategory.UE:
+            # set connection status to not_configured for cots ues
+            resource_data.connection_status = UEConnectionStatus.NOT_CONFIGURED
 
 
 async def run_parallel_provisioning_action(  # noqa: PLR0917
