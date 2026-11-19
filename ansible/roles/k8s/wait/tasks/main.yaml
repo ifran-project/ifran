@@ -26,6 +26,9 @@
   retries: 100
   delay: 5
 
+# A pod listed when the wait starts can be deleted and recreated meanwhile (e.g. by the Tigera operator or a
+# DaemonSet rollout at cluster start): the wait then fails instead of following the new pod, so it is retried
+# with a new list of pods.
 - name: Wait for all system pods to become ready
   kubernetes.core.k8s_info:
     kind: Pod
@@ -38,6 +41,10 @@
       status: "True"
     wait_timeout: 3600 # 1h of waiting before timeout
     wait_sleep: 10
+  register: system_pods
+  until: system_pods is succeeded
+  retries: 3
+  delay: 5
   loop:
     - kube-system
     - calico-system
