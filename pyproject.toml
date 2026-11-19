@@ -8,6 +8,7 @@ authors = [
     {name = "Mohammadbagher Tavassoli", email = "mohammadbagher.tavassoli-kejani@inria.fr"},
     {name = "Yassir Amami", email = "yassir.amami@inria.fr"},
     {name = "Samuel DeLaughter", email = "samuel.de-laughter@inria.fr"},
+    {name = "Thierry Turletti", email = "thierry.turletti@inria.fr"},
 ]
 license = {text = "BSD-Clear"}
 readme = "README.md"
