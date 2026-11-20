@@ -204,7 +204,7 @@ class BaseManagement:
         self.deployment_model = DeploymentModel.model_validate(self.deployment_model.model_dump())
 
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
-        """Generate an Ansible INI inventory from nodes and ues."""
+        """Generate an Ansible INI inventory from resources."""
 
         # get groups based on node roles => {role: nodes with that role}
         groups: dict[str, dict[str, ProvisionableResource]] = defaultdict(dict)
@@ -219,6 +219,11 @@ class BaseManagement:
         }
         if ues:
             groups["ues"] = ues  # type: ignore
+
+        # add rus as their own group
+        rus = self.deployment_model.rus
+        if rus:
+            groups["rus"] = self.deployment_model.rus  # type: ignore
 
         lines: list[str] = []
         for role, role_resources in groups.items():

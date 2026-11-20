@@ -3,7 +3,6 @@
 from typing import Literal
 
 from ifran.deployment.base import BaseManagement
-from ifran.models.provisioning import ProvisioningCategory
 from ifran.utils.provisioning import (
     get_provisionable_resources,
     run_parallel_command,
@@ -85,16 +84,9 @@ class ProvisioningManagement(BaseManagement):
         retries: int = 5,
         flatten: bool = True,
     ) -> str | dict[str, str]:
-        """Run command on SSH-able resources (nodes and UEs)."""
+        """Run command on resources."""
 
-        ssh_able_categories = [ProvisioningCategory.NODE, ProvisioningCategory.UE]
-
-        # get only ssh-able resources
-        target_resources = {
-            k: v
-            for k, v in get_provisionable_resources(deployment_model=self.deployment_model, filter=resources).items()
-            if v.category in ssh_able_categories
-        }
+        target_resources = get_provisionable_resources(deployment_model=self.deployment_model, filter=resources)
 
         cmd_outputs = await run_parallel_command(
             resources=target_resources,  # type: ignore
@@ -120,7 +112,7 @@ class ProvisioningManagement(BaseManagement):
         nodes: list[str] | None = None,
         **kwargs,
     ) -> str | dict[str, str]:
-        """Run nodes on all or a targeted list of nodes."""
+        """Run command on all or a targeted list of nodes."""
 
         # if no specific node names are passed, default to all nodes
         if nodes is None:
@@ -134,7 +126,7 @@ class ProvisioningManagement(BaseManagement):
         ues: list[str] | None = None,
         **kwargs,
     ) -> str | dict[str, str]:
-        """Run nodes on all or a targeted list of UEs."""
+        """Run command on all or a targeted list of UEs."""
 
         # if no specific ue names are passed, default to all ues
         if ues is None:
@@ -143,6 +135,20 @@ class ProvisioningManagement(BaseManagement):
             ues = list(self.deployment_model.ues.keys())
 
         return await self.run_command(command=command, resources=ues, **kwargs)
+
+    async def run_ru_command(
+        self,
+        command: list[str],
+        rus: list[str] | None = None,
+        **kwargs,
+    ) -> str | dict[str, str]:
+        """Run command on all or a targeted list of RUs."""
+
+        # if no specific ru names are passed, default to all rus
+        if rus is None:
+            rus = list(self.deployment_model.rus.keys())
+
+        return await self.run_command(command=command, resources=rus, **kwargs)
 
     async def copy(  # noqa: PLR0917
         self,
@@ -157,16 +163,9 @@ class ProvisioningManagement(BaseManagement):
         quiet: bool = False,
         retries: int = 5,
     ) -> None:
-        """Copy a file/directory to SSH-able resources (nodes and UEs) or fetch a file from them."""
+        """Copy a file/directory to resources or fetch a file from them."""
 
-        ssh_able_categories = [ProvisioningCategory.NODE, ProvisioningCategory.UE]
-
-        # get only ssh-able resources
-        target_resources = {
-            k: v
-            for k, v in get_provisionable_resources(deployment_model=self.deployment_model, filter=resources).items()
-            if v.category in ssh_able_categories
-        }
+        target_resources = get_provisionable_resources(deployment_model=self.deployment_model, filter=resources)
 
         await run_parallel_copy(
             resources=target_resources,  # type: ignore
@@ -220,6 +219,24 @@ class ProvisioningManagement(BaseManagement):
             ues = list(self.deployment_model.ues.keys())
 
         await self.copy(local_path=local_path, remote_path=remote_path, direction=direction, resources=ues, **kwargs)  # type: ignore
+
+    async def ru_copy(
+        self,
+        local_path: str,
+        remote_path: str,
+        direction: Literal["to_ru", "from_ru"] = "to_ru",
+        rus: list[str] | None = None,
+        **kwargs,
+    ) -> None:
+        """Copy a file/directory to all or a targeted list of RUs or fetch a file from them."""
+
+        direction = "to_resource" if direction == "to_ru" else "from_resource"  # type: ignore
+
+        # if no specific ru names are passed, default to all rus
+        if rus is None:
+            rus = list(self.deployment_model.rus.keys())
+
+        await self.copy(local_path=local_path, remote_path=remote_path, direction=direction, resources=rus, **kwargs)  # type: ignore
 
     async def _run_type_action(
         self,
