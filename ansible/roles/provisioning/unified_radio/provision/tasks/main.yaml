@@ -8,8 +8,8 @@
 # - is_ru: bool
 
 # Output: 
+# - ssh_info: SSHInfo
 # - if is_ru: ru_ips: list[str]
-# - else: ssh_info: SSHInfo
 ---
 - name: Get access token if missing
   ansible.builtin.include_role:
@@ -56,4 +56,3 @@
   ansible.builtin.set_stats:
     data:
       ssh_info: {} # can't construct ssh_info
-  when: not is_ru

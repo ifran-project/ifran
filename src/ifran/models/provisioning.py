@@ -686,8 +686,7 @@ class LiteonModel(StrEnum):
 type RUModel = USRPModel | AW2SModel | BenetelModel | LiteonModel
 
 
-# NOTE radio units are not ssh-able resources
-class ProvisionableRU(GenericProvisionableResource):
+class ProvisionableRU(SSHableResource):
     """Radio Unit (RU) provisioning."""
 
     category: Literal[ProvisioningCategory.RU] = Field(default=ProvisioningCategory.RU, frozen=True)

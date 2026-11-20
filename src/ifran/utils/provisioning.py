@@ -171,11 +171,10 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             f"{resource_data.category.value.upper()} {resource_name!r} is already {action}ed."
         )
 
-    if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
-        # ssh-able resources have ssh_info
-        output_keys = ["ssh_info"]
-    else:
-        output_keys = ["ru_ips"]
+    output_keys = ["ssh_info"]
+    if resource_data.category is ProvisioningCategory.RU:
+        # rus have ru_ips as well
+        output_keys.append("ru_ips")
 
     provisioner = resolve_provisioner(
         resource_name=resource_name,
@@ -200,8 +199,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             # NOTE use resource name from its provided data rather that its key in the dictionary
             "resource_name": resource_data.name,
             **merged_prov_params.model_dump(mode="json"),
-            # bool used by provisioners that manage ssh-able (nodes and ues) and non-ssh-ables resources (rus)
-            # for now, it used to decide whether to return 'ssh_info' or 'ru_ips' instead
+            # bool used by provisioners to decide whether to return 'ru_ips' or not
             "is_ru": resource_data.category is ProvisioningCategory.RU,
         },
         "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}}
@@ -222,15 +220,14 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     if action == "provision":
         resource_data.is_provisioned = True
 
-        if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
-            # validate and update resource ssh info for nodes and ues
-            # NOTE ssh_info is merged with precedence to the provisioning's ssh_info
-            # NOTE deep_merge is used to also merge nested jumphost ssh info
-            resource_data.ssh_info = SSHInfo.model_validate(  # type: ignore
-                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"])  # type: ignore
-            )  # type: ignore
+        # validate and update resource ssh info
+        # NOTE ssh_info is merged with precedence to the existing non-default ssh_info
+        # NOTE deep_merge is used to also merge nested jumphost ssh info
+        resource_data.ssh_info = SSHInfo.model_validate(
+            deep_merge(result["ssh_info"], resource_data.ssh_info.model_dump(mode="json", exclude_defaults=True))  # type: ignore
+        )
 
-        elif resource_data.category is ProvisioningCategory.RU and not resource_data.ips:
+        if resource_data.category is ProvisioningCategory.RU and not resource_data.ips:
             # update ips for rus if not already set
             resource_data.ips = [IPv4Address(ip) for ip in result["ru_ips"]]  # type: ignore
 
@@ -342,7 +339,7 @@ async def run_parallel_command(  # noqa: PLR0917
     quiet: bool = False,
     retries: int = 5,
 ) -> dict[str, str]:
-    """Run a command on provided SSH-able resources in parallel."""
+    """Run a command on provided resources in parallel."""
 
     if not command:
         raise ValueError(f"Invalid command {command!r}.")
@@ -404,7 +401,7 @@ async def run_parallel_copy(  # noqa: PLR0917
     quiet: bool = False,
     retries: int = 5,
 ) -> None:
-    """Copy a file/directory from or to the provided SSH-able resources in parallel."""
+    """Copy a file/directory from or to the provided resources in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}
 
