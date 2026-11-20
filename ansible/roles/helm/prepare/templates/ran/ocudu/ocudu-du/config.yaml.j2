@@ -4,6 +4,9 @@
 
 gnb_id: {{ component.config.gnbId }}
 gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32, true) }}
+{% if component.advanced_config and component.advanced_config.gnb_du_id is not none %}
+gnb_du_id: {{ component.advanced_config.gnb_du_id }}
+{% endif %}
 dryrun: {{ component.advanced_config.dryrun | default("false", true) | lower }}
 
 f1ap:
@@ -55,6 +58,9 @@ cell_cfg:
   plmn: "{{ component.config.plmnList[0].plmnId.plmnId }}"
   tac: {{ component.config.tac }}
   pci: {{ component.config.physicalCellId }}
+{% if component.advanced_config and component.advanced_config.sector_id is not none %}
+  sector_id: {{ component.advanced_config.sector_id }}
+{% endif %}
   nof_antennas_dl: {{ component.config.ru.numberOfTxPorts }}
   nof_antennas_ul: {{ component.config.ru.numberOfRxPorts }}
 {% if component.advanced_config and component.advanced_config.pdcch %}

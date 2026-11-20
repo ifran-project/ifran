@@ -254,6 +254,9 @@ class OCUDUAdvancedDUConfig(OCUDUAdvancedCommonGNBConfig):
 
     f1ap: dict[str, Any] | None = Field(default=None)
     f1u: dict[str, Any] | None = Field(default=None)
+    # unique per DU of a CU-CP, which rejects a DU with the ID or a cell with the NCI (gNB ID + sector) of another DU
+    gnb_du_id: int | None = Field(default=None)
+    sector_id: int | None = Field(default=None)
 
 
 class OCUDUAdvancedGNBConfig(OCUDUAdvancedCommonGNBConfig):
