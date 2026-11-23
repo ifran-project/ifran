@@ -229,7 +229,7 @@ flowchart TD
 
 ```python
 from ifran import (
-    MetaModel
+    MetaModel,
     DeploymentModel
     CoreManagement,
     K8SManagement,
@@ -333,8 +333,8 @@ pings = await ues.run_command(command=command, components=["sim_ue1", "sim_ue2"]
 print(pings)
 
 # Save the state for reproducibility
-ues.metamodel.to_yaml_file("state/metamodel.yaml")
-ues.deployment_model.to_yaml_file("state/deployment_model.yaml")
+ues.metamodel.to_yaml_file("metamodel.yaml")
+ues.deployment_model.to_yaml_file("deployment_model.yaml")
 ```
 
 If you already have machines, replace the provisioner with `provisioner: null` on each node, set `is_provisioned: true` and give its `ssh_info`.
