@@ -169,6 +169,7 @@ class HelmManagement(BaseManagement):
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
             ssh_params=self.deployment_model.params.ssh,
+            misc_data=self.deployment_model.miscellaneous,
             order=order,
             force=force,
             ignore_invalid_states=ignore_invalid_states,
