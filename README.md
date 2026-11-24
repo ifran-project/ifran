@@ -230,7 +230,7 @@ flowchart TD
 ```python
 from ifran import (
     MetaModel,
-    DeploymentModel
+    DeploymentModel,
     CoreManagement,
     K8SManagement,
     ProvisioningManagement,
