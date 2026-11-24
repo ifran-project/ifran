@@ -46,7 +46,7 @@ doc = [
 
 [tool.ruff]
 line-length = 120
-extend-exclude = ["examples", "docs", "public"]
+extend-exclude = ["examples", "docs", "public", "README.md"]
 
 [tool.ruff.lint]
 select = [
