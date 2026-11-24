@@ -80,7 +80,11 @@ class DeploymentModel(StrictBaseModel):
     """RIC deployment."""
 
     miscellaneous: dict[str, Any] | None = Field(default=None)
-    """Miscellaneous data for pipelining purposes."""
+    """
+    Miscellaneous data for pipelining purposes.
+
+    This data is also given as input when rendering the `custom_rendered_files` of 5G components.
+    """
 
     @model_validator(mode="before")
     @classmethod
