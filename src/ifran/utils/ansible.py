@@ -51,7 +51,7 @@ def get_ansible_inventory_line(
     if ssh_info.sudo_password:
         vars["ansible_become_password"] = shlex.quote(ssh_info.sudo_password)
 
-    common_args = ssh_info.compute_common_args()
+    common_args = ssh_info.get_common_args()
     if common_args:
         vars["ansible_ssh_common_args"] = shlex.quote(common_args)
 

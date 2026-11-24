@@ -114,7 +114,7 @@ class SSHInfo(StrictBaseModel):
 
         return proxy_cmd
 
-    def compute_common_args(self) -> str | None:
+    def get_common_args(self) -> str | None:
         """Combine explicit extra_args with generated ones and ProxyCommand to construct common_args."""
 
         args = []
