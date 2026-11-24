@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import random
 import shlex
 import threading
 from datetime import UTC, datetime
@@ -120,6 +121,12 @@ def get_ansible_error(runner: ansible_runner.Runner) -> str:
     return "\n\n".join(errors)
 
 
+def _get_retry_delay(attempt: int) -> float:
+    """Calculate exponential backoff delay for each retry attempt."""
+
+    return random.uniform(0, min(2 * (2**attempt), 30))  # noqa: S311
+
+
 async def run_ansible_playbook(  # noqa: PLR0917
     playbook: list | dict[str, Any] | str,
     runner_path: str,
@@ -203,7 +210,7 @@ async def run_ansible_playbook(  # noqa: PLR0917
 
             logger.warning("Ansible playbook attempt %d/%d failed: %s\n\nRetrying...\n\n", i + 1, retries, e)
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(_get_retry_delay(i))
 
     return None
 
