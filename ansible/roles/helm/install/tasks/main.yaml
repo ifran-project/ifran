@@ -9,15 +9,21 @@
 # Output:
 # - network_info: str if 'output_with_multus' is False, else list[MultusNetworkStatus]
 ---
+- name: Resolve '{{ chart_name }}' Helm chart directory
+  ansible.builtin.command:
+    argv: ["echo", "{{ helm_build_dir }}"]
+  register: helm_build_dir_resolved
+  changed_when: false
+
 - name: Deploy rendered '{{ chart_name }}' Helm chart in namespace '{{ component.namespace }}'
   kubernetes.core.helm:
     name: "{{ chart_name }}"
-    chart_ref: "{{ helm_build_dir }}"
+    chart_ref: "{{ helm_build_dir_resolved.stdout }}"
     release_namespace: "{{ component.namespace }}"
     create_namespace: true
     state: present
     values_files:
-      - "{{ helm_build_dir }}/values.yaml"
+      - "{{ helm_build_dir_resolved.stdout }}/values.yaml"
 
 - name: Wait for '{{ chart_name }}' pod to become ready
   kubernetes.core.k8s_info:
