@@ -96,6 +96,8 @@ spec:
         volumeMounts:
           - mountPath: /openair-pcf/etc
             name: configuration
+          - mountPath: /openair-pcf/policies
+            name: policies
         imagePullPolicy: {{ .Values.nfimage.pullPolicy }}
         {{- if .Values.resources.define }}
         resources:
@@ -163,6 +165,14 @@ spec:
           name: {{ .Chart.Name }}-configmap
       {{- end }}
         name: configuration
+      - name: policies
+        configMap:
+          name: {{ .Chart.Name }}-policies
+          items:
+          {{- range $path, $_ := .Files.Glob "policies/**.yaml" }}
+            - key: {{ $path | trimPrefix "policies/" | replace "/" "__" }}
+              path: {{ $path | trimPrefix "policies/" }}
+          {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       serviceAccountName: {{ .Chart.Name }}

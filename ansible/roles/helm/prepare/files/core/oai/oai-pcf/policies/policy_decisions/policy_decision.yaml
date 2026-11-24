@@ -1,0 +1,6 @@
+# Default policy decision of the OAI PCF: every PDU session gets the default PCC rule.
+# A decision can also target one UE (supi_imsi), one DNN (dnn) or one slice (slice: {sst, sd}).
+default-decision:
+  default: true
+  pcc_rules:
+    - default-rule

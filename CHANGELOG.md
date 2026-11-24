@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- OAI PCF exiting at start-up, which blocked the OAI core installation: it read its policies from the database
+  (`enable_policy_provisioning_api: yes`), which the published OAI PCF images do not support. It now reads them from
+  local policy files, mounted with a default PCC rule and policy decision (`enable_policy_provisioning_api: no`).
+
 ## [0.0.6] - 2026-11-13
 
 ### Changed
