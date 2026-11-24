@@ -8,3 +8,16 @@ metadata:
 data:
   {{ (.Files.Glob "config.yaml").AsConfig | indent 2 | trim }}
 {{- end }}
+---
+# Local policies of the PCF (policies/<kind>/<file>.yaml), mounted at /openair-pcf/policies/<kind>/<file>.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-policies
+  labels:
+    app: {{ .Release.Name }}
+data:
+  {{- range $path, $_ := .Files.Glob "policies/**.yaml" }}
+  {{ $path | trimPrefix "policies/" | replace "/" "__" }}: |-
+{{ $.Files.Get $path | indent 4 }}
+  {{- end }}

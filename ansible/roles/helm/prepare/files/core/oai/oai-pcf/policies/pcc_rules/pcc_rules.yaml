@@ -1,0 +1,8 @@
+# Default PCC rule of the OAI PCF: every flow of a PDU session, without a dedicated QoS flow.
+# The PCF reads its policies from these files (enable_policy_provisioning_api: no); it needs at least one PCC
+# rule and one policy decision. To use your own, replace this policies folder in a custom chart.
+default-rule:
+  flowInfos:
+    - flowDescription: permit out ip from any to assigned
+      packetFilterUsage: true
+  precedence: 10000
