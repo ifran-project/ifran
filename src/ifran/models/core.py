@@ -353,7 +353,13 @@ class Free5GCAdvancedUPFConfig(GenericFree5GCAdvancedCoreConfig):
     gtpu: dict[str, Any] | None = Field(default=None)
 
 
-ADVANCED_CORE_CONFIG_MAPPING: dict[CoreImplementation, dict[CoreComponentType, type[GenericAdvancedCoreConfig]]] = {
+GENERIC_ADVANCED_CORE_CONFIGS: dict[CoreImplementation, type[GenericAdvancedCoreConfig]] = {
+    CoreImplementation.OAI: GenericOAIAdvancedCoreConfig,
+    CoreImplementation.OPEN5GS: GenericOpen5GSAdvancedCoreConfig,
+    CoreImplementation.FREE5GC: GenericFree5GCAdvancedCoreConfig,
+}
+
+VALIDATED_ADVANCED_CORE_CONFIGS: dict[CoreImplementation, dict[CoreComponentType, type[GenericAdvancedCoreConfig]]] = {
     CoreImplementation.OAI: {
         CoreComponentType.AMF: OAIAdvancedAMFConfig,
         CoreComponentType.SMF: OAIAdvancedSMFConfig,
@@ -402,8 +408,8 @@ class DeployedCoreComponent(Deployed5GComponent):
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
-            mapping=ADVANCED_CORE_CONFIG_MAPPING,
-            default_model=GenericAdvancedCoreConfig,  # type: ignore
+            validated=VALIDATED_ADVANCED_CORE_CONFIGS,
+            generic=GENERIC_ADVANCED_CORE_CONFIGS,
         )
 
 

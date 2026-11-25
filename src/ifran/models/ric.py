@@ -57,7 +57,12 @@ class ORANSCAdvancedRICConfig(GenericAdvancedRICConfig):
     """Unique sibling component types mapped to their Kubernetes services."""
 
 
-ADVANCED_RIC_CONFIG_MAPPING: dict[RICImplementation, dict[RICComponentType, type[GenericAdvancedRICConfig]]] = {
+GENERIC_ADVANCED_CORE_CONFIGS: dict[RICImplementation, type[GenericAdvancedRICConfig]] = {
+    RICImplementation.OAI: GenericAdvancedRICConfig,
+    RICImplementation.ORAN_SC: GenericAdvancedRICConfig,
+}
+
+VALIDATED_ADVANCED_RIC_CONFIGS: dict[RICImplementation, dict[RICComponentType, type[GenericAdvancedRICConfig]]] = {
     RICImplementation.OAI: {
         RICComponentType.RIC: OAIAdvancedRICConfig,
     },
@@ -88,8 +93,8 @@ class DeployedRICComponent(Deployed5GComponent):
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
-            mapping=ADVANCED_RIC_CONFIG_MAPPING,
-            default_model=GenericAdvancedRICConfig,  # type: ignore
+            validated=VALIDATED_ADVANCED_RIC_CONFIGS,
+            generic=GENERIC_ADVANCED_CORE_CONFIGS,
         )
 
 

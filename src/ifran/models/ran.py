@@ -243,7 +243,13 @@ class OCUDUAdvancedGNBConfig(OCUDUAdvancedCommonGNBConfig):
     cu_up: dict[str, Any] | None = Field(default=None)
 
 
-ADVANCED_RAN_CONFIG_MAPPING: dict[RANImplementation, dict[RANComponentType, type[GenericAdvancedRANConfig]]] = {
+GENERIC_ADVANCED_CORE_CONFIGS: dict[RANImplementation, type[GenericAdvancedRANConfig]] = {
+    RANImplementation.OAI: GenericOAIAdvancedRANConfig,
+    RANImplementation.OCUDU: GenericOCUDUAdvancedRANConfig,
+    RANImplementation.UERANSIM: GenericUERANSIMAdvancedRANConfig,
+}
+
+VALIDATED_ADVANCED_RAN_CONFIGS: dict[RANImplementation, dict[RANComponentType, type[GenericAdvancedRANConfig]]] = {
     RANImplementation.OAI: {
         RANComponentType.CU_CP: OAIAdvancedCUCPConfig,
         RANComponentType.CU_UP: OAIAdvancedCUUPConfig,
@@ -280,8 +286,8 @@ class DeployedRANComponent(Deployed5GComponent):
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
-            mapping=ADVANCED_RAN_CONFIG_MAPPING,
-            default_model=GenericAdvancedRANConfig,  # type: ignore
+            validated=VALIDATED_ADVANCED_RAN_CONFIGS,
+            generic=GENERIC_ADVANCED_CORE_CONFIGS,
         )
 
 

@@ -104,7 +104,13 @@ class SRSUEAdvancedUEConfig(GenericAdvancedUEConfig):
     master_clock_rate: str | float | None = Field(default=None)
 
 
-ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {
+GENERIC_ADVANCED_UE_CONFIGS: dict[UEImplementation, type[GenericAdvancedUEConfig]] = {
+    UEImplementation.OAI: GenericAdvancedUEConfig,
+    UEImplementation.UERANSIM: GenericAdvancedUEConfig,
+    UEImplementation.SRSUE: GenericAdvancedUEConfig,
+}
+
+VALIDATED_ADVANCED_UE_CONFIGS: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: OAIAdvancedUEConfig,
     },
@@ -133,6 +139,6 @@ class DeployedUE(Deployed5GComponent):
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
-            mapping=ADVANCED_UE_CONFIG_MAPPING,
-            default_model=GenericAdvancedUEConfig,  # type: ignore
+            validated=VALIDATED_ADVANCED_UE_CONFIGS,
+            generic=GENERIC_ADVANCED_UE_CONFIGS,
         )
