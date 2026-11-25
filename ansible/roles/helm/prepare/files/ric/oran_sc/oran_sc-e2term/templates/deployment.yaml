@@ -153,7 +153,7 @@ spec:
               valueFrom:
                fieldRef:
                 fieldPath: metadata.name
-            {{- range $key, $value := .Values.extraEnvVars }}
+            {{- range $key, $value := $topCtx.Values.extraEnvVars }}
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
