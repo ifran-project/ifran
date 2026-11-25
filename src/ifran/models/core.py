@@ -117,6 +117,7 @@ class OAIAdvancedSMFConfig(GenericOAIAdvancedCoreConfig):
     ue_mtu: int = Field(default=1500)
     upfs: dict[str, Any] | None = Field(default=None)
     ue_dns: dict[str, Any] | None = Field(default=None)
+    ims: dict[str, Any] | None = Field(default=None)
 
 
 class OAIAdvancedUPFConfig(GenericOAIAdvancedCoreConfig):
