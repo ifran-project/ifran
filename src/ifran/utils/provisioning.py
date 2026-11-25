@@ -189,7 +189,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     # because some provisioning params are only intended for some provisioners and not the others
     merged_prov_params = type(provisioner.params).model_validate(
         provisioning_params
-        | provisioner.params.model_dump(mode="json", exclude_defaults=True)
+        | provisioner.params.model_dump(mode="json", exclude_unset=True)
         | resource_data.provisioning_params
     )
 
@@ -224,7 +224,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         # NOTE ssh_info is merged with precedence to the existing non-default ssh_info
         # NOTE deep_merge is used to also merge nested jumphost ssh info
         resource_data.ssh_info = SSHInfo.model_validate(
-            deep_merge(result["ssh_info"], resource_data.ssh_info.model_dump(mode="json", exclude_defaults=True))  # type: ignore
+            deep_merge(result["ssh_info"], resource_data.ssh_info.model_dump(mode="json", exclude_unset=True))  # type: ignore
         )
 
         if resource_data.category is ProvisioningCategory.RU and not resource_data.ips:

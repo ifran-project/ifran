@@ -31,8 +31,8 @@ def get_ansible_inventory_line(
     # NOTE deep_merge is used to also merge nested jumphost ssh info
     ssh_info = SSHInfo.model_validate(
         deep_merge(
-            ssh_params.model_dump(mode="json", exclude_defaults=True),
-            resource_data.ssh_info.model_dump(mode="json", exclude_defaults=True),
+            ssh_params.model_dump(mode="json", exclude_unset=True),
+            resource_data.ssh_info.model_dump(mode="json", exclude_unset=True),
         ),
     )
 

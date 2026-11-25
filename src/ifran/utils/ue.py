@@ -249,7 +249,7 @@ async def run_single_ue_action(  # noqa: PLR0917
     # merge provisioning params without mutating the provisioner
     merged_prov_params = type(provisioner.params).model_validate(  # type: ignore
         provisioning_params
-        | provisioner.params.model_dump(mode="json")  # type: ignore
+        | provisioner.params.model_dump(mode="json", exclude_unset=True)  # type: ignore
         | ue_prov.provisioning_params
     )
 
