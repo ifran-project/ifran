@@ -31,9 +31,9 @@ class Deployed5GComponent(K8SComponent):
     def validate_advanced_config(self, mapping: dict, default_model: BaseModel) -> Self:
         """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
 
-        # advanced config can be none
+        # NOTE advanced_config is not allowed to be none, and if it is, it will be initiated
         if self.advanced_config is None:
-            return self
+            self.advanced_config = {}
 
         if isinstance(self.advanced_config, BaseModel):
             return self

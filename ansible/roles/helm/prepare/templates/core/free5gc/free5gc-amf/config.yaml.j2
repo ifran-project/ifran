@@ -3,7 +3,7 @@
 {%- else %}
 
 info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   version: 1.0.9
@@ -30,7 +30,7 @@ configuration:
 
   # SBI Services offered by this AMF, as per TS 29.518
   serviceNameList:
-{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{% if component.advanced_config.serviceNameList %}
 {{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - namf-comm # Namf_Communication service
@@ -87,7 +87,7 @@ configuration:
 
   nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
 
-{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+{% if component.advanced_config.nrfCertPem %}
   nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
 {% endif %}
 
@@ -111,25 +111,25 @@ configuration:
     short: {{ component.config.networkName.shortNetworkName }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.ngapIE %}
+{% if component.advanced_config.ngapIE %}
   # Optional NGAP Information Elements (IE)
   ngapIE:
 {{ component.advanced_config.ngapIE | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.nasIE %}
+{% if component.advanced_config.nasIE %}
   # Optional NAS Information Elements (IE)
   nasIE:
 {{ component.advanced_config.nasIE | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-  t3502Value: {{ component.advanced_config.t3502Value | default(720, true) }}  # timer value (seconds) at UE side
-  t3512Value: {{ component.advanced_config.t3512Value | default(3600, true) }} # timer value (seconds) at UE side
-  non3gppDeregTimerValue: {{ component.advanced_config.non3gppDeregTimerValue | default(3240, true) }} # timer value (seconds) at UE side
+  t3502Value: {{ component.advanced_config.t3502Value }}  # timer value (seconds) at UE side
+  t3512Value: {{ component.advanced_config.t3512Value }} # timer value (seconds) at UE side
+  non3gppDeregTimerValue: {{ component.advanced_config.non3gppDeregTimerValue }} # timer value (seconds) at UE side
 
   # retransmission timer for paging message
   t3513:
-{% if component.advanced_config and component.advanced_config.t3513 %}
+{% if component.advanced_config.t3513 %}
 {{ component.advanced_config.t3513 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true     # true or false
@@ -139,7 +139,7 @@ configuration:
 
   # retransmission timer for NAS Deregistration Request message
   t3522:
-{% if component.advanced_config and component.advanced_config.t3522 %}
+{% if component.advanced_config.t3522 %}
 {{ component.advanced_config.t3522 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true     # true or false
@@ -149,7 +149,7 @@ configuration:
 
   # retransmission timer for NAS Registration Accept message
   t3550:
-{% if component.advanced_config and component.advanced_config.t3550 %}
+{% if component.advanced_config.t3550 %}
 {{ component.advanced_config.t3550 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true     # true or false
@@ -159,7 +159,7 @@ configuration:
 
   # retransmission timer for NAS Configuration Update Command message
   t3555:
-{% if component.advanced_config and component.advanced_config.t3555 %}
+{% if component.advanced_config.t3555 %}
 {{ component.advanced_config.t3555 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true     # true or false
@@ -169,7 +169,7 @@ configuration:
 
   # retransmission timer for NAS Authentication Request/Security Mode Command message
   t3560:
-{% if component.advanced_config and component.advanced_config.t3560 %}
+{% if component.advanced_config.t3560 %}
 {{ component.advanced_config.t3560 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true     # true or false
@@ -179,7 +179,7 @@ configuration:
 
   # retransmission timer for NAS Notification message
   t3565:
-{% if component.advanced_config and component.advanced_config.t3565 %}
+{% if component.advanced_config.t3565 %}
 {{ component.advanced_config.t3565 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true     # true or false
@@ -189,7 +189,7 @@ configuration:
 
   # retransmission timer for NAS Identity Request message
   t3570:
-{% if component.advanced_config and component.advanced_config.t3570 %}
+{% if component.advanced_config.t3570 %}
 {{ component.advanced_config.t3570 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true     # true or false
@@ -197,11 +197,11 @@ configuration:
     maxRetryTimes: 4 # the max number of retransmission
 {% endif %}
 
-  locality: {{ component.advanced_config.locality | default("area1", true) }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
+  locality: {{ component.advanced_config.locality }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
 
   # set the sctp server setting <optional>, once this field is set, please also add maxInputStream, maxOsStream, maxAttempts, maxInitTimeOut
   sctp:
-{% if component.advanced_config and component.advanced_config.sctp %}
+{% if component.advanced_config.sctp %}
 {{ component.advanced_config.sctp | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     numOstreams: 3 # the maximum out streams of each sctp connection
@@ -210,13 +210,13 @@ configuration:
     maxInitTimeout: 2 # the maximum init timeout of each sctp connection
 {% endif %}
 
-  defaultUECtxReq: {{ component.advanced_config.defaultUECtxReq | default("false", true) | lower }} # the default value of UE Context Request to decide when triggering Initial Context Setup procedure
+  defaultUECtxReq: {{ component.advanced_config.defaultUECtxReq | lower }} # the default value of UE Context Request to decide when triggering Initial Context Setup procedure
 
-  ngapWorkerPoolSize: {{ component.advanced_config.ngapWorkerPoolSize | default(0, true) }} # (int), default equal to runtime.NumCPU()
-  ngapTaskBufferSize: {{ component.advanced_config.ngapTaskBufferSize | default(4096, true) }} # (int)
+  ngapWorkerPoolSize: {{ component.advanced_config.ngapWorkerPoolSize }} # (int), default equal to runtime.NumCPU()
+  ngapTaskBufferSize: {{ component.advanced_config.ngapTaskBufferSize }} # (int)
 
 logger: # log output setting
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false

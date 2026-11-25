@@ -3,7 +3,7 @@
 {%- else %}
 
 info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   version: 1.0.2
@@ -24,21 +24,21 @@ configuration:
       key: {{ component.config.sbi.tls.privateKey }} # PCF TLS Private key
 {% endif %}
 
-  timeFormat: {{ component.advanced_config.timeFormat | default("2019-01-02 15:04:05", true) }} # time format of this PCF
+  timeFormat: {{ component.advanced_config.timeFormat }} # time format of this PCF
 
-  defaultBdtRefId: {{ component.advanced_config.defaultBdtRefId | default("BdtPolicyId-", true) }}   # BDT Reference ID, indicating transfer policies of background data transfer.
+  defaultBdtRefId: {{ component.advanced_config.defaultBdtRefId }}   # BDT Reference ID, indicating transfer policies of background data transfer.
 
   nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
 
-{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+{% if component.advanced_config.nrfCertPem %}
   nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
 {% endif %}
 
   bsf:
-    enable: {{ component.advanced_config.bsf_enable | default("true", true) | lower }}  # Enable BSF integration (set to false to disable BSF completely)
+    enable: {{ component.advanced_config.bsf_enable | lower }}  # Enable BSF integration (set to false to disable BSF completely)
 
   serviceList:   # the SBI services provided by this PCF, refer to TS 29.507
-{% if component.advanced_config and component.advanced_config.serviceList %}
+{% if component.advanced_config.serviceList %}
 {{ component.advanced_config.serviceList | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - serviceName: npcf-am-policy-control # Npcf_AMPolicyControl service
@@ -53,13 +53,13 @@ configuration:
 {% endif %}
 
   mongodb:       # the mongodb connected by this PCF
-    name: {{ component.advanced_config.mongodb_name | default("free5gc", true) }}                      # name of the mongodb
-    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }}     # a valid URL of the mongodb
+    name: {{ component.advanced_config.mongodb_name }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url }}     # a valid URL of the mongodb
 
-  locality: {{ component.advanced_config.locality | default("area1", true) }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
+  locality: {{ component.advanced_config.locality }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
 
 logger: # log output setting
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false

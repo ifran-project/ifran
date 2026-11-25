@@ -43,8 +43,8 @@ class GenericAdvancedRICConfig(StrictBaseModel):
 class OAIAdvancedRICConfig(GenericAdvancedRICConfig):
     """Advanced configuration for OAI FLEXRIC."""
 
-    DB_DIR: str | None = Field(default=None)
-    DB_NAME: str | None = Field(default=None)
+    DB_DIR: str = Field(default="/tmp/")  # noqa: S108
+    DB_NAME: str = Field(default="xapp_db")
 
 
 class ORANSCAdvancedRICConfig(GenericAdvancedRICConfig):

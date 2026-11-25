@@ -3,7 +3,7 @@
 {%- else %}
 
 logger:
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   file:
@@ -12,7 +12,7 @@ logger:
 {% endif %}
 
 global:
-{% if component.advanced_config and component.advanced_config.global_config %}
+{% if component.advanced_config.global_config %}
 {{ component.advanced_config.global_config | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   max:
@@ -29,8 +29,8 @@ amf:
         scheme: https
         private_key: {{ component.config.sbi.tls.privateKey }}
         cert: {{ component.config.sbi.tls.certificate }}
-        sslkeylogfile: {{ component.advanced_config.sslkeylogfile | default("/var/log/open5gs/tls/amf-server-sslkeylog.log", true) }}
-{% if component.advanced_config and component.advanced_config.tls_client %}
+        sslkeylogfile: {{ component.advanced_config.sslkeylogfile }}
+{% if component.advanced_config.tls_client %}
       client:
 {{ component.advanced_config.tls_client | to_nice_yaml(indent=8) | indent(8, True) }}
 {% endif %}
@@ -43,7 +43,7 @@ amf:
         port: {{ component.config.sbi.port }}
 
     client:
-{% if component.advanced_config and component.advanced_config.sbi_client %}
+{% if component.advanced_config.sbi_client %}
 {{ component.advanced_config.sbi_client | to_nice_yaml(indent=6) | indent(6, True) }}
 {% else %}
       nrf:
@@ -56,7 +56,7 @@ amf:
         port: {{ component.config.n2.port }}
 
   metrics:
-{% if component.advanced_config and component.advanced_config.metrics %}
+{% if component.advanced_config.metrics %}
 {{ component.advanced_config.metrics | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     server:
@@ -115,7 +115,7 @@ amf:
   amf_name: {{ chart_name }}
 
   time:
-{% if component.advanced_config and component.advanced_config.time %}
+{% if component.advanced_config.time %}
 {{ component.advanced_config.time | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
 #    t3502:
@@ -124,12 +124,12 @@ amf:
       value: 540    # 9 minutes * 60 = 540 seconds
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.access_control %}
+{% if component.advanced_config.access_control %}
   access_control:
 {{ component.advanced_config.access_control | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.relative_capacity %}
+{% if component.advanced_config.relative_capacity %}
   relative_capacity: {{ component.advanced_config.relative_capacity }}
 {% endif %}
 

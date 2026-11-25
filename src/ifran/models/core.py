@@ -78,7 +78,7 @@ class GenericOAIAdvancedCoreConfig(GenericAdvancedCoreConfig):
 
     log_level: dict[str, str] | None = Field(default=None)
     register_nf: dict[str, str] | None = Field(default=None)
-    http_version: int | None = Field(default=None)
+    http_version: int = Field(default=2)
     nfs: dict[str, Any] | None = Field(default=None)
 
 
@@ -87,7 +87,7 @@ class GenericOpen5GSAdvancedCoreConfig(GenericAdvancedCoreConfig):
 
     logger: dict[str, Any] | None = Field(default=None)
     global_config: dict[str, Any] | None = Field(default=None)
-    sslkeylogfile: str | None = Field(default=None)
+    sslkeylogfile: str = Field(default="/var/log/open5gs/tls/amf-server-sslkeylog.log")
     tls_client: dict[str, Any] | None = Field(default=None)
     sbi_client: dict[str, Any] | None = Field(default=None)
 
@@ -105,16 +105,16 @@ class OAIAdvancedAMFConfig(GenericOAIAdvancedCoreConfig):
 
     database: dict[str, Any] | None = Field(default=None)
     support_features_options: dict[str, str] | None = Field(default=None)
-    relative_capacity: int | None = Field(default=None)
-    statistics_timer_interval: int | None = Field(default=None)
-    emergency_support: bool | None = Field(default=None)
+    relative_capacity: int = Field(default=30)
+    statistics_timer_interval: int = Field(default=20)
+    emergency_support: bool = Field(default=False)
 
 
 class OAIAdvancedSMFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI SMF."""
 
     support_features: dict[str, str] | None = Field(default=None)
-    ue_mtu: int | None = Field(default=None)
+    ue_mtu: int = Field(default=1500)
     upfs: dict[str, Any] | None = Field(default=None)
     ue_dns: dict[str, Any] | None = Field(default=None)
 
@@ -123,7 +123,7 @@ class OAIAdvancedUPFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI UPF."""
 
     support_features: dict[str, str] | None = Field(default=None)
-    remote_n6_gw: str | None = Field(default=None)
+    remote_n6_gw: str = Field(default="127.0.0.1")
 
 
 class OAIAdvancedPCFConfig(GenericOAIAdvancedCoreConfig):
@@ -131,24 +131,24 @@ class OAIAdvancedPCFConfig(GenericOAIAdvancedCoreConfig):
 
     database: dict[str, Any] | None = Field(default=None)
     local_policy: dict[str, str] | None = Field(default=None)
-    enable_policy_provisioning_api: str | None = Field(default=None)
+    enable_policy_provisioning_api: str = Field(default="no")
 
 
 class OAIAdvancedNSSFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI NSSF."""
 
-    slice_config_path: dict[str, str] | None = Field(default=None)
+    slice_config_path: str = Field(default="/openair-nssf/etc/nssf_slice_config.yaml")
 
 
 class OAIAdvancedLMFConfig(GenericOAIAdvancedCoreConfig):
     """Advanced configuration for OAI LMF."""
 
-    http_threads_count: int | None = Field(default=None)
-    gnb_id_bits_count: int | None = Field(default=None)
-    num_gnb: int | None = Field(default=None)
-    trp_info_wait_ms: int | None = Field(default=None)
-    positioning_wait_ms: int | None = Field(default=None)
-    measurement_wait_ms: int | None = Field(default=None)
+    http_threads_count: int = Field(default=8)
+    gnb_id_bits_count: int = Field(default=28)
+    num_gnb: int = Field(default=1)
+    trp_info_wait_ms: int = Field(default=10000)
+    positioning_wait_ms: int = Field(default=10000)
+    measurement_wait_ms: int = Field(default=10000)
     support_features: dict[str, str] | None = Field(default=None)
 
 
@@ -164,19 +164,19 @@ class Open5GSAdvancedAMFConfig(GenericOpen5GSAdvancedCoreConfig):
     metrics: dict[str, Any] | None = Field(default=None)
     time: dict[str, Any] | None = Field(default=None)
     access_control: dict[str, Any] | None = Field(default=None)
-    relative_capacity: int | None = Field(default=None)
+    relative_capacity: int = Field(default=30)
 
 
 class Open5GSAdvancedNRFConfig(GenericOpen5GSAdvancedCoreConfig):
     """Advanced configuration for Open5GS NRF."""
 
-    db_uri: str | None = Field(default=None)
+    db_uri: str = Field(default="mongodb://test:test@open5gs-database/open5gs?authSource=admin")
 
 
 class Open5GSAdvancedSCPConfig(GenericOpen5GSAdvancedCoreConfig):
     """Advanced configuration for Open5GS SCP."""
 
-    db_uri: str | None = Field(default=None)
+    db_uri: str = Field(default="mongodb://test:test@open5gs-database/open5gs?authSource=admin")
     info: dict[str, Any] | None = Field(default=None)
 
 
@@ -189,7 +189,7 @@ class Open5GSAdvancedSMFConfig(GenericOpen5GSAdvancedCoreConfig):
     gtpc: dict[str, Any] | None = Field(default=None)
     gtpu: dict[str, Any] | None = Field(default=None)
     dns: dict[str, Any] | None = Field(default=None)
-    mtu: int | None = Field(default=None)
+    mtu: int = Field(default=1400)
     p_cscf: dict[str, Any] | None = Field(default=None)
     ctf: dict[str, Any] | None = Field(default=None)
     freeDiameter: str | None = Field(default=None)
@@ -206,7 +206,7 @@ class Open5GSAdvancedUDMConfig(GenericOpen5GSAdvancedCoreConfig):
 class Open5GSAdvancedPCFConfig(GenericOpen5GSAdvancedCoreConfig):
     """Advanced configuration for Open5GS PCF."""
 
-    db_uri: str | None = Field(default=None)
+    db_uri: str = Field(default="mongodb://test:test@open5gs-database/open5gs?authSource=admin")
     qos_profiles: dict[str, Any] | None = Field(default=None)
     policy: dict[str, Any] | None = Field(default=None)
 
@@ -214,7 +214,7 @@ class Open5GSAdvancedPCFConfig(GenericOpen5GSAdvancedCoreConfig):
 class Open5GSAdvancedUDRConfig(GenericOpen5GSAdvancedCoreConfig):
     """Advanced configuration for Open5GS UDR."""
 
-    db_uri: str | None = Field(default=None)
+    db_uri: str = Field(default="mongodb://test:test@open5gs-database/open5gs?authSource=admin")
 
 
 class Open5GSAdvancedUPFConfig(GenericOpen5GSAdvancedCoreConfig):
@@ -235,9 +235,9 @@ class Free5GCAdvancedAMFConfig(GenericFree5GCAdvancedCoreConfig):
     serviceNameList: dict[str, Any] | None = Field(default=None)
     ngapIE: dict[str, Any] | None = Field(default=None)
     nasIE: dict[str, Any] | None = Field(default=None)
-    t3502Value: int | None = Field(default=None)
-    t3512Value: int | None = Field(default=None)
-    non3gppDeregTimerValue: int | None = Field(default=None)
+    t3502Value: int = Field(default=720)
+    t3512Value: int = Field(default=3600)
+    non3gppDeregTimerValue: int = Field(default=3240)
     t3513: dict[str, Any] | None = Field(default=None)
     t3522: dict[str, Any] | None = Field(default=None)
     t3550: dict[str, Any] | None = Field(default=None)
@@ -245,38 +245,38 @@ class Free5GCAdvancedAMFConfig(GenericFree5GCAdvancedCoreConfig):
     t3560: dict[str, Any] | None = Field(default=None)
     t3565: dict[str, Any] | None = Field(default=None)
     t3570: dict[str, Any] | None = Field(default=None)
-    locality: str | None = Field(default=None)
+    locality: str = Field(default="area1")
     sctp: dict[str, Any] | None = Field(default=None)
-    defaultUECtxReq: bool | None = Field(default=None)
-    ngapWorkerPoolSize: int | None = Field(default=None)
-    ngapTaskBufferSize: int | None = Field(default=None)
+    defaultUECtxReq: bool = Field(default=False)
+    ngapWorkerPoolSize: int = Field(default=0)
+    ngapTaskBufferSize: int = Field(default=4096)
 
 
 class Free5GCAdvancedAUSFConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC AUSF."""
 
     serviceNameList: dict[str, Any] | None = Field(default=None)
-    groupId: str | None = Field(default=None)
-    eapAkaSupiImsiPrefix: bool | None = Field(default=None)
+    groupId: str = Field(default="ausfGroup001")
+    eapAkaSupiImsiPrefix: bool = Field(default=False)
 
 
 class Free5GCAdvancedBSFConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC BSF."""
 
-    mongodb_name: str | None = Field(default=None)
-    mongodb_url: str | None = Field(default=None)
+    mongodb_name: str = Field(default="free5gc")
+    mongodb_url: str = Field(default="mongodb://test:test@free5gc-database/?authSource=admin")
 
 
 class Free5GCAdvancedCHFConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC CHF."""
 
     serviceNameList: dict[str, Any] | None = Field(default=None)
-    mongodb_name: str | None = Field(default=None)
-    mongodb_url: str | None = Field(default=None)
-    quotaValidityTime: int | None = Field(default=None)
-    volumeLimit: int | None = Field(default=None)
-    volumeLimitPDU: int | None = Field(default=None)
-    volumeThresholdRate: float | None = Field(default=None)
+    mongodb_name: str = Field(default="free5gc")
+    mongodb_url: str = Field(default="mongodb://test:test@free5gc-database/?authSource=admin")
+    quotaValidityTime: int = Field(default=10000)
+    volumeLimit: int = Field(default=50000)
+    volumeLimitPDU: int = Field(default=10000)
+    volumeThresholdRate: float = Field(default=0.8)
     cgf: dict[str, Any] | None = Field(default=None)
     abmfDiameter: dict[str, Any] | None = Field(default=None)
     rfDiameter: dict[str, Any] | None = Field(default=None)
@@ -291,23 +291,23 @@ class Free5GCAdvancedNEFConfig(GenericFree5GCAdvancedCoreConfig):
 class Free5GCAdvancedNRFConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC NRF."""
 
-    MongoDBName: str | None = Field(default=None)
-    MongoDBUrl: str | None = Field(default=None)
+    MongoDBName: str = Field(default="free5gc")
+    MongoDBUrl: str = Field(default="mongodb://test:test@free5gc-database/?authSource=admin")
     rootcert: dict[str, Any] | None = Field(default=None)
-    oauth: bool | None = Field(default=None)
+    oauth: bool = Field(default=False)
     serviceNameList: dict[str, Any] | None = Field(default=None)
 
 
 class Free5GCAdvancedPCFConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC PCF."""
 
-    timeFormat: str | None = Field(default=None)
-    defaultBdtRefId: str | None = Field(default=None)
-    bsf_enable: bool | None = Field(default=None)
+    timeFormat: str = Field(default="2019-01-02 15:04:05")
+    defaultBdtRefId: str = Field(default="BdtPolicyId-")
+    bsf_enable: bool = Field(default=True)
     serviceList: dict[str, Any] | None = Field(default=None)
-    mongodb_name: str | None = Field(default=None)
-    mongodb_url: str | None = Field(default=None)
-    locality: str | None = Field(default=None)
+    mongodb_name: str = Field(default="free5gc")
+    mongodb_url: str = Field(default="mongodb://test:test@free5gc-database/?authSource=admin")
+    locality: str = Field(default="area1")
 
 
 class Free5GCAdvancedSMFConfig(GenericFree5GCAdvancedCoreConfig):
@@ -315,17 +315,17 @@ class Free5GCAdvancedSMFConfig(GenericFree5GCAdvancedCoreConfig):
 
     serviceNameList: dict[str, Any] | None = Field(default=None)
     dns: dict[str, Any] | None = Field(default=None)
-    locality: str | None = Field(default=None)
-    assocFailAlertInterval: str | None = Field(default=None)
-    assocFailRetryInterval: str | None = Field(default=None)
-    heartbeatInterval: str | None = Field(default=None)
+    locality: str = Field(default="area1")
+    assocFailAlertInterval: str = Field(default="10s")
+    assocFailRetryInterval: str = Field(default="30s")
+    heartbeatInterval: str = Field(default="10s")
     userplaneInformation: dict[str, Any] | None = Field(default=None)
     links: dict[str, Any] | None = Field(default=None)
     t3591: dict[str, Any] | None = Field(default=None)
     t3592: dict[str, Any] | None = Field(default=None)
-    urrPeriod: int | None = Field(default=None)
-    urrThreshold: int | None = Field(default=None)
-    requestedUnit: int | None = Field(default=None)
+    urrPeriod: int = Field(default=30)
+    urrThreshold: int = Field(default=500000)
+    requestedUnit: int = Field(default=1000)
 
 
 class Free5GCAdvancedUDMConfig(GenericFree5GCAdvancedCoreConfig):
@@ -338,18 +338,18 @@ class Free5GCAdvancedUDMConfig(GenericFree5GCAdvancedCoreConfig):
 class Free5GCAdvancedUDRConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC UDR."""
 
-    mongodb_name: str | None = Field(default=None)
-    mongodb_url: str | None = Field(default=None)
-    dbConnectorType: str | None = Field(default=None)
+    mongodb_name: str = Field(default="free5gc")
+    mongodb_url: str = Field(default="mongodb://test:test@free5gc-database/?authSource=admin")
+    dbConnectorType: str = Field(default="mongodb")
 
 
 class Free5GCAdvancedUPFConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC UPF."""
 
-    version: str | None = Field(default=None)
-    description: str | None = Field(default=None)
-    retransTimeout: str | None = Field(default=None)
-    maxRetrans: int | None = Field(default=None)
+    version: str = Field(default="1.0.3")
+    description: str = Field(default="UPF initial local configuration")
+    retransTimeout: str = Field(default="1s")
+    maxRetrans: int = Field(default=3)
     gtpu: dict[str, Any] | None = Field(default=None)
 
 

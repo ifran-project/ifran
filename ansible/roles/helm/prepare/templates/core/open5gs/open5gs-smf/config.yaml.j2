@@ -3,7 +3,7 @@
 {%- else %}
 
 logger:
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   file:
@@ -12,7 +12,7 @@ logger:
 {% endif %}
 
 global:
-{% if component.advanced_config and component.advanced_config.global_config %}
+{% if component.advanced_config.global_config %}
 {{ component.advanced_config.global_config | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   max:
@@ -29,8 +29,8 @@ smf:
         scheme: https
         private_key: {{ component.config.sbi.tls.privateKey }}
         cert: {{ component.config.sbi.tls.certificate }}
-        sslkeylogfile: {{ component.advanced_config.sslkeylogfile | default("/var/log/open5gs/tls/amf-server-sslkeylog.log", true) }}
-{% if component.advanced_config and component.advanced_config.tls_client %}
+        sslkeylogfile: {{ component.advanced_config.sslkeylogfile }}
+{% if component.advanced_config.tls_client %}
       client:
 {{ component.advanced_config.tls_client | to_nice_yaml(indent=8) | indent(8, True) }}
 {% endif %}
@@ -43,7 +43,7 @@ smf:
         port: {{ component.config.sbi.port }}
 
     client:
-{% if component.advanced_config and component.advanced_config.sbi_client %}
+{% if component.advanced_config.sbi_client %}
 {{ component.advanced_config.sbi_client | to_nice_yaml(indent=6) | indent(6, True) }}
 {% else %}
       nrf:
@@ -51,7 +51,7 @@ smf:
 {% endif %}
 
   metrics:
-{% if component.advanced_config and component.advanced_config.metrics %}
+{% if component.advanced_config.metrics %}
 {{ component.advanced_config.metrics | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     server:
@@ -65,7 +65,7 @@ smf:
         port: {{ component.config.n4.port }}
 
     client:
-{% if component.advanced_config and component.advanced_config.pfcp_client %}
+{% if component.advanced_config.pfcp_client %}
 {{ component.advanced_config.pfcp_client | to_nice_yaml(indent=6) | indent(6, True) }}
 {% else %}
       upf:
@@ -81,7 +81,7 @@ smf:
 {% endif %}
 
   gtpc:
-{% if component.advanced_config and component.advanced_config.gtpc %}
+{% if component.advanced_config.gtpc %}
 {{ component.advanced_config.gtpc | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     server:
@@ -89,7 +89,7 @@ smf:
 {% endif %}
 
   gtpu:
-{% if component.advanced_config and component.advanced_config.gtpu %}
+{% if component.advanced_config.gtpu %}
 {{ component.advanced_config.gtpu | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     server:
@@ -111,7 +111,7 @@ smf:
 {% endfor %}
 
   dns:
-{% if component.advanced_config and component.advanced_config.dns %}
+{% if component.advanced_config.dns %}
 {{ component.advanced_config.dns | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - 8.8.8.8
@@ -120,14 +120,14 @@ smf:
     - 2001:4860:4860::8844
 {% endif %}
 
-  mtu: {{ component.advanced_config.mtu | default(1400, true) }}
+  mtu: {{ component.advanced_config.mtu }}
 
 ################################################################################
 # SMF Info
 ################################################################################
 #  <SMF Selection - 5G Core only>
   info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     s_nssai:
@@ -150,21 +150,21 @@ smf:
 {% endfor %}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.p_cscf %}
+{% if component.advanced_config.p_cscf %}
   p-cscf:
 {{ component.advanced_config.p_cscf | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.ctf %}
+{% if component.advanced_config.ctf %}
   ctf:
 {{ component.advanced_config.ctf | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.freeDiameter %}
+{% if component.advanced_config.freeDiameter %}
   freeDiameter: {{ component.advanced_config.freeDiameter }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.security_indication %}
+{% if component.advanced_config.security_indication %}
   security_indication:
 {{ component.advanced_config.security_indication | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
