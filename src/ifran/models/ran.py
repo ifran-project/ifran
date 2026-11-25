@@ -56,6 +56,7 @@ class GenericOAIAdvancedRANConfig(GenericAdvancedRANConfig):
     gdbstack: int = Field(default=1)
     Asn1_verbosity: Literal["none", "info", "annoying"] = Field(default="none")
     log_config: dict[str, str] | None = Field(default=None)
+    sm_dir: str = Field(default="/usr/local/lib/flexric/")
 
 
 class GenericOCUDUAdvancedRANConfig(GenericAdvancedRANConfig):
@@ -100,7 +101,6 @@ class OAIAdvancedCUConfig(GenericOAIAdvancedRANConfig):
     du_ip: IPvAnyAddress = Field(default=IPv4Address("0.0.0.0"))
     drb_ciphering: str = Field(default="yes")
     drb_integrity: str = Field(default="no")
-    sm_dir: str = Field(default="/usr/local/lib/flexric/")
 
 
 class OAIAdvancedCommonGNBConfig(GenericOAIAdvancedRANConfig):
@@ -162,7 +162,6 @@ class OAIAdvancedCommonGNBConfig(GenericOAIAdvancedRANConfig):
     thread_pool: str | None = Field(default=None)
     channelmod: dict[str, Any] | None = Field(default=None)
 
-
 class OAIAdvancedDUConfig(OAIAdvancedCommonGNBConfig):
     """Advanced configuration for OAI DU."""
 
@@ -172,7 +171,6 @@ class OAIAdvancedGNBConfig(OAIAdvancedCommonGNBConfig):
 
     drb_ciphering: str = Field(default="yes")
     drb_integrity: str = Field(default="no")
-    sm_dir: str = Field(default="/usr/local/lib/flexric/")
 
 
 class OCUDUAdvancedCUCPConfig(GenericOCUDUAdvancedRANConfig):
