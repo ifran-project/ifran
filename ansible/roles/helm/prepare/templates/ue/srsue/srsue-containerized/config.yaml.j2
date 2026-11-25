@@ -28,8 +28,8 @@ nof_carriers = 0
 [rat.nr]
 bands = {{ component.config.gnbs[0].config.radioConfiguration.nrBand }}
 nof_carriers = {{ component.advanced_config.nof_carriers }}
-max_nof_prb = {{ component.advanced_config.max_nof_prb | default(component.derived_radio_config.nof_prb, true) }}
-nof_prb = {{ component.advanced_config.nof_prb | default(component.derived_radio_config.nof_prb, true) }}
+max_nof_prb = {{ component.advanced_config.max_nof_prb if component.advanced_config.max_nof_prb is not none else component.derived_radio_config.nof_prb }}
+nof_prb = {{ component.advanced_config.nof_prb if component.advanced_config.nof_prb is not none else component.derived_radio_config.nof_prb }}
 
 [pcap]
 {% if component.advanced_config.pcap %}

@@ -49,7 +49,7 @@ gNBs:
         dl_carrierBandwidth: {{ component.derived_radio_config.bandwidth_rb }}
         #initialDownlinkBWP
         #genericParameters
-        initialDLBWPlocationAndBandwidth: {{ component.advanced_config.initialDLBWPlocationAndBandwidth | default(component.derived_radio_config.bwp_location_and_bandwidth, true) }}
+        initialDLBWPlocationAndBandwidth: {{ component.advanced_config.initialDLBWPlocationAndBandwidth if component.advanced_config.initialDLBWPlocationAndBandwidth is not none else component.derived_radio_config.bwp_location_and_bandwidth }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         initialDLBWPsubcarrierSpacing: {{ component.advanced_config.initialDLBWPsubcarrierSpacing }}
@@ -71,7 +71,7 @@ gNBs:
         pMax: {{ component.advanced_config.pMax }}
         #initialUplinkBWP
         #genericParameters
-        initialULBWPlocationAndBandwidth: {{ component.advanced_config.initialULBWPlocationAndBandwidth | default(component.derived_radio_config.bwp_location_and_bandwidth, true) }}
+        initialULBWPlocationAndBandwidth: {{ component.advanced_config.initialULBWPlocationAndBandwidth if component.advanced_config.initialULBWPlocationAndBandwidth is not none else component.derived_radio_config.bwp_location_and_bandwidth }}
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         initialULBWPsubcarrierSpacing: {{ component.derived_radio_config.numerology }}
