@@ -161,6 +161,7 @@ class BaseManagement:
             target_dict=self.deployment_model.core.components,
             source_dict=self.metamodel.core.components,
             default_factory=DeployedCoreComponent,
+            populate_implementation=self.deployment_model.core.implementation,
             populate_type=True,
         )
         # ran components
@@ -168,6 +169,7 @@ class BaseManagement:
             target_dict=self.deployment_model.ran.components,
             source_dict=self.metamodel.ran.components,
             default_factory=DeployedRANComponent,
+            populate_implementation=self.deployment_model.ran.implementation,
             populate_type=True,
         )
         # rus (only real rus are provisionable)
@@ -196,6 +198,7 @@ class BaseManagement:
             target_dict=self.deployment_model.ric.components,
             source_dict=self.metamodel.ric.components,
             default_factory=DeployedRICComponent,
+            populate_implementation=self.deployment_model.ric.implementation,
             populate_type=True,
         )
 
