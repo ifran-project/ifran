@@ -102,15 +102,10 @@ class K8SManagement(BaseManagement):
         # run prepare in parallel on target nodes
         await self.prepare(nodes=nodes, **kwargs)
 
-        # get target nodes using filter if provided
-        target_nodes = (
-            self.deployment_model.nodes
-            if nodes is None
-            else {k: v for k, v in self.deployment_model.nodes.items() if k in nodes}
-        )
-
-        # get successfully prepared nodes
-        prepared_nodes = {k: v for k, v in target_nodes.items() if v.k8s_status is K8SStatus.CONFIGURED}
+        # get ALL successfully prepared nodes
+        prepared_nodes = {
+            k: v for k, v in self.deployment_model.nodes.items() if v.k8s_status is not K8SStatus.NOT_CONFIGURED
+        }
 
         if not prepared_nodes:
             raise RuntimeError("No nodes were successfully prepared for Kubernetes setup.")
