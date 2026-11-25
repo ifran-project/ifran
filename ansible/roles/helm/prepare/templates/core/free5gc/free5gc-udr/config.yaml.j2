@@ -3,7 +3,7 @@
 {%- else %}
 
 info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   version: 1.1.0
@@ -22,20 +22,20 @@ configuration:
       key: {{ component.config.sbi.tls.privateKey }} # UDM TLS Private key
 {% endif %}
 
-  dbConnectorType: {{ component.advanced_config.mongodb_name | default("mongodb", true) }}
+  dbConnectorType: {{ component.advanced_config.dbConnectorType }}
 
   mongodb:
-    name: {{ component.advanced_config.mongodb_name | default("free5gc", true) }}                      # name of the mongodb
-    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }}     # a valid URL of the mongodb
+    name: {{ component.advanced_config.mongodb_name }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url }}     # a valid URL of the mongodb
 
   nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
 
-{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+{% if component.advanced_config.nrfCertPem %}
   nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
 {% endif %}
 
 logger: # log output setting
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false

@@ -142,7 +142,8 @@ def reconcile_ric(
     # populate 'service_name' and 'ric_type_services' in osc ric advanced config
     for component_name, component_deployment in ric_deployment.components.items():
         if component_deployment.implementation is RICImplementation.ORAN_SC:
-            component_deployment.advanced_config = component_deployment.advanced_config or ORANSCAdvancedRICConfig(
-                service_name=ric_services[component_name],
-                ric_type_services=ric_type_services.copy(),
-            )
+            # advanced_config is already populated by this point
+            adv_config: ORANSCAdvancedRICConfig = component_deployment.advanced_config
+
+            adv_config.service_name = adv_config.service_name or ric_services[component_name]
+            adv_config.ric_type_services = adv_config.ric_type_services or ric_type_services.copy()

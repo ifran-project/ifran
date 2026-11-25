@@ -143,8 +143,6 @@ spec:
           - infinity
         {{- end}}
         env:
-          - name: DB_URI
-            value: {{ .Values.config.db_uri }}
           - name: GIN_MODE
             value: release # used to configure the Gin Web Framework to optimize performance and disable verbose debug logging
           {{- range $key, $value := .Values.extraEnvVars }}

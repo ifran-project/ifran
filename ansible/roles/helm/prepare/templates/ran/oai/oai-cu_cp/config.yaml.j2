@@ -4,9 +4,9 @@
 Active_gNBs:
   - {{ component_name }}
 # Asn1_verbosity, choice in: none, info, annoying
-Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none", true) }}
-Num_Threads_PUSCH: {{ component.advanced_config.Num_Threads_PUSCH | default(8, true) }}
-sa: {{ component.advanced_config.sa | default(1, true) }}
+Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity }}
+Num_Threads_PUSCH: {{ component.advanced_config.Num_Threads_PUSCH }}
+sa: {{ component.advanced_config.sa }}
 
 gNBs:
   - gNB_ID: 0x{{ "%x" | format(component.config.gnbId) }}
@@ -31,7 +31,7 @@ gNBs:
     tr_s_preference: "f1"
 
     local_s_address: "{{ component.config.f1c.ipv4EndPointAddress }}"
-    remote_s_address: "{{ component.advanced_config.du_ip | default("0.0.0.0", true) }}"
+    remote_s_address: "{{ component.advanced_config.du_ip }}"
     local_s_portc: "{{ component.config.f1c.port }}"
     remote_s_portc: "{{ component.config.f1c.port }}"
 
@@ -48,7 +48,7 @@ gNBs:
       - type: "cp"
         ipv4_cucp: "{{ component.config.e1.ipv4EndPointAddress }}"
         port_cucp: "{{ component.config.e1.port }}"
-        ipv4_cuup: "{{ component.advanced_config.cu_up_ip | default("0.0.0.0", true) }}"
+        ipv4_cuup: "{{ component.advanced_config.cu_up_ip }}"
         port_cuup: "{{ component.config.e1.port }}"
 
     NETWORK_INTERFACES:
@@ -71,17 +71,17 @@ security:
 {% endfor %}
   # setting 'drb_ciphering' to "no" disables ciphering for DRBs, no matter
   # what 'ciphering_algorithms' configures; same thing for 'drb_integrity'
-  drb_ciphering: {{ component.advanced_config.drb_ciphering | default("yes", true) }}
-  drb_integrity: {{ component.advanced_config.drb_integrity | default("no", true) }}
+  drb_ciphering: {{ component.advanced_config.drb_ciphering }}
+  drb_integrity: {{ component.advanced_config.drb_integrity }}
 
 {% if component.config.ric %}
 e2_agent:
   near_ric_ip_addr: {{ component.config.ric }}
-  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/", true) }}
+  sm_dir: {{ component.advanced_config.sm_dir }}
 {% endif %}
 
 log_config:
-{% if component.advanced_config and component.advanced_config.log_config %}
+{% if component.advanced_config.log_config %}
 {{ component.advanced_config.log_config | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   global_log_level: "info"

@@ -14,7 +14,7 @@
 
 # Log level
 log_level:
-{% if component.advanced_config and component.advanced_config.log_level %}
+{% if component.advanced_config.log_level %}
 {{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: info
@@ -22,13 +22,13 @@ log_level:
 
 # If you enable registration, the NF will use the NRF discovery mechanism
 register_nf:
-{% if component.advanced_config and component.advanced_config.register_nf %}
+{% if component.advanced_config.register_nf %}
 {{ component.advanced_config.register_nf | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ## general single_nssai configuration
 ## Defines YAML anchors, which are reused in the config file
@@ -56,13 +56,13 @@ nfs:
     n2:
       interface_name: {{ component.config.n2.interfaceName }}
       port: {{ component.config.n2.port }}
-{% if component.advanced_config %}{% if component.advanced_config.nfs %}
+{% if component.advanced_config.nfs %}
 {{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
-{%- endif %}{% endif %}
+{% endif %}
 
 #### Only if using mini deployment of core network
 database:
-{% if component.advanced_config and component.advanced_config.database %}
+{% if component.advanced_config.database %}
 {{ component.advanced_config.database | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   host: oai-database
@@ -79,7 +79,7 @@ amf:
   amf_name: {{ chart_name }}
   # This really depends on if we want to keep the "mini" version or not
   support_features_options:
-{% if component.advanced_config and component.advanced_config.support_features_options %}
+{% if component.advanced_config.support_features_options %}
 {{ component.advanced_config.support_features_options | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable_simple_scenario: no # "no" by default with the normal deployment scenarios with AMF/SMF/UPF/AUSF/UDM/UDR/NRF.
@@ -88,9 +88,9 @@ amf:
     enable_nssf: no
     enable_smf_selection: yes
 {% endif %}
-  relative_capacity: {{ component.advanced_config.relative_capacity | default(30, true) }}
-  statistics_timer_interval: {{ component.advanced_config.statistics_timer_interval | default(20, true) }}  # in seconds
-  emergency_support: {{ component.advanced_config.emergency_support | default(false, true) | lower }}
+  relative_capacity: {{ component.advanced_config.relative_capacity }}
+  statistics_timer_interval: {{ component.advanced_config.statistics_timer_interval }}  # in seconds
+  emergency_support: {{ component.advanced_config.emergency_support | lower }}
   served_guami_list:
 {% for guami in component.config.guamiList %}
     - mcc: {{ guami.plmnId.mcc }}

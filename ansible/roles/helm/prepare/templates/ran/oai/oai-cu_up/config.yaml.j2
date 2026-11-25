@@ -4,7 +4,7 @@
 Active_gNBs:
   - {{ component_name }}
 # Asn1_verbosity, choice in: none, info, annoying
-Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity | default("none", true) }}
+Asn1_verbosity: {{ component.advanced_config.Asn1_verbosity }}
 gNBs:
   - gNB_ID: 0x{{ "%x" | format(component.config.gnbId) }}
     gNB_CU_UP_ID: 0x{{ "%x" | format(component.config.gnbCuUpId) }}
@@ -25,7 +25,7 @@ gNBs:
 {% endfor %}
 
     local_s_address: "{{ component.config.f1u.ipv4EndPointAddress }}"
-    remote_s_address: "{{ component.advanced_config.du_ip | default("0.0.0.0", true) }}"
+    remote_s_address: "{{ component.advanced_config.du_ip }}"
     local_s_portd: "{{ component.config.f1u.port }}"
     remote_s_portd: "{{ component.config.f1u.port }}"
 
@@ -49,11 +49,11 @@ gNBs:
 {% if component.config.ric %}
 e2_agent:
   near_ric_ip_addr: {{ component.config.ric }}
-  sm_dir: {{ component.advanced_config.sm_dir | default("/usr/local/lib/flexric/", true) }}
+  sm_dir: {{ component.advanced_config.sm_dir }}
 {% endif %}
 
 log_config:
-{% if component.advanced_config and component.advanced_config.log_config %}
+{% if component.advanced_config.log_config %}
 {{ component.advanced_config.log_config | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   global_log_level: "info"

@@ -151,7 +151,7 @@ multus:
 config:
   timeZone: {{ component.config.timeZone }}
   useAdditionalOptions: "{{ component.advanced_config.useAdditionalOptions | default("", true) }}"
-  gdbstack: {{ component.advanced_config.gdbstack | default(1, true) }}     # 1 to see gdb traces 
+  gdbstack: {{ component.advanced_config.gdbstack }}     # 1 to see gdb traces 
 
 start:
   {{ component.type }}: {{ component.start | lower }}      # If false → NF container sleeps (for manual debugging)

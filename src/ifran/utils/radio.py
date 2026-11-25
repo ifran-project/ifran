@@ -16,7 +16,7 @@ from metamodel_3gpp.models.ru import RUType
 from metamodel_3gpp.models.ue import UE, UEType
 
 from ifran.models.provisioning import AW2SModel, RUModel, RUVendor, USRPModel
-from ifran.models.ran import ADVANCED_RAN_CONFIG_MAPPING, DeployedRANComponent, RANImplementation
+from ifran.models.ran import DeployedRANComponent, RANImplementation
 from ifran.models.ue import DeployedUE, UEImplementation
 
 NUMEROLOGY: dict[SubcarrierSpacing, int] = {
@@ -173,6 +173,7 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
 ) -> dict[str, Any]:
     """Derive radio parameters specific to OAI RAN to put in derived configuration."""
 
+    adv_conf = component_deployment.advanced_config
     ru = component_meta.config.ru
     radio_config: RadioConfiguration = component_meta.config.radioConfiguration
 
@@ -191,8 +192,8 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
     # -E enables continuous synchronization/transmission optimizations
     # NOTE don't use -E with real RUs, except for USRP B210/B205
     # for some reason the gNB can't see radio signals anymore (tested on N300 and N320)
-    if component_deployment.advanced_config and component_deployment.advanced_config.useAdditionalOptions:
-        additional_flags = component_deployment.advanced_config.useAdditionalOptions
+    if adv_conf.useAdditionalOptions:
+        additional_flags = adv_conf.useAdditionalOptions
     elif ru.type is RUType.SIMULATED:  # type: ignore
         additional_flags = "-E --rfsim"
     elif ru.model in [USRPModel.B210, USRPModel.B205]:  # type: ignore
@@ -202,21 +203,19 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
 
     # aw2s specific configuration
     if ru.type is RUType.REAL and ru.vendor is RUVendor.AW2S:  # type: ignore
-        if not component_deployment.advanced_config:
-            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[RANImplementation.OAI][
-                component_meta.type
-            ]()
-
-        adv_conf = component_deployment.advanced_config
-
-        adv_conf.local_rf = adv_conf.local_rf or "no"
-        adv_conf.local_portc = adv_conf.local_portc or 50000
-        adv_conf.remote_portc = adv_conf.remote_portc or 55444
-        adv_conf.local_portd = adv_conf.local_portd or 52001
-        adv_conf.remote_portd = adv_conf.remote_portd or 52183
-        adv_conf.tr_preference = adv_conf.tr_preference or "udp_ecpri_if5"
-        adv_conf.nr_flag = adv_conf.nr_flag or 1
-        adv_conf.sl_ahead = adv_conf.sl_ahead or 5
+        aw2s_defaults = {
+            "local_rf": "no",
+            "local_portc": 50000,
+            "remote_portc": 55444,
+            "local_portd": 52001,
+            "remote_portd": 52183,
+            "tr_preference": "udp_ecpri_if5",
+            "nr_flag": 1,
+            "sl_ahead": 5,
+        }
+        for field, default in aw2s_defaults.items():
+            if getattr(adv_conf, field) is None:
+                setattr(adv_conf, field, default)
 
         if ru.ips:  # type: ignore
             adv_conf.remote_address = adv_conf.remote_address or ru.ips[0]  # type: ignore
@@ -266,7 +265,7 @@ def derive_ocudu_ran_config(
             f"tx_port=tcp://{component_deployment.static_pod_ip}:2000,"
             f"rx_port=tcp://{component_deployment.advanced_config.ue_ip}:2001"
         )
-        if component_deployment.advanced_config and component_deployment.advanced_config.base_srate:
+        if component_deployment.advanced_config.base_srate is not None:
             device_args += f",base_srate={component_deployment.advanced_config.base_srate}"
 
     elif ru.vendor is RUVendor.USRP:  # type: ignore
@@ -278,7 +277,7 @@ def derive_ocudu_ran_config(
                 f"addr={ru.ips[0]},"  # type: ignore
                 f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
             )
-            if component_deployment.advanced_config and component_deployment.advanced_config.master_clock_rate:
+            if component_deployment.advanced_config.master_clock_rate is not None:
                 device_args += f",master_clock_rate={component_deployment.advanced_config.master_clock_rate}"
     else:
         device_driver = None
@@ -338,6 +337,7 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
     derived = {}
 
     if ue_meta.type is UEType.CONTAINERIZED:
+        adv_conf = ue_deployment.advanced_config
         ru = ue_meta.config.ru
         gnb = ue_meta.config.gnbs[0]
         radio_config: RadioConfiguration = gnb.config.radioConfiguration  # type: ignore
@@ -389,8 +389,8 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
         ssb_start = int(ssb_offset_hz // scs_ssb_hz)
 
         # additional flags
-        if ue_deployment.advanced_config and ue_deployment.advanced_config.useAdditionalOptions:
-            additional_flags = ue_deployment.advanced_config.useAdditionalOptions
+        if adv_conf.useAdditionalOptions:
+            additional_flags = adv_conf.useAdditionalOptions
 
         elif ru.type is RUType.SIMULATED:  # type: ignore
             if gnb.implementation is RANImplementation.OAI:  # type: ignore
@@ -416,11 +416,11 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
                 sdr_addrs = f"addr={ru.ips[0]},clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
 
         derived = {
-            "dl_carrier_freq_hz": dl_carrier_freq_hz,  # rf_freq
-            "offset_hz": offset_hz,  # rf_offset
+            "dl_carrier_freq_hz": dl_carrier_freq_hz if adv_conf.rf_freq is None else adv_conf.rf_freq,  # rf_freq
+            "offset_hz": offset_hz if adv_conf.rf_offset is None else adv_conf.rf_offset,  # rf_offset
             "numerology": numerology,  # numerology
             "bandwidth_rb": bandwidth_rb,  # N_RB_DL
-            "ssb_start": ssb_start,  # ssb_start
+            "ssb_start": ssb_start if adv_conf.ssb_start is None else adv_conf.ssb_start,  # ssb_start
             "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""),  # type: ignore
             "additional_flags": additional_flags,
             "sdr_addrs": sdr_addrs,
@@ -449,6 +449,7 @@ def derive_srsue_ue_config(
         # gnb references must be resolved by now
         radio_config: RadioConfiguration = ue_meta.config.gnbs[0].config.radioConfiguration  # type: ignore
 
+        adv_conf = ue_deployment.advanced_config
         ru = ue_meta.config.ru  # must be resolved by now
 
         if ru.type is RUType.SIMULATED:  # type: ignore
@@ -457,8 +458,8 @@ def derive_srsue_ue_config(
                 f"tx_port=tcp://{ue_deployment.static_pod_ip}:2001,"
                 f"rx_port=tcp://{ue_meta.config.gnbs[0].gnb_ip}:2000"  # type: ignore
             )
-            if ue_deployment.advanced_config and ue_deployment.advanced_config.srate:
-                device_args += f",base_srate={ue_deployment.advanced_config.srate}"
+            if adv_conf.srate is not None:
+                device_args += f",base_srate={adv_conf.srate}"
 
         elif ru.vendor is RUVendor.USRP:  # type: ignore
             device_driver = "uhd"
@@ -469,15 +470,15 @@ def derive_srsue_ue_config(
                     f"addr={ru.ips[0]},"  # type: ignore
                     f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
                 )
-                if ue_deployment.advanced_config and ue_deployment.advanced_config.master_clock_rate:
-                    device_args += f",master_clock_rate={ue_deployment.advanced_config.master_clock_rate}"
+                if adv_conf.master_clock_rate is not None:
+                    device_args += f",master_clock_rate={adv_conf.master_clock_rate}"
         else:
             device_driver = None
             device_args = None
 
         derived = {
             "device_driver": device_driver,
-            "device_args": ue_deployment.advanced_config.device_args or device_args,
+            "device_args": adv_conf.device_args or device_args,
             "radio": RADIO_TYPE_BY_RU.get(getattr(ru, "vendor", None), {}).get(getattr(ru, "model", None), ""),  # type: ignore
             "nof_prb": get_rbs(radio_config.subcarrierSpacingKhz, radio_config.channelBandwidthMhz),
         }
