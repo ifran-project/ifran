@@ -58,7 +58,7 @@ cell_cfg:
   pci: {{ component.config.physicalCellId }}
   nof_antennas_dl: {{ component.config.ru.numberOfTxPorts }}
   nof_antennas_ul: {{ component.config.ru.numberOfRxPorts }}
-{% if component.advanced_config.sector_id %}
+{% if component.advanced_config.sector_id is not none %}
   sector_id: {{ component.advanced_config.sector_id }}
 {% endif %}
 {% if component.advanced_config.pdcch %}

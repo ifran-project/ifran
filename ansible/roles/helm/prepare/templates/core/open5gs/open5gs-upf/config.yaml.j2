@@ -60,16 +60,16 @@ upf:
     server:
       - dev: {{ component.config.n3.interfaceName }}
         port: {{ component.config.n3.port }}
-{% if component.advanced_config.teid_range_indication %}
+{% if component.advanced_config.teid_range_indication is not none %}
         teid_range_indication: {{ component.advanced_config.teid_range_indication }}
 {% endif %}
-{% if component.advanced_config.teid_range %}
+{% if component.advanced_config.teid_range is not none %}
         teid_range: {{ component.advanced_config.teid_range }}
 {% endif %}
 {% if component.advanced_config.network_instance %}
         network_instance: {{ component.advanced_config.network_instance }}
 {% endif %}
-{% if component.advanced_config.source_interface %}
+{% if component.advanced_config.source_interface is not none %}
         source_interface: {{ component.advanced_config.source_interface }}
 {% endif %}
 

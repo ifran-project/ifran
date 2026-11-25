@@ -129,7 +129,7 @@ amf:
 {{ component.advanced_config.access_control | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-{% if component.advanced_config.relative_capacity %}
+{% if component.advanced_config.relative_capacity is not none %}
   relative_capacity: {{ component.advanced_config.relative_capacity }}
 {% endif %}
 
