@@ -202,10 +202,6 @@ class BaseManagement:
             populate_type=True,
         )
 
-        # NOTE the deployment model should retrigger its validation functions for the newly added components
-        # this is mainly important to populate the implementation for the added core, ric and ran components
-        self.deployment_model = DeploymentModel.model_validate(self.deployment_model.model_dump())
-
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
         """Generate an Ansible INI inventory from resources."""
 
