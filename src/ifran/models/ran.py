@@ -222,6 +222,7 @@ class OCUDUAdvancedCommonGNBConfig(GenericOCUDUAdvancedRANConfig):
     srbs: dict[str, Any] | None = Field(default=None)
     du: dict[str, Any] | None = Field(default=None)
     cell_cfg: dict[str, Any] | None = Field(default=None)
+    sector_id: int | None = Field(default=None)
     pdcch: dict[str, Any] | None = Field(default=None)
     pdsch: dict[str, Any] | None = Field(default=None)
     pusch: dict[str, Any] | None = Field(default=None)
