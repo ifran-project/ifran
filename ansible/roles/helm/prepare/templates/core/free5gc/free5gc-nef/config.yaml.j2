@@ -29,8 +29,8 @@ configuration:
 {% endif %}
 
   serviceList: # the SBI services provided by this NEF
-{% if component.advanced_config.serviceNameList %}
-{{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
+{% if component.advanced_config.serviceList %}
+{{ component.advanced_config.serviceList | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - serviceName: nnef-pfdmanagement # Nnef_PFDManagement Service (also mounts /3gpp-pfd-management)
     - serviceName: nnef-oam # OAM service

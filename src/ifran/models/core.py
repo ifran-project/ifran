@@ -298,6 +298,12 @@ class Free5GCAdvancedNRFConfig(GenericFree5GCAdvancedCoreConfig):
     serviceNameList: dict[str, Any] | None = Field(default=None)
 
 
+class Free5GCAdvancedNSSFConfig(GenericFree5GCAdvancedCoreConfig):
+    """Advanced configuration for Free5GC NSSF."""
+
+    serviceNameList: dict[str, Any] | None = Field(default=None)
+
+
 class Free5GCAdvancedPCFConfig(GenericFree5GCAdvancedCoreConfig):
     """Advanced configuration for Free5GC PCF."""
 
@@ -386,6 +392,7 @@ VALIDATED_ADVANCED_CORE_CONFIGS: dict[CoreImplementation, dict[CoreComponentType
         CoreComponentType.CHF: Free5GCAdvancedCHFConfig,
         CoreComponentType.NEF: Free5GCAdvancedNEFConfig,
         CoreComponentType.NRF: Free5GCAdvancedNRFConfig,
+        CoreComponentType.NSSF: Free5GCAdvancedNSSFConfig,
         CoreComponentType.PCF: Free5GCAdvancedPCFConfig,
         CoreComponentType.SMF: Free5GCAdvancedSMFConfig,
         CoreComponentType.UDM: Free5GCAdvancedUDMConfig,
