@@ -11,10 +11,24 @@
 
 # Output: None
 ---
+# Reference: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+- name: Create kubeadm patch directory on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /etc/kubernetes/patches
+    state: directory
+    mode: "0700"
+
+- name: Write node-specific kubelet patch on '{{ node.name }}'
+  ansible.builtin.template:
+    src: kubeletconfiguration+merge.yaml.j2
+    dest: /etc/kubernetes/patches/kubeletconfiguration+merge.yaml
+    mode: "0600"
+
 - name: Join '{{ node.name }}' to the Kubernetes cluster
   ansible.builtin.command: >-
     {{ join_command }}
     --node-name {{ node.name }}
+    --patches=/etc/kubernetes/patches
   args:
     creates: /etc/kubernetes/kubelet.conf
 

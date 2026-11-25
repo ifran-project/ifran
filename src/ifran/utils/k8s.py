@@ -21,7 +21,7 @@ from ifran.utils.ansible import (
     handle_ansible_result_exception,
     run_ansible_role,
 )
-from ifran.utils.utils import InvalidResourceStateError
+from ifran.utils.utils import InvalidResourceStateError, deep_merge
 
 
 def build_k8s_safe(name: str) -> str:
@@ -77,7 +77,7 @@ async def run_single_k8s_setup_action(  # noqa: PLR0917
             )
 
     # merge k8s params with priority to node's k8s params
-    merged_params = K8SParams.model_validate(k8s_params.model_dump(mode="json") | node_data.k8s_params)
+    merged_params = K8SParams.model_validate(deep_merge(k8s_params, node_data.k8s_params))
 
     if action == "join" and merged_params.join_command is None:
         raise RuntimeError(f"Node {node_name!r} cannot join Kubernetes cluster. Join command is undefined.")

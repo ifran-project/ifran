@@ -1,0 +1,9 @@
+cpuManagerPolicy: {{ kubelet_params.cpu_manager_policy }}
+{% if kubelet_params.cpu_manager_policy_options %}
+cpuManagerPolicyOptions:
+{{ kubelet_params.cpu_manager_policy_options | to_nice_yaml(indent=2) | indent(2, True) }}
+{% endif %}
+{% if kubelet_params.reserved_system_cpus %}
+reservedSystemCPUs: {{ kubelet_params.reserved_system_cpus | quote }}
+{% endif %}
+topologyManagerPolicy: {{ kubelet_params.topology_manager_policy }}
