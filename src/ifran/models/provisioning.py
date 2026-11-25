@@ -580,33 +580,11 @@ class Fhi72VF(StrictBaseModel):
     """VLAN ID of the fronthaul traffic on this VF."""
 
 
-class Fhi72PTPParams(StrictBaseModel):
-    """PTP (linuxptp) parameters of an O-RAN 7.2 node: ptp4l slave on 'interface', phc2sys to the system clock."""
-
-    interface: str = Field()
-    """Interface connected to the PTP grandmaster (its PHC is used by phc2sys)."""
-
-    domain_number: int = Field(default=24, ge=0, le=255)
-    """PTP domain number."""
-
-    network_transport: Literal["L2", "UDPv4", "UDPv6"] = Field(default="L2")
-    """PTP network transport."""
-
-    log_announce_interval: int = Field(default=1)
-    """ptp4l logAnnounceInterval (log2 seconds)."""
-
-    log_sync_interval: int = Field(default=-4)
-    """ptp4l logSyncInterval (log2 seconds)."""
-
-    linuxptp_version: str = Field(default="v4.4")
-    """linuxptp git tag built from source."""
-
-
 class Fhi72NodeParams(StrictBaseModel):
     """
     O-RAN 7.2 fronthaul (fhi72) node setup.
 
-    SR-IOV VFs bound to vfio-pci, kubelet static CPU manager, NIC IRQ pinning, PTP and the SR-IOV network
+    SR-IOV VFs bound to vfio-pci, kubelet static CPU manager, NIC IRQ pinning and the SR-IOV network
     device plugin (static pod). Kernel boot parameters (IOMMU, 1G hugepages, isolated CPUs) are expected
     to be set at provisioning time.
     """
@@ -643,11 +621,8 @@ class Fhi72NodeParams(StrictBaseModel):
     irq_pattern: str | None = Field(default=None)
     """
     Extended regex matched against /proc/interrupts lines to pin NIC IRQs on 'reserved_cpus'.
-    Defaults to the fronthaul and PTP interface names.
+    Defaults to the fronthaul interface name.
     """
-
-    ptp: Fhi72PTPParams | None = Field(default=None)
-    """PTP parameters, no PTP setup if None."""
 
     device_plugin_image: str = Field(default="ghcr.io/k8snetworkplumbingwg/sriov-network-device-plugin:v3.9.0")
     """SR-IOV network device plugin container image."""

@@ -8,7 +8,6 @@
 # - RT sysctl settings, systemd services on the kubelet reserved CPUs (CPUAffinity and system slices cpuset)
 # - kubelet static CPU manager (Guaranteed DPDK pods get whole physical cores)
 # - SR-IOV network device plugin as a static pod, one resource pool per VF resource name
-# - PTP: linuxptp built from source, ptp4l slave on the PTP interface and phc2sys to the system clock
 
 # Input:
 # - node: Node (node.name and node.fhi72)
@@ -84,7 +83,7 @@
   vars:
     fhi72_irq_pattern: >-
       {{ fhi72_params.irq_pattern if fhi72_params.irq_pattern is not none
-         else ([fhi72_params.fronthaul_interface] + ([fhi72_params.ptp.interface] if fhi72_params.ptp is not none else [])) | join('|') }}
+         else fhi72_params.fronthaul_interface }}
 
 # VFs, ethtool settings and IRQ affinities are lost at reboot: the script also runs at boot, before kubelet
 - name: Install the fronthaul node tuning systemd unit on '{{ node.name }}'
@@ -247,71 +246,3 @@
     mode: "0600"
   vars:
     sriovdp_config_checksum: "{{ fhi72_sriovdp_config_stat.stat.checksum }}"
-
-# ---------------------------------------------------------------------------
-# PTP
-# ---------------------------------------------------------------------------
-
-- name: Set up PTP on '{{ node.name }}'
-  when: fhi72_params.ptp is not none
-  block:
-    - name: Install linuxptp build dependencies on '{{ node.name }}'
-      ansible.builtin.apt:
-        name:
-          - gcc
-          - make
-          - git
-        state: present
-        update_cache: true
-
-    - name: Clone linuxptp on '{{ node.name }}'
-      ansible.builtin.git:
-        repo: https://github.com/richardcochran/linuxptp.git
-        dest: /usr/local/src/linuxptp
-        version: "{{ fhi72_params.ptp.linuxptp_version }}"
-        depth: 1
-        force: true
-      register: fhi72_linuxptp_clone
-
-    - name: Build and install linuxptp in /usr/local/sbin on '{{ node.name }}'
-      ansible.builtin.shell: |
-        make -j"$(nproc)"
-        make install
-      args:
-        chdir: /usr/local/src/linuxptp
-      changed_when: true
-      when: fhi72_linuxptp_clone is changed
-
-    # phc2sys drives the system clock, NTP must not fight it
-    - name: Disable NTP on '{{ node.name }}'
-      ansible.builtin.command: timedatectl set-ntp false
-      changed_when: false
-
-    - name: Write the ptp4l configuration of '{{ node.name }}'
-      ansible.builtin.template:
-        src: ptp4l.conf.j2
-        dest: /etc/ptp4l.conf
-        mode: "0644"
-      register: fhi72_ptp4l_conf
-
-    - name: Install the ptp4l and phc2sys systemd units on '{{ node.name }}'
-      ansible.builtin.template:
-        src: "{{ item }}.service.j2"
-        dest: "/etc/systemd/system/{{ item }}.service"
-        mode: "0644"
-      loop:
-        - ptp4l
-        - phc2sys
-      register: fhi72_ptp_units
-
-    - name: Enable and (re)start ptp4l and phc2sys on '{{ node.name }}'
-      ansible.builtin.systemd_service:
-        name: "{{ item }}"
-        enabled: true
-        daemon_reload: true
-        state: >-
-          {{ 'restarted' if (fhi72_linuxptp_clone is changed or fhi72_ptp4l_conf is changed
-                             or fhi72_ptp_units is changed) else 'started' }}
-      loop:
-        - ptp4l
-        - phc2sys
