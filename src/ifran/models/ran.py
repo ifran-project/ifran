@@ -258,6 +258,7 @@ class OCUDUAdvancedGNBConfig(OCUDUAdvancedCommonGNBConfig):
     """Advanced configuration for OCUDU GNB."""
 
     gnb_cu_up_id: int = Field(default=0)
+    gnb_du_id: int = Field(default=0)
     cu_cp: dict[str, Any] | None = Field(default=None)
     inactivity_timer: int = Field(default=120)
     cu_up: dict[str, Any] | None = Field(default=None)
