@@ -31,7 +31,11 @@ gNBs:
 
     ##### Physical parameters:
     min_rxtxtime: {{ component.advanced_config.min_rxtxtime }}
-
+{% for key in ["pdsch_AntennaPorts_XP", "pdsch_AntennaPorts_N1", "pusch_AntennaPorts", "do_CSIRS", "do_SRS"] %}
+{% if component.advanced_config[key] is not none %}
+    {{ key }}: {{ component.advanced_config[key] }}
+{% endif %}
+{% endfor %}
     servingCellConfigCommon:
       #spCellConfigCommon
       - physCellId: {{ component.config.physicalCellId }}
@@ -158,6 +162,11 @@ MACRLCs:
     tr_n_preference: local_RRC
     pusch_TargetSNRx10: {{ component.advanced_config.pusch_TargetSNRx10 }}
     pucch_TargetSNRx10:  {{ component.advanced_config.pucch_TargetSNRx10 }}
+{% for key in ["dl_bler_target_lower", "dl_bler_target_upper", "ul_bler_target_lower", "ul_bler_target_upper", "pusch_RSSI_Threshold", "pucch_RSSI_Threshold", "pusch_FailureThres", "ul_max_mcs", "stats_max_ue"] %}
+{% if component.advanced_config[key] is not none %}
+    {{ key }}: {{ component.advanced_config[key] }}
+{% endif %}
+{% endfor %}
 
 L1s:
   - num_cc: 1
@@ -165,6 +174,11 @@ L1s:
     prach_dtx_threshold: {{ component.advanced_config.prach_dtx_threshold }}
     pucch0_dtx_threshold: {{ component.advanced_config.pucch0_dtx_threshold }}
     ofdm_offset_divisor: {{ component.advanced_config.ofdm_offset_divisor }} # set this to UINT_MAX for offset 0
+{% for key in ["pusch_dtx_threshold", "max_ldpc_iterations", "tx_amp_backoff_dB", "phase_compensation"] %}
+{% if component.advanced_config[key] is not none %}
+    {{ key }}: {{ component.advanced_config[key] }}
+{% endif %}
+{% endfor %}
 
 RUs:
   - local_rf: {{ component.advanced_config.local_rf }}
@@ -180,48 +194,16 @@ RUs:
 {% if component.derived_radio_config.sdr_addrs %}
     sdr_addrs: {{ component.derived_radio_config.sdr_addrs }}
 {% endif %}
-{% if component.advanced_config.tr_preference %}
-    tr_preference: {{ component.advanced_config.tr_preference }}
+{% for key in ["do_precoding", "tr_preference", "num_tp_cores", "rxfh_core_id", "txfh_core_id", "tp_cores", "nr_flag", "sl_ahead", "local_portc", "remote_portc", "local_portd", "remote_portd"] %}
+{% if component.advanced_config[key] is not none %}
+    {{ key }}: {{ component.advanced_config[key] }}
 {% endif %}
-{% if component.advanced_config.num_tp_cores %}
-    num_tp_cores: {{ component.advanced_config.num_tp_cores }}
+{% endfor %}
+{% for key in ["local_if_name", "remote_address", "local_address"] %}
+{% if component.advanced_config[key] is not none %}
+    {{ key }}: "{{ component.advanced_config[key] }}"
 {% endif %}
-{% if component.advanced_config.rxfh_core_id %}
-    rxfh_core_id: {{ component.advanced_config.rxfh_core_id }}
-{% endif %}
-{% if component.advanced_config.txfh_core_id %}
-    txfh_core_id: {{ component.advanced_config.txfh_core_id }}
-{% endif %}
-{% if component.advanced_config.tp_cores %}
-    tp_cores: {{ component.advanced_config.tp_cores }}
-{% endif %}
-{% if component.advanced_config.nr_flag %}
-    nr_flag: {{ component.advanced_config.nr_flag }}
-{% endif %}
-{% if component.advanced_config.sl_ahead %}
-    sl_ahead: {{ component.advanced_config.sl_ahead }}
-{% endif %}
-{% if component.advanced_config.local_if_name %}
-    local_if_name: "{{ component.advanced_config.local_if_name }}"
-{% endif %}
-{% if component.advanced_config.remote_address %}
-    remote_address: "{{ component.advanced_config.remote_address }}"
-{% endif %}
-{% if component.advanced_config.local_address %}
-    local_address: "{{ component.advanced_config.local_address }}"
-{% endif %}
-{% if component.advanced_config.local_portc %}
-    local_portc: {{ component.advanced_config.local_portc }}
-{% endif %}
-{% if component.advanced_config.remote_portc %}
-    remote_portc: {{ component.advanced_config.remote_portc }}
-{% endif %}
-{% if component.advanced_config.local_portd %}
-    local_portd: {{ component.advanced_config.local_portd }}
-{% endif %}
-{% if component.advanced_config.remote_portd %}
-    remote_portd: {{ component.advanced_config.remote_portd }}
-{% endif %}
+{% endfor %}
 
 {% if component.config.ru.type == "simulated" %}
 rfsimulator:
