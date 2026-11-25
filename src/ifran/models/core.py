@@ -265,6 +265,7 @@ class Free5GCAdvancedBSFConfig(GenericFree5GCAdvancedCoreConfig):
 
     mongodb_name: str = Field(default="free5gc")
     mongodb_url: str = Field(default="mongodb://test:test@free5gc-database/?authSource=admin")
+    metrics: dict[str, Any] | None = Field(default=None)
 
 
 class Free5GCAdvancedCHFConfig(GenericFree5GCAdvancedCoreConfig):
