@@ -374,7 +374,7 @@ VALIDATED_ADVANCED_CORE_CONFIGS: dict[CoreImplementation, dict[CoreComponentType
         CoreComponentType.PCF: OAIAdvancedPCFConfig,
         CoreComponentType.NSSF: OAIAdvancedNSSFConfig,
         CoreComponentType.LMF: OAIAdvancedLMFConfig,
-        CoreComponentType.UDR: OAIAdvancedLMFConfig,
+        CoreComponentType.UDR: OAIAdvancedUDRConfig,
     },
     CoreImplementation.OPEN5GS: {
         CoreComponentType.AMF: Open5GSAdvancedAMFConfig,
