@@ -134,7 +134,7 @@ def resolve_ocudu_zmq_ran(
     if is_zmq_based:
         # zmq in ocudu gnb/du needs both gnb ip and ue ip
         # NOTE the gnb/du should have generated a ue_ip in their advanced_config by this point
-        if gnb.advanced_config is None or gnb.advanced_config.ue_ip is None:  # type: ignore
+        if gnb.advanced_config.ue_ip is None:  # type: ignore
             raise ValueError(
                 f"UE {component_name} needs a static pod IP for ZMQ simulated RF with OCUDU RAN, "
                 "but none was found in gNB/DU's 'ue_ip' advanced config field."

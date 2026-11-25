@@ -9,7 +9,7 @@ from metamodel_3gpp.models.ru import RUType
 from ifran.models.common import Deployed5GComponent
 from ifran.models.core import MergedAMF
 from ifran.models.deployment import DeploymentModel
-from ifran.models.ran import ADVANCED_RAN_CONFIG_MAPPING, DeployedRANComponent, RANImplementation
+from ifran.models.ran import DeployedRANComponent, RANImplementation
 from ifran.models.ric import MergedRIC
 from ifran.utils.common_5g import (
     get_5g_components_by_type,
@@ -120,14 +120,9 @@ def resolve_ocudu_zmq_ran(
         # simulated ocudu gnb/du (zmq) needs to know ue ip in advance
         ue_ip = generate_random_ip(k8s_params)
 
-        # make sure advanced_config is populated
-        if component_deployment.advanced_config is None:
-            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[RANImplementation.OCUDU][
-                component_meta.type
-            ]()
-
-        component_deployment.advanced_config.ue_ip = component_deployment.advanced_config.ue_ip or ue_ip
+        # advanced_config is already populated by this point
         # NOTE this ip will later be taken from here and given as static_pod_ip to the ue component
+        component_deployment.advanced_config.ue_ip = component_deployment.advanced_config.ue_ip or ue_ip
 
 
 def reconcile_ran(
@@ -172,7 +167,7 @@ def reconcile_ran(
 
     rics_meta = get_5g_components_by_type(ric_meta.components, [RICComponentType.RIC, RICComponentType.E2TERM])  # type: ignore
     rics_deployment = get_5g_components_by_type(
-        ric_deployment.components,
+        ric_deployment.components,  # type: ignore
         [RICComponentType.RIC, RICComponentType.E2TERM],  # type: ignore
     )  # type: ignore
 

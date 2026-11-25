@@ -16,7 +16,7 @@ from metamodel_3gpp.models.ru import RUType
 from metamodel_3gpp.models.ue import UE, UEType
 
 from ifran.models.provisioning import AW2SModel, RUModel, RUVendor, USRPModel
-from ifran.models.ran import ADVANCED_RAN_CONFIG_MAPPING, DeployedRANComponent, RANImplementation
+from ifran.models.ran import DeployedRANComponent, RANImplementation
 from ifran.models.ue import DeployedUE, UEImplementation
 
 NUMEROLOGY: dict[SubcarrierSpacing, int] = {
@@ -191,7 +191,7 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
     # -E enables continuous synchronization/transmission optimizations
     # NOTE don't use -E with real RUs, except for USRP B210/B205
     # for some reason the gNB can't see radio signals anymore (tested on N300 and N320)
-    if component_deployment.advanced_config and component_deployment.advanced_config.useAdditionalOptions:
+    if component_deployment.advanced_config.useAdditionalOptions:
         additional_flags = component_deployment.advanced_config.useAdditionalOptions
     elif ru.type is RUType.SIMULATED:  # type: ignore
         additional_flags = "-E --rfsim"
@@ -202,11 +202,6 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
 
     # aw2s specific configuration
     if ru.type is RUType.REAL and ru.vendor is RUVendor.AW2S:  # type: ignore
-        if not component_deployment.advanced_config:
-            component_deployment.advanced_config = ADVANCED_RAN_CONFIG_MAPPING[RANImplementation.OAI][
-                component_meta.type
-            ]()
-
         adv_conf = component_deployment.advanced_config
 
         adv_conf.local_rf = adv_conf.local_rf or "no"
@@ -266,7 +261,7 @@ def derive_ocudu_ran_config(
             f"tx_port=tcp://{component_deployment.static_pod_ip}:2000,"
             f"rx_port=tcp://{component_deployment.advanced_config.ue_ip}:2001"
         )
-        if component_deployment.advanced_config and component_deployment.advanced_config.base_srate:
+        if component_deployment.advanced_config.base_srate:
             device_args += f",base_srate={component_deployment.advanced_config.base_srate}"
 
     elif ru.vendor is RUVendor.USRP:  # type: ignore
@@ -278,7 +273,7 @@ def derive_ocudu_ran_config(
                 f"addr={ru.ips[0]},"  # type: ignore
                 f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
             )
-            if component_deployment.advanced_config and component_deployment.advanced_config.master_clock_rate:
+            if component_deployment.advanced_config.master_clock_rate:
                 device_args += f",master_clock_rate={component_deployment.advanced_config.master_clock_rate}"
     else:
         device_driver = None
@@ -389,7 +384,7 @@ def derive_oai_ue_config(  # noqa: C901, PLR0912
         ssb_start = int(ssb_offset_hz // scs_ssb_hz)
 
         # additional flags
-        if ue_deployment.advanced_config and ue_deployment.advanced_config.useAdditionalOptions:
+        if ue_deployment.advanced_config.useAdditionalOptions:
             additional_flags = ue_deployment.advanced_config.useAdditionalOptions
 
         elif ru.type is RUType.SIMULATED:  # type: ignore
@@ -457,7 +452,7 @@ def derive_srsue_ue_config(
                 f"tx_port=tcp://{ue_deployment.static_pod_ip}:2001,"
                 f"rx_port=tcp://{ue_meta.config.gnbs[0].gnb_ip}:2000"  # type: ignore
             )
-            if ue_deployment.advanced_config and ue_deployment.advanced_config.srate:
+            if ue_deployment.advanced_config.srate:
                 device_args += f",base_srate={ue_deployment.advanced_config.srate}"
 
         elif ru.vendor is RUVendor.USRP:  # type: ignore
@@ -469,7 +464,7 @@ def derive_srsue_ue_config(
                     f"addr={ru.ips[0]},"  # type: ignore
                     f"clock_source={ru.clockSource},time_source={ru.timeSource}"  # type: ignore
                 )
-                if ue_deployment.advanced_config and ue_deployment.advanced_config.master_clock_rate:
+                if ue_deployment.advanced_config.master_clock_rate:
                     device_args += f",master_clock_rate={ue_deployment.advanced_config.master_clock_rate}"
         else:
             device_driver = None
