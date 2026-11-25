@@ -162,6 +162,7 @@ class OAIAdvancedCommonGNBConfig(GenericOAIAdvancedRANConfig):
     thread_pool: str | None = Field(default=None)
     channelmod: dict[str, Any] | None = Field(default=None)
 
+
 class OAIAdvancedDUConfig(OAIAdvancedCommonGNBConfig):
     """Advanced configuration for OAI DU."""
 
