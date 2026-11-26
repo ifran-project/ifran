@@ -1,0 +1,29 @@
+# Reboot after a changed/forced configuration and verify the file survived boot
+---
+- name: Read the current RU boot ID
+  ansible.builtin.raw: cat /proc/sys/kernel/random/boot_id
+  register: ru_boot_id_before
+  changed_when: false
+
+- name: Reboot the RU
+  ansible.builtin.raw: /sbin/reboot
+  register: configure_reboot
+  changed_when: true
+  failed_when: configure_reboot.rc not in [0, 255]
+
+- name: Allow the RU to start rebooting
+  ansible.builtin.pause:
+    seconds: 200
+
+- name: Read the RU boot ID after reboot
+  ansible.builtin.raw: cat /proc/sys/kernel/random/boot_id
+  register: ru_boot_id_after
+  changed_when: false
+  retries: 120
+  delay: 5
+  until: >
+    ru_boot_id_after.rc == 0 and
+    (ru_boot_id_after.stdout | trim | length) > 0 and
+    (ru_boot_id_after.stdout | trim) !=
+    (ru_boot_id_before.stdout | trim)
+  ignore_unreachable: true

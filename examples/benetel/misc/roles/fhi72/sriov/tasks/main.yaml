@@ -1,0 +1,41 @@
+# Install the SR-IOV device plugin configuration and kubelet static pod
+---
+- name: Read kubelet configuration to find its static pod directory
+  ansible.builtin.slurp:
+    src: /var/lib/kubelet/config.yaml
+  register: fhi72_kubelet_config_raw
+
+- name: Decode kubelet configuration
+  ansible.builtin.set_fact:
+    fhi72_kubelet_config: "{{ fhi72_kubelet_config_raw.content | b64decode | from_yaml }}"
+
+- name: Require kubelet static pod support
+  ansible.builtin.assert:
+    that: fhi72_kubelet_config.staticPodPath is defined
+    fail_msg: "kubelet has no staticPodPath; the SR-IOV device plugin cannot run as a static pod."
+
+- name: Create SR-IOV plugin configuration directory
+  ansible.builtin.file:
+    path: /etc/pcidp
+    state: directory
+    mode: "0755"
+
+- name: Configure SR-IOV device plugin pools
+  ansible.builtin.template:
+    src: sriovdp-config.json.j2
+    dest: /etc/pcidp/config.json
+    mode: "0644"
+
+- name: Read SR-IOV device plugin configuration checksum
+  ansible.builtin.stat:
+    path: /etc/pcidp/config.json
+    checksum_algorithm: sha256
+  register: fhi72_sriov_config
+
+- name: Install SR-IOV device plugin static pod
+  ansible.builtin.template:
+    src: sriov-device-plugin.yaml.j2
+    dest: "{{ fhi72_kubelet_config.staticPodPath }}/sriov-device-plugin.yaml"
+    mode: "0600"
+  vars:
+    sriovdp_config_checksum: "{{ fhi72_sriov_config.stat.checksum }}"

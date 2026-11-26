@@ -1,0 +1,74 @@
+# Disable irqbalance and confine system services/slices to the reserved CPUs
+---
+- name: Read installed services
+  ansible.builtin.service_facts:
+
+- name: Disable irqbalance when installed
+  ansible.builtin.systemd_service:
+    name: irqbalance
+    state: stopped
+    enabled: false
+  when: "'irqbalance.service' in ansible_facts.services"
+
+- name: Create systemd manager drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Set system service CPU affinity
+  ansible.builtin.template:
+    src: systemd-cpuaffinity.conf.j2
+    dest: /etc/systemd/system.conf.d/90-ifran-fhi72.conf
+    mode: "0644"
+  register: fhi72_cpuaffinity
+
+- name: Reexecute systemd when CPU affinity changed
+  ansible.builtin.systemd_service:
+    daemon_reexec: true
+  when: fhi72_cpuaffinity is changed
+
+- name: Read system slice CPU restrictions
+  ansible.builtin.command:
+    argv: [systemctl, show, --property=AllowedCPUs, --value, "{{ item }}"]
+  loop: [system.slice, user.slice, init.scope]
+  register: fhi72_slice_cpus
+  changed_when: false
+
+- name: Restrict system slices to reserved CPUs
+  ansible.builtin.command:
+    argv: [systemctl, set-property, "{{ item.item }}", "AllowedCPUs={{ miscellaneous.fhi72_params[inventory_hostname].reserved_cpus }}"]
+  loop: "{{ fhi72_slice_cpus.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  changed_when: true
+  when: item.stdout != miscellaneous.fhi72_params[inventory_hostname].reserved_cpus
+
+- name: Install the fronthaul VF setup script
+  ansible.builtin.template:
+    src: fhi72-vfs.sh.j2
+    dest: /usr/local/sbin/ifran-fhi72-vfs.sh
+    mode: "0755"
+
+- name: Install the fronthaul tuning script
+  ansible.builtin.template:
+    src: fhi72-tuning.sh.j2
+    dest: /usr/local/sbin/ifran-fhi72-tuning.sh
+    mode: "0755"
+  vars:
+    fhi72_irq_pattern: >-
+      {{ fhi72_params.irq_pattern if fhi72_params.irq_pattern is not none
+         else ([fhi72_params.fronthaul_interface] + ([fhi72_params.ptp.interface] if fhi72_params.ptp is not none else [])) | join('|') }}
+
+- name: Install the fronthaul tuning service
+  ansible.builtin.template:
+    src: ifran-fhi72-tuning.service.j2
+    dest: /etc/systemd/system/ifran-fhi72-tuning.service
+    mode: "0644"
+
+- name: Enable and run fronthaul tuning
+  ansible.builtin.systemd_service:
+    name: ifran-fhi72-tuning
+    enabled: true
+    daemon_reload: true
+    state: started

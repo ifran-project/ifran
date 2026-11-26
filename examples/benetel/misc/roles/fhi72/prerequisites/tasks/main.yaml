@@ -1,0 +1,40 @@
+# Verify IOMMU and allocate/check the requested 1 GiB hugepages
+---
+- name: Check IOMMU groups
+  ansible.builtin.find:
+    paths: /sys/kernel/iommu_groups
+    file_type: directory
+  register: fhi72_iommu_groups
+
+- name: Read current 1G hugepage count
+  ansible.builtin.slurp:
+    src: /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+  register: fhi72_hugepages_before
+
+- name: Allocate configured 1G hugepages
+  ansible.builtin.command:
+    argv: [tee, /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages]
+    stdin: "{{ miscellaneous.fhi72_params[inventory_hostname].hugepages_1g }}"
+  changed_when: true
+  when:
+    - miscellaneous.fhi72_params[inventory_hostname].hugepages_1g | int > 0
+    - fhi72_hugepages_before.content | b64decode | trim | int != miscellaneous.fhi72_params[inventory_hostname].hugepages_1g | int
+  register: fhi72_hugepages_allocated
+
+- name: Read allocated 1G hugepage count
+  ansible.builtin.slurp:
+    src: /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+  register: fhi72_hugepages
+
+- name: Stop when required kernel prerequisites are missing
+  ansible.builtin.fail:
+    msg: >-
+      {{ inventory_hostname }} needs IOMMU groups and 1G hugepages for DPDK
+      ({{ fhi72_iommu_groups.matched }} IOMMU groups,
+      {{ fhi72_hugepages.content | b64decode | trim }} hugepages).
+      Enable IOMMU in boot parameters; hugepages can be set at boot or with hugepages_1g.
+  when: >-
+    fhi72_iommu_groups.matched | int == 0 or
+    fhi72_hugepages.content | b64decode | trim | int == 0 or
+    (miscellaneous.fhi72_params[inventory_hostname].hugepages_1g | int > 0 and
+     fhi72_hugepages.content | b64decode | trim | int != miscellaneous.fhi72_params[inventory_hostname].hugepages_1g | int)

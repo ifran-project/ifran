@@ -1,0 +1,32 @@
+# Pin fronthaul and optional PTP NIC interrupts to the reserved CPU list
+---
+- name: Read kernel interrupt table
+  ansible.builtin.slurp:
+    src: /proc/interrupts
+  register: fhi72_interrupt_table
+
+- name: Derive default IRQ match pattern
+  ansible.builtin.set_fact:
+    fhi72_irq_pattern: >-
+      {{ miscellaneous.fhi72_params[inventory_hostname].irq_pattern if miscellaneous.fhi72_params[inventory_hostname].irq_pattern is not none
+         else ([miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface] + ([miscellaneous.fhi72_params[inventory_hostname].ptp.interface] if miscellaneous.fhi72_params[inventory_hostname].ptp is not none else [])) | join('|') }}
+
+- name: Select matching interrupt lines
+  ansible.builtin.set_fact:
+    fhi72_irq_lines: "{{ (fhi72_interrupt_table.content | b64decode).splitlines() | select('search', fhi72_irq_pattern) | list }}"
+
+- name: Extract matching IRQ numbers
+  ansible.builtin.set_fact:
+    fhi72_irq_numbers: "{{ fhi72_irq_lines | map('regex_replace', '^\\s*(\\d+):.*$', '\\1') | list }}"
+
+- name: Require at least one matching NIC IRQ
+  ansible.builtin.fail:
+    msg: "No IRQ matched '{{ fhi72_irq_pattern }}' in /proc/interrupts"
+  when: fhi72_irq_numbers | length == 0
+
+- name: Pin NIC IRQs to reserved CPUs
+  ansible.builtin.command:
+    argv: [tee, "/proc/irq/{{ item }}/smp_affinity_list"]
+    stdin: "{{ miscellaneous.fhi72_params[inventory_hostname].reserved_cpus }}"
+  loop: "{{ fhi72_irq_numbers }}"
+  changed_when: true

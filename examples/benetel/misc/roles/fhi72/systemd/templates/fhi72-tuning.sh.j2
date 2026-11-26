@@ -1,0 +1,48 @@
+#!/bin/bash
+# Reapply fronthaul tuning after a node reboot.
+set -uo pipefail
+
+PF="{{ fhi72_params.fronthaul_interface }}"
+RESERVED_CPUS="{{ fhi72_params.reserved_cpus }}"
+IRQ_PATTERN='{{ fhi72_irq_pattern }}'
+status=0
+
+ethtool -C "${PF}" adaptive-rx off adaptive-tx off
+rc=$?
+[ "${rc}" -eq 0 ] || [ "${rc}" -eq 80 ] || { echo "ERROR: ethtool -C ${PF} failed (${rc})" >&2; status=1; }
+{% if fhi72_params.ring_size is not none %}
+ethtool -G "${PF}" rx {{ fhi72_params.ring_size }} tx {{ fhi72_params.ring_size }}
+rc=$?
+[ "${rc}" -eq 0 ] || [ "${rc}" -eq 80 ] || { echo "ERROR: ethtool -G ${PF} failed (${rc})" >&2; status=1; }
+{% endif %}
+
+/usr/local/sbin/ifran-fhi72-vfs.sh || status=1
+
+n=0
+failed=""
+for irq in $(grep -E "${IRQ_PATTERN}" /proc/interrupts | cut -d: -f1); do
+  if { echo "${RESERVED_CPUS}" > "/proc/irq/${irq}/smp_affinity_list"; } 2>/dev/null; then
+    n=$((n+1))
+  else
+    failed="${failed} ${irq}"
+  fi
+done
+echo "pinned ${n} IRQs on ${RESERVED_CPUS}"
+[ -z "${failed}" ] || echo "failed IRQs:${failed}" >&2
+[ "${n}" -gt 0 ] || { echo "ERROR: no IRQ matches '${IRQ_PATTERN}'" >&2; status=1; }
+
+n=0
+for governor in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+  [ -e "${governor}" ] || continue
+  [ "$(cat "${governor}")" = performance ] && continue
+  echo performance > "${governor}" && n=$((n+1)) || status=1
+done
+echo "performance governor set on ${n} CPUs"
+
+n=0
+for pid in $(pgrep '^rcu[cb]/'); do
+  [ "$(chrt -p "${pid}" | awk -F': ' '/priority/ {print $2}')" = 99 ] && continue
+  chrt -f -p 99 "${pid}" && n=$((n+1)) || status=1
+done
+echo "RCU kthreads raised to SCHED_FIFO 99: ${n}"
+exit "${status}"

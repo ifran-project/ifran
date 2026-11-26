@@ -1,0 +1,12 @@
+[Unit]
+Description=Synchronize the system clock to the PHC of {{ miscellaneous.fhi72_params[inventory_hostname].ptp.interface }}
+After=ptp4l.service
+Requires=ptp4l.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/phc2sys -s {{ miscellaneous.fhi72_params[inventory_hostname].ptp.interface }} -c CLOCK_REALTIME -r -n {{ miscellaneous.fhi72_params[inventory_hostname].ptp.domain_number }} -w -m -l 7
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
