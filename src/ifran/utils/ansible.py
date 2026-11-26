@@ -20,12 +20,11 @@ from ifran.utils.utils import InvalidResourceStateError, deep_merge, resolve_pat
 logger = logging.getLogger(__name__)
 
 
-def get_ansible_inventory_line(
-    resource_name: str,
+def get_merged_ssh_info(
     resource_data: SSHableResource,
     ssh_params: SSHInfo | None = None,
-) -> str:
-    """Return Ansible INI inventory line to SSH access a provisionable resource."""
+) -> SSHInfo:
+    """Return merged SSH info with global SSH defaults."""
 
     if ssh_params:
         # merge resource ssh info with global ssh defaults
@@ -38,6 +37,18 @@ def get_ansible_inventory_line(
         )
     else:
         ssh_info = resource_data.ssh_info
+
+    return ssh_info
+
+
+def get_ansible_inventory_line(
+    resource_name: str,
+    resource_data: SSHableResource,
+    ssh_params: SSHInfo | None = None,
+) -> str:
+    """Return Ansible INI inventory line to SSH access a provisionable resource."""
+
+    ssh_info = get_merged_ssh_info(resource_data=resource_data, ssh_params=ssh_params)
 
     vars: dict[str, str] = {
         "ansible_host": ssh_info.hostname or resource_data.name,
