@@ -15,7 +15,7 @@ from metamodel_3gpp.models.ran import (
 from metamodel_3gpp.models.ru import RUType
 from metamodel_3gpp.models.ue import UE, UEType
 
-from ifran.models.provisioning import AW2SModel, RUModel, RUVendor, USRPModel
+from ifran.models.provisioning import AW2SModel, BenetelModel, LiteonModel, RUModel, RUVendor, USRPModel
 from ifran.models.ran import DeployedRANComponent, RANImplementation
 from ifran.models.ue import DeployedUE, UEImplementation
 
@@ -112,6 +112,13 @@ RADIO_TYPE_BY_RU: dict[RUVendor | None, dict[RUModel | None, str]] = {
     RUVendor.AW2S: {
         AW2SModel.JAGUAR: "aw2s",
         AW2SModel.PANTHER: "aw2s",
+    },
+    RUVendor.BENETEL: {
+        BenetelModel.RAN550: "fhi72",
+        BenetelModel.RAN650: "fhi72",
+    },
+    RUVendor.LITEON: {
+        LiteonModel.FLEXFI: "fhi72",
     },
 }
 
