@@ -7,10 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-11-26
+
+### Added
+- A separate `configure` action for COTS UEs, so configuration can be performed independently of connecting to the network (#4).
+- SSH access and remote command execution on radio units (RUs), with shared SSH defaults and per-resource overrides (#5).
+- A public Kubernetes `wait` action, kubelet CPU and topology manager settings, and containerd registry mirror configuration (#25).
+- Support for rendering `rendered_files` and `custom_rendered_files` together.
+
+### Changed
+- **Breaking:** COTS UE setup now requires calling `configure()` before `connect()` (#4).
+- **Breaking:** `ProvisionableUE.is_connected` is replaced by `connection_status`, with `not_configured`, `configured` and `connected` states.
+- **Breaking:** Rename the SSH pipelining setting from `ssh_pipelining` to `pipelining`; SSH common arguments are generated from the connection settings.
+- Core deployment no longer applies a fixed default component order.
+- Advanced configuration defaults are defined and validated by the Pydantic models across core, RAN and UE components. The schemas now cover additional OAI and OCUDU settings (#20, #23, #24).
+- Ansible actions retry failures with exponential backoff, include detailed failure output, and stop cleanly when cancelled.
+- Free5GC components use the official Docker Hub images by default.
+
 ### Fixed
-- OAI PCF exiting at start-up, which blocked the OAI core installation: it read its policies from the database
-  (`enable_policy_provisioning_api: yes`), which the published OAI PCF images do not support. It now reads them from
-  local policy files, mounted with a default PCC rule and policy decision (`enable_policy_provisioning_api: no`).
+- Preserve explicitly supplied advanced configuration values, including `0` and values equal to model defaults, and correct missing fields and defaults across supported components (#20, #23, #24).
+- OAI PCF start-up failures caused by unsupported database-backed policies: mount default local policy files in the chart and use them by default (#18).
+- Handle Kubernetes readiness waits when a Kubernetes or Calico system pod is removed, and make Kubernetes deployment actions idempotent.
+- Helm installations using relative chart paths.
+- Free5GC and Open5GS NSSF chart configuration issues.
 
 ## [0.0.6] - 2026-11-13
 
@@ -77,7 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for multiple RAN and core implementations.
 - Component lifecycle management and deployment reconciliation.
 
-[Unreleased]: https://github.com/ifran-project/ifran/compare/v0.0.6...HEAD
+[Unreleased]: https://github.com/ifran-project/ifran/compare/v0.0.7...HEAD
+[0.0.7]: https://github.com/ifran-project/ifran/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/ifran-project/ifran/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/ifran-project/ifran/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/ifran-project/ifran/compare/v0.0.3...v0.0.4
