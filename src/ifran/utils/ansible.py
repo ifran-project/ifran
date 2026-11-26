@@ -23,18 +23,21 @@ logger = logging.getLogger(__name__)
 def get_ansible_inventory_line(
     resource_name: str,
     resource_data: SSHableResource,
-    ssh_params: SSHInfo,
+    ssh_params: SSHInfo | None = None,
 ) -> str:
     """Return Ansible INI inventory line to SSH access a provisionable resource."""
 
-    # merge resource ssh info with global ssh defaults
-    # NOTE deep_merge is used to also merge nested jumphost ssh info
-    ssh_info = SSHInfo.model_validate(
-        deep_merge(
-            ssh_params.model_dump(mode="json", exclude_unset=True),
-            resource_data.ssh_info.model_dump(mode="json", exclude_unset=True),
-        ),
-    )
+    if ssh_params:
+        # merge resource ssh info with global ssh defaults
+        # NOTE deep_merge is used to also merge nested jumphost ssh info
+        ssh_info = SSHInfo.model_validate(
+            deep_merge(
+                ssh_params.model_dump(mode="json", exclude_unset=True),
+                resource_data.ssh_info.model_dump(mode="json", exclude_unset=True),
+            ),
+        )
+    else:
+        ssh_info = resource_data.ssh_info
 
     vars: dict[str, str] = {
         "ansible_host": ssh_info.hostname or resource_data.name,
