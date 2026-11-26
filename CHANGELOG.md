@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Preserve explicitly supplied advanced configuration values, including `0` and values equal to model defaults, and correct missing fields and defaults across supported components (#20, #23, #24).
+- SSH connections through multiple jumphosts issue (#28).
 - OAI PCF start-up failures caused by unsupported database-backed policies: mount default local policy files in the chart and use them by default (#18).
 - Handle Kubernetes readiness waits when a Kubernetes or Calico system pod is removed, and make Kubernetes deployment actions idempotent.
 - Helm installations using relative chart paths.

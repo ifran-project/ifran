@@ -110,7 +110,9 @@ class SSHInfo(StrictBaseModel):
         # if jump host itself has a jump host, nest the proxy command
         if jump.jumphost:
             nested_proxy = jump._build_proxy_command()
-            proxy_cmd += f" -o ProxyCommand={shlex.quote(nested_proxy)}"  # type: ignore
+            # NOTE escape every % as %% to makes it survive ssh expansion
+            nested_proxy = nested_proxy.replace("%", "%%")  # type: ignore
+            proxy_cmd += f" -o ProxyCommand={shlex.quote(nested_proxy)}"
 
         return proxy_cmd
 
