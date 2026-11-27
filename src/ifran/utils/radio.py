@@ -220,8 +220,11 @@ def derive_oai_ran_config(  # noqa: C901, PLR0912
             "nr_flag": 1,
             "sl_ahead": 5,
         }
+
+        # NOTE apply aw2s specific defaults only when not explicitly configured.
+        unset_adv_conf = adv_conf.model_dump(mode="json", exclude_unset=True)
         for field, default in aw2s_defaults.items():
-            if getattr(adv_conf, field) is None:
+            if unset_adv_conf.get(field) is None:
                 setattr(adv_conf, field, default)
 
         if ru.ips:  # type: ignore
