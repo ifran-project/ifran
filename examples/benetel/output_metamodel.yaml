@@ -1,0 +1,84 @@
+ran:
+  components:
+    cucp:
+      type: cu_cp
+    cuup:
+      type: cu_up
+      config:
+        cu_cp: cucp
+    du1:
+      type: du
+      config:
+        radioConfiguration:
+          duplexMode: tdd
+          downlinkArfcn: 620000
+          uplinkArfcn: 620000
+          pointAFrequencyArfcn: 626772
+          channelBandwidthMhz: 100
+          ssbArfcn: 630048
+          ssbPbchBlockPowerDbm: -15
+          prachConfigurationIndex: 152
+          tddConfiguration:
+            periodicityMilliseconds: 2.5
+            nrofDownlinkSlots: 3
+            nrofUplinkSlots: 1
+        ru: benetel1
+        cu_cp: cucp
+        cu_up: cuup
+    du2:
+      type: du
+      config:
+        nrCellId: 2
+        physicalCellId: 1
+        radioConfiguration:
+          duplexMode: tdd
+          downlinkArfcn: 620000
+          uplinkArfcn: 620000
+          pointAFrequencyArfcn: 646644
+          channelBandwidthMhz: 100
+          ssbArfcn: 649920
+          ssbPbchBlockPowerDbm: -15
+          prachConfigurationIndex: 152
+          tddConfiguration:
+            periodicityMilliseconds: 2.5
+            nrofDownlinkSlots: 3
+            nrofUplinkSlots: 1
+        ru: benetel2
+        gnbDuId: 2
+        cu_cp: cucp
+        cu_up: cuup
+rus:
+  benetel1:
+    type: real
+    clockSource: external
+    timeSource: external
+    numberOfTxPorts: 4
+    numberOfRxPorts: 4
+  benetel2:
+    type: real
+    clockSource: external
+    timeSource: external
+    numberOfTxPorts: 4
+    numberOfRxPorts: 4
+ues:
+  qhat01:
+    type: cots
+    config:
+      supi: '001010000000006'
+      gnbs:
+      - du1
+      ru: null
+  qhat02:
+    type: cots
+    config:
+      supi: '001010000000007'
+      gnbs:
+      - du1
+      ru: null
+  qhat03:
+    type: cots
+    config:
+      supi: 001010000000008
+      gnbs:
+      - du1
+      ru: null

@@ -1,0 +1,31 @@
+# Render /etc/ru_config.cfg
+---
+- name: Render RU configuration locally
+  ansible.builtin.template:
+    src: ru_config.cfg.j2
+    dest: "/tmp/ru_config-{{ inventory_hostname }}.cfg"
+    mode: "0644"
+  delegate_to: localhost
+  become: false
+
+- name: Install the rendered RU configuration
+  ansible.builtin.raw: |
+    cat > /etc/ru_config.cfg <<'EOF'
+    {{ lookup('ansible.builtin.file', '/tmp/ru_config-' ~ inventory_hostname ~ '.cfg') }}
+    EOF
+    chown root:root /etc/ru_config.cfg
+    chmod 0644 /etc/ru_config.cfg
+  become: true
+  register: ru_config_file
+  changed_when: true
+
+- name: Save the configuration for post-reboot verification
+  ansible.builtin.set_fact:
+    ru_expected_config: "{{ lookup('ansible.builtin.file', '/tmp/ru_config-' ~ inventory_hostname ~ '.cfg') | b64encode }}"
+
+- name: Remove temporary rendered configuration
+  ansible.builtin.file:
+    path: "/tmp/ru_config-{{ inventory_hostname }}.cfg"
+    state: absent
+  delegate_to: localhost
+  become: false

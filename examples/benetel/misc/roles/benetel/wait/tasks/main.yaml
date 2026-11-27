@@ -1,0 +1,24 @@
+# Wait for successful ADRV9025/DPD radio initialization; stop on two reported failures
+---
+- name: Read radio initialization results
+  ansible.builtin.raw: >-
+    grep -aE 'has failed|DPD configuration complete'
+    /tmp/logs/radio_boot_response || true
+  register: ru_radio_initialization
+  until: >-
+    'DPD configuration complete' in ru_radio_initialization.stdout
+    or ru_radio_initialization.stdout.count('has failed') >= 2
+  retries: 60
+  delay: 5
+  changed_when: false
+  failed_when: false
+
+- name: Fail when the latest radio initialization failed
+  ansible.builtin.fail:
+    msg: >-
+      The radio in RU {{ inventory_hostname }} failed to initialize
+      ({{ ru_radio_initialization.stdout.count('has failed') }} attempts).
+      Check /etc/ru_config.cfg and /tmp/logs/radio_boot_response on the RU.
+  when: >-
+    ru_radio_initialization.stdout.rfind('DPD configuration complete')
+    <= ru_radio_initialization.stdout.rfind('has failed')

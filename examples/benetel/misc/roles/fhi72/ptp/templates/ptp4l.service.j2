@@ -1,0 +1,14 @@
+[Unit]
+Description=Precision Time Protocol (PTP) service on {{ miscellaneous.fhi72_params[inventory_hostname].ptp.interface }}
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# ptp4l does not bring the link up, and a freshly provisioned node may leave the PTP interface down
+ExecStartPre=/usr/sbin/ip link set dev {{ miscellaneous.fhi72_params[inventory_hostname].ptp.interface }} up
+ExecStart=/usr/local/sbin/ptp4l -f /etc/ptp4l.conf -i {{ miscellaneous.fhi72_params[inventory_hostname].ptp.interface }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

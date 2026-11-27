@@ -1,0 +1,35 @@
+---
+- name: Read current VF driver
+  ansible.builtin.command:
+    argv: [readlink, -f, "{{ fhi72_vf.stdout }}/driver"]
+  register: fhi72_driver
+  changed_when: false
+  failed_when: false
+
+- name: Set VF driver override
+  ansible.builtin.command:
+    argv: [tee, "{{ fhi72_vf.stdout }}/driver_override"]
+    stdin: vfio-pci
+  when: fhi72_driver.rc != 0 or fhi72_driver.stdout | basename != 'vfio-pci'
+  changed_when: true
+
+- name: Unbind VF from current driver
+  ansible.builtin.command:
+    argv: [tee, "{{ fhi72_driver.stdout }}/unbind"]
+    stdin: "{{ fhi72_vf.stdout | basename }}"
+  when: fhi72_driver.rc == 0 and fhi72_driver.stdout | basename != 'vfio-pci'
+  changed_when: true
+
+- name: Probe VF with vfio-pci
+  ansible.builtin.command:
+    argv: [tee, /sys/bus/pci/drivers_probe]
+    stdin: "{{ fhi72_vf.stdout | basename }}"
+  when: fhi72_driver.rc != 0 or fhi72_driver.stdout | basename != 'vfio-pci'
+  changed_when: true
+
+- name: Verify VF driver binding
+  ansible.builtin.command:
+    argv: [readlink, -f, "{{ fhi72_vf.stdout }}/driver"]
+  register: fhi72_verified_driver
+  changed_when: false
+  failed_when: fhi72_verified_driver.rc != 0 or fhi72_verified_driver.stdout | basename != 'vfio-pci'

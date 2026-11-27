@@ -1,0 +1,286 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    {{- include "oai-du.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "oai-du.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        {{- include "oai-du.selectorLabels" . | nindent 8 }}
+        app: {{ .Release.Name }}
+    {{- if or .Values.staticPodIp (and .Values.multus.enabled .Values.multus.interfaces) }}
+      annotations:
+
+        {{- if .Values.staticPodIp }}
+        cni.projectcalico.org/ipAddrs: '["{{ .Values.staticPodIp }}"]'
+        {{- end }}
+
+        {{- if and .Values.multus.enabled .Values.multus.interfaces }}
+        k8s.v1.cni.cncf.io/networks: |-
+          [
+          {{- $first := true }}
+          {{- range .Values.multus.interfaces }}
+          {{- if .enabled }}
+            {{- if not $first }},{{- end }}
+            {
+              "name": "{{ $.Release.Name }}-{{ .name }}",
+              "interface": "{{ .name }}"
+              {{- if .mac }},
+              "mac": "{{ .mac }}"
+              {{- end }}
+              {{- if .defaultRoute }},
+              "default-route": ["{{ .defaultRoute }}"]
+              {{- end }}
+              {{- if .gateway }},
+              "gateway": "{{ .gateway }}"
+              {{- end }}
+            }
+            {{- $first = false }}
+          {{- end }}
+          {{- end }}
+          ]
+        {{- end }}
+    {{- end }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if eq .Values.config.radio "fhi72" }}
+      initContainers:
+        # the yq of the gNB image cannot patch the configuration (as in the upstream oai-gnb-fhi-72 chart)
+        - name: copy-yq
+          image: {{ .Values.fhi72.yqImage | quote }}
+          imagePullPolicy: IfNotPresent
+          command: [ "/bin/sh", "-c", "cp /usr/bin/yq /shared/yq && chmod +x /shared/yq" ]
+          # requests equal to limits: an init container with unequal values makes the pod Burstable,
+          # and the static CPU manager then stops pinning the DU CPUs
+          resources:
+            requests: { cpu: "1m", memory: "50Mi" }
+            limits: { cpu: "1m", memory: "50Mi" }
+          volumeMounts:
+            - name: shared-data
+              mountPath: /shared
+      {{- end }}
+      containers:
+        - name: du
+          image: "{{ .Values.nfimage.repository }}:{{ .Values.nfimage.version }}"
+          imagePullPolicy: {{ .Values.nfimage.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+          {{- if eq .Values.config.radio "aw2s" }}
+            - name: configuration
+              mountPath: /opt/oai-gnb-aw2s/etc
+          {{- else }}
+            - name: configuration
+              mountPath: /opt/oai-gnb/etc
+          {{- end }}
+          {{- if eq .Values.config.radio "b2xx" }}
+            - name: radio
+              mountPath: /dev/bus/usb/
+          {{- end }}
+          {{- if eq .Values.config.radio "fhi72" }}
+            - name: hugepage
+              mountPath: /dev/hugepages
+            - name: shared-data
+              mountPath: /shared
+          {{- end }}
+          env:
+          {{- if eq .Values.config.radio "fhi72" }}
+            - name: NF_CPUS
+              value: {{ .Values.resources.limits.nf.cpu | quote }}
+            - name: FHI72_OAI_CONFIG
+              value: {{ .Values.fhi72.oaiConfig | toJson | quote }}
+          {{- end }}
+            - name: TZ
+              value: {{ .Values.config.timeZone | quote }}
+            - name: USE_ADDITIONAL_OPTIONS
+              value: {{ .Values.config.useAdditionalOptions | quote }}
+            - name: OAI_GDBSTACKS
+              value: "{{ .Values.config.gdbstack }}"
+          {{- if eq .Values.config.radio "b2xx" }}
+            - name: USE_B2XX
+              value: "yes"
+          {{- end }}
+          {{- if eq .Values.config.radio "x3xx" }}
+            - name: USE_X3XX
+              value: "yes"
+          {{- end }}
+          {{- if eq .Values.config.radio "n3xx" }}
+            - name: USE_N3XX
+              value: "yes"
+          {{- end }}
+          {{- range $key, $value := .Values.extraEnvVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+          {{- end }}
+          {{- if .Values.resources.define }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.nf.cpu | quote }}
+              memory: {{ .Values.resources.requests.nf.memory | quote }}
+              {{- if .Values.resources.requests.nf.hugepages1Gi }}
+              hugepages-1Gi: {{ .Values.resources.requests.nf.hugepages1Gi | quote }}
+              {{- end }}
+              {{- if eq .Values.config.radio "fhi72" }}
+              {{- range .Values.fhi72.sriovResources }}
+              {{ . }}: "1"
+              {{- end }}
+              {{- end }}
+            limits:
+              cpu: {{ .Values.resources.limits.nf.cpu | quote }}
+              memory: {{ .Values.resources.limits.nf.memory | quote }}
+              {{- if .Values.resources.limits.nf.hugepages1Gi }}
+              hugepages-1Gi: {{ .Values.resources.limits.nf.hugepages1Gi | quote }}
+              {{- end }}
+              {{- if eq .Values.config.radio "fhi72" }}
+              {{- range .Values.fhi72.sriovResources }}
+              {{ . }}: "1"
+              {{- end }}
+              {{- end }}
+          {{- end }}
+          ports:
+          {{- range $name, $port := .Values.exposedPorts }}
+          - containerPort: {{ $port.port }}
+            name: {{ $name }}
+            {{- if $port.protocol }}
+            protocol: {{ $port.protocol }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.customEntrypointCommand}}
+          command:
+            {{- toYaml .Values.customEntrypointCommand | nindent 12 }}
+          {{- else if not .Values.start.du }}
+          command: [ "/bin/sleep", "infinity" ]
+          {{- else if eq .Values.config.radio "fhi72" }}
+          # adapted from the upstream oai-gnb-fhi-72 chart: set the VFs allocated by the SR-IOV device plugin
+          # and pin the DU threads on the CPUs allocated by the static CPU manager
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |
+              set -e
+              cp /shared/yq /usr/local/bin/yq
+              cp /opt/oai-gnb/etc/gnb.yaml /tmp/gnb.yaml
+              PCI_LIST=""
+              {{- range .Values.fhi72.pciDeviceEnvVars }}
+              [ -n "${{ . }}" ] || { echo "ERROR: {{ . }} is not set (no VF allocated)"; exit 1; }
+              PCI_LIST="${PCI_LIST:+$PCI_LIST }${{ . }}"
+              {{- end }}
+              export PCI_LIST
+              echo "Virtual PCI devices: $PCI_LIST"
+              # CPUs the container may run on (the cgroup cpuset file is not visible in every cgroup layout)
+              CPU_LIST=$(awk '/^Cpus_allowed_list:/ {print $2}' /proc/self/status)
+              CPUS=$(echo "$CPU_LIST" | awk '/-/{for (i=$1; i<=$2; i++)printf "%s%s",i,ORS;next} 1' ORS=' ' RS=, FS=-)
+              CPU_COUNT=$(echo "$CPUS" | wc -w)
+              echo "Available CPUs: $CPU_LIST (count=$CPU_COUNT)"
+              # with the static CPU manager, a Guaranteed pod only gets its exclusive CPUs
+              if [ "$CPU_COUNT" -ne "$NF_CPUS" ]; then
+                echo "ERROR: $CPU_COUNT CPUs instead of the $NF_CPUS exclusive CPUs (kubelet static CPU manager, Guaranteed pod)"
+                exit 1
+              fi
+              if [ "$CPU_COUNT" -lt 7 ]; then
+                echo "ERROR: only $CPU_COUNT CPUs: 6 needed for L1 RX/TX, RU, DPDK system/IO/worker, and 1 for the thread pool"
+                exit 1
+              fi
+              get_cpu() { echo "$CPUS" | awk -v n="$1" '{ if (NF>=n) print $n; }'; }
+              export L1_RX_CORE=$(get_cpu 1)
+              export L1_TX_CORE=$(get_cpu 2)
+              export RU_THREAD_CORE=$(get_cpu 3)
+              export SYSTEM_CORE=$(get_cpu 4)
+              export IO_CORE=$(get_cpu 5)
+              export WORKER_CORE=$(get_cpu 6)
+              export THREAD_POOL=$(echo "$CPUS" | cut -d' ' -f7- | sed 's/ *$//; s/ /,/g')
+              echo "CPU allocation: L1 RX $L1_RX_CORE, L1 TX $L1_TX_CORE, RU $RU_THREAD_CORE, system $SYSTEM_CORE, IO $IO_CORE, worker $WORKER_CORE, thread pool $THREAD_POOL"
+              yq -i '
+                .L1s[0].L1_rx_thread_core = strenv(L1_RX_CORE) |
+                .L1s[0].L1_tx_thread_core = strenv(L1_TX_CORE) |
+                .RUs[0].ru_thread_core = strenv(RU_THREAD_CORE) |
+                .fhi_72.system_core = strenv(SYSTEM_CORE) |
+                .fhi_72.io_core = strenv(IO_CORE) |
+                .fhi_72.worker_cores = [strenv(WORKER_CORE)] |
+                .thread-pool = strenv(THREAD_POOL) |
+                .fhi_72.dpdk_devices = (strenv(PCI_LIST) | split(" "))
+              ' /tmp/gnb.yaml
+              yq -i '
+                .gNBs[0] *= env(FHI72_OAI_CONFIG).gnb |
+                .gNBs[0].servingCellConfigCommon[0] *= env(FHI72_OAI_CONFIG).servingCell |
+                .MACRLCs[0] *= env(FHI72_OAI_CONFIG).macrlc |
+                .L1s[0] *= env(FHI72_OAI_CONFIG).l1 |
+                .RUs[0] *= env(FHI72_OAI_CONFIG).rus
+              ' /tmp/gnb.yaml
+              cat /tmp/gnb.yaml
+              exec stdbuf -o0 /opt/oai-gnb/bin/nr-softmodem -O /tmp/gnb.yaml $USE_ADDITIONAL_OPTIONS
+          {{- end }}
+
+        {{- if .Values.includeTcpDumpContainer }}
+        - name: tcpdump
+          image: "{{ .Values.tcpdumpimage.repository }}:{{ .Values.tcpdumpimage.version }}"
+          imagePullPolicy: {{ .Values.tcpdumpimage.pullPolicy }}
+          securityContext:
+            capabilities:
+              add: [ "NET_ADMIN", "NET_RAW" ]
+              drop: [ "ALL" ]
+          {{- if .Values.resources.define }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.tcpdump.cpu | quote }}
+              memory: {{ .Values.resources.requests.tcpdump.memory | quote }}
+            limits:
+              cpu: {{ .Values.resources.limits.tcpdump.cpu | quote }}
+              memory: {{ .Values.resources.limits.tcpdump.memory | quote }}
+          {{- end }}
+          {{- if .Values.start.tcpdump }}
+          command: [ "/bin/sh", "-c", "/usr/bin/tcpdump -i any -w /tmp/pcap/{{ .Chart.Name }}_$(date +%Y-%m-%d_%H_%M-%S-%Z).pcap" ]
+          {{- else }}
+          command: [ "/bin/sleep", "infinity" ]
+          {{- end }}
+        {{- end }}
+      volumes:
+        - name: configuration
+          configMap:
+            name: {{ .Chart.Name }}-configmap
+        - name: shared-data
+          emptyDir: {}
+        {{- if eq .Values.config.radio "fhi72" }}
+        - name: hugepage
+          emptyDir:
+            medium: HugePages
+        {{- end }}
+        {{- if eq .Values.config.radio "b2xx" }}
+        - name: radio
+          hostPath:
+            path: /dev/bus/usb/
+        {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      serviceAccountName: {{ .Chart.Name }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+         {{- toYaml .Values.nodeSelector | nindent 12 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 12 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 12 }}
+      {{- end }}
+      {{- if .Values.nodeName }}
+      nodeName: {{ .Values.nodeName }}
+      {{- end }}
+

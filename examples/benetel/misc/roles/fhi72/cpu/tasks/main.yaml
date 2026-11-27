@@ -1,0 +1,50 @@
+# Set CPU frequency governors to performance and raise RCU callback thread priority.
+---
+- name: Find CPU frequency governor controls
+  ansible.builtin.find:
+    paths: /sys/devices/system/cpu
+    patterns: scaling_governor
+    recurse: true
+    file_type: file
+  register: fhi72_governors
+
+- name: Read current CPU governors
+  ansible.builtin.slurp:
+    src: "{{ item.path }}"
+  loop: "{{ fhi72_governors.files }}"
+  register: fhi72_governor_values
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Set performance CPU governor
+  ansible.builtin.command:
+    argv: [tee, "{{ item.item.path }}"]
+    stdin: performance
+  loop: "{{ fhi72_governor_values.results }}"
+  loop_control:
+    label: "{{ item.item.path }}"
+  when: item.content | b64decode | trim != 'performance'
+  changed_when: true
+
+- name: Find RCU callback thread PIDs
+  ansible.builtin.command:
+    argv: [pgrep, "^rcu[cb]/"]
+  register: fhi72_rcu_pids
+  changed_when: false
+  failed_when: false
+
+- name: Read RCU callback thread priorities
+  ansible.builtin.command:
+    argv: [chrt, -p, "{{ item }}"]
+  loop: "{{ fhi72_rcu_pids.stdout_lines }}"
+  register: fhi72_rcu_priorities
+  changed_when: false
+
+- name: Set RCU callback thread priority to FIFO 99
+  ansible.builtin.command:
+    argv: [chrt, -f, -p, "99", "{{ item.item }}"]
+  loop: "{{ fhi72_rcu_priorities.results }}"
+  loop_control:
+    label: "PID {{ item.item }}"
+  changed_when: true
+  when: "item.stdout is not search('current priority: 99')"

@@ -1,0 +1,6 @@
+---
+- name: Apply netplan on DU nodes
+  hosts: du_nodes
+  gather_facts: true
+  roles:
+    - role: netplan

@@ -1,0 +1,21 @@
+# Set the fronthaul PF MTU, link state, interrupt moderation, and ring sizes
+---
+- name: Bring fronthaul interface up with configured MTU
+  ansible.builtin.command:
+    argv: [ip, link, set, dev, "{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}", mtu, "{{ miscellaneous.fhi72_params[inventory_hostname].mtu }}", up]
+  changed_when: true
+
+- name: Disable adaptive NIC interrupt moderation
+  ansible.builtin.command:
+    argv: [ethtool, -C, "{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}", adaptive-rx, "off", adaptive-tx, "off"]
+  register: fhi72_coalesce
+  changed_when: fhi72_coalesce.rc == 0
+  failed_when: fhi72_coalesce.rc not in [0, 80]
+
+- name: Set NIC RX/TX ring sizes
+  ansible.builtin.command:
+    argv: [ethtool, -G, "{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}", rx, "{{ miscellaneous.fhi72_params[inventory_hostname].ring_size }}", tx, "{{ miscellaneous.fhi72_params[inventory_hostname].ring_size }}"]
+  register: fhi72_ring
+  changed_when: fhi72_ring.rc == 0
+  failed_when: fhi72_ring.rc not in [0, 80]
+  when: miscellaneous.fhi72_params[inventory_hostname].ring_size is not none
