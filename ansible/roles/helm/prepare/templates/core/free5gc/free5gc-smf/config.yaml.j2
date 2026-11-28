@@ -3,7 +3,7 @@
 {%- else %}
 
 info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   version: 1.0.7
@@ -27,7 +27,7 @@ configuration:
 
   # the SBI services provided by this SMF, refer to TS 29.502
   serviceNameList:
-{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{% if component.advanced_config.serviceNameList %}
 {{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - nsmf-pdusession # Nsmf_PDUSession service
@@ -48,7 +48,7 @@ configuration:
 {% for dnn in slice.dnns.values() %}
         - dnn: {{ dnn.name }} # Data Network Name
           dns: # the IP address of DNS
-{% if component.advanced_config and component.advanced_config.dns %}
+{% if component.advanced_config.dns %}
 {{ component.advanced_config.dns | to_nice_yaml(indent=12) | indent(12, True) }}
 {% else %}
             ipv4: 8.8.8.8
@@ -64,7 +64,7 @@ configuration:
       mnc: '{{ plmn.mnc }}'  # Mobile Network Code (2 or 3 digits string, digit: 0~9)
 {% endfor %}
 
-  locality: {{ component.advanced_config.locality | default("area1", true) }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
+  locality: {{ component.advanced_config.locality }} # Name of the location where a set of AMF, SMF, PCF and UPFs are located
 
   # PFCP (Packet Forwarding Control Protocol) configuration for N4 interface.
   pfcp:
@@ -72,13 +72,13 @@ configuration:
     nodeID: {{ chart_name }} # the Node ID of this SMF
     listenAddr: {{ component.config.n4.ipv4EndPointAddress }} # the IP/FQDN of N4 interface on this SMF (PFCP)
     externalAddr: {{ chart_name }} # the IP/FQDN of N4 interface on this SMF (PFCP)
-    assocFailAlertInterval: {{ component.advanced_config.assocFailAlertInterval | default("10s", true) }}
-    assocFailRetryInterval: {{ component.advanced_config.assocFailRetryInterval | default("30s", true) }}
-    heartbeatInterval: {{ component.advanced_config.heartbeatInterval | default("10s", true) }}
+    assocFailAlertInterval: {{ component.advanced_config.assocFailAlertInterval }}
+    assocFailRetryInterval: {{ component.advanced_config.assocFailRetryInterval }}
+    heartbeatInterval: {{ component.advanced_config.heartbeatInterval }}
 
   # Userplane nodes information, specifying details for AN and UPF.
   userplaneInformation:
-{% if component.advanced_config and component.advanced_config.userplaneInformation %}
+{% if component.advanced_config.userplaneInformation %}
 {{ component.advanced_config.userplaneInformation | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     upNodes: # information of userplane node (AN or UPF)
@@ -125,7 +125,7 @@ configuration:
 
     # the topology graph of userplane, A and B represent the two nodes of each link
     links:
-{% if component.advanced_config and component.advanced_config.links %}
+{% if component.advanced_config.links %}
 {{ component.advanced_config.links | to_nice_yaml(indent=6) | indent(6, True) }}
 {% else %}
 {% for upf in component.config.upfs %}
@@ -136,7 +136,7 @@ configuration:
 
   # retransmission timer for PDU session modification command
   t3591:
-{% if component.advanced_config and component.advanced_config.t3591 %}
+{% if component.advanced_config.t3591 %}
 {{ component.advanced_config.t3591 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true # true or false
@@ -146,7 +146,7 @@ configuration:
 
   # retransmission timer for PDU session release command
   t3592:
-{% if component.advanced_config and component.advanced_config.t3592 %}
+{% if component.advanced_config.t3592 %}
 {{ component.advanced_config.t3592 | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true # true or false
@@ -156,16 +156,16 @@ configuration:
 
   nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
 
-{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+{% if component.advanced_config.nrfCertPem %}
   nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
 {% endif %}
 
-  urrPeriod: {{ component.advanced_config.urrPeriod | default(30, true) }} # default usage report period in seconds
-  urrThreshold: {{ component.advanced_config.urrThreshold | default(500000, true) }} # default usage report threshold in bytes
-  requestedUnit: {{ component.advanced_config.requestedUnit | default(1000, true) }}
+  urrPeriod: {{ component.advanced_config.urrPeriod }} # default usage report period in seconds
+  urrThreshold: {{ component.advanced_config.urrThreshold }} # default usage report threshold in bytes
+  requestedUnit: {{ component.advanced_config.requestedUnit }}
 
 logger: # log output setting
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false

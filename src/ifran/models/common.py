@@ -28,23 +28,23 @@ class Deployed5GComponent(K8SComponent):
     plain_text_config: str | None = Field(default=None)
     """Raw configuration file path or text content."""
 
-    def validate_advanced_config(self, mapping: dict, default_model: BaseModel) -> Self:
-        """Validate component advanced configuration's raw dict based on what is supported in the mapping."""
+    def validate_advanced_config(self, validated: dict, generic: dict) -> Self:
+        """Validate component advanced configuration's raw dict based on what is supported."""
 
-        # advanced config can be none
+        # NOTE advanced_config is not allowed to be none, and if it is, it will be initiated
         if self.advanced_config is None:
-            return self
+            self.advanced_config = {}
 
         if isinstance(self.advanced_config, BaseModel):
             return self
 
-        advanced_config_model: BaseModel = mapping.get(self.implementation, {}).get(self.type)
+        advanced_config_model: BaseModel = validated.get(self.implementation, {}).get(self.type)
         if advanced_config_model:
             # use type-specific advanced config model if found
             self.advanced_config = advanced_config_model.model_validate(self.advanced_config)
         else:
-            # use default advanced config model
-            self.advanced_config = default_model.model_validate(self.advanced_config)
+            # use generic advanced config model
+            self.advanced_config = generic[self.implementation].model_validate(self.advanced_config)
 
         return self
 

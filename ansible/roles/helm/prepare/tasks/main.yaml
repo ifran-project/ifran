@@ -1,7 +1,7 @@
 # Role to prepare/render Helm chart on Kubernetes cluster
 
 # Assumes that {{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }} exists in files and in templates
-# e.g. core/oai/oai-amf
+# e.g. core/oai/oai-amf. Files are archived on the localhost and extracted to {{ helm_build_dir }} on master node.
 
 # Input:
 # - component_name: str
@@ -17,19 +17,36 @@
     state: directory
     mode: "0700"
 
-- name: Copy custom Helm chart directory for '{{ chart_name }}' if provided
-  ansible.builtin.copy:
-    src: "{{ component.custom_chart_path }}/"
-    dest: "{{ helm_build_dir }}/"
-    mode: "0755"
+- name: Compress custom Helm chart directory for '{{ chart_name }}' if provided on localhost
+  community.general.archive:
+    path: "{{ component.custom_chart_path }}/"
+    dest: "/tmp/{{ chart_name }}.tar.gz"
+    format: gz
+  delegate_to: localhost
+  become: false
   when: component.custom_chart_path | default('', true) | length > 0
 
-- name: Copy local built-in '{{ component.implementation }}-{{ component.type }}' Helm chart directory for '{{ chart_name }}'
-  ansible.builtin.copy:
-    src: "{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/"
-    dest: "{{ helm_build_dir }}"
-    mode: "0755"
+- name: Compress built-in Helm chart directory for '{{ chart_name }}' on localhost
+  community.general.archive:
+    path: "{{ role_path }}/files/{{ component.category }}/{{ component.implementation }}/{{ component.implementation }}-{{ component.type }}/"
+    dest: "/tmp/{{ chart_name }}.tar.gz"
+    format: gz
+  delegate_to: localhost
+  become: false
   when: component.custom_chart_path | default('', true) | length == 0
+
+- name: Extract Helm chart archive for '{{ chart_name }}' from localhost
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ chart_name }}.tar.gz"
+    dest: "{{ helm_build_dir }}"
+    remote_src: false # archive is on localhost not on the remote host
+
+- name: Remove temporary Helm chart archive for '{{ chart_name }}' from localhost
+  ansible.builtin.file:
+    path: "/tmp/{{ chart_name }}.tar.gz"
+    state: absent
+  become: false
+  delegate_to: localhost
 
 # NOTE make sure the Chart.yaml is always handled by the orchestrator
 # to be able to manage the chart by its know naming later on
@@ -53,4 +70,11 @@
     dest: "{{ helm_build_dir }}/{{ item }}"
     mode: "0600"
   loop: "{{ component.rendered_files }}"
-  when: component.custom_rendered_files | default([], true) | length == 0
+
+- name: Render custom templated Helm files for '{{ chart_name }}' if provided
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ helm_build_dir }}/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    mode: "0600"
+  loop: "{{ component.custom_rendered_files | default([], true) }}"
+  when: component.custom_rendered_files | default([], true) | length > 0

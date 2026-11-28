@@ -5,7 +5,7 @@
 
 # Log level
 log_level:
-{% if component.advanced_config and component.advanced_config.log_level %}
+{% if component.advanced_config.log_level %}
 {{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: info
@@ -13,13 +13,13 @@ log_level:
 
 # If you enable registration, the NF will use the NRF discovery mechanism
 register_nf:
-{% if component.advanced_config and component.advanced_config.register_nf %}
+{% if component.advanced_config.register_nf %}
 {{ component.advanced_config.register_nf | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ############## SBI Interfaces
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
@@ -30,20 +30,20 @@ nfs:
       port: {{ component.config.sbi.port }}
       api_version: {{ component.config.sbi.apiVersion }}
       interface_name: {{ component.config.sbi.interfaceName }}
-{% if component.advanced_config and component.advanced_config.nfs %}
+{% if component.advanced_config.nfs %}
 {{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
 ############### LMF Configuration 
 lmf:
-  http_threads_count: {{ component.advanced_config.http_threads_count | default(8, true) }}
-  gnb_id_bits_count: {{ component.advanced_config.gnb_id_bits_count | default(28, true) }}
-  num_gnb: {{ component.advanced_config.num_gnb | default(1, true) }}
-  trp_info_wait_ms: {{ component.advanced_config.trp_info_wait_ms | default(10000, true) }}
-  positioning_wait_ms: {{ component.advanced_config.positioning_wait_ms | default(10000, true) }}
-  measurement_wait_ms: {{ component.advanced_config.measurement_wait_ms | default(10000, true) }}
+  http_threads_count: {{ component.advanced_config.http_threads_count }}
+  gnb_id_bits_count: {{ component.advanced_config.gnb_id_bits_count }}
+  num_gnb: {{ component.advanced_config.num_gnb }}
+  trp_info_wait_ms: {{ component.advanced_config.trp_info_wait_ms }}
+  positioning_wait_ms: {{ component.advanced_config.positioning_wait_ms }}
+  measurement_wait_ms: {{ component.advanced_config.measurement_wait_ms }}
   support_features:
-{% if component.advanced_config and component.advanced_config.support_features %}
+{% if component.advanced_config.support_features %}
 {{ component.advanced_config.support_features | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     request_trp_info: no 

@@ -5,7 +5,7 @@
 
 # Log level
 log_level:
-{% if component.advanced_config and component.advanced_config.log_level %}
+{% if component.advanced_config.log_level %}
 {{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: info
@@ -13,13 +13,13 @@ log_level:
 
 # If you enable registration, the NF will use the NRF discovery mechanism
 register_nf:
-{% if component.advanced_config and component.advanced_config.register_nf %}
+{% if component.advanced_config.register_nf %}
 {{ component.advanced_config.register_nf | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ############## SBI Interfaces
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
@@ -30,13 +30,13 @@ nfs:
       port: {{ component.config.sbi.port }}
       api_version: {{ component.config.sbi.apiVersion }}
       interface_name: {{ component.config.sbi.interfaceName }}
-{% if component.advanced_config and component.advanced_config.nfs %}
+{% if component.advanced_config.nfs %}
 {{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
 #### Common for UDR and AMF and PCF
 database:
-{% if component.advanced_config and component.advanced_config.database %}
+{% if component.advanced_config.database %}
 {{ component.advanced_config.database | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   host: oai-database
@@ -52,11 +52,17 @@ database:
 pcf:
   pcf_name: {{ chart_name }}
 
-  enable_policy_provisioning_api: {{ component.advanced_config.enable_policy_provisioning_api | default("yes", true) }} # Use db instead of yaml, enables dynamic pcc rule creation via API
+  # "no": policies are read from the files the chart mounts at /openair-pcf/policies. "yes" reads them from
+  # the database instead, which needs a PCF image built with database (ODB) support: the published OAI images are not.
+  enable_policy_provisioning_api: {{ component.advanced_config.enable_policy_provisioning_api }}
 
   local_policy:
-{% if component.advanced_config and component.advanced_config.local_policy %}
+{% if component.advanced_config.local_policy %}
 {{ component.advanced_config.local_policy | to_nice_yaml(indent=4) | indent(4, True) }}
+{% else %}
+    policy_decisions_path: /openair-pcf/policies/policy_decisions
+    pcc_rules_path: /openair-pcf/policies/pcc_rules
+    traffic_rules_path: /openair-pcf/policies/traffic_rules
 {% endif %}
 
 {% endif %}

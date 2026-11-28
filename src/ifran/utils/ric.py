@@ -4,7 +4,7 @@ from metamodel_3gpp.models.metamodel import MetaModel
 
 from ifran.models.ansible import AnsibleParams
 from ifran.models.deployment import DeploymentModel
-from ifran.models.provisioning import ProvisionableNode
+from ifran.models.provisioning import ProvisionableNode, SSHInfo
 from ifran.models.ric import (
     ORANSCAdvancedRICConfig,
     RICComponentType,
@@ -30,11 +30,13 @@ ORAN_SC_PLATFORM_NAMESPACE = "ricplt"
 ORAN_SC_XAPP_NAMESPACE = "ricxapp"
 
 
-async def create_xapp_namespace(
+async def create_xapp_namespace(  # noqa: PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run playbook to create xApp namespace before OSC RIC installation."""
 
@@ -58,9 +60,14 @@ async def create_xapp_namespace(
             }
         ],
         runner_path=f"{ansible_params.runner_path}/ric/namespaces",
-        inventory=get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        inventory=get_ansible_inventory_line(
+            resource_name=node_name,
+            resource_data=node_data,
+            ssh_params=ssh_params,
+        ),
         roles_paths=ansible_params.roles_paths,
         quiet=quiet,
+        retries=retries,
     )
 
 
@@ -135,7 +142,8 @@ def reconcile_ric(
     # populate 'service_name' and 'ric_type_services' in osc ric advanced config
     for component_name, component_deployment in ric_deployment.components.items():
         if component_deployment.implementation is RICImplementation.ORAN_SC:
-            component_deployment.advanced_config = component_deployment.advanced_config or ORANSCAdvancedRICConfig(
-                service_name=ric_services[component_name],
-                ric_type_services=ric_type_services.copy(),
-            )
+            # advanced_config is already populated by this point
+            adv_config: ORANSCAdvancedRICConfig = component_deployment.advanced_config
+
+            adv_config.service_name = adv_config.service_name or ric_services[component_name]
+            adv_config.ric_type_services = adv_config.ric_type_services or ric_type_services.copy()

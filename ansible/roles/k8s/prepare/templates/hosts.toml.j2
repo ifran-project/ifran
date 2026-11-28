@@ -1,0 +1,6 @@
+{% if item.key != "_default" %}
+server = "https://{{ item.key }}"
+
+{% endif %}
+[host."{{ item.value }}"]
+  capabilities = ["pull", "resolve"]

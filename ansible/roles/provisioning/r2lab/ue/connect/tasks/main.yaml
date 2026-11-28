@@ -11,4 +11,3 @@
 - name: Connect '{{ ue_name }}'
   ansible.builtin.include_role:
     name: provisioning/unified_radio/ue/connect
-    public: true # share role vars for next tasks (token)

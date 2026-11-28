@@ -3,7 +3,7 @@
 {%- else %}
 
 info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   version: 1.0.3
@@ -26,28 +26,28 @@ configuration:
 
   nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
 
-{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+{% if component.advanced_config.nrfCertPem %}
   nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
 {% endif %}
 
   serviceNameList: # the SBI services provided by this CHF, refer to TS 32.291
-{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{% if component.advanced_config.serviceNameList %}
 {{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - nchf-convergedcharging # Nchf_ConvergedCharging service
 {% endif %}
 
   mongodb: # the mongodb connected by this CHF
-    name: {{ component.advanced_config.mongodb_name | default("free5gc", true) }}                      # name of the mongodb
-    url: {{ component.advanced_config.mongodb_url | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }}     # a valid URL of the mongodb
+    name: {{ component.advanced_config.mongodb_name }}                      # name of the mongodb
+    url: {{ component.advanced_config.mongodb_url }}     # a valid URL of the mongodb
 
-  quotaValidityTime: {{ component.advanced_config.quotaValidityTime | default(10000, true) }}
-  volumeLimit: {{ component.advanced_config.volumeLimit | default(50000, true) }}
-  volumeLimitPDU: {{ component.advanced_config.volumeLimitPDU | default(10000, true) }}
-  volumeThresholdRate: {{ component.advanced_config.volumeThresholdRate | default(0.8, true) }}
+  quotaValidityTime: {{ component.advanced_config.quotaValidityTime }}
+  volumeLimit: {{ component.advanced_config.volumeLimit }}
+  volumeLimitPDU: {{ component.advanced_config.volumeLimitPDU }}
+  volumeThresholdRate: {{ component.advanced_config.volumeThresholdRate }}
 
   cgf:
-{% if component.advanced_config and component.advanced_config.cgf %}
+{% if component.advanced_config.cgf %}
 {{ component.advanced_config.cgf | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable: true
@@ -61,7 +61,7 @@ configuration:
 {% endif %}
 
   abmfDiameter:
-{% if component.advanced_config and component.advanced_config.abmfDiameter %}
+{% if component.advanced_config.abmfDiameter %}
 {{ component.advanced_config.abmfDiameter | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     protocol: tcp
@@ -73,7 +73,7 @@ configuration:
 {% endif %}
 
   rfDiameter:
-{% if component.advanced_config and component.advanced_config.rfDiameter %}
+{% if component.advanced_config.rfDiameter %}
 {{ component.advanced_config.rfDiameter | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     protocol: tcp
@@ -85,7 +85,7 @@ configuration:
 {% endif %}
 
 logger: # log output setting
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false

@@ -15,7 +15,7 @@
 
 # Log level for all the NFs
 log_level:
-{% if component.advanced_config and component.advanced_config.log_level %}
+{% if component.advanced_config.log_level %}
 {{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: info
@@ -23,13 +23,13 @@ log_level:
 
 # If you enable registration, the other NFs will use the NRF discovery mechanism
 register_nf:
-{% if component.advanced_config and component.advanced_config.register_nf %}
+{% if component.advanced_config.register_nf %}
 {{ component.advanced_config.register_nf | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2, true) }}
+http_version: {{ component.advanced_config.http_version }}
 
 ## general single_nssai configuration
 ## Defines YAML anchors, which are reused in the config file
@@ -62,20 +62,20 @@ nfs:
     n9:
       interface_name: {{ component.config.n9.interfaceName }}
       port: {{ component.config.n9.port }}
-{% if component.advanced_config and component.advanced_config.nfs %}
+{% if component.advanced_config.nfs %}
 {{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
 ############## NF-specific configuration
 upf:
   support_features:
-{% if component.advanced_config and component.advanced_config.support_features %}
+{% if component.advanced_config.support_features %}
 {{ component.advanced_config.support_features | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     enable_bpf_datapath: no    # If "on": BPF is used as datapath else simpleswitch is used, DEFAULT= off
     enable_snat: yes           # If "on": Source natting is done for UE, DEFAULT= off
 {% endif %}
-  remote_n6_gw:  {{ component.advanced_config.remote_n6_gw | default("127.0.0.1", true) }}     # Dummy host since simple-switch does not use N6 GW
+  remote_n6_gw:  {{ component.advanced_config.remote_n6_gw }}     # Dummy host since simple-switch does not use N6 GW
   upf_info:
     sNssaiUpfInfoList:
 {% for slice in component.config.snssaiList %}

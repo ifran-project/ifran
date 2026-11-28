@@ -17,6 +17,7 @@ from ifran.models.deployment import DeploymentModel
 from ifran.models.provisioning import (
     ProvisionableUE,
     Provisioner,
+    UEConnectionStatus,
 )
 from ifran.models.ran import RANImplementation, UEReferencedDU, UEReferencedGNB
 from ifran.models.ue import DeployedUE
@@ -133,7 +134,7 @@ def resolve_ocudu_zmq_ran(
     if is_zmq_based:
         # zmq in ocudu gnb/du needs both gnb ip and ue ip
         # NOTE the gnb/du should have generated a ue_ip in their advanced_config by this point
-        if gnb.advanced_config is None or gnb.advanced_config.ue_ip is None:  # type: ignore
+        if gnb.advanced_config.ue_ip is None:  # type: ignore
             raise ValueError(
                 f"UE {component_name} needs a static pod IP for ZMQ simulated RF with OCUDU RAN, "
                 "but none was found in gNB/DU's 'ue_ip' advanced config field."
@@ -215,18 +216,26 @@ async def run_single_ue_action(  # noqa: PLR0917
     ue_name: str,
     ue_meta: UE,
     ue_prov: ProvisionableUE,
-    action: Literal["connect", "disconnect"],
+    action: Literal["configure", "connect", "disconnect"],
     provisioners: dict[str, Provisioner],
     provisioning_params: dict[str, Any],
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
-    """Run the 'ue/connect' or 'ue/disconnect' Ansible role of the provisioner on a single provisionable UE."""
+    """Run 'configure', 'connect' or 'disconnect' Ansible role of the provisioner on a single provisionable UE."""
 
     if not force:
-        if (action == "connect" and ue_prov.is_connected) or (action == "disconnect" and not ue_prov.is_connected):
-            raise InvalidResourceStateError(f"UE {ue_name!r} is already {action}ed.")
+        if (
+            (action == "configure" and ue_prov.connection_status.value in ["configured", "connected"])
+            or (action == "connect" and ue_prov.connection_status is UEConnectionStatus.CONNECTED)
+            or (action == "disconnect" and ue_prov.connection_status is not UEConnectionStatus.CONNECTED)
+        ):
+            raise InvalidResourceStateError(f"UE {ue_name!r} is already {action.removesuffix('e')}ed.")
+
+        if action == "connect" and ue_prov.connection_status is UEConnectionStatus.NOT_CONFIGURED:
+            raise InvalidResourceStateError(f"UE {ue_name!r} is not configured.")
 
         if not ue_prov.is_provisioned:
             raise InvalidResourceStateError(f"UE {ue_name!r} is not provisioned.")
@@ -240,7 +249,7 @@ async def run_single_ue_action(  # noqa: PLR0917
     # merge provisioning params without mutating the provisioner
     merged_prov_params = type(provisioner.params).model_validate(  # type: ignore
         provisioning_params
-        | provisioner.params.model_dump(mode="json")  # type: ignore
+        | provisioner.params.model_dump(mode="json", exclude_unset=True)  # type: ignore
         | ue_prov.provisioning_params
     )
 
@@ -259,6 +268,7 @@ async def run_single_ue_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/ue/{ue_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
         "quiet": quiet,
+        "retries": retries,
     }
 
     try:
@@ -266,14 +276,17 @@ async def run_single_ue_action(  # noqa: PLR0917
     except Exception as e:
         raise RuntimeError(f"UE {ue_name!r} {action} action failed.") from e
 
-    # update ue connection state
-    ue_prov.is_connected = action == "connect"
+    # update ue connection status
+    if action in ["configure", "disconnect"]:
+        ue_prov.connection_status = UEConnectionStatus.CONFIGURED
+    elif action == "connect":
+        ue_prov.connection_status = UEConnectionStatus.CONNECTED
 
 
 async def run_parallel_ue_action(  # noqa: PLR0917
     ues_meta: dict[str, UE],
     ues_prov: dict[str, ProvisionableUE],
-    action: Literal["connect", "disconnect"],
+    action: Literal["configure", "connect", "disconnect"],
     provisioners: dict[str, Provisioner],
     provisioning_params: dict[str, Any],
     ansible_params: AnsibleParams,
@@ -281,8 +294,9 @@ async def run_parallel_ue_action(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
-    """Connect or disconnect UEs in parallel."""
+    """Configure, connect or disconnect UEs in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}
     for ue_name, ue_meta in ues_meta.items():
@@ -298,6 +312,7 @@ async def run_parallel_ue_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         )
 

@@ -15,7 +15,7 @@
 
 # Log level for all the NFs
 log_level:
-{% if component.advanced_config and component.advanced_config.log_level %}
+{% if component.advanced_config.log_level %}
 {{ component.advanced_config.log_level | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: info
@@ -23,13 +23,13 @@ log_level:
 
 # If you enable registration, the NF will use the NRF discovery mechanism
 register_nf:
-{% if component.advanced_config and component.advanced_config.register_nf %}
+{% if component.advanced_config.register_nf %}
 {{ component.advanced_config.register_nf | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   general: yes
 {% endif %}
 
-http_version: {{ component.advanced_config.http_version | default(2, true) }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
+http_version: {{ component.advanced_config.http_version }}  # allowed value 1 and 2, make sure all NFs use the same HTTP version
 
 ## general single_nssai configuration
 ## Defines YAML anchors, which are reused in the config file
@@ -54,15 +54,15 @@ nfs:
     n4:
       interface_name: {{ component.config.n4.interfaceName }}
       port: {{ component.config.n4.port }}
-{% if component.advanced_config and component.advanced_config.nfs %}
+{% if component.advanced_config.nfs %}
 {{ component.advanced_config.nfs | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
 ############## NF-specific configuration
 smf:
-  ue_mtu: {{ component.advanced_config.ue_mtu | default(1500, true) }}
+  ue_mtu: {{ component.advanced_config.ue_mtu }}
   support_features:
-{% if component.advanced_config and component.advanced_config.support_features %}
+{% if component.advanced_config.support_features %}
 {{ component.advanced_config.support_features | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     use_local_subscription_info: yes # Use infos from local_subscription_info or from UDM
@@ -71,17 +71,17 @@ smf:
 {% endif %}
   # we resolve from NRF, this is just to configure usage_reporting
 
-{% if component.advanced_config and component.advanced_config.upfs %}
+{% if component.advanced_config.upfs %}
   upfs:
 {{ component.advanced_config.upfs | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.ue_dns %}
+{% if component.advanced_config.ue_dns %}
   ue_dns:
 {{ component.advanced_config.ue_dns | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.ims %}
+{% if component.advanced_config.ims %}
   ims:
 {{ component.advanced_config.ims | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}

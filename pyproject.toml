@@ -1,6 +1,6 @@
 [project]
 name = "ifran"
-version = "0.0.6"
+version = "0.0.7"
 description = "Orchestrator for deploying and managing 5G/6G mobile networks."
 authors = [
     {name = "Ziyad Mabrouk", email = "ziyad.mabrouk@inria.fr"},
@@ -8,6 +8,7 @@ authors = [
     {name = "Mohammadbagher Tavassoli", email = "mohammadbagher.tavassoli-kejani@inria.fr"},
     {name = "Yassir Amami", email = "yassir.amami@inria.fr"},
     {name = "Samuel DeLaughter", email = "samuel.de-laughter@inria.fr"},
+    {name = "Thierry Turletti", email = "thierry.turletti@inria.fr"},
 ]
 license = {text = "BSD-Clear"}
 readme = "README.md"
@@ -45,7 +46,7 @@ doc = [
 
 [tool.ruff]
 line-length = 120
-extend-exclude = ["examples", "docs", "public"]
+extend-exclude = ["examples", "docs", "public", "README.md"]
 
 [tool.ruff.lint]
 select = [

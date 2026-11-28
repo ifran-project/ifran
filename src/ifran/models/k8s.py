@@ -7,10 +7,12 @@ from pathlib import Path
 from typing import Any, Literal, Self
 
 from metamodel_3gpp.models.base import StrictBaseModel
+from metamodel_3gpp.utils import URL
 from pydantic import (
     Field,
     IPvAnyAddress,
     IPvAnyNetwork,
+    TypeAdapter,
     field_serializer,
     model_validator,
 )
@@ -70,6 +72,40 @@ class Version(StrictBaseModel):
         return data
 
 
+class KubeletParams(StrictBaseModel):
+    """Kubelet global parameters."""
+
+    cpu_manager_policy: Literal["none", "static"] = Field(default="none")
+    """Kubelet CPU manager policy."""
+
+    cpu_manager_policy_options: dict[str, str] | None = Field(default=None)
+    """
+    Kubelet CPU manager policy options, e.g. {'full-pcpus-only': 'true'}. For more details, check:
+    https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/#cpu-policy-static--options
+    """
+
+    reserved_system_cpus: str | None = Field(default=None)
+    """Logical CPUs reserved for system and Kubernetes processes."""
+
+    topology_manager_policy: Literal["none", "best-effort", "restricted", "single-numa-node"] = Field(default="none")
+    """
+    Kubelet topology manager policy. For more details, check:
+    https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/#topology-manager-policies
+    """
+
+    @model_validator(mode="after")
+    def validate_cpu_manager(self) -> Self:
+        """Validate CPU manager configuration."""
+
+        if self.cpu_manager_policy_options and self.cpu_manager_policy != "static":
+            raise ValueError("cpu_manager_policy_options requires cpu_manager_policy='static'")
+
+        if self.cpu_manager_policy == "static" and not self.reserved_system_cpus:
+            raise ValueError("reserved_system_cpus must be configured when cpu_manager_policy='static'")
+
+        return self
+
+
 class K8SParams(StrictBaseModel):
     """Kubernetes global parameters."""
 
@@ -103,6 +139,9 @@ class K8SParams(StrictBaseModel):
     multus_version: str = Field(default="4.3.0")
     """Multus CNI version to be deployed if 'install_multus' is True."""
 
+    kubelet_params: KubeletParams = Field(default_factory=KubeletParams)
+    """Kubelet parameters."""
+
     helm_version: str = Field(default="4.2.3", pattern=SEM_VER_PATTERN)
     """Helm version."""
 
@@ -129,6 +168,18 @@ class K8SParams(StrictBaseModel):
 
     label_selection_base: str = Field(default="node-type.5g.blueprint")
     """Label base used to enforce scheduling on nodes based on their roles."""
+
+    # NOTE: by default, we use a mirror for docker.io to avoid rate limiting issues on public registries
+    registry_mirrors: dict[str, URL] | None = Field(
+        default_factory=lambda: {
+            "docker.io": TypeAdapter(URL).validate_python("http://registry.theblueprintfactory.org")
+        }
+    )
+    """
+    Container registry mirrors to use for container image pull.
+    Each key is the original registry and the value is the mirror to use instead.
+    Use "_default" as key to set a default mirror for all registries.
+    """
 
     used_ips: set[IPvAnyAddress] = Field(default_factory=set)
     """Set of IPs explicitly assigned to pods."""

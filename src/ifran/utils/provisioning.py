@@ -17,6 +17,7 @@ from ifran.models.provisioning import (
     ProvisioningCategory,
     SSHableResource,
     SSHInfo,
+    UEConnectionStatus,
 )
 from ifran.utils.ansible import (
     get_ansible_inventory_line,
@@ -104,6 +105,7 @@ async def run_reservation_action(  # noqa: PLR0917
     force: bool = False,
     skip_unreservable: bool = True,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run the 'reserve' Ansible role of the given provisioner once for the given resources list."""
 
@@ -136,6 +138,7 @@ async def run_reservation_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/reserve/{provisioner_name}",
         "roles_paths": ansible_params.roles_paths,
         "quiet": quiet,
+        "retries": retries,
     }
     try:
         await run_ansible_role(**args)
@@ -156,6 +159,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     ansible_params: AnsibleParams,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Run the Ansible role of the provisioner corresponding to the given action on a single resource."""
 
@@ -167,11 +171,10 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             f"{resource_data.category.value.upper()} {resource_name!r} is already {action}ed."
         )
 
-    if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
-        # ssh-able resources have ssh_info
-        output_keys = ["ssh_info"]
-    else:
-        output_keys = ["ru_ips"]
+    output_keys = ["ssh_info"]
+    if resource_data.category is ProvisioningCategory.RU:
+        # rus have ru_ips as well
+        output_keys.append("ru_ips")
 
     provisioner = resolve_provisioner(
         resource_name=resource_name,
@@ -183,9 +186,10 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     # lvl 1 : merge provisioner params with global provisioning_params with priority to non-default provisioner's params
     # lvl 2: merge provisioner params with resource provisioning params with priority to resource's provisioning params
     # NOTE provisioner params model needs to tolerate extra fields and ignore them for this to work with no problems
+    # because some provisioning params are only intended for some provisioners and not the others
     merged_prov_params = type(provisioner.params).model_validate(
         provisioning_params
-        | provisioner.params.model_dump(mode="json", exclude_defaults=True)
+        | provisioner.params.model_dump(mode="json", exclude_unset=True)
         | resource_data.provisioning_params
     )
 
@@ -195,8 +199,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
             # NOTE use resource name from its provided data rather that its key in the dictionary
             "resource_name": resource_data.name,
             **merged_prov_params.model_dump(mode="json"),
-            # bool used by provisioners that manage ssh-able (nodes and ues) and non-ssh-ables resources (rus)
-            # for now, it used to decide whether to return 'ssh_info' or 'ru_ips' instead
+            # bool used by provisioners to decide whether to return 'ru_ips' or not
             "is_ru": resource_data.category is ProvisioningCategory.RU,
         },
         "extra_params": {"environment": {"PATH": f"{merged_prov_params.extra_path}:{os.environ.get('PATH', '')}"}}
@@ -206,6 +209,7 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         "runner_path": f"{ansible_params.runner_path}/{resource_data.category.value}/{resource_name}/{action}",
         "roles_paths": ansible_params.roles_paths,
         "quiet": quiet,
+        "retries": retries,
     }
 
     try:
@@ -216,15 +220,14 @@ async def run_single_provisioning_action(  # noqa: PLR0917
     if action == "provision":
         resource_data.is_provisioned = True
 
-        if resource_data.category in [ProvisioningCategory.NODE, ProvisioningCategory.UE]:
-            # validate and update resource ssh info for nodes and ues
-            # NOTE ssh_info is merged with precedence to the provisioning's ssh_info
-            # NOTE deep_merge is used to also merge nested jumphost ssh info
-            resource_data.ssh_info = SSHInfo.model_validate(  # type: ignore
-                deep_merge(resource_data.ssh_info.model_dump(mode="json"), result["ssh_info"])
-            )  # type: ignore
+        # validate and update resource ssh info
+        # NOTE ssh_info is merged with precedence to the existing non-default ssh_info
+        # NOTE deep_merge is used to also merge nested jumphost ssh info
+        resource_data.ssh_info = SSHInfo.model_validate(
+            deep_merge(result["ssh_info"], resource_data.ssh_info.model_dump(mode="json", exclude_unset=True))  # type: ignore
+        )
 
-        elif resource_data.category is ProvisioningCategory.RU and not resource_data.ips:
+        if resource_data.category is ProvisioningCategory.RU and not resource_data.ips:
             # update ips for rus if not already set
             resource_data.ips = [IPv4Address(ip) for ip in result["ru_ips"]]  # type: ignore
 
@@ -234,6 +237,9 @@ async def run_single_provisioning_action(  # noqa: PLR0917
         if resource_data.category is ProvisioningCategory.NODE:
             # set k8s status to not_configured for nodes
             resource_data.k8s_status = K8SStatus.NOT_CONFIGURED
+        elif resource_data.category is ProvisioningCategory.UE:
+            # set connection status to not_configured for cots ues
+            resource_data.connection_status = UEConnectionStatus.NOT_CONFIGURED
 
 
 async def run_parallel_provisioning_action(  # noqa: PLR0917
@@ -246,6 +252,7 @@ async def run_parallel_provisioning_action(  # noqa: PLR0917
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Provision or unprovision action on provided provisionable resources in parallel."""
 
@@ -261,6 +268,7 @@ async def run_parallel_provisioning_action(  # noqa: PLR0917
                 ansible_params=ansible_params,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         )
 
@@ -283,6 +291,7 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
     ignore_failures: bool = False,
     skip_unreservable: bool = True,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
     """Reserve provided reservable resources in parallel."""
 
@@ -303,6 +312,7 @@ async def run_parallel_reservation_action(  # noqa: PLR0917
                 force=force,
                 skip_unreservable=skip_unreservable,
                 quiet=quiet,
+                retries=retries,
             )
         )
 
@@ -321,13 +331,15 @@ async def run_parallel_command(  # noqa: PLR0917
     resources: dict[str, SSHableResource],
     command: list[str],
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     become: bool = False,
     force: bool = False,
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> dict[str, str]:
-    """Run a command on provided SSH-able resources in parallel."""
+    """Run a command on provided resources in parallel."""
 
     if not command:
         raise ValueError(f"Invalid command {command!r}.")
@@ -343,6 +355,7 @@ async def run_parallel_command(  # noqa: PLR0917
         inventory = get_ansible_inventory_line(
             resource_name=resource_name,
             resource_data=resource_data,
+            ssh_params=ssh_params,
         )
 
         tasks[resource_name] = asyncio.create_task(
@@ -353,6 +366,7 @@ async def run_parallel_command(  # noqa: PLR0917
                 hosts=resource_name,
                 become=become,
                 quiet=quiet,
+                retries=retries,
             )
         )
 
@@ -379,13 +393,15 @@ async def run_parallel_copy(  # noqa: PLR0917
     remote_path: str,
     direction: Literal["to_resource", "from_resource"],
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
     become: bool = False,
     force: bool = False,
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
 ) -> None:
-    """Copy a file/directory from or to the provided SSH-able resources in parallel."""
+    """Copy a file/directory from or to the provided resources in parallel."""
 
     tasks: dict[str, asyncio.Task] = {}
 
@@ -398,6 +414,7 @@ async def run_parallel_copy(  # noqa: PLR0917
         inventory = get_ansible_inventory_line(
             resource_name=resource_name,
             resource_data=resource_data,
+            ssh_params=ssh_params,
         )
 
         tasks[resource_name] = asyncio.create_task(
@@ -410,6 +427,7 @@ async def run_parallel_copy(  # noqa: PLR0917
                 hosts=resource_name,
                 become=become,
                 quiet=quiet,
+                retries=retries,
             )
         )
 

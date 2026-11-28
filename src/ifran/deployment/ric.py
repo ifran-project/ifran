@@ -109,6 +109,7 @@ class RICManagement(HelmManagement):
         node: str | None = None,
         order: ComponentDependencyGraph | None = RIC_COMPONENT_DEPENDENCIES,
         quiet: bool = False,
+        retries: int = 5,
         **kwargs,
     ) -> None:
         """Install RIC components."""
@@ -121,10 +122,12 @@ class RICManagement(HelmManagement):
                 node_name=node_name,
                 node_data=node_data,
                 ansible_params=self.deployment_model.params.ansible,
+                ssh_params=self.deployment_model.params.ssh,
                 quiet=quiet,
+                retries=retries,
             )
 
-        await super().install(components=components, node=node, order=order, quiet=quiet, **kwargs)
+        await super().install(components=components, node=node, order=order, quiet=quiet, retries=retries, **kwargs)
 
     # override dependency graph
     @override

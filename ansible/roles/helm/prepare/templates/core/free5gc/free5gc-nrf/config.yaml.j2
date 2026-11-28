@@ -3,7 +3,7 @@
 {%- else %}
 
 info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   version: 1.0.2
@@ -11,8 +11,8 @@ info:
 {% endif %}
 
 configuration:
-  MongoDBName: {{ component.advanced_config.MongoDBName | default("free5gc", true) }} # database name in MongoDB
-  MongoDBUrl: {{ component.advanced_config.MongoDBUrl | default("mongodb://test:test@free5gc-database/?authSource=admin", true) }} # a valid URL of the mongodb
+  MongoDBName: {{ component.advanced_config.MongoDBName }} # database name in MongoDB
+  MongoDBUrl: {{ component.advanced_config.MongoDBUrl }} # a valid URL of the mongodb
 
   sbi: # Service-based interface information
     scheme: {{ component.config.sbi.scheme }} # the protocol for sbi (http or https)
@@ -25,12 +25,12 @@ configuration:
       key: {{ component.config.sbi.tls.privateKey }} # NRF TLS Private key
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.rootcert %}
+{% if component.advanced_config.rootcert %}
     rootcert: # the local path of root CA certs
 {{ component.advanced_config.rootcert | to_nice_yaml(indent=6) | indent(6, True) }}
 {% endif %}
 
-    oauth: {{ component.advanced_config.oauth | default("false", true) | lower }}
+    oauth: {{ component.advanced_config.oauth | lower }}
 
   DefaultPlmnId:
 {% for plmn in component.config.plmnList %}
@@ -39,7 +39,7 @@ configuration:
 {% endfor %}
 
   serviceNameList: # the SBI services provided by this NRF, refer to TS 29.510
-{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{% if component.advanced_config.serviceNameList %}
 {{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - nnrf-nfm # Nnrf_NFManagement service
@@ -47,7 +47,7 @@ configuration:
 {% endif %}
 
 logger: # log output setting
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false

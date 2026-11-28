@@ -3,14 +3,14 @@
 {%- else %}
 
 gnb_id: {{ component.config.gnbId }}
-gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length | default(32, true) }}
-dryrun: {{ component.advanced_config.dryrun | default("false", true) | lower }}
+gnb_id_bit_length: {{ component.advanced_config.gnb_id_bit_length }}
+dryrun: {{ component.advanced_config.dryrun | lower }}
 
 cu_cp:
-{% if component.advanced_config and component.advanced_config.cu_cp %}
+{% if component.advanced_config.cu_cp %}
 {{ component.advanced_config.cu_cp | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
-  inactivity_timer: {{ component.advanced_config.inactivity_timer | default(120, true) }}
+  inactivity_timer: {{ component.advanced_config.inactivity_timer }}
   amf:
     addr: {{ component.config.amf }}
     port: {{ component.config.n2.port }}
@@ -34,7 +34,7 @@ cu_cp:
     bind_addrs: {{ component.config.f1c.ipv4EndPointAddress }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.e2 %}
+{% if component.advanced_config.e2 %}
 e2:
 {{ component.advanced_config.e2 | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
@@ -47,13 +47,13 @@ e2:
 {% endif %}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.remote_control %}
+{% if component.advanced_config.remote_control %}
 remote_control:
 {{ component.advanced_config.remote_control | to_nice_yaml(indent=2) | indent(2, True) }}
 {% endif %}
 
 log:
-{% if component.advanced_config and component.advanced_config.log %}
+{% if component.advanced_config.log %}
 {{ component.advanced_config.log | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   filename: stdout
@@ -61,12 +61,12 @@ log:
   config_level: info
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.pcap %}
+{% if component.advanced_config.pcap %}
 pcap:
 {{ component.advanced_config.pcap | to_nice_yaml(indent=2) | indent(2, True) }}
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.metrics %}
+{% if component.advanced_config.metrics %}
 metrics:
 {{ component.advanced_config.metrics | to_nice_yaml(indent=2) | indent(2, True) }}
 {% endif %}

@@ -117,6 +117,7 @@ class HelmManagement(BaseManagement):
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        retries: int = 5,
         **kwargs,
     ) -> dict[str, str] | None:
         """Run Helm action on 5G components of a specific category."""
@@ -167,11 +168,14 @@ class HelmManagement(BaseManagement):
             node_name=node_name,
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
+            ssh_params=self.deployment_model.params.ssh,
+            misc_data=self.deployment_model.miscellaneous,
             order=order,
             force=force,
             ignore_invalid_states=ignore_invalid_states,
             ignore_failures=ignore_failures,
             quiet=quiet,
+            retries=retries,
             **kwargs,
         )
 

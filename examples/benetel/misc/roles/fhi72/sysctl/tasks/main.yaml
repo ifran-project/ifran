@@ -1,0 +1,14 @@
+# Persist and apply the RT scheduling and networking sysctl settings
+---
+- name: Configure RT and networking kernel parameters
+  ansible.builtin.template:
+    src: sysctl-fhi72.conf.j2
+    dest: /etc/sysctl.d/90-ifran-fhi72.conf
+    mode: "0644"
+  register: fhi72_sysctl
+
+- name: Apply RT and networking kernel parameters
+  ansible.builtin.command:
+    argv: [sysctl, --load, /etc/sysctl.d/90-ifran-fhi72.conf]
+  when: fhi72_sysctl is changed
+  changed_when: true

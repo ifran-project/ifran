@@ -40,24 +40,24 @@ class OAIAdvancedUEConfig(GenericAdvancedUEConfig):
     ssb_start: int | None = Field(default=None)
     position0: SerializableLibconfigDict | None = Field(default=None)
     channelmod: SerializableLibconfigDict | None = Field(default=None)
-    gdbstack: int | None = Field(default=None)
+    gdbstack: int = Field(default=1)
     thread_pool: str | None = Field(default=None)
-    tune_offset: float | None = Field(default=None)
-    if_freq: int | None = Field(default=None)
-    if_offset: int | None = Field(default=None)
+    tune_offset: float | None = Field(default=0.0)
+    if_freq: int | None = Field(default=0)
+    if_offset: int | None = Field(default=0)
 
 
 class UERANSIMAdvancedUEConfig(GenericAdvancedUEConfig):
     """Advanced configuration for UERANSIM UE."""
 
-    protectionScheme: int | None = Field(default=None)
-    homeNetworkPublicKey: str | None = Field(default=None)
-    homeNetworkPublicKeyId: str | None = Field(default=None)
-    routingIndicator: str | None = Field(default=None)
-    imeiSv: str | None = Field(default=None)
-    tunNetmask: str | None = Field(default=None)
-    useNamespace: bool | None = Field(default=None)
-    nsNamePrefix: str | None = Field(default=None)
+    protectionScheme: int | None = Field(default=0)
+    homeNetworkPublicKey: str | None = Field(default="5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650")
+    homeNetworkPublicKeyId: int | None = Field(default=1)
+    routingIndicator: str | None = Field(default="0000")
+    imeiSv: str | None = Field(default="4370816125816151")
+    tunNetmask: str | None = Field(default="255.255.255.0")
+    useNamespace: bool | None = Field(default=False)
+    nsNamePrefix: str | None = Field(default="ueransim")
     uacAic: dict[str, Any] | None = Field(default=None)
     uacAcc: dict[str, Any] | None = Field(default=None)
     integrity: dict[str, Any] | None = Field(default=None)
@@ -68,10 +68,10 @@ class UERANSIMAdvancedUEConfig(GenericAdvancedUEConfig):
 class SRSUEAdvancedUEConfig(GenericAdvancedUEConfig):
     """Advanced configuration for SRSUE."""
 
-    freq_offset: float | None = Field(default=None)
-    srate: str | float | None = Field(default=None)
+    freq_offset: float | None = Field(default=0)
+    srate: str | float | None = Field(default="61.44e6")
     device_args: str | None = Field(default=None)
-    nof_carriers: int | None = Field(default=None)
+    nof_carriers: int | None = Field(default=1)
     max_nof_prb: int | None = Field(default=None)
     nof_prb: int | None = Field(default=None)
     rf: SerializableINIConfigDict | None = Field(default=None)
@@ -104,7 +104,13 @@ class SRSUEAdvancedUEConfig(GenericAdvancedUEConfig):
     master_clock_rate: str | float | None = Field(default=None)
 
 
-ADVANCED_UE_CONFIG_MAPPING: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {
+GENERIC_ADVANCED_UE_CONFIGS: dict[UEImplementation, type[GenericAdvancedUEConfig]] = {
+    UEImplementation.OAI: GenericAdvancedUEConfig,
+    UEImplementation.UERANSIM: GenericAdvancedUEConfig,
+    UEImplementation.SRSUE: GenericAdvancedUEConfig,
+}
+
+VALIDATED_ADVANCED_UE_CONFIGS: dict[UEImplementation, dict[UEType, type[GenericAdvancedUEConfig]]] = {
     UEImplementation.OAI: {
         UEType.CONTAINERIZED: OAIAdvancedUEConfig,
     },
@@ -133,6 +139,6 @@ class DeployedUE(Deployed5GComponent):
     def validate_advanced_config(self) -> Self:
         """Validate advanced configuration based on what is supported."""
         return super().validate_advanced_config(
-            mapping=ADVANCED_UE_CONFIG_MAPPING,
-            default_model=GenericAdvancedUEConfig,  # type: ignore
+            validated=VALIDATED_ADVANCED_UE_CONFIGS,
+            generic=GENERIC_ADVANCED_UE_CONFIGS,
         )

@@ -25,6 +25,7 @@ def sync_dict_keys(  # noqa: PLR0917
     target_dict: dict,
     source_dict: dict,
     default_factory: Any,
+    populate_implementation: str | None = None,
     populate_type: bool = False,
     populate_name: bool = False,
     remove_extra: bool = True,
@@ -40,6 +41,10 @@ def sync_dict_keys(  # noqa: PLR0917
         if populate_type:
             # ran, core, and ric components need the type field
             args["type"] = source_dict[key].type
+
+        if populate_implementation:
+            # ran, core, and ric components get their implementation field from parent model
+            args["implementation"] = populate_implementation
 
         if populate_name:
             # provisionable resources (RUs et UEs) need the name field

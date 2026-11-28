@@ -1,0 +1,6 @@
+# O-RAN 7.2 host setup
+---
+- name: Configure O-RAN 7.2 fronthaul nodes
+  hosts: du_nodes
+  roles:
+    - fhi72

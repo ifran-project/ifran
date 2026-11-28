@@ -161,6 +161,7 @@ class BaseManagement:
             target_dict=self.deployment_model.core.components,
             source_dict=self.metamodel.core.components,
             default_factory=DeployedCoreComponent,
+            populate_implementation=self.deployment_model.core.implementation,
             populate_type=True,
         )
         # ran components
@@ -168,6 +169,7 @@ class BaseManagement:
             target_dict=self.deployment_model.ran.components,
             source_dict=self.metamodel.ran.components,
             default_factory=DeployedRANComponent,
+            populate_implementation=self.deployment_model.ran.implementation,
             populate_type=True,
         )
         # rus (only real rus are provisionable)
@@ -196,15 +198,12 @@ class BaseManagement:
             target_dict=self.deployment_model.ric.components,
             source_dict=self.metamodel.ric.components,
             default_factory=DeployedRICComponent,
+            populate_implementation=self.deployment_model.ric.implementation,
             populate_type=True,
         )
 
-        # NOTE the deployment model should retrigger its validation functions for the newly added components
-        # this is mainly important to populate the implementation for the added core, ric and ran components
-        self.deployment_model = DeploymentModel.model_validate(self.deployment_model.model_dump())
-
     def get_ansible_inventory(self, path: str | None = None) -> str | None:
-        """Generate an Ansible .ini inventory from nodes and ues."""
+        """Generate an Ansible INI inventory from resources."""
 
         # get groups based on node roles => {role: nodes with that role}
         groups: dict[str, dict[str, ProvisionableResource]] = defaultdict(dict)
@@ -220,6 +219,11 @@ class BaseManagement:
         if ues:
             groups["ues"] = ues  # type: ignore
 
+        # add rus as their own group
+        rus = self.deployment_model.rus
+        if rus:
+            groups["rus"] = self.deployment_model.rus  # type: ignore
+
         lines: list[str] = []
         for role, role_resources in groups.items():
             lines.append(f"[{role}]")
@@ -228,6 +232,7 @@ class BaseManagement:
                     get_ansible_inventory_line(
                         resource_name=name,
                         resource_data=resource,  # type: ignore
+                        ssh_params=self.deployment_model.params.ssh,
                     )
                 )
             lines.append("")  # new line between sections

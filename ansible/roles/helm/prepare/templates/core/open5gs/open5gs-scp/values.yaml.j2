@@ -63,7 +63,7 @@ exposedPorts:
 
 config:
   listening_port: {{ component.config.sbi.port }}
-  db_uri: {{ component.advanced_config.db_uri | default("mongodb://test:test@open5gs-database/open5gs?authSource=admin", true) }}
+  db_uri: {{ component.advanced_config.db_uri }}
 
 podSecurityContext:
   runAsUser: {{ component.pod_security_context.run_as_user }}

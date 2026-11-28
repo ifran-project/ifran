@@ -12,6 +12,7 @@
 # - k9s_install: bool
 # - k9s_version: str
 # - containerd_snapshotter: str
+# - registry_mirrors: dict[str, str] | None
 
 # Output: None
 ---
@@ -176,7 +177,42 @@
     mode: "0644"
   notify: Restart containerd
 
-- name: Flush handlers
+# Reference: https://github.com/containerd/containerd/blob/main/docs/hosts.md
+- name: Ensure containerd registry configuration directory exists on '{{ node.name }}'
+  ansible.builtin.file:
+    path: /etc/containerd/certs.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: registry_mirrors | default({}, true) | length > 0
+
+- name: Create containerd registry namespace directories on '{{ node.name }}'
+  ansible.builtin.file:
+    path: "/etc/containerd/certs.d/{{ item.key }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ registry_mirrors | default({}, true) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: registry_mirrors | default({}, true) | length > 0
+
+- name: Configure containerd registry mirrors on '{{ node.name }}'
+  ansible.builtin.template:
+    src: hosts.toml.j2
+    dest: "/etc/containerd/certs.d/{{ item.key }}/hosts.toml"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ registry_mirrors | default({}, true) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }} -> {{ item.value }}"
+  notify: Restart containerd
+  when: registry_mirrors | default({}, true) | length > 0
+
+- name: Flush handlers after containerd configuration
   ansible.builtin.meta: flush_handlers
 
 - name: Enable containerd on '{{ node.name }}'

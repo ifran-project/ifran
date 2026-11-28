@@ -3,7 +3,7 @@
 {%- else %}
 
 info:
-{% if component.advanced_config and component.advanced_config.info %}
+{% if component.advanced_config.info %}
 {{ component.advanced_config.info | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   version: 1.0.3
@@ -12,7 +12,7 @@ info:
 
 configuration:
   serviceNameList: # the SBI services provided by this UDM, refer to TS 29.503
-{% if component.advanced_config and component.advanced_config.serviceNameList %}
+{% if component.advanced_config.serviceNameList %}
 {{ component.advanced_config.serviceNameList | to_nice_yaml(indent=4) | indent(4, True) }}
 {% else %}
     - nudm-sdm # Nudm_SubscriberDataManagement service
@@ -35,18 +35,18 @@ configuration:
 
   nrfUri: {{ component.config.nrfUri }} # a valid URI of NRF
 
-{% if component.advanced_config and component.advanced_config.nrfCertPem %}
+{% if component.advanced_config.nrfCertPem %}
   nrfCertPem: {{ component.advanced_config.nrfCertPem }} # NRF Certificate
 {% endif %}
 
-{% if component.advanced_config and component.advanced_config.SuciProfile %}
+{% if component.advanced_config.SuciProfile %}
   # test data set from TS33501-f60 Annex C.4
   SuciProfile: # Home Network Public Key ID = slice index +1
 {{ component.advanced_config.SuciProfile | to_nice_yaml(indent=4) | indent(4, True) }}
 {% endif %}
 
 logger: # log output setting
-{% if component.advanced_config and component.advanced_config.logger %}
+{% if component.advanced_config.logger %}
 {{ component.advanced_config.logger | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   enable: true # true or false

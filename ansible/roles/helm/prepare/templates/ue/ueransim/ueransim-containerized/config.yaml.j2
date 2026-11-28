@@ -9,13 +9,13 @@ mcc: "{{ component.config.gnbs[0].config.plmnList[0].plmnId.mcc }}"
 # Mobile Network Code value of HPLMN (2 or 3 digits)
 mnc: "{{ component.config.gnbs[0].config.plmnList[0].plmnId.mnc }}"
 # SUCI Protection Scheme : 0 for Null-scheme, 1 for Profile A and 2 for Profile B
-protectionScheme: {{ component.advanced_config.protectionScheme | default(0, true) }}
+protectionScheme: {{ component.advanced_config.protectionScheme }}
 # Home Network Public Key for protecting with SUCI Profile A
-homeNetworkPublicKey: {{ component.advanced_config.homeNetworkPublicKey | default("5a8d38864820197c3394b92613b20b91633cbd897119273bf8e4a6f4eec0a650", true) }}
+homeNetworkPublicKey: {{ component.advanced_config.homeNetworkPublicKey }}
 # Home Network Public Key ID for protecting with SUCI Profile A
-homeNetworkPublicKeyId: {{ component.advanced_config.homeNetworkPublicKeyId | default(1, true) }}
+homeNetworkPublicKeyId: {{ component.advanced_config.homeNetworkPublicKeyId }}
 # Routing Indicator
-routingIndicator: {{ component.advanced_config.routingIndicator | default("0000", true) }}
+routingIndicator: {{ component.advanced_config.routingIndicator }}
 
 # Permanent subscription key
 key: "{{ component.config.authenticationData.k }}"
@@ -34,16 +34,16 @@ amf: "{{ component.config.authenticationData.amf }}"
 # IMEI number of the device. It is used if no SUPI is provided
 imei: {{ component.config.pei }}
 # IMEISV number of the device. It is used if no SUPI and IMEI is provided
-imeiSv: {{ component.advanced_config.imeiSv | default("4370816125816151", true) }}
+imeiSv: {{ component.advanced_config.imeiSv }}
 
 # Network mask used for the UE's TUN interface to define the subnet size  
-tunNetmask: {{ component.advanced_config.tunNetmask | default("255.255.255.0", true) }}
+tunNetmask: {{ component.advanced_config.tunNetmask }}
 
 # Create the UE TUN interface inside a dedicated Linux network namespace.
-useNamespace: {{ component.advanced_config.useNamespace | default("false", true) | lower }}
+useNamespace: {{ component.advanced_config.useNamespace | lower }}
 
 # Optional prefix used when deriving the namespace name.
-nsNamePrefix: {{ component.advanced_config.nsNamePrefix | default("ueransim", true) }}
+nsNamePrefix: {{ component.advanced_config.nsNamePrefix }}
 
 # List of gNB IP addresses for Radio Link Simulation
 gnbSearchList:
@@ -53,7 +53,7 @@ gnbSearchList:
 
 # UAC Access Identities Configuration
 uacAic:
-{% if component.advanced_config and component.advanced_config.uacAic %}
+{% if component.advanced_config.uacAic %}
 {{ component.advanced_config.uacAic | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   mps: false
@@ -62,7 +62,7 @@ uacAic:
 
 # UAC Access Control Class
 uacAcc:
-{% if component.advanced_config and component.advanced_config.uacAcc %}
+{% if component.advanced_config.uacAcc %}
 {{ component.advanced_config.uacAcc | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   normalClass: 0
@@ -103,7 +103,7 @@ default-nssai:
 
 # Supported integrity algorithms by this UE
 integrity:
-{% if component.advanced_config and component.advanced_config.integrity %}
+{% if component.advanced_config.integrity %}
 {{ component.advanced_config.integrity | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   IA1: true
@@ -113,7 +113,7 @@ integrity:
 
 # Supported encryption algorithms by this UE
 ciphering:
-{% if component.advanced_config and component.advanced_config.ciphering %}
+{% if component.advanced_config.ciphering %}
 {{ component.advanced_config.ciphering | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   EA1: true
@@ -123,7 +123,7 @@ ciphering:
 
 # Integrity protection maximum data rate for user plane
 integrityMaxRate:
-{% if component.advanced_config and component.advanced_config.integrityMaxRate %}
+{% if component.advanced_config.integrityMaxRate %}
 {{ component.advanced_config.integrityMaxRate | to_nice_yaml(indent=2) | indent(2, True) }}
 {% else %}
   uplink: 'full'

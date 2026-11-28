@@ -1,0 +1,980 @@
+params:
+  ansible:
+    runner_path: /Users/zimabrou/ifran/ansible-runner
+    roles_paths:
+    - /Users/zimabrou/Projects/ifran/venv/lib/python3.14/site-packages/ansible/roles
+  k8s:
+    timezone: Europe/Paris
+    k8s_version:
+      major: 1
+      minor: 36
+      patch: 2
+      extension: '2.1'
+    cluster_name: ifran
+    master_node: null
+    join_command: null
+    pod_network_cidr: 10.244.0.0/16
+    service_cidr: 10.96.0.0/12
+    calico_version: 3.32.1
+    install_multus: true
+    multus_version: 4.3.0
+    kubelet_params:
+      cpu_manager_policy: none
+      cpu_manager_policy_options: null
+      reserved_system_cpus: null
+      topology_manager_policy: none
+    helm_version: 4.2.3
+    k9s_install: true
+    k9s_version: 0.51.0
+    containerd_snapshotter: null
+    enable_cni_dhcp: true
+    copy_kubeconfig_to_workers: true
+    local_kubeconfig_path: /Users/zimabrou/Projects/ifran/venv/lib/python3.14/.k8s-admin.conf
+    label_selection_base: node-type.5g.blueprint
+    registry_mirrors:
+      docker.io: http://registry.theblueprintfactory.org
+    used_ips: []
+  provisioning: {}
+  ssh:
+    hostname: null
+    port: 22
+    user: root
+    private_key_file: null
+    password: null
+    sudo_password: null
+    extra_args: null
+    jumphost: null
+    no_host_key_checking: true
+    timeout: 30
+    multiplexing: true
+    pipelining: true
+    extra_ansible_vars: {}
+provisioners:
+  bi:
+    supported_categories:
+    - node
+    type: bi
+    params:
+      extra_path: null
+      infra: fr-sophia2-bi-vm1
+      image: Ubuntu 24.04.3
+      flavor: large
+      project: post5g-beta
+      experiment: ifran
+      create_experiment: false
+      experiment_duration: 24h
+      node_duration: 4h
+      allow_created: true
+  pos:
+    supported_categories:
+    - node
+    type: pos
+    params:
+      extra_path: null
+      attempt_reservation: true
+      reservation_period: 120
+      reservation_params: {}
+      timezone: Europe/Paris
+      start_time: '2026-11-26T18:31:02.838101+01:00'
+      image: ubuntu-questing-rt@2025-10-29T19:34:30+00:00
+      is_staged_image: true
+      boot_params: net.ifnames=1 biosdevname=0 isolcpus=managed_irq,6-63 nohz_full=6-63
+        nohz=on rcu_nocbs=6-63 kthread_cpus=0-5 irqaffinity=0-5 rcu_nocb_poll selinux=0
+        enforcing=0 intel_pstate=disable nosoftlockup hugepagesz=1G hugepages=40 hugepagesz=2M
+        hugepages=0 default_hugepagesz=1G mitigations=off intel_iommu=on processor.max_cstate=1
+        idle=poll intel_idle.max_cstate=0 iommu=pt skew_tick=1 tsc=nowatchdog nmi_watchdog=0
+        softlockup_panic=0 audit=0 mce=off nosmt
+      only_bootstrap: false
+      testbed: sophia
+      use_slices: true
+      end_time: '2026-11-26T20:31:02.838101+01:00'
+  r2lab:
+    supported_categories:
+    - ue
+    - ru
+    type: r2lab
+    params:
+      extra_path: null
+      attempt_reservation: false
+      reservation_period: null
+      reservation_params:
+        r2lab_api_url: https://r2labapi.inria.fr
+        email: <REDACTED>
+        password: <REDACTED>
+      timezone: Europe/Paris
+      start_time: '2026-11-26T18:31:02.838127+01:00'
+      base_url: https://bi.theblueprintfactory.org/devices/api/v1
+      token: null
+      token_params:
+        infra: r2lab
+        input_body:
+          email: <REDACTED>
+          password: <REDACTED>
+          slice: inria_ubinet01
+      r2lab_slice: inria_ubinet01
+      end_time: '2026-11-26T18:31:02.838127+01:00'
+nodes:
+  node1:
+    name: node1
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
+  node2:
+    name: node2
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
+  node3:
+    name: node3
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
+  node4:
+    name: node4
+    category: node
+    is_provisioned: false
+    provisioner: bi
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    roles:
+    - core
+    - ran
+    - ue
+    - ric
+    k8s_status: not_configured
+    k8s_params: {}
+  sopnode-f3:
+    name: sopnode-f3
+    category: node
+    is_provisioned: false
+    provisioner: pos
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    roles:
+    - ran
+    - du
+    k8s_status: not_configured
+    k8s_params:
+      kubelet_params:
+        cpu_manager_policy: static
+        cpu_manager_policy_options:
+          full-pcpus-only: 'true'
+        topology_manager_policy: best-effort
+        reserved_system_cpus: 0-5
+  sopnode-f4:
+    name: sopnode-f4
+    category: node
+    is_provisioned: false
+    provisioner: pos
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    roles:
+    - ran
+    - du
+    k8s_status: not_configured
+    k8s_params:
+      kubelet_params:
+        cpu_manager_policy: static
+        cpu_manager_policy_options:
+          full-pcpus-only: 'true'
+        topology_manager_policy: best-effort
+        reserved_system_cpus: 0-5
+core:
+  implementation: open5gs
+  components: {}
+  database_params:
+    image: null
+    is_installed: false
+    ip: null
+    force_database_scheduling: false
+ran:
+  implementation: oai
+  components:
+    cucp:
+      kind: Deployment
+      is_installed: false
+      static_pod_ip: null
+      network_info: null
+      force_type_scheduling: false
+      image: null
+      exposed_ports: {}
+      resources:
+        define: false
+        requests: null
+        limits: null
+      namespace: null
+      pod_security_context:
+        run_as_user: 0
+        run_as_group: 0
+        run_as_non_root: false
+        fs_group: null
+      security_context: null
+      node_name: null
+      node_selector: null
+      affinity: null
+      tolerations: []
+      multus:
+        enabled: false
+        interfaces: []
+      labels: {}
+      annotations: {}
+      liveness_probe: true
+      readiness_probe: true
+      start: true
+      include_tcp_dump_container: false
+      tcp_dump_image:
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+        image_tag: alpine-3.20
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+      tcp_dump_share_volume: false
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      extra_env_vars: null
+      custom_entrypoint_command: null
+      custom_chart_path: null
+      custom_rendered_files: null
+      type: cu_cp
+      implementation: oai
+      advanced_config:
+        useAdditionalOptions: --telnetsrv --telnetsrv.shrmod ci --telnetsrv.listenport
+          9091
+        gdbstack: 1
+        Asn1_verbosity: none
+        log_config: null
+        sm_dir: /usr/local/lib/flexric/
+        cu_up_ip: 0.0.0.0
+        du_ip: 0.0.0.0
+        Num_Threads_PUSCH: 8
+        sa: 1
+        drb_ciphering: 'yes'
+        drb_integrity: 'no'
+      plain_text_config: null
+      derived_radio_config: null
+    cuup:
+      kind: Deployment
+      is_installed: false
+      static_pod_ip: null
+      network_info: null
+      force_type_scheduling: false
+      image: null
+      exposed_ports: {}
+      resources:
+        define: false
+        requests: null
+        limits: null
+      namespace: null
+      pod_security_context:
+        run_as_user: 0
+        run_as_group: 0
+        run_as_non_root: false
+        fs_group: null
+      security_context: null
+      node_name: null
+      node_selector: null
+      affinity: null
+      tolerations: []
+      multus:
+        enabled: false
+        interfaces: []
+      labels: {}
+      annotations: {}
+      liveness_probe: true
+      readiness_probe: true
+      start: true
+      include_tcp_dump_container: false
+      tcp_dump_image:
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+        image_tag: alpine-3.20
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+      tcp_dump_share_volume: false
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      extra_env_vars: null
+      custom_entrypoint_command: null
+      custom_chart_path: null
+      custom_rendered_files: null
+      type: cu_up
+      implementation: oai
+      advanced_config:
+        useAdditionalOptions: null
+        gdbstack: 1
+        Asn1_verbosity: none
+        log_config: null
+        sm_dir: /usr/local/lib/flexric/
+        du_ip: 0.0.0.0
+      plain_text_config: null
+      derived_radio_config: null
+    du1:
+      kind: Deployment
+      is_installed: false
+      static_pod_ip: null
+      network_info: null
+      force_type_scheduling: false
+      image: null
+      exposed_ports: {}
+      resources:
+        define: true
+        requests:
+          nf:
+            cpu: 14
+            memory: 8Gi
+          tcpdump: null
+        limits:
+          nf:
+            cpu: 14
+            memory: 8Gi
+          tcpdump: null
+      namespace: null
+      pod_security_context:
+        run_as_user: 0
+        run_as_group: 0
+        run_as_non_root: false
+        fs_group: null
+      security_context: null
+      node_name: sopnode-f3
+      node_selector: null
+      affinity: null
+      tolerations: []
+      multus:
+        enabled: false
+        interfaces: []
+      labels: {}
+      annotations: {}
+      liveness_probe: true
+      readiness_probe: true
+      start: true
+      include_tcp_dump_container: false
+      tcp_dump_image:
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+        image_tag: alpine-3.20
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+      tcp_dump_share_volume: false
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      extra_env_vars: null
+      custom_entrypoint_command: null
+      custom_chart_path: /Users/zimabrou/Projects/ifran/examples/benetel/custom_du_chart/oai-du
+      custom_rendered_files:
+      - /Users/zimabrou/Projects/ifran/examples/benetel/custom_du_chart/values.yaml.j2
+      type: du
+      implementation: oai
+      advanced_config:
+        useAdditionalOptions: --log_config.global_log_options level,nocolor,time
+        gdbstack: 1
+        Asn1_verbosity: none
+        log_config: null
+        sm_dir: /usr/local/lib/flexric/
+        min_rxtxtime: 6
+        pdsch_AntennaPorts_XP: 2
+        pdsch_AntennaPorts_N1: 2
+        pusch_AntennaPorts: 4
+        do_CSIRS: 1
+        do_SRS: periodic
+        dl_offstToCarrier: 0
+        initialDLBWPlocationAndBandwidth: 1099
+        initialDLBWPsubcarrierSpacing: 1
+        initialDLBWPcontrolResourceSetZero: 11
+        initialDLBWPsearchSpaceZero: 0
+        ul_offstToCarrier: 0
+        pMax: 23
+        initialULBWPlocationAndBandwidth: 1099
+        prach_msg1_FDM: 0
+        zeroCorrelationZoneConfig: 0
+        preambleReceivedTargetPower: -100
+        preambleTransMax: 8
+        powerRampingStep: 3
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR: 4
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: 14
+        ra_ContentionResolutionTimer: 7
+        rsrp_ThresholdSSB: 19
+        prach_RootSequenceIndex_PR: 2
+        prach_RootSequenceIndex: 1
+        restrictedSetConfig: 0
+        msg3_DeltaPreamble: 2
+        p0_NominalWithGrant: -96
+        pucchGroupHopping: 0
+        hoppingId: 0
+        p0_nominal: -96
+        ssb_PositionsInBurst_Bitmap: 1
+        dmrs_TypeA_Position: 0
+        pusch_TargetSNRx10: 150
+        pucch_TargetSNRx10: 220
+        dl_bler_target_lower: 0.15
+        dl_bler_target_upper: 0.35
+        ul_bler_target_lower: 0.15
+        ul_bler_target_upper: 0.35
+        pusch_RSSI_Threshold: -150
+        pucch_RSSI_Threshold: -150
+        pusch_FailureThres: 500
+        ul_max_mcs: 28
+        stats_max_ue: 32
+        prach_dtx_threshold: 140
+        pucch0_dtx_threshold: 10
+        ofdm_offset_divisor: 8
+        pusch_dtx_threshold: 10
+        max_ldpc_iterations: 15
+        tx_amp_backoff_dB: 12
+        phase_compensation: 0
+        local_rf: 'no'
+        max_pdschReferenceSignalPower: -27
+        eNB_instances:
+        - 0
+        sf_extension: 0
+        do_precoding: null
+        tr_preference: raw_if4p5
+        num_tp_cores: null
+        rxfh_core_id: null
+        txfh_core_id: null
+        tp_cores: null
+        nr_flag: null
+        sl_ahead: 5
+        local_if_name: null
+        remote_address: null
+        local_address: null
+        local_portc: null
+        remote_portc: null
+        local_portd: null
+        remote_portd: null
+        rfsimulator: null
+        fhi_72:
+          dpdk_mem_size: 0
+          du_addr:
+          - 00:11:22:33:44:67
+          - 00:11:22:33:44:66
+          ru_addr:
+          - 70:b3:d5:e1:5b:81
+          - 70:b3:d5:e1:5b:81
+          mtu: 9600
+          file_prefix: fhi_72
+          fh_config:
+          - T1a_cp_dl:
+            - 419
+            - 470
+            T1a_cp_ul:
+            - 285
+            - 336
+            T1a_up:
+            - 294
+            - 345
+            Ta4:
+            - 0
+            - 200
+            ru_config:
+              iq_width: 9
+              iq_width_prach: 9
+        thread_pool: null
+        channelmod: null
+      plain_text_config: null
+      derived_radio_config: null
+    du2:
+      kind: Deployment
+      is_installed: false
+      static_pod_ip: null
+      network_info: null
+      force_type_scheduling: false
+      image: null
+      exposed_ports: {}
+      resources:
+        define: true
+        requests:
+          nf:
+            cpu: 14
+            memory: 8Gi
+          tcpdump: null
+        limits:
+          nf:
+            cpu: 14
+            memory: 8Gi
+          tcpdump: null
+      namespace: null
+      pod_security_context:
+        run_as_user: 0
+        run_as_group: 0
+        run_as_non_root: false
+        fs_group: null
+      security_context: null
+      node_name: sopnode-f4
+      node_selector: null
+      affinity: null
+      tolerations: []
+      multus:
+        enabled: false
+        interfaces: []
+      labels: {}
+      annotations: {}
+      liveness_probe: true
+      readiness_probe: true
+      start: true
+      include_tcp_dump_container: false
+      tcp_dump_image:
+        repository: docker.io/oaisoftwarealliance/oai-tcpdump-init
+        image_tag: alpine-3.20
+        image_pull_policy: IfNotPresent
+        image_pull_secrets: null
+      tcp_dump_share_volume: false
+      rendered_files:
+      - values.yaml
+      - config.yaml
+      extra_env_vars: null
+      custom_entrypoint_command: null
+      custom_chart_path: /Users/zimabrou/Projects/ifran/examples/benetel/custom_du_chart/oai-du
+      custom_rendered_files:
+      - /Users/zimabrou/Projects/ifran/examples/benetel/custom_du_chart/values.yaml.j2
+      type: du
+      implementation: oai
+      advanced_config:
+        useAdditionalOptions: --log_config.global_log_options level,nocolor,time
+        gdbstack: 1
+        Asn1_verbosity: none
+        log_config: null
+        sm_dir: /usr/local/lib/flexric/
+        min_rxtxtime: 6
+        pdsch_AntennaPorts_XP: 2
+        pdsch_AntennaPorts_N1: 2
+        pusch_AntennaPorts: 4
+        do_CSIRS: 1
+        do_SRS: periodic
+        dl_offstToCarrier: 0
+        initialDLBWPlocationAndBandwidth: 1099
+        initialDLBWPsubcarrierSpacing: 1
+        initialDLBWPcontrolResourceSetZero: 11
+        initialDLBWPsearchSpaceZero: 0
+        ul_offstToCarrier: 0
+        pMax: 23
+        initialULBWPlocationAndBandwidth: 1099
+        prach_msg1_FDM: 0
+        zeroCorrelationZoneConfig: 0
+        preambleReceivedTargetPower: -100
+        preambleTransMax: 8
+        powerRampingStep: 3
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR: 4
+        ssb_perRACH_OccasionAndCB_PreamblesPerSSB: 14
+        ra_ContentionResolutionTimer: 7
+        rsrp_ThresholdSSB: 19
+        prach_RootSequenceIndex_PR: 2
+        prach_RootSequenceIndex: 1
+        restrictedSetConfig: 0
+        msg3_DeltaPreamble: 2
+        p0_NominalWithGrant: -96
+        pucchGroupHopping: 0
+        hoppingId: 0
+        p0_nominal: -96
+        ssb_PositionsInBurst_Bitmap: 1
+        dmrs_TypeA_Position: 0
+        pusch_TargetSNRx10: 150
+        pucch_TargetSNRx10: 220
+        dl_bler_target_lower: 0.15
+        dl_bler_target_upper: 0.35
+        ul_bler_target_lower: 0.15
+        ul_bler_target_upper: 0.35
+        pusch_RSSI_Threshold: -150
+        pucch_RSSI_Threshold: -150
+        pusch_FailureThres: 500
+        ul_max_mcs: 28
+        stats_max_ue: 32
+        prach_dtx_threshold: 140
+        pucch0_dtx_threshold: 10
+        ofdm_offset_divisor: 8
+        pusch_dtx_threshold: 10
+        max_ldpc_iterations: 15
+        tx_amp_backoff_dB: 12
+        phase_compensation: 0
+        local_rf: 'no'
+        max_pdschReferenceSignalPower: -27
+        eNB_instances:
+        - 0
+        sf_extension: 0
+        do_precoding: null
+        tr_preference: raw_if4p5
+        num_tp_cores: null
+        rxfh_core_id: null
+        txfh_core_id: null
+        tp_cores: null
+        nr_flag: null
+        sl_ahead: 5
+        local_if_name: null
+        remote_address: null
+        local_address: null
+        local_portc: null
+        remote_portc: null
+        local_portd: null
+        remote_portd: null
+        rfsimulator: null
+        fhi_72:
+          dpdk_mem_size: 0
+          du_addr:
+          - 00:11:22:33:44:67
+          - 00:11:22:33:44:66
+          ru_addr:
+          - 70:b3:d5:e1:5b:81
+          - 70:b3:d5:e1:5b:81
+          mtu: 9600
+          file_prefix: fhi_72
+          fh_config:
+          - T1a_cp_dl:
+            - 419
+            - 470
+            T1a_cp_ul:
+            - 285
+            - 336
+            T1a_up:
+            - 294
+            - 345
+            Ta4:
+            - 0
+            - 200
+            ru_config:
+              iq_width: 9
+              iq_width_prach: 9
+        thread_pool: null
+        channelmod: null
+      plain_text_config: null
+      derived_radio_config: null
+rus:
+  benetel1:
+    name: benetel1
+    category: ru
+    is_provisioned: false
+    provisioner: r2lab
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars:
+        ansible_python_interpreter: ''
+    vendor: benetel
+    model: ran550
+    ips: []
+  benetel2:
+    name: benetel2
+    category: ru
+    is_provisioned: false
+    provisioner: r2lab
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars:
+        ansible_python_interpreter: ''
+    vendor: benetel
+    model: ran550
+    ips: []
+ues:
+  qhat01:
+    name: qhat01
+    category: ue
+    is_provisioned: false
+    provisioner: r2lab
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    type: cots
+    connection_status: not_configured
+  qhat02:
+    name: qhat02
+    category: ue
+    is_provisioned: false
+    provisioner: r2lab
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    type: cots
+    connection_status: not_configured
+  qhat03:
+    name: qhat03
+    category: ue
+    is_provisioned: false
+    provisioner: r2lab
+    provisioning_params: {}
+    ssh_info:
+      hostname: null
+      port: 22
+      user: root
+      private_key_file: null
+      password: null
+      sudo_password: null
+      extra_args: null
+      jumphost: null
+      no_host_key_checking: true
+      timeout: 30
+      multiplexing: true
+      pipelining: true
+      extra_ansible_vars: {}
+    type: cots
+    connection_status: not_configured
+ric:
+  implementation: oai
+  components: {}
+miscellaneous:
+  fhi72_params:
+    sopnode-f3:
+      fronthaul_interface: ens15f1np1
+      mtu: 9216
+      vfs:
+      - resource_name: ruvfiou
+        plane: U
+        mac: 00:11:22:33:44:66
+        vlan: 801
+      - resource_name: ruvfioc
+        plane: C
+        mac: 00:11:22:33:44:67
+        vlan: 801
+      resource_prefix: openshift.io
+      hugepages_1g: 0
+      ring_size: 8160
+      reserved_cpus: 0-5
+      topology_manager_policy: best-effort
+      irq_pattern: ice-|ens15f[0-3]np[0-3]
+      ptp:
+        interface: ens15f2np2
+        domain_number: 24
+        network_transport: L2
+        log_announce_interval: 1
+        log_sync_interval: -4
+        linuxptp_version: v4.4
+      device_plugin_image: ghcr.io/k8snetworkplumbingwg/sriov-network-device-plugin:v3.9.0
+    sopnode-f4:
+      fronthaul_interface: ens15f2np2
+      mtu: 9216
+      vfs:
+      - resource_name: ruvfiou
+        plane: U
+        mac: 00:11:22:33:44:66
+        vlan: 802
+      - resource_name: ruvfioc
+        plane: C
+        mac: 00:11:22:33:44:67
+        vlan: 802
+      resource_prefix: openshift.io
+      hugepages_1g: 0
+      ring_size: 8160
+      reserved_cpus: 0-5
+      topology_manager_policy: best-effort
+      irq_pattern: ice-|ens15f[0-3]np[0-3]
+      ptp:
+        interface: ens15f3np3
+        domain_number: 24
+        network_transport: L2
+        log_announce_interval: 1
+        log_sync_interval: -4
+        linuxptp_version: v4.4
+      device_plugin_image: ghcr.io/k8snetworkplumbingwg/sriov-network-device-plugin:v3.9.0
+  ru_targets:
+    sopnode-f3:
+      name: benetel1
+      component_name: du1
+      ip: null
+    sopnode-f4:
+      name: benetel2
+      component_name: du2
+      ip: null
+  ru_config:
+    benetel1:
+      mimo_mode: 1_2_3_4_4x4
+      downlink_scaling: '0'
+      prach_format: short
+      compression: static_compressed
+      c_plane_du_mac: 00:11:22:33:44:67
+      u_plane_du_mac: 00:11:22:33:44:66
+      u_plane_du_vlan_uplink: '321'
+      u_plane_du_vlan_downlink: '321'
+      c_plane_du_vlan: '321'
+      bandwidth_hz: '100000000'
+      centre_frequency_hz: '3450720000'
+      tx_power_dbm: '24.000000'
+      tdd_pattern_1: DDDSU
+      tdd_pattern_2: DDDSU
+      special_slots_symbols: DDDDDDGGGGUUUU
+    benetel2:
+      mimo_mode: 1_2_3_4_4x4
+      downlink_scaling: '0'
+      prach_format: short
+      compression: static_compressed
+      c_plane_du_mac: 00:11:22:33:44:67
+      u_plane_du_mac: 00:11:22:33:44:66
+      u_plane_du_vlan_uplink: '322'
+      u_plane_du_vlan_downlink: '322'
+      c_plane_du_vlan: '322'
+      bandwidth_hz: '100000000'
+      centre_frequency_hz: '3748800000'
+      tx_power_dbm: '24.000000'
+      tdd_pattern_1: DDDSU
+      tdd_pattern_2: DDDSU
+      special_slots_symbols: DDDDDDGGGGUUUU
+  derived_fhi72_params:
+    sopnode-f3:
+      sriov_resources:
+      - openshift.io/ruvfiou
+      - openshift.io/ruvfioc
+      pci_device_env_vars:
+      - PCIDEVICE_OPENSHIFT_IO_RUVFIOU
+      - PCIDEVICE_OPENSHIFT_IO_RUVFIOC
+    sopnode-f4:
+      sriov_resources:
+      - openshift.io/ruvfiou
+      - openshift.io/ruvfioc
+      pci_device_env_vars:
+      - PCIDEVICE_OPENSHIFT_IO_RUVFIOU
+      - PCIDEVICE_OPENSHIFT_IO_RUVFIOC
+  du_resources:
+    requests:
+      nf:
+        hugepages_1gi: 8Gi
+    limits:
+      nf:
+        hugepages_1gi: 8Gi

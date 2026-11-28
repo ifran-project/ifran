@@ -1,5 +1,9 @@
 [plugins.'io.containerd.cri.v1.images']
   snapshotter = "{{ selected_containerd_snapshotter }}"
+{% if registry_mirrors %}
+  [plugins.'io.containerd.cri.v1.images'.registry]
+    config_path = "/etc/containerd/certs.d"
+{% endif %}
 
 [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options]
   SystemdCgroup = true

@@ -1,0 +1,13 @@
+[global]
+domainNumber            {{ miscellaneous.fhi72_params[inventory_hostname].ptp.domain_number }}
+slaveOnly               1
+time_stamping           hardware
+tx_timestamp_timeout    100
+logging_level           6
+summary_interval        0
+logAnnounceInterval     {{ miscellaneous.fhi72_params[inventory_hostname].ptp.log_announce_interval }}
+logSyncInterval         {{ miscellaneous.fhi72_params[inventory_hostname].ptp.log_sync_interval }}
+verbose                 1
+
+[{{ miscellaneous.fhi72_params[inventory_hostname].ptp.interface }}]
+network_transport       {{ miscellaneous.fhi72_params[inventory_hostname].ptp.network_transport }}

@@ -131,7 +131,7 @@ spec:
         {{- if .Values.customEntrypointCommand}}
         command:
           {{- toYaml .Values.customEntrypointCommand | nindent 10 }}
-        {{- else sif .Values.start.nssf}}
+        {{- else if .Values.start.nssf}}
         command:
           - /free5gc/nssf
         args:

@@ -69,14 +69,25 @@ class SSHInfo(StrictBaseModel):
     """Direct jump host to reach this target."""
 
     no_host_key_checking: bool = Field(default=True)
-    """If True, flags will be added to disable host key checkin."""
+    """If True, flags will be added to disable host key checking."""
 
-    ssh_pipelining: bool = Field(default=True)
-    """If True, use SSH pipelining """
+    timeout: int = Field(default=30)
+    """Time in seconds to wait while establishing SSH connection."""
 
-    # auto-generated
-    common_args: str | None = Field(default=None)
-    """Auto-generated SSH flags."""
+    multiplexing: bool = Field(default=True)
+    """If True, use SSH multiplexing."""
+
+    pipelining: bool = Field(default=True)
+    """
+    If True, use Ansible's SSH pipelining. For more details, see:
+    https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/ssh_connection.html#parameter-pipelining
+    """
+
+    extra_ansible_vars: dict[str, str] = Field(default_factory=dict)
+    """
+    Extra Ansible variables to be added in the generated inventory lines.
+    Example: {'ansible_ssh_private_key_passphrase': '...'}
+    """
 
     def _build_proxy_command(self) -> str | None:
         """Recursively build nested SSH ProxyCommand string for jump hosts."""
@@ -99,20 +110,21 @@ class SSHInfo(StrictBaseModel):
         # if jump host itself has a jump host, nest the proxy command
         if jump.jumphost:
             nested_proxy = jump._build_proxy_command()
-            proxy_cmd += f" -o ProxyCommand={shlex.quote(nested_proxy)}"  # type: ignore
+            # NOTE escape every % as %% to makes it survive ssh expansion
+            nested_proxy = nested_proxy.replace("%", "%%")  # type: ignore
+            proxy_cmd += f" -o ProxyCommand={shlex.quote(nested_proxy)}"
 
         return proxy_cmd
 
-    @model_validator(mode="after")
-    def compute_common_args(self) -> Self:
+    def get_common_args(self) -> str | None:
         """Combine explicit extra_args with generated ones and ProxyCommand to construct common_args."""
 
         args = []
         if self.no_host_key_checking:
             args.append("-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null")
-        if self.ssh_pipelining:
+        if self.multiplexing:
             args.append("-o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ControlMaster=auto")
-            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C")  # 2 hours
+            args.append("-o ControlPersist=7200s -o ControlPath=/tmp/cm-%C")  # persist for 2 hours
         if self.extra_args:
             args.append(self.extra_args)
 
@@ -120,8 +132,7 @@ class SSHInfo(StrictBaseModel):
         if proxy_cmd:
             args.append(f'-o ProxyCommand="{proxy_cmd}"')
 
-        self.common_args = " ".join(args) if args else None
-        return self
+        return " ".join(args) if args else None
 
 
 class ProvisioningCategory(StrEnum):
@@ -585,6 +596,19 @@ class ProvisionableNode(SSHableResource):
     """Kubernetes parameter overrides."""
 
 
+class UEConnectionStatus(StrEnum):
+    """Supported UE connection status values."""
+
+    NOT_CONFIGURED = auto()
+    """UE is not configured and not ready to connect to the 5G network."""
+
+    CONFIGURED = auto()
+    """UE is configured and ready to connect to the 5G network."""
+
+    CONNECTED = auto()
+    """UE is actively connected to the 5G network."""
+
+
 class ProvisionableUE(SSHableResource):
     """User Equipment (UE) provisioning."""
 
@@ -597,8 +621,8 @@ class ProvisionableUE(SSHableResource):
     provisioner: str | None = Field(default="r2lab")
     """UE provisioner's name."""
 
-    is_connected: bool = Field(default=False)
-    """If this UE is connected or not."""
+    connection_status: UEConnectionStatus = Field(default=UEConnectionStatus.NOT_CONFIGURED)
+    """Current UE connection status."""
 
 
 class RUVendor(StrEnum):
@@ -664,8 +688,7 @@ class LiteonModel(StrEnum):
 type RUModel = USRPModel | AW2SModel | BenetelModel | LiteonModel
 
 
-# NOTE radio units are not ssh-able resources
-class ProvisionableRU(GenericProvisionableResource):
+class ProvisionableRU(SSHableResource):
     """Radio Unit (RU) provisioning."""
 
     category: Literal[ProvisioningCategory.RU] = Field(default=ProvisioningCategory.RU, frozen=True)

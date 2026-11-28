@@ -1,0 +1,72 @@
+# Create configured SR-IOV VFs, apply their link attributes, and bind them to vfio-pci
+---
+- name: Read supported VF count
+  ansible.builtin.slurp:
+    src: "/sys/class/net/{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}/device/sriov_totalvfs"
+  register: fhi72_max_vfs
+
+- name: Require supported VF capacity
+  ansible.builtin.fail:
+    msg: "{{ miscellaneous.fhi72_params[inventory_hostname].vfs | length }} VFs requested, but {{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }} supports {{ fhi72_max_vfs.content | b64decode | trim }}"
+  when: miscellaneous.fhi72_params[inventory_hostname].vfs | length > fhi72_max_vfs.content | b64decode | trim | int
+
+- name: Read current VF count
+  ansible.builtin.slurp:
+    src: "/sys/class/net/{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}/device/sriov_numvfs"
+  register: fhi72_current_vfs
+
+- name: Set VF count to zero before changing it
+  ansible.builtin.command:
+    argv: [tee, "/sys/class/net/{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}/device/sriov_numvfs"]
+    stdin: "0"
+  when: fhi72_current_vfs.content | b64decode | trim | int != miscellaneous.fhi72_params[inventory_hostname].vfs | length
+  changed_when: true
+
+- name: Create configured VFs
+  ansible.builtin.command:
+    argv: [tee, "/sys/class/net/{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}/device/sriov_numvfs"]
+    stdin: "{{ miscellaneous.fhi72_params[inventory_hostname].vfs | length }}"
+  when: fhi72_current_vfs.content | b64decode | trim | int != miscellaneous.fhi72_params[inventory_hostname].vfs | length
+  changed_when: true
+
+- name: Set VF MAC, VLAN, trust, and spoof checking
+  ansible.builtin.command:
+    argv:
+      - ip
+      - link
+      - set
+      - dev
+      - "{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}"
+      - vf
+      - "{{ item.0 }}"
+      - mac
+      - "{{ item.1.mac }}"
+      - vlan
+      - "{{ item.1.vlan }}"
+      - spoofchk
+      - "off"
+      - trust
+      - "on"
+  loop: "{{ range(0, miscellaneous.fhi72_params[inventory_hostname].vfs | length) | zip(miscellaneous.fhi72_params[inventory_hostname].vfs) | list }}"
+  loop_control:
+    label: "VF {{ item.0 }}"
+  changed_when: true
+
+- name: Load vfio-pci
+  community.general.modprobe:
+    name: vfio-pci
+    state: present
+
+- name: Resolve VF PCI device paths
+  ansible.builtin.command:
+    argv: [readlink, -f, "/sys/class/net/{{ miscellaneous.fhi72_params[inventory_hostname].fronthaul_interface }}/device/virtfn{{ item }}"]
+  loop: "{{ range(0, miscellaneous.fhi72_params[inventory_hostname].vfs | length) | list }}"
+  register: fhi72_vf_paths
+  changed_when: false
+
+- name: Bind VFs to vfio-pci
+  ansible.builtin.include_tasks: bind_vf.yaml
+  loop: "{{ fhi72_vf_paths.results }}"
+  loop_control:
+    loop_var: fhi72_vf
+    label: "{{ fhi72_vf.stdout | basename }}"

@@ -3,7 +3,7 @@
 import asyncio
 from ipaddress import IPv4Address
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from metamodel_3gpp.models.common import Component5G, TransportEndpoint
 
@@ -16,7 +16,7 @@ from ifran.models.k8s import (
     HelmParams,
     MultusNetworkStatus,
 )
-from ifran.models.provisioning import ProvisionableNode
+from ifran.models.provisioning import ProvisionableNode, SSHInfo
 from ifran.utils.ansible import (
     get_ansible_inventory_line,
     handle_ansible_result_exception,
@@ -66,8 +66,11 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
+    misc_data: dict[str, Any] | None,
     force: bool = False,
     quiet: bool = False,
+    retries: int = 5,
     **kwargs,
 ) -> None | str | dict[str, str]:
     """Run Ansible Helm role corresponding to the given action on a single 5G component."""
@@ -128,22 +131,33 @@ async def run_single_helm_action(  # noqa: C901, PLR0912, PLR0915, PLR0917
             # not a valid path => treat it as a text string
             component_data["plain_text_config"] = plain_text_config
 
+    inputs = {
+        "component_name": component_name,
+        # merged component (meta + deployment)
+        # NOTE use serialize_as_any=True to prevent pydantic from replacing models
+        # because of type mismatch after reference resolution
+        "component": component_data,
+        **helm_params.model_dump(mode="json"),
+    }
+
+    # give misc_data to helm/prepare role when component has custom rendered files
+    if action == "prepare" and component_deployment.custom_rendered_files and misc_data:
+        inputs |= {"miscellaneous": misc_data}
+
     args = {
         "role": f"helm/{action}",
-        "inputs": {
-            "component_name": component_name,
-            # merged component (meta + deployment)
-            # NOTE use serialize_as_any=True to prevent pydantic from replacing models
-            # because of type mismatch after reference resolution
-            "component": component_data,
-            **helm_params.model_dump(mode="json"),
-        },
+        "inputs": inputs,
         "runner_path": f"{ansible_params.runner_path}/{component_meta.category.value}/{component_name}/helm/{action}",
         "roles_paths": ansible_params.roles_paths,
         "hosts": node_name,
-        "inventory": get_ansible_inventory_line(resource_name=node_name, resource_data=node_data),
+        "inventory": get_ansible_inventory_line(
+            resource_name=node_name,
+            resource_data=node_data,
+            ssh_params=ssh_params,
+        ),
         "become": True,
         "quiet": quiet,
+        "retries": retries,
     }
 
     # expect network info output after installation
@@ -248,11 +262,14 @@ async def run_parallel_helm_action(  # noqa: PLR0917
     node_name: str,
     node_data: ProvisionableNode,
     ansible_params: AnsibleParams,
+    ssh_params: SSHInfo,
+    misc_data: dict[str, Any] | None,
     order: ComponentDependencyGraph | None = None,
     force: bool = False,
     ignore_invalid_states: bool = True,
     ignore_failures: bool = False,
     quiet: bool = False,
+    retries: int = 5,
     **kwargs,
 ) -> dict[str, str | dict[str, str]] | None:
     """Run Helm action in parallel on provided 5G components."""
@@ -281,8 +298,11 @@ async def run_parallel_helm_action(  # noqa: PLR0917
                     node_name=node_name,
                     node_data=node_data,
                     ansible_params=ansible_params,
+                    ssh_params=ssh_params,
+                    misc_data=misc_data,
                     force=force,
                     quiet=quiet,
+                    retries=retries,
                     **kwargs,
                 )
                 for name, component_meta, component_deployment in level_components

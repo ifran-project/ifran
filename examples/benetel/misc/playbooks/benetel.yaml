@@ -1,0 +1,21 @@
+# Benetel RU configuration
+# NOTE Benetel RUs do not have Python
+---
+- name: Install Benetel RU configuration
+  hosts: rus
+  gather_facts: false
+  roles:
+    - role: "benetel/configure"
+
+- name: Reboot RU when configuration changed or reboot was forced
+  hosts: rus
+  gather_facts: false
+  roles:
+    - role: "benetel/reboot"
+      when: ru_config_file.changed or (force_reboot | default(false) | bool)
+
+- name: Wait for Benetel radio initialization
+  hosts: rus
+  gather_facts: false
+  roles:
+    - role: "benetel/wait"

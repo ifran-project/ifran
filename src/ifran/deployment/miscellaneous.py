@@ -10,7 +10,7 @@ from ifran.utils.utils import deep_merge
 class MiscellaneousManagement(BaseManagement):
     """Miscellaneous executions management class."""
 
-    async def run_playbook(  # noqa: PLR0917
+    async def run_playbook(  # noqa: D417, PLR0917
         self,
         playbook: list | dict[str, Any] | str,
         inputs: dict[str, Any] | None = None,
@@ -20,6 +20,7 @@ class MiscellaneousManagement(BaseManagement):
         inventory: str | dict[str, Any] | list | None = None,
         store: bool = True,
         quiet: bool = False,
+        retries: int = 5,
     ) -> dict[str, Any] | None:
         """
         Run a custom Ansible playbook on deployment model resources (nodes and UEs) or a custom inventory of resources.
@@ -37,7 +38,8 @@ class MiscellaneousManagement(BaseManagement):
                 (defaults to deployment model resources inventory).
             store: whether to store the output of this play in the 'miscellaneous' field of the deployment model or not
                 (defaults to True).
-            quiet: whether to suppress Ansible playbook execution output.
+            quiet: whether to suppress Ansible playbook execution output (default to False).
+            retries: number of times to retry the playbook execution in case of failure (default to 5).
 
         """
 
@@ -51,6 +53,7 @@ class MiscellaneousManagement(BaseManagement):
             roles_paths=roles_paths if roles_paths else self.deployment_model.params.ansible.roles_paths,
             inventory=inventory if inventory else self.get_ansible_inventory(),
             quiet=quiet,
+            retries=retries,
         )
 
         if results and store:

@@ -1,0 +1,42 @@
+# O-RAN 7.2 host setup
+---
+- name: Select this node's FHI72 parameters
+  ansible.builtin.set_fact:
+    fhi72_params: "{{ miscellaneous.fhi72_params[inventory_hostname] }}"
+
+- name: Verify DPDK kernel prerequisites
+  ansible.builtin.include_role:
+    name: fhi72/prerequisites
+
+- name: Configure the fronthaul NIC
+  ansible.builtin.include_role:
+    name: fhi72/nic
+
+- name: Create and bind SR-IOV VFs
+  ansible.builtin.include_role:
+    name: fhi72/vfs
+
+- name: Pin fronthaul IRQs
+  ansible.builtin.include_role:
+    name: fhi72/irq
+
+- name: Tune CPU governor and RCU threads
+  ansible.builtin.include_role:
+    name: fhi72/cpu
+
+- name: Configure systemd CPU placement
+  ansible.builtin.include_role:
+    name: fhi72/systemd
+
+- name: Configure kernel sysctls
+  ansible.builtin.include_role:
+    name: fhi72/sysctl
+
+- name: Install the SR-IOV device plugin
+  ansible.builtin.include_role:
+    name: fhi72/sriov
+
+- name: Configure PTP
+  ansible.builtin.include_role:
+    name: fhi72/ptp
+  when: miscellaneous.fhi72_params[inventory_hostname].ptp is not none

@@ -9,8 +9,8 @@
 # - is_ru: bool
 
 # Output: 
+# - ssh_info: SSHInfo
 # - if is_ru: ru_ips: list[str]
-# - else: ssh_info: SSHInfo
 ---
 - name: Provision '{{ resource_name }}'
   ansible.builtin.include_role:
@@ -26,4 +26,3 @@
         jumphost:
           hostname: faraday.inria.fr
           user: "{{ r2lab_slice | default(omit, true) }}"
-  when: not is_ru

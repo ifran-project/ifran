@@ -17,6 +17,7 @@ from ifran.models.provisioning import (
     Provisioner,
     ProvisioningCategory,
     ProvisioningType,
+    SSHInfo,
 )
 from ifran.models.ran import RANDeployment
 from ifran.models.ric import RICDeployment
@@ -27,13 +28,16 @@ class DeploymentParams(StrictBaseModel):
     """Global deployment parameters."""
 
     ansible: AnsibleParams = Field(default_factory=AnsibleParams)
-    """Ansible global parameters."""
+    """Global Ansible parameters."""
 
     k8s: K8SParams = Field(default_factory=K8SParams)
-    """Kubernetes global default parameters."""
+    """Global Kubernetes parameters."""
 
     provisioning: dict[str, Any] = Field(default_factory=dict)
     """Global default provisioning parameters."""
+
+    ssh: SSHInfo = Field(default_factory=SSHInfo)
+    """Global default SSH parameters."""
 
 
 class DeploymentModel(StrictBaseModel):
@@ -76,7 +80,11 @@ class DeploymentModel(StrictBaseModel):
     """RIC deployment."""
 
     miscellaneous: dict[str, Any] | None = Field(default=None)
-    """Miscellaneous data for pipelining purposes."""
+    """
+    Miscellaneous data for pipelining purposes.
+
+    This data is also given as input when rendering the `custom_rendered_files` of 5G components.
+    """
 
     @model_validator(mode="before")
     @classmethod

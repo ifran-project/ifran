@@ -128,6 +128,7 @@ class CoreManagement(HelmManagement):
         ignore_invalid_states: bool = True,
         ignore_failures: bool = False,
         quiet: bool = False,
+        retries: int = 5,
     ) -> None:
         """Run 5G core database Helm action."""
 
@@ -140,8 +141,10 @@ class CoreManagement(HelmManagement):
                 node_name=node_name,
                 node_data=node_data,
                 ansible_params=self.deployment_model.params.ansible,
+                ssh_params=self.deployment_model.params.ssh,
                 force=force,
                 quiet=quiet,
+                retries=retries,
             )
         except Exception as e:
             handle_ansible_result_exception(
@@ -174,6 +177,7 @@ class CoreManagement(HelmManagement):
             node_name=node_name,
             node_data=node_data,
             ansible_params=self.deployment_model.params.ansible,
+            ssh_params=self.deployment_model.params.ssh,
             **kwargs,
         )
 
@@ -189,7 +193,7 @@ class CoreManagement(HelmManagement):
     @override
     async def install(
         self,
-        order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
+        order: ComponentDependencyGraph | None = None,
         **kwargs,
     ) -> None:
         """Install 5G core components."""
@@ -199,7 +203,7 @@ class CoreManagement(HelmManagement):
     async def deploy(
         self,
         node: str | None = None,
-        order: ComponentDependencyGraph | None = CORE_COMPONENT_DEPENDENCIES,
+        order: ComponentDependencyGraph | None = None,
         **kwargs,
     ) -> None:
         """
